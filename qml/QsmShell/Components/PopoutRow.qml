@@ -43,8 +43,8 @@ Item {
             IconButton {
                 visible: root.actionIcon.length > 0
                 icon: root.actionIcon
-                size: 16
-                padding: Tokens.space1
+                size: Style.iconSm
+                padding: Style.space1
                 color: root.hovered && root.actionDanger ? Style.danger : Style.textMuted
                 opacity: root.hovered ? 1 : Style.opacityDisabled
                 onClicked: root.actionTriggered()

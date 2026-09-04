@@ -20,15 +20,23 @@ QtObject {
     readonly property int space4: 16
     readonly property int space5: 24
     readonly property int space6: 32
+    readonly property int spaceTight: 2
+    readonly property int radiusXs: 4
     readonly property int radiusSm: 8
     readonly property int radiusMd: 12
     readonly property int radiusLg: 16
-    readonly property int radiusXl: 28
+    readonly property int radiusXl: 20
+    readonly property int radius2xl: 28
     readonly property int radiusPill: 999
     readonly property int typeXs: 11
     readonly property int typeSm: 12
     readonly property int typeMd: 14
-    readonly property int typeIconMd: 20
+    readonly property int typeLg: 18
+    readonly property int typeXl: 22
+    readonly property int iconXs: 12
+    readonly property int iconSm: 16
+    readonly property int iconMd: 20
+    readonly property int iconLg: 26
     readonly property int motionPress: 80
     readonly property int motionMicro: 130
     readonly property int motionFast: 180
@@ -36,12 +44,15 @@ QtObject {
     readonly property real opacitySurface: 0.9
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
-    readonly property int iconXs: 12
-    readonly property int iconLg: 26
     readonly property int geometryRolloutRadius: 28
     readonly property int geometryFrameThickness: 16
     readonly property int geometryLevelThumbSize: 16
     readonly property int geometryLevelTrackHeight: 4
     readonly property int geometryControlHeight: 40
     readonly property int geometryControlHeightSm: 32
+    readonly property int geometryNotificationWidth: 380
+    readonly property int geometryNotificationCollapsedHeight: 36
+    readonly property int geometryControlHeightLg: 52
+    readonly property int geometryMarkThickness: 3
+    readonly property int geometryMarkHeight: 18
 }

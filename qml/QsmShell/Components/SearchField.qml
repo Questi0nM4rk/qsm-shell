@@ -24,11 +24,11 @@ Rectangle {
     signal focusPrevious
     // Consumer owns keyboard/pointer selection policy.
     signal selectionClaimed
-    readonly property int fieldTextSize: compact ? Tokens.typeMd : 18
+    readonly property int fieldTextSize: compact ? Style.textMd : Style.textLg
     function focusField(): void { input.forceActiveFocus(); }
     function setText(value: string): void { input.text = value; }
-    implicitHeight: compact ? Style.controlHeight : 52
-    radius: 12
+    implicitHeight: compact ? Style.controlHeight : Style.controlHeightLg
+    radius: Style.radiusMd
     color: Style.surface
     border.width: input.activeFocus ? 1 : 0
     border.color: Style.accent

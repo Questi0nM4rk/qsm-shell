@@ -27,7 +27,7 @@ Item {
     readonly property string shownLabel: armed && confirmLabel.length > 0 ? confirmLabel : label
     Rectangle {
         anchors.fill: parent
-        radius: 12
+        radius: Style.radiusMd
         color: root.armed ? Qt.rgba(root.armedColor.r, root.armedColor.g, root.armedColor.b, .25)
             : root.selected ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, .22)
             : Qt.rgba(Style.surfaceHover.r, Style.surfaceHover.g, Style.surfaceHover.b, .5)
@@ -35,7 +35,7 @@ Item {
     }
     Column {
         anchors.centerIn: parent
-        spacing: Tokens.space1
+        spacing: Style.space1
         SvgIcon { anchors.horizontalCenter: parent.horizontalCenter; name: root.icon; size: Style.iconLg; color: root.stateColor }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter

@@ -27,14 +27,14 @@ Item {
 
     signal dismissed
 
-    implicitWidth: 380
+    implicitWidth: Style.notificationWidth
     implicitHeight: expanded ? headline.height + details.implicitHeight + Style.space2 : headline.height
 
     Rectangle {
         anchors.left: parent.left
         anchors.verticalCenter: headline.verticalCenter
-        width: root.selected ? 5 : 3
-        height: 18
+        width: root.selected ? Style.markThickness + Style.spaceTight : Style.markThickness
+        height: Style.markHeight
         radius: width / 2
         color: root.danger ? Style.danger : root.accent
     }
@@ -44,9 +44,9 @@ Item {
         anchors.right: parent.right
         anchors.leftMargin: Style.space3
         anchors.rightMargin: Style.space3
-        height: 36
+        height: Style.notificationCollapsedHeight
         spacing: Style.space2
-        SvgIcon { visible: root.icon.length > 0; name: root.icon; size: 16; color: Style.textMuted }
+        SvgIcon { visible: root.icon.length > 0; name: root.icon; size: Style.iconSm; color: Style.textMuted }
         Text { visible: root.source.length > 0; text: root.source; color: Style.textMuted; font.pixelSize: Style.textXs }
         Text {
             Layout.fillWidth: true
@@ -54,7 +54,7 @@ Item {
             text: root.title
             textFormat: Text.PlainText
             color: Style.text
-            font.pixelSize: Tokens.typeMd
+            font.pixelSize: Style.textMd
             font.weight: Style.weightBold
         }
     }

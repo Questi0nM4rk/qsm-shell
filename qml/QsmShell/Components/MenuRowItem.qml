@@ -46,7 +46,7 @@ Item {
 
     implicitWidth: normalBody.implicitWidth
     implicitHeight: root._normal
-        ? Style.controlHeightSm + Tokens.space1
+        ? Style.controlHeightSm + Style.space1
         : root.header ? Style.space4 + Style.space2 : Style.space3
 
     // Left selection accent (only on selectable rows).
@@ -54,8 +54,8 @@ Item {
         visible: root._normal && root.selected
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        width: 3
-        height: 18
+        width: Style.markThickness
+        height: Style.markHeight
         radius: width / 2
         color: root.accent
         Behavior on height { NumberAnimation { duration: Motion.micro } }
@@ -123,7 +123,7 @@ Item {
             id: glyph
             visible: leadingSlot.children.length === 0
             name: root.icon
-            size: 18
+            size: Style.iconSm
             color: root.proseColor
         }
         ColumnLayout {

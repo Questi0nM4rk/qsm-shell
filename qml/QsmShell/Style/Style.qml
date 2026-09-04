@@ -3,13 +3,29 @@ pragma Singleton
 import QtQuick
 import qs.QsmShell.Style
 
-// Consumers may override selected defaults with a plain backend object.
+// THE style surface. Components read this and nothing else — never `Tokens`
+// directly, because a value read from Tokens is a value the consumer cannot
+// theme, and a component library whose consumer cannot retheme it is a
+// component library with two sources of truth.
+//
+// Every value below resolves the same way: the consumer's backend wins, the
+// library's generated token is the fallback. `Tokens` is the DEFAULT theme,
+// not the theme.
+//
+// The scales are complete on purpose. Every gap here is a number typed into a
+// component instead — that is where 16, 18 and 22 all became "the small icon"
+// in three different files.
 QtObject {
     property var backend: null
+
+    // ── mode ────────────────────────────────────────────────────────────
     readonly property bool reducedMotion: backend?.reducedMotion ?? false
+
+    // ── colour ──────────────────────────────────────────────────────────
     readonly property color accent: backend?.accent ?? Tokens.colorAccent
     readonly property color secondary: backend?.secondary ?? Tokens.colorSecondary
     readonly property color success: backend?.success ?? Tokens.colorSuccess
+    readonly property color danger: backend?.danger ?? Tokens.colorDanger
     readonly property color outline: backend?.outline ?? Tokens.colorOutline
     readonly property color background: backend?.background ?? Tokens.colorBackground
     readonly property color surface: backend?.surface ?? Tokens.colorSurface
@@ -17,29 +33,64 @@ QtObject {
     readonly property color surfaceRaised: backend?.surfaceRaised ?? Tokens.colorSurfaceRaised
     readonly property color text: backend?.text ?? Tokens.colorText
     readonly property color textMuted: backend?.textMuted ?? Tokens.colorTextMuted
-    readonly property color danger: backend?.danger ?? Tokens.colorDanger
+
+    // ── opacity ─────────────────────────────────────────────────────────
     readonly property real opacityDisabled: backend?.opacityDisabled ?? Tokens.opacityDisabled
-    readonly property string fontFamily: backend?.fontFamily ?? Tokens.fontFamily
-    readonly property int textXs: Tokens.typeXs
-    readonly property int textSm: Tokens.typeSm
-    readonly property int iconMd: Tokens.typeIconMd
-    readonly property int iconLg: Tokens.iconLg
-    readonly property int iconXs: Tokens.iconXs
-    readonly property int space3: Tokens.space3
-    readonly property int space4: Tokens.space4
-    readonly property int radiusLg: Tokens.radiusLg
-    readonly property int radiusPill: Tokens.radiusPill
-    readonly property int rolloutRadius: Tokens.geometryRolloutRadius
-    readonly property int frameThickness: Tokens.geometryFrameThickness
     readonly property real surfaceOpacity: backend?.surfaceOpacity ?? Tokens.opacitySurface
-    readonly property int weightBold: Font.DemiBold
-    readonly property int weightRegular: Font.Normal
-    readonly property int space2: Tokens.space2
-    readonly property int space1: Tokens.space1
-    readonly property int levelThumbSize: backend?.levelThumbSize ?? Tokens.geometryLevelThumbSize
-    readonly property int levelTrackHeight: backend?.levelTrackHeight ?? Tokens.geometryLevelTrackHeight
+
+    // ── type ────────────────────────────────────────────────────────────
+    readonly property string fontFamily: backend?.fontFamily ?? Tokens.fontFamily
+    readonly property string technicalFontFamily: backend?.technicalFontFamily ?? Tokens.fontTechnicalFamily
+    readonly property int textXs: backend?.textXs ?? Tokens.typeXs
+    readonly property int textSm: backend?.textSm ?? Tokens.typeSm
+    readonly property int textMd: backend?.textMd ?? Tokens.typeMd
+    readonly property int textLg: backend?.textLg ?? Tokens.typeLg
+    readonly property int textXl: backend?.textXl ?? Tokens.typeXl
+    readonly property int weightRegular: backend?.weightRegular ?? Font.Normal
+    readonly property int weightMedium: backend?.weightMedium ?? Font.Medium
+    readonly property int weightBold: backend?.weightBold ?? Font.DemiBold
+
+    // ── icon ────────────────────────────────────────────────────────────
+    readonly property int iconXs: backend?.iconXs ?? Tokens.iconXs
+    readonly property int iconSm: backend?.iconSm ?? Tokens.iconSm
+    readonly property int iconMd: backend?.iconMd ?? Tokens.iconMd
+    readonly property int iconLg: backend?.iconLg ?? Tokens.iconLg
+
+    // ── space ───────────────────────────────────────────────────────────
+    // spaceTight is the half-step below the grid: a glyph and its own reading
+    // read as ONE thing at 2px and as two things at 4px.
+    readonly property int spaceTight: backend?.spaceTight ?? Tokens.spaceTight
+    readonly property int space1: backend?.space1 ?? Tokens.space1
+    readonly property int space2: backend?.space2 ?? Tokens.space2
+    readonly property int space3: backend?.space3 ?? Tokens.space3
+    readonly property int space4: backend?.space4 ?? Tokens.space4
+    readonly property int space5: backend?.space5 ?? Tokens.space5
+    readonly property int space6: backend?.space6 ?? Tokens.space6
+
+    // ── radius ──────────────────────────────────────────────────────────
+    readonly property int radiusXs: backend?.radiusXs ?? Tokens.radiusXs
+    readonly property int radiusSm: backend?.radiusSm ?? Tokens.radiusSm
+    readonly property int radiusMd: backend?.radiusMd ?? Tokens.radiusMd
+    readonly property int radiusLg: backend?.radiusLg ?? Tokens.radiusLg
+    readonly property int radiusXl: backend?.radiusXl ?? Tokens.radiusXl
+    readonly property int radius2xl: backend?.radius2xl ?? Tokens.radius2xl
+    readonly property int radiusPill: backend?.radiusPill ?? Tokens.radiusPill
+
+    // ── control and surface geometry ────────────────────────────────────
     readonly property int controlHeight: backend?.controlHeight ?? Tokens.geometryControlHeight
     readonly property int controlHeightSm: backend?.controlHeightSm ?? Tokens.geometryControlHeightSm
-    readonly property int weightMedium: Font.Medium
-    readonly property string technicalFontFamily: backend?.technicalFontFamily ?? Tokens.fontTechnicalFamily
+    readonly property int controlHeightLg: backend?.controlHeightLg ?? Tokens.geometryControlHeightLg
+    readonly property int levelThumbSize: backend?.levelThumbSize ?? Tokens.geometryLevelThumbSize
+    readonly property int levelTrackHeight: backend?.levelTrackHeight ?? Tokens.geometryLevelTrackHeight
+    readonly property int rolloutRadius: backend?.rolloutRadius ?? Tokens.geometryRolloutRadius
+    readonly property int frameThickness: backend?.frameThickness ?? Tokens.geometryFrameThickness
+    readonly property int notificationWidth: backend?.notificationWidth ?? Tokens.geometryNotificationWidth
+    readonly property int notificationCollapsedHeight: backend?.notificationCollapsedHeight
+        ?? Tokens.geometryNotificationCollapsedHeight
+
+    // The "this one" mark: the same 3x18 pill the launcher, the menu rows, the
+    // notification history and the device lists all use to say which row is
+    // current. It is one idiom, so it is one pair of numbers.
+    readonly property int markThickness: backend?.markThickness ?? Tokens.geometryMarkThickness
+    readonly property int markHeight: backend?.markHeight ?? Tokens.geometryMarkHeight
 }
