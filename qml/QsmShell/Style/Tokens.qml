@@ -1,0 +1,47 @@
+pragma Singleton
+
+import QtQuick
+
+QtObject {
+    readonly property color colorAccent: "#c5a5e9"
+    readonly property color colorSecondary: "#e1b7e1"
+    readonly property color colorSuccess: "#91d6c2"
+    readonly property color colorOutline: "#4e3f62"
+    readonly property color colorSurface: "#21142b"
+    readonly property color colorSurfaceRaised: "#2d1f3a"
+    readonly property color colorSurfaceHover: "#382a48"
+    readonly property color colorText: "#f6f1f9"
+    readonly property color colorTextMuted: "#b6a8c2"
+    readonly property color colorBackground: "#1c0e27"
+    readonly property color colorDanger: "#ff8b94"
+    readonly property int space1: 4
+    readonly property int space2: 8
+    readonly property int space3: 12
+    readonly property int space4: 16
+    readonly property int space5: 24
+    readonly property int space6: 32
+    readonly property int radiusSm: 8
+    readonly property int radiusMd: 12
+    readonly property int radiusLg: 16
+    readonly property int radiusXl: 28
+    readonly property int radiusPill: 999
+    readonly property int typeXs: 11
+    readonly property int typeSm: 12
+    readonly property int typeMd: 14
+    readonly property int typeIconMd: 20
+    readonly property int motionPress: 80
+    readonly property int motionMicro: 130
+    readonly property int motionFast: 180
+    readonly property real opacityDisabled: 0.35
+    readonly property real opacitySurface: 0.9
+    readonly property string fontFamily: "sans-serif"
+    readonly property string fontTechnicalFamily: "monospace"
+    readonly property int iconXs: 12
+    readonly property int iconLg: 26
+    readonly property int geometryRolloutRadius: 28
+    readonly property int geometryFrameThickness: 16
+    readonly property int geometryLevelThumbSize: 16
+    readonly property int geometryLevelTrackHeight: 4
+    readonly property int geometryControlHeight: 40
+    readonly property int geometryControlHeightSm: 32
+}

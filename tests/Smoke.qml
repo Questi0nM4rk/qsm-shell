@@ -1,0 +1,157 @@
+import QtQuick
+
+import qs.QsmShell.Components
+import qs.QsmShell.Style
+
+Item {
+    id: root
+
+    width: 320
+    height: 240
+    visible: false
+
+    property int activatedIndex: -1
+
+    QtObject {
+        id: backend
+        property bool reducedMotion: false
+        property color accent: "#c5a5e9"
+        property color secondary: "#e1b7e1"
+        property color success: "#91d6c2"
+        property color outline: "#4e3f62"
+        property color background: "#1c0e27"
+        property color surface: "#21142b"
+        property color surfaceHover: "#382a48"
+        property color surfaceRaised: "#2d1f3a"
+        property color text: "#f6f1f9"
+        property color textMuted: "#b6a8c2"
+        property color danger: "#ff8b94"
+        property string fontFamily: "Test Sans"
+        property string technicalFontFamily: "Test Mono"
+        property real surfaceOpacity: 0.9
+        property real opacityDisabled: 0.23
+        property int levelThumbSize: 19
+        property int levelTrackHeight: 7
+        property int controlHeight: 53
+        property int controlHeightSm: 29
+    }
+
+    Component.onCompleted: {
+        Style.backend = backend;
+        runTimer.start();
+    }
+
+    Timer {
+        id: runTimer
+        interval: Motion.micro + 20
+        onTriggered: root.run()
+    }
+
+    function require(condition, message) {
+        if (condition)
+            return true;
+
+        console.error(`SMOKE_FAIL: ${message}`);
+        Qt.exit(1);
+        return false;
+    }
+
+    function run() {
+        if (!require(compactCapsule.implicitHeight === backend.controlHeightSm,
+                "Capsule did not consume backend compact height"))
+            return;
+        if (!require(capsule.implicitHeight === backend.controlHeight,
+                "Capsule did not consume backend height"))
+            return;
+        if (!require(level.implicitHeight === backend.levelThumbSize,
+                "LevelBar did not consume backend thumb size"))
+            return;
+        if (!require(level.children[0].height === backend.levelTrackHeight,
+                "LevelBar did not consume backend track height"))
+            return;
+        if (!require(disabledButton.opacity === backend.opacityDisabled,
+                "IconButton did not consume backend disabled opacity"))
+            return;
+        if (!require(Style.technicalFontFamily === backend.technicalFontFamily,
+                "Style did not consume backend technical font"))
+            return;
+
+        menu.step(1);
+        if (!require(menu.currentIndex === 1, "Menu did not skip its header"))
+            return;
+        if (!require(first.width === menu.width, "Menu did not size its vertical rows"))
+            return;
+
+        menu.step(1);
+        if (!require(menu.currentIndex === 3, "Menu did not skip its disabled row"))
+            return;
+        if (!require(second.selected, "Menu did not apply selection to its real row"))
+            return;
+
+        menu.activateCurrent();
+        if (!require(activatedIndex === 3, "Menu did not emit its selected index"))
+            return;
+
+        menu.step(1);
+        if (!require(menu.currentIndex === 1, "Menu did not wrap to the first selectable row"))
+            return;
+
+        console.log("SMOKE_OK");
+        Qt.exit(0);
+    }
+
+    Capsule {
+        id: compactCapsule
+        compact: true
+        icon: "check"
+        label: "Compact"
+    }
+
+    Capsule {
+        id: capsule
+        icon: "check"
+        label: "Default"
+    }
+
+    LevelBar {
+        id: level
+        width: 100
+        value: 0.5
+    }
+
+    IconButton {
+        id: disabledButton
+        icon: "check"
+        enabled: false
+    }
+
+    Menu {
+        id: menu
+
+        width: parent.width
+        height: parent.height
+
+        onActivated: index => root.activatedIndex = index
+
+        MenuRowItem {
+            header: true
+            primary: "Section"
+        }
+
+        MenuRowItem {
+            id: first
+            primary: "First"
+        }
+
+        MenuRowItem {
+            disabled: true
+            primary: "Disabled"
+        }
+
+        MenuRowItem {
+            id: second
+            primary: "Second"
+        }
+    }
+
+}

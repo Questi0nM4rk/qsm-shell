@@ -1,0 +1,11 @@
+{
+  "color": { "accent": "#c5a5e9", "secondary": "#e1b7e1", "success": "#91d6c2", "outline": "#4e3f62", "surface": "#21142b", "surfaceRaised": "#2d1f3a", "surfaceHover": "#382a48", "text": "#f6f1f9", "textMuted": "#b6a8c2", "background": "#1c0e27", "danger": "#ff8b94" },
+  "space": { "1": 4, "2": 8, "3": 12, "4": 16, "5": 24, "6": 32 },
+  "radius": { "sm": 8, "md": 12, "lg": 16, "xl": 28, "pill": 999 },
+  "type": { "xs": 11, "sm": 12, "md": 14, "iconMd": 20 },
+  "motion": { "press": 80, "micro": 130, "fast": 180 },
+  "opacity": { "disabled": 0.35, "surface": 0.9 },
+  "font": { "family": "sans-serif", "technicalFamily": "monospace" },
+  "icon": { "xs": 12, "lg": 26 },
+  "geometry": { "rolloutRadius": 28, "frameThickness": 16, "levelThumbSize": 16, "levelTrackHeight": 4, "controlHeight": 40, "controlHeightSm": 32 }
+}

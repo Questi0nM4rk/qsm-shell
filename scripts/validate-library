@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+node "$root/scripts/generate-tokens.mjs"
+/usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/qml/QsmShell/Style/*.qml "$root"/qml/QsmShell/Components/*.qml
+/usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/previews/*.qml
+/usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/tests/*.qml
+
+QT_QPA_PLATFORM=offscreen \
+QT_QUICK_BACKEND=software \
+QT_FORCE_STDERR_LOGGING=1 \
+    /usr/lib/qt6/bin/qml -I "$root/qml" "$root/tests/Smoke.qml"
+
+npm --prefix "$root/gallery" run build
+npm --prefix "$root/gallery" run lint
+
+printf 'qsm-shell validation passed\n'

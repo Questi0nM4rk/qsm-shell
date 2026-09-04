@@ -1,0 +1,20 @@
+<!-- Custom (no lucide "gpu" glyph exists): card + fin heatsink, matching
+     the shipped lucide-static stroke set (white stroke, width 2, round
+     caps/joins) so SvgIcon's colorization tints it identically. -->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#ffffff"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <rect x="2" y="7" width="20" height="10" rx="2" />
+  <circle cx="7" cy="12" r="2" />
+  <line x1="12" y1="9" x2="12" y2="15" />
+  <line x1="15" y1="9" x2="15" y2="15" />
+  <line x1="18" y1="9" x2="18" y2="15" />
+</svg>
