@@ -36,7 +36,7 @@
   "prose": { "component": "prose", "variant": "heading", "viewport": [800, 500] },
   "session-button": { "component": "session-button", "variant": "armed", "viewport": [800, 500] },
   "state-layer": { "component": "state-layer", "variant": "hover", "viewport": [800, 500] },
-  "stat-ring": { "component": "stat-ring", "variant": "cpu", "viewport": [800, 500] },
+  "stat-ring": { "component": "stat-ring", "variant": "open", "viewport": [800, 500] },
   "svg-icon": { "component": "svg-icon", "variant": "selected", "viewport": [800, 500] },
   "tabs": { "component": "tabs", "variant": "second", "viewport": [800, 500] }
 }

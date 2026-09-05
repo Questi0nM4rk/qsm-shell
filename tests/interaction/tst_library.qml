@@ -96,7 +96,7 @@ TestCase {
     MonthCalendar { id: calendar; width: 260; shown: new Date(2026, 7, 1); today: new Date(2026, 7, 28) }
     NotificationCard { id: notification; title: "Updated"; body: "Body"; source: "test" }
     SessionButton { id: sessionButton; icon: "power"; label: "Power off" }
-    StatRing { id: ring; value: 0.7; label: "CPU"; reading: "70%" }
+    StatRing { id: ring; value: 0.7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
     // A device row: read, not picked, so it does not recede its neighbours.
     ListRow {
         id: deviceRow

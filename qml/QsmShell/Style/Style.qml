@@ -123,6 +123,11 @@ QtObject {
     // A count riding a cell's corner, and the bar a progress or a level is
     // drawn on. Both were being typed as literals at the call sites that
     // needed them.
+    // The ring, at the size a performance card wants it. A card fitting three
+    // of them states its own; the library keeps one default.
+    readonly property int ringDiameter: backend?.ringDiameter ?? Tokens.geometryRingDiameter
+    readonly property int ringStroke: backend?.ringStroke ?? Tokens.geometryRingStroke
+
     readonly property int badgeHeight: backend?.badgeHeight ?? Tokens.geometryBadgeHeight
     readonly property int trackThickness: backend?.trackThickness ?? Tokens.geometryTrackThickness
 

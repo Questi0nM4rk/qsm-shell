@@ -79,7 +79,9 @@
     "sliderThumbSize": 12,
     "sliderThumbLift": 2,
     "badgeHeight": 16,
-    "trackThickness": 6
+    "trackThickness": 6,
+    "ringDiameter": 150,
+    "ringStroke": 8
   },
   "line": {
     "tight": 1.2,

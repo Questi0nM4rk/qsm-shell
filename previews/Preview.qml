@@ -172,7 +172,17 @@ Rectangle {
             options: ["Overview", { label: "Media", badge: "2" }, { label: "Performance", disabled: true }]
             currentIndex: root.variant === "second" ? 1 : 0
         }
-        StatRing { visible: root.component === "stat-ring"; value: .72; label: "CPU"; reading: "72%" }
+        StatRing {
+            visible: root.component === "stat-ring"
+            value: .72
+            icon: "cpu"
+            reading: "72%"
+            label: "CPU"
+            // The open form: the gap is where the label sits without meeting
+            // the arc.
+            startAngle: root.variant === "open" ? -225 : -90
+            sweepAngle: root.variant === "open" ? 270 : 360
+        }
         Divider { visible: root.component === "divider"; Layout.preferredWidth: 400; inset: 20 }
         EmptyState { visible: root.component === "empty-state"; Layout.preferredWidth: 260; icon: "bell"; title: "Nothing here"; detail: "A deterministic empty fixture." }
         KeyValueRow { visible: root.component === "key-value"; Layout.preferredWidth: 280; icon: "battery"; label: "Battery"; value: "68%"; valueColor: Style.accent }
