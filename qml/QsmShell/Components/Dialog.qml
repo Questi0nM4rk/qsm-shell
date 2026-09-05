@@ -55,16 +55,54 @@ FocusScope {
     property Item _returnTo: null
 
     anchors.fill: parent
-    visible: card.opacity > 0
-    // A closed dialog must not be in the tab order. `visible: false` handles
-    // that, and the opacity guard above keeps it laid out through its own
-    // fade-out.
+    // `root.open` FIRST, and it is not redundant: the card fades in from zero,
+    // so at the instant `open` flips, `card.opacity` is still 0. Reading only
+    // the opacity left the dialog invisible for its first frame — and an
+    // invisible item cannot take focus, so the focus-entry below silently did
+    // nothing and the keyboard stayed behind the modal. The opacity term is
+    // what keeps it laid out through the fade OUT.
+    visible: root.open || card.opacity > 0
+    // A closed dialog must not be in the tab order at all: a set of controls
+    // that are invisible and still reachable is worse than no dialog.
     enabled: root.open
+
+    // Move the keyboard to the first control IN the dialog, not to the card.
+    // The card is a plain surface: focusing it leaves the keyboard pointing at
+    // nothing, so the first Tab goes somewhere arbitrary and the person has no
+    // idea where they are. `head` is the tab trap's own sentinel, so "the
+    // thing after head" is by construction the first focusable control inside.
+    function _enterFocus(): void {
+        if (!root.open)
+            return;
+        const first = head.nextItemInFocusChain(true);
+        if (first && root._holds(first))
+            first.forceActiveFocus();
+        else
+            card.forceActiveFocus();
+    }
+
+    // Is `item` inside this dialog? The focus chain runs through the whole
+    // window, so "the next focusable thing" can perfectly well be a control
+    // behind the modal — which is the failure this guards.
+    function _holds(item: Item): bool {
+        let walk = item;
+        while (walk) {
+            if (walk === card)
+                return true;
+            walk = walk.parent;
+        }
+        return false;
+    }
 
     onOpenChanged: {
         if (root.open) {
             root._returnTo = root.returnFocusTo ?? (Window.window?.activeFocusItem ?? null);
-            card.forceActiveFocus();
+            // Deferred by one turn, and it has to be: `visible` and `enabled`
+            // are BINDINGS on `open`, and this handler can run before they
+            // re-evaluate. An invisible item silently refuses focus, so
+            // calling straight through left the keyboard outside the modal
+            // with nothing to say it had failed.
+            Qt.callLater(root._enterFocus);
         } else {
             if (root._returnTo)
                 root._returnTo.forceActiveFocus();

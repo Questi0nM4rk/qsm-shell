@@ -8,7 +8,11 @@ import qs.QsmShell.Style
 Item {
     id: root
 
-    required property string name
+    // NOT required. An empty name is a legitimate "nothing to draw here" —
+    // a button with a label and no glyph, a row whose leading slot is filled
+    // by something else. Required, it meant `Capsule { label: "Discard" }`
+    // failed to construct at all, which is the most ordinary button there is.
+    property string name: ""
     property int size: Style.iconMd
     property color color: Style.text
 

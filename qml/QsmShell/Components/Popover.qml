@@ -46,7 +46,11 @@ Item {
     property int openDelay: Motion.large
     property int closeDelay: Motion.medium
 
-    default property alias content: panel.data
+    // Content goes straight in. An intermediate host that fills the popover
+    // cannot also be what the popover sizes itself from — the first version
+    // had `implicitWidth: panel.implicitWidth` over an `anchors.fill` Item,
+    // which is 0 forever, so every popover was zero by zero.
+    default property alias content: contentHost.data
 
     signal dismissRequested
 
@@ -58,21 +62,36 @@ Item {
         : placement === "right" && !_fitsRight ? "left"
         : placement
 
-    // Anchor rectangle in this item's own coordinates. Recomputed whenever
-    // either end moves, because a popover anchored to a scrolling row must
-    // travel with it rather than being placed once.
-    readonly property rect _anchor: {
+    // Anchor rectangle in this item's own coordinates.
+    //
+    // It is SAMPLED, not bound, and that is not laziness. An item's scene
+    // position changes whenever any ancestor moves, and Qt Quick emits no
+    // signal for that — a binding that reads `anchorItem.x` re-fires when the
+    // anchor moves inside its own parent and stays silent when the parent
+    // scrolls out from under it. Measured: a popover anchored to a row in a
+    // scrolling list sat where the row used to be.
+    //
+    // So it is resampled every frame while OPEN, and never while closed. The
+    // assignment is a no-op when nothing moved, so a still popover costs one
+    // `mapToItem` per frame and no bindings at all.
+    property rect _anchor: Qt.rect(0, 0, 0, 0)
+
+    function resample(): void {
         if (!root.anchorItem || !root.parent)
-            return Qt.rect(0, 0, 0, 0);
-        // Referenced so the binding re-evaluates when the anchor moves; the
-        // mapping alone reads no property QML can track.
-        void root.anchorItem.x;
-        void root.anchorItem.y;
-        void root.anchorItem.width;
-        void root.anchorItem.height;
+            return;
         const origin = root.anchorItem.mapToItem(root.parent, 0, 0);
-        return Qt.rect(origin.x, origin.y, root.anchorItem.width, root.anchorItem.height);
+        const next = Qt.rect(origin.x, origin.y, root.anchorItem.width, root.anchorItem.height);
+        if (next !== root._anchor)
+            root._anchor = next;
     }
+
+    FrameAnimation {
+        running: root.open || root.opacity > 0
+        onTriggered: root.resample()
+    }
+
+    onOpenChanged: if (root.open) root.resample()
+    Component.onCompleted: root.resample()
 
     readonly property real _boundsWidth: bounds ? bounds.width : 0
     readonly property real _boundsHeight: bounds ? bounds.height : 0
@@ -107,8 +126,8 @@ Item {
         }
     }
 
-    implicitWidth: panel.implicitWidth
-    implicitHeight: panel.implicitHeight
+    implicitWidth: contentHost.childrenRect.width
+    implicitHeight: contentHost.childrenRect.height
 
     visible: opacity > 0
     opacity: open ? 1 : 0
@@ -129,10 +148,14 @@ Item {
         }
     }
 
-    Item {
-        id: panel
-        anchors.fill: parent
-    }
+    // Deliberately unsized. `childrenRect` measures the bounding box of the
+    // children regardless of the host's own size, so the popover can take its
+    // size FROM the content — and giving the host a size taken from the
+    // popover would close that circle into a binding loop.
+    //
+    // So the content states its own size, which is what a popover's content
+    // does anyway: the panel decides how big it is and the popover wraps it.
+    Item { id: contentHost }
 
     // ── triggering ──────────────────────────────────────────────────────
     // The popover watches the anchor, so a consumer using `hover` or `press`

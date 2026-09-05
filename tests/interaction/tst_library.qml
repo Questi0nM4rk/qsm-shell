@@ -24,6 +24,10 @@ TestCase {
 
     // ── every type, constructed ─────────────────────────────────────────
     Prose { id: prose; role: "heading"; text: "Heading" }
+    // A button with a label and no glyph -- the most ordinary button there is,
+    // and it did not construct at all while `SvgIcon.name` was required.
+    Capsule { id: wordButton; label: "Discard"; variant: "destructive" }
+    Capsule { id: glyphButton; icon: "check"; label: "Keep" }
     Badge { id: badge; tone: "warning"; text: "3" }
     Badge { id: dotBadge; dot: true; tone: "success" }
     Spinner { id: spinner }
@@ -176,7 +180,7 @@ TestCase {
         // typo inside one leaves the object alive but wrong. Both show up as a
         // console error, and `qmltestrunner` fails the run on those, so simply
         // reaching this line with every id resolvable is the assertion.
-        const types = [prose, badge, dotBadge, spinner, progress, unknownProgress,
+        const types = [prose, wordButton, glyphButton, badge, dotBadge, spinner, progress, unknownProgress,
             skeleton, callout, field, meter, fullMeter, scroller, section,
             disclosure, scrim, shortCue, longCue, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
@@ -190,6 +194,15 @@ TestCase {
     // A count must not resize its badge as it ticks; a dot must carry no
     // reading, because a dot means "there is something here" and a state
     // needs a channel that is not a hue.
+    // A layout skips an invisible child AND its spacing, so a text-only pill
+    // has to be narrower than the same pill with a glyph -- not the same width
+    // with a hole in it.
+    function test_a_button_without_a_glyph_closes_up() {
+        verify(wordButton.implicitWidth > 0, "a text-only button had no width");
+        verify(glyphButton.implicitWidth - wordButton.implicitWidth > 0,
+            "the glyph took no room, so the text-only pill is carrying a hole");
+    }
+
     function test_badge_dot_carries_no_reading() {
         compare(dotBadge.text, "", "a dot badge carried a reading");
         verify(badge.implicitWidth >= badge.implicitHeight, "a badge collapsed narrower than it is tall");

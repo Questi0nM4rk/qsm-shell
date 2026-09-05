@@ -104,6 +104,10 @@ Card {
         // each item's implicit height out of the answer.
         SvgIcon {
             id: icon
+            // A layout skips an invisible child AND its spacing, so a
+            // text-only pill closes up around the missing glyph instead of
+            // carrying an icon-sized hole and a gap.
+            visible: icon.name.length > 0
             Layout.alignment: Qt.AlignVCenter
             size: root._sm ? Style.iconSm : root._lg ? Style.iconLg : Style.iconMd
             color: root._prose
