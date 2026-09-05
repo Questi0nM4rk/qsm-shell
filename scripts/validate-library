@@ -7,11 +7,20 @@ node "$root/scripts/generate-tokens.mjs"
 /usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/qml/QsmShell/Style/*.qml "$root"/qml/QsmShell/Components/*.qml
 /usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/previews/*.qml
 /usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/tests/*.qml
+/usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/tests/interaction/*.qml
 
 QT_QPA_PLATFORM=offscreen \
 QT_QUICK_BACKEND=software \
 QT_FORCE_STDERR_LOGGING=1 \
     /usr/lib/qt6/bin/qml -I "$root/qml" "$root/tests/Smoke.qml"
+
+# Real pointer and keyboard events against real components. The Qt6 runner at
+# this path works fine -- it is /usr/bin/qmltestrunner that is Qt5 and cannot
+# load a Qt6 module, which is what the backlog's environment note meant and
+# what kept this repo from having interaction tests at all.
+QT_QPA_PLATFORM=offscreen \
+QT_QUICK_BACKEND=software \
+    /usr/lib/qt6/bin/qmltestrunner -import "$root/qml" -input "$root/tests/interaction"
 
 npm --prefix "$root/gallery" run build
 npm --prefix "$root/gallery" run lint

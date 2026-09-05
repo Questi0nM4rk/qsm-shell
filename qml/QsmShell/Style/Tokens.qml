@@ -46,6 +46,8 @@ QtObject {
     readonly property int motionFast: 180
     readonly property int motionMedium: 260
     readonly property int motionLarge: 400
+    readonly property int motionSpin: 900
+    readonly property int motionPulse: 1400
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySurface: 0.9
     readonly property string fontFamily: "sans-serif"
@@ -62,6 +64,8 @@ QtObject {
     readonly property int geometrySliderTrackThickness: 4
     readonly property int geometrySliderThumbSize: 12
     readonly property int geometrySliderThumbLift: 2
+    readonly property int geometryBadgeHeight: 16
+    readonly property int geometryTrackThickness: 6
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

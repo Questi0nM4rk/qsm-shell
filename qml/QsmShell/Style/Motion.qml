@@ -32,6 +32,18 @@ QtObject {
     // large — a whole surface rolling out or retracting.
     readonly property int large: Style.reducedMotion ? 120 : Tokens.motionLarge
 
+    // ── loops ───────────────────────────────────────────────────────────
+    // Everything above names a ONE-SHOT change: how long a thing takes to
+    // arrive or to leave. A loop is a different quantity — it has a period,
+    // not a duration — and reduced motion must LENGTHEN it rather than
+    // shorten it. Shortening a duration calms a transition; shortening a
+    // period makes a spinner whirr, which is the opposite of the request.
+    //
+    // spin — one full turn of an indeterminate indicator.
+    readonly property int spin: Style.reducedMotion ? Tokens.motionSpin * 2 : Tokens.motionSpin
+    // pulse — one breath of a placeholder or a waiting surface.
+    readonly property int pulse: Style.reducedMotion ? Tokens.motionPulse * 2 : Tokens.motionPulse
+
     // Enter: decelerate in, so the arrival is where the eye lands.
     readonly property int standardEasing: Easing.OutCubic
     // Enter, with more authority — a surface rather than a control.

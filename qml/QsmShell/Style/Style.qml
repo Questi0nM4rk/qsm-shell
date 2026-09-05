@@ -115,6 +115,12 @@ QtObject {
     // The "this one" mark: the same 3x18 pill the launcher, the menu rows, the
     // notification history and the device lists all use to say which row is
     // current. It is one idiom, so it is one pair of numbers.
+    // A count riding a cell's corner, and the bar a progress or a level is
+    // drawn on. Both were being typed as literals at the call sites that
+    // needed them.
+    readonly property int badgeHeight: backend?.badgeHeight ?? Tokens.geometryBadgeHeight
+    readonly property int trackThickness: backend?.trackThickness ?? Tokens.geometryTrackThickness
+
     readonly property int markThickness: backend?.markThickness ?? Tokens.geometryMarkThickness
     readonly property int markHeight: backend?.markHeight ?? Tokens.geometryMarkHeight
 

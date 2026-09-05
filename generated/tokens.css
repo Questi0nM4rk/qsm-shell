@@ -42,6 +42,8 @@
   --qsm-motion-fast: 180ms;
   --qsm-motion-medium: 260ms;
   --qsm-motion-large: 400ms;
+  --qsm-motion-spin: 900ms;
+  --qsm-motion-pulse: 1400ms;
   --qsm-opacity-disabled: 0.35;
   --qsm-opacity-surface: 0.9;
   --qsm-font-family: sans-serif;
@@ -58,6 +60,8 @@
   --qsm-geometry-sliderTrackThickness: 4px;
   --qsm-geometry-sliderThumbSize: 12px;
   --qsm-geometry-sliderThumbLift: 2px;
+  --qsm-geometry-badgeHeight: 16px;
+  --qsm-geometry-trackThickness: 6px;
   --qsm-line-tight: 1.2;
   --qsm-line-heading: 1.25;
   --qsm-line-body: 1.55;

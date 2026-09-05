@@ -19,6 +19,11 @@
 
 ## Known Environment
 
-- `/usr/bin/qmltestrunner` is Qt 5 and cannot test this Qt 6 module.
+- `/usr/bin/qmltestrunner` is Qt 5 and cannot test this Qt 6 module. **The Qt 6
+  one is at `/usr/lib/qt6/bin/qmltestrunner` and works**, including real
+  `mouseClick` / `keyClick` under `QT_QPA_PLATFORM=offscreen`. The note above
+  used to read as "this repo cannot have interaction tests", which is why it
+  had none for months. `tests/interaction/` uses it, and `scripts/validate-library`
+  runs it.
 - Use `/usr/lib/qt6/bin/qml` with an explicit QML file and
-  `QT_QPA_PLATFORM=offscreen` for native checks.
+  `QT_QPA_PLATFORM=offscreen` for native checks that are not TestCases.
