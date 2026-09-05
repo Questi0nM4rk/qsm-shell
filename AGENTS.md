@@ -68,3 +68,30 @@ Earned, each from a specific failure. Break one and name which.
   label half a pixel below its own pill. Half a pixel reads as "not centred".
 - **A number that moves the wrong way is worse than no number.** Anything
   derived from an instantaneous reading gets averaged before it is shown.
+- **Lint proves a file parses; only running it proves it works.** `qmllint`
+  cannot see a binding that fails to resolve or one that feeds itself. Twenty
+  new types shipped linted-and-never-run and two of them were broken: a
+  `Flickable`'s declared children become children of its `contentItem`, so a
+  scroll indicator was both chrome and content and its height fed the content
+  height fed its own height. `tests/interaction/` instantiates every public
+  type for exactly this.
+- **A type whose name says where it is used is a type you have twice.**
+  `MenuRowItem`, `PopoutRow` and `ResultRow` were one row wearing three names,
+  differing in a handful of numbers and in which of the three had remembered
+  which rule. Same for `SearchField`: a search box is a text box with a glyph
+  in its leading slot.
+- **Unavailable and not-a-target are different states.** `disabled` means the
+  action exists and cannot be taken now, so it dims. A row that only REPORTS
+  is showing the truth at full strength and simply is not clickable. Dimming
+  it to say "you cannot click this" also says "this reading is stale".
+- **A configuration flag per key the consumer might want is the wrong shape.**
+  Four `intercept*` booleans covered four keys and not the fifth. One hook
+  carrying the live event covers every key, and the surface that knows what
+  the key means is the one that decides.
+- **A copy with the reasoning stripped out is worse than no copy.** It is the
+  one that looks canonical and cannot say what it is for. Found three
+  implementations of one fuzzy scorer; the library held the one with its
+  explanation deleted.
+- **Reduced motion shortens a DURATION and lengthens a PERIOD.** A one-shot
+  transition calms by getting shorter; a loop calms by getting slower.
+  Shortening a spinner's period makes it whirr.
