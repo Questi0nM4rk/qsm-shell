@@ -3,14 +3,16 @@
     "accent": "#c5a5e9",
     "secondary": "#e1b7e1",
     "success": "#91d6c2",
+    "warning": "#e8c58a",
+    "danger": "#ff8b94",
+    "info": "#9fc2ea",
     "outline": "#4e3f62",
+    "background": "#1c0e27",
     "surface": "#21142b",
     "surfaceRaised": "#2d1f3a",
     "surfaceHover": "#382a48",
     "text": "#f6f1f9",
-    "textMuted": "#b6a8c2",
-    "background": "#1c0e27",
-    "danger": "#ff8b94"
+    "textMuted": "#b6a8c2"
   },
   "space": {
     "tight": 2,
@@ -35,7 +37,9 @@
     "sm": 12,
     "md": 14,
     "lg": 18,
-    "xl": 22
+    "xl": 22,
+    "display": 28,
+    "hero": 44
   },
   "icon": {
     "xs": 12,

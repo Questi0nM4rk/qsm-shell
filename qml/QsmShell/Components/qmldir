@@ -1,5 +1,6 @@
 module qs.QsmShell.Components
 StateLayer 1.0 StateLayer.qml
+Prose 1.0 Prose.qml
 Card 1.0 Card.qml
 AppIcon 1.0 AppIcon.qml
 MonthCalendar 1.0 MonthCalendar.qml
@@ -18,6 +19,5 @@ KeyValueRow 1.0 KeyValueRow.qml
 Capsule 1.0 Capsule.qml
 SvgIcon 1.0 SvgIcon.qml
 IconButton 1.0 IconButton.qml
-SectionLabel 1.0 SectionLabel.qml
 SelectionMark 1.0 SelectionMark.qml
 Slider 1.0 Slider.qml

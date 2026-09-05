@@ -26,6 +26,12 @@ Item {
         }
         Connections { target: root; function onValueChanged() { canvas.requestPaint(); } function onColorChanged() { canvas.requestPaint(); } }
     }
-    Text { anchors.centerIn: parent; text: root.reading; color: Style.text; font.pixelSize: Style.textSm; font.weight: Style.weightBold }
-    Text { anchors.horizontalCenter: parent.horizontalCenter; anchors.top: parent.bottom; anchors.topMargin: Style.space1; text: root.label; color: Style.textMuted; font.pixelSize: Style.textXs }
+    Prose { anchors.centerIn: parent; role: "reading"; text: root.reading }
+    Prose {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.bottom
+        anchors.topMargin: Style.space1
+        role: "metadata"
+        text: root.label
+    }
 }

@@ -84,12 +84,11 @@ Item {
         anchors.rightMargin: Style.space3
         spacing: Style.space2
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Style.textMuted; opacity: .5 }
-        Text {
+        Prose {
+            role: "section"
+            font.capitalization: Font.MixedCase
+            font.letterSpacing: 0
             text: root.primary
-            color: Style.textMuted
-            font.family: Style.fontFamily
-            font.pixelSize: Style.textXs
-            font.weight: Style.weightBold
         }
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Style.textMuted; opacity: .5 }
     }
@@ -130,26 +129,18 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 0
-            Text {
+            Prose {
                 Layout.fillWidth: true
-                elide: Text.ElideRight
-                text: root.primary
-                textFormat: Text.PlainText
+                role: "label"
                 color: root.proseColor
-                font.family: Style.fontFamily
-                font.pixelSize: Style.textSm
-                font.weight: Style.weightMedium
+                text: root.primary
                 Behavior on color { ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
             }
-            Text {
+            Prose {
                 Layout.fillWidth: true
                 visible: root.supporting.length > 0
-                elide: Text.ElideRight
+                role: "metadata"
                 text: root.supporting
-                textFormat: Text.PlainText
-                color: Style.textMuted
-                font.family: Style.fontFamily
-                font.pixelSize: Style.textXs
             }
         }
         RowLayout {

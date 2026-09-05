@@ -59,11 +59,11 @@ function levelSamples(): Sample[] {
   }))
 }
 
-function sectionLabelSamples(): Sample[] {
-  return ['resting', 'selected'].map((state) => ({
+function proseSamples(): Sample[] {
+  return ['hero', 'display', 'heading', 'title', 'body', 'label', 'metadata', 'reading', 'section'].map((state) => ({
     state,
-    className: stateClass('ref-section-label', state),
-    node: <span>Section label</span>,
+    className: `ref-prose ref-prose--${state}`,
+    node: <span>{state === 'reading' ? '72%' : 'The quick brown fox'}</span>,
   }))
 }
 
@@ -310,7 +310,7 @@ const SAMPLES: Record<ReferenceId, Sample[]> = {
   'svg-icon': svgIconSamples(),
   'icon-button': iconButtonSamples(),
   level: levelSamples(),
-  'section-label': sectionLabelSamples(),
+  prose: proseSamples(),
   'popout-row': popoutRowSamples(),
   calendar: monthCalendarSamples(),
   search: searchSamples(),

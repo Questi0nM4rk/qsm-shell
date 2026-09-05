@@ -25,6 +25,13 @@ QtObject {
     readonly property color accent: backend?.accent ?? Tokens.colorAccent
     readonly property color secondary: backend?.secondary ?? Tokens.colorSecondary
     readonly property color success: backend?.success ?? Tokens.colorSuccess
+    // The semantic status set, complete. It shipped with success and danger
+    // only, so a surface with a degraded state or an informational one had
+    // nowhere to put it and reached for the accent -- which is the accent
+    // budget being spent on a passive readout, and the interactive world going
+    // grey as a result.
+    readonly property color warning: backend?.warning ?? Tokens.colorWarning
+    readonly property color info: backend?.info ?? Tokens.colorInfo
     readonly property color danger: backend?.danger ?? Tokens.colorDanger
     readonly property color outline: backend?.outline ?? Tokens.colorOutline
     readonly property color background: backend?.background ?? Tokens.colorBackground
@@ -46,6 +53,12 @@ QtObject {
     readonly property int textMd: backend?.textMd ?? Tokens.typeMd
     readonly property int textLg: backend?.textLg ?? Tokens.typeLg
     readonly property int textXl: backend?.textXl ?? Tokens.typeXl
+    // The top of the ladder. A big reading (a temperature, a ring's value) and
+    // a number read from across the room (a clock) are different enough from
+    // each other and from textXl that surfaces were inventing 28 and 44
+    // locally rather than going without.
+    readonly property int textDisplay: backend?.textDisplay ?? Tokens.typeDisplay
+    readonly property int textHero: backend?.textHero ?? Tokens.typeHero
     // Line height is a RATIO, and it is the difference between a paragraph and
     // a stack of lines. Three roles, because that is how many kinds of text a
     // shell has: a label that must not add height, a heading that must hold

@@ -108,24 +108,25 @@ Card {
             size: root._sm ? Style.iconSm : root._lg ? Style.iconLg : Style.iconMd
             color: root._prose
         }
-        Text {
+        Prose {
             id: label
             Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
+            role: "label"
             color: root._prose
-            font.family: Style.fontFamily
+            // The label is the one place a size axis still reads through to
+            // type: a small control with a body-sized label is not a small
+            // control. Everything else about the role stays the role's.
             font.pixelSize: root._sm ? Style.textXs : root._lg ? Style.textMd : Style.textSm
-            font.weight: Style.weightMedium
         }
-        Text {
+        Prose {
             Layout.fillHeight: true
             verticalAlignment: Text.AlignVCenter
             visible: root.detail.length > 0
-            text: root.detail
-            color: root._accent
-            font.family: Style.technicalFontFamily
+            role: "reading"
             font.pixelSize: Style.textXs
-            font.weight: Style.weightBold
+            color: root._accent
+            text: root.detail
         }
     }
 

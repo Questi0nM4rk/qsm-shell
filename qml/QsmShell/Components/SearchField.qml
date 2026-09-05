@@ -41,7 +41,7 @@ Rectangle {
         Item {
             Layout.fillWidth: true
             implicitHeight: root.fieldTextSize * 1.8
-            Text { anchors.fill: parent; visible: input.text.length === 0; text: root.placeholder; color: Style.textMuted; verticalAlignment: Text.AlignVCenter; font.family: Style.fontFamily; font.pixelSize: root.fieldTextSize }
+            Prose { anchors.fill: parent; visible: input.text.length === 0; role: "label"; muted: true; font.pixelSize: root.fieldTextSize; verticalAlignment: Text.AlignVCenter; text: root.placeholder }
             TextInput {
                 id: input
                 anchors.fill: parent

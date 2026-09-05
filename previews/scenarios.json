@@ -15,7 +15,7 @@
   "popout-row": { "component": "popout-row", "variant": "active", "viewport": [800, 500] },
   "result": { "component": "result", "variant": "selected", "viewport": [800, 500] },
   "search": { "component": "search", "variant": "filled", "viewport": [800, 500] },
-  "section-label": { "component": "section-label", "variant": "selected", "viewport": [800, 500] },
+  "prose": { "component": "prose", "variant": "heading", "viewport": [800, 500] },
   "session-button": { "component": "session-button", "variant": "armed", "viewport": [800, 500] },
   "state-layer": { "component": "state-layer", "variant": "hover", "viewport": [800, 500] },
   "stat-ring": { "component": "stat-ring", "variant": "cpu", "viewport": [800, 500] },

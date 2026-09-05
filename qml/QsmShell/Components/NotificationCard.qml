@@ -49,16 +49,8 @@ Item {
         height: Style.notificationCollapsedHeight
         spacing: Style.space2
         SvgIcon { visible: root.icon.length > 0; name: root.icon; size: Style.iconSm; color: Style.textMuted }
-        Text { visible: root.source.length > 0; text: root.source; color: Style.textMuted; font.pixelSize: Style.textXs }
-        Text {
-            Layout.fillWidth: true
-            elide: Text.ElideRight
-            text: root.title
-            textFormat: Text.PlainText
-            color: Style.text
-            font.pixelSize: Style.textMd
-            font.weight: Style.weightBold
-        }
+        Prose { visible: root.source.length > 0; role: "metadata"; text: root.source }
+        Prose { Layout.fillWidth: true; role: "title"; text: root.title }
     }
     // Expansion toggle sits behind the actionable content so a action click is
     // never toggled/stolen by the full-card expansion handler.
@@ -78,15 +70,12 @@ Item {
         anchors.rightMargin: Style.space3
         visible: root.expanded
         spacing: Style.space2
-        Text {
+        Prose {
             Layout.fillWidth: true
             visible: root.body.length > 0
+            role: "body"
+            muted: true
             text: root.body
-            textFormat: Text.PlainText
-            wrapMode: Text.WordWrap
-            lineHeight: Style.lineBody
-            color: Style.textMuted
-            font.pixelSize: Style.textSm
         }
         RowLayout {
             id: actionHost

@@ -27,7 +27,7 @@ Rectangle {
     ColumnLayout {
         anchors.centerIn: parent
         spacing: Style.space4
-        SectionLabel { text: `${root.component} / ${root.variant}` }
+        Prose { role: "section"; text: `${root.component} / ${root.variant}` }
         Card {
             visible: root.component === "card"
             Layout.preferredWidth: 260
@@ -66,10 +66,10 @@ Rectangle {
             color: root.variant === "hover" ? Style.accent : root.variant === "pressed" ? Style.secondary : root.variant === "selected" ? Style.success : Style.text
             opacity: root.variant === "disabled" ? Style.opacityDisabled : 1
         }
-        SectionLabel {
-            visible: root.component === "section-label"
-            text: `Section label / ${root.variant}`
-            color: root.variant === "selected" ? Style.accent : Style.textMuted
+        Prose {
+            visible: root.component === "prose"
+            role: root.variant
+            text: `Prose / ${root.variant}`
         }
         Capsule { visible: root.component === "capsule"; icon: "bell"; label: "Notifications"; detail: root.variant === "active" ? "2" : ""; active: root.variant === "active" }
         Slider { visible: root.component === "level"; Layout.preferredWidth: 260; value: root.variant === "high" ? .82 : .42; wheelStep: .05 }

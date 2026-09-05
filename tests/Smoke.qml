@@ -34,6 +34,8 @@ Item {
         property int sliderTrackThickness: 7
         property int controlHeight: 53
         property int controlHeightSm: 29
+        property int textDisplay: 37
+        property color warning: "#abcdef"
     }
 
     Component.onCompleted: {
@@ -72,6 +74,18 @@ Item {
         if (!require(Style.technicalFontFamily === backend.technicalFontFamily,
                 "Style did not consume backend technical font"))
             return;
+        // A role resolves to a token AND the token resolves through the
+        // backend -- the two halves of "the consumer can retheme the type
+        // scale", which a component typing its own pixelSize breaks silently.
+        if (!require(bigReading.font.pixelSize === backend.textDisplay,
+                "Prose display role did not resolve the backend display size"))
+            return;
+        if (!require(bigReading.font.family === backend.technicalFontFamily,
+                "Prose reading role did not use the technical face"))
+            return;
+        if (!require(String(Style.warning) === String(backend.warning),
+                "Style did not consume backend warning"))
+            return;
 
         menu.step(1);
         if (!require(menu.currentIndex === 1, "Menu did not skip its header"))
@@ -95,6 +109,15 @@ Item {
 
         console.log("SMOKE_OK");
         Qt.exit(0);
+    }
+
+    Prose {
+        id: bigReading
+        role: "display"
+        text: "72%"
+        // A role sets the face; a call site may still need the other one. The
+        // reading face is what a value that changes gets, whatever its size.
+        font.family: Style.technicalFontFamily
     }
 
     Capsule {

@@ -27,7 +27,7 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: Style.space2
         IconButton { icon: "chevron-left"; size: Style.iconSm; padding: Style.space2; color: Style.textMuted; onClicked: root.shiftMonth(-1) }
-        Text { Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; text: Qt.formatDate(root.shown, "MMMM yyyy"); color: Style.text; font.family: Style.fontFamily; font.pixelSize: Style.textMd; font.weight: Style.weightBold }
+        Prose { Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; role: "title"; text: Qt.formatDate(root.shown, "MMMM yyyy") }
         IconButton { icon: "chevron-right"; size: Style.iconSm; padding: Style.space2; color: Style.textMuted; onClicked: root.shiftMonth(1) }
     }
 
@@ -38,7 +38,7 @@ ColumnLayout {
         columnSpacing: Style.spaceTight
         Repeater {
             model: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-            Text { required property string modelData; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; text: modelData; color: Style.textMuted; font.family: Style.technicalFontFamily; font.pixelSize: Style.textXs }
+            Prose { required property string modelData; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; role: "reading"; font.pixelSize: Style.textXs; muted: true; text: modelData }
         }
         Repeater {
             model: 42
@@ -53,7 +53,15 @@ ColumnLayout {
                 Layout.fillWidth: true
                 Layout.preferredHeight: Style.space5
                 Rectangle { anchors.centerIn: parent; width: Style.space5 - Style.spaceTight; height: Style.space5 - Style.spaceTight; radius: width / 2; color: parent.isToday ? Style.accent : "transparent" }
-                Text { anchors.centerIn: parent; text: parent.cellDate.getDate(); color: parent.isToday ? Style.background : parent.inMonth ? Style.text : Style.textMuted; opacity: parent.inMonth || parent.isToday ? 1 : 0.4; font.family: Style.technicalFontFamily; font.pixelSize: Style.textXs; font.weight: parent.isToday ? Style.weightBold : Style.weightRegular }
+                Prose {
+                    anchors.centerIn: parent
+                    role: "reading"
+                    font.pixelSize: Style.textXs
+                    font.weight: parent.isToday ? Style.weightBold : Style.weightRegular
+                    text: parent.cellDate.getDate()
+                    color: parent.isToday ? Style.background : parent.inMonth ? Style.text : Style.textMuted
+                    opacity: parent.inMonth || parent.isToday ? 1 : 0.4
+                }
             }
         }
     }

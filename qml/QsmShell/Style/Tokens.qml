@@ -6,14 +6,16 @@ QtObject {
     readonly property color colorAccent: "#c5a5e9"
     readonly property color colorSecondary: "#e1b7e1"
     readonly property color colorSuccess: "#91d6c2"
+    readonly property color colorWarning: "#e8c58a"
+    readonly property color colorDanger: "#ff8b94"
+    readonly property color colorInfo: "#9fc2ea"
     readonly property color colorOutline: "#4e3f62"
+    readonly property color colorBackground: "#1c0e27"
     readonly property color colorSurface: "#21142b"
     readonly property color colorSurfaceRaised: "#2d1f3a"
     readonly property color colorSurfaceHover: "#382a48"
     readonly property color colorText: "#f6f1f9"
     readonly property color colorTextMuted: "#b6a8c2"
-    readonly property color colorBackground: "#1c0e27"
-    readonly property color colorDanger: "#ff8b94"
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -33,6 +35,8 @@ QtObject {
     readonly property int typeMd: 14
     readonly property int typeLg: 18
     readonly property int typeXl: 22
+    readonly property int typeDisplay: 28
+    readonly property int typeHero: 44
     readonly property int iconXs: 12
     readonly property int iconSm: 16
     readonly property int iconMd: 20

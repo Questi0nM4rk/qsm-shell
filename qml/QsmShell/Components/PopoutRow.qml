@@ -33,12 +33,14 @@ Item {
         content: RowLayout {
             spacing: Style.space2
             SvgIcon { visible: root.badgeIcon.length > 0; name: root.badgeIcon; size: Style.iconXs; color: Style.textMuted }
-            Text {
+            Prose {
                 visible: root.value.length > 0
-                text: root.value
-                color: Style.textMuted
-                font.family: /\d/.test(root.value) ? Style.technicalFontFamily : Style.fontFamily
+                // A value carrying digits is set in the technical face so it
+                // does not shift the row as it changes; a word is prose.
+                role: /\d/.test(root.value) ? "reading" : "metadata"
                 font.pixelSize: Style.textXs
+                muted: true
+                text: root.value
             }
             IconButton {
                 visible: root.actionIcon.length > 0

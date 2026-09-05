@@ -40,12 +40,11 @@ Item {
         anchors.centerIn: parent
         spacing: Style.space1
         SvgIcon { anchors.horizontalCenter: parent.horizontalCenter; name: root.icon; size: Style.iconLg; color: root.stateColor }
-        Text {
+        Prose {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: root.shownLabel
+            role: "metadata"
             color: root.armed || root.selected ? root.stateColor : Style.textMuted
-            font.family: Style.fontFamily
-            font.pixelSize: Style.textXs
+            text: root.shownLabel
         }
     }
     StateLayer {
