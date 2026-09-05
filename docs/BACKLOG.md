@@ -20,7 +20,8 @@
   centres itself has to centre in body+band; centring in the body alone puts
   it half a band-depth off, every time, on every rollout.
 
-- **`ScrollArea` has no consumer yet.** Eight surfaces in qsm-desktop still
+- **`ScrollArea` still has no consumer** (`ScrollCue` has one: the cheat
+  sheet). Eight surfaces in qsm-desktop still
   hand-roll a Flickable + a clip + a bar somebody drew + a fade somebody else
   drew: `ColorPickContent`, `RailAppList`, `LauncherSurface`, `ThemeCarousel`,
   `WorkspacesTab`, `NotificationCenterTab`, `ClipboardSurface`,
@@ -31,7 +32,15 @@
   consumer either.** Each was built against a hand-rolled equivalent in
   qsm-desktop (`ModalHost`, `BarPopouts` + `PopoutController`, the session
   backdrop, the dashboard and performance tabs). Same rule: the migration is
-  the proof.
+  the proof — and it is not a formality. Every component migrated so far
+  turned out to be missing a rule the hand-rolled version had learned:
+  `ScrollCue` was reading `contentY` instead of `visibleArea` and had no cap
+  on the mark's length, and `StatRing` could not draw a partial arc at all.
+
+- **`Popover` is placement, not a tooltip and not a menu.** Its own header now
+  says so. Building either of those over it is real work — focus entry and
+  return, keyboard activation, whether the content is reachable at all — and
+  it should wait for a surface that needs one rather than being guessed at.
 
 ## Later
 
@@ -76,6 +85,19 @@ Each cost real time once. None is findable by reading the code.
   the container has to clip.
 - **`Qt.application` has no `activeFocusItem`.** `Window.window.activeFocusItem`
   does, which is what `Dialog` reads to know where to send focus back.
+- **A ternary yielding `undefined` does NOT withdraw an anchor.** Qt still
+  sees `left`, `right` and `horizontalCenter` all declared on one item, warns
+  every run, and resolves the conflict however it likes. One item that has to
+  work in two orientations states its own rectangle instead.
+- **A Rectangle paints its own fill and border BEHIND every child.** An opaque
+  child filling the parent hides the parent's border completely; a selection
+  ring has to be the last child, not the root's `border`.
+- **A Rectangle with a radius and `layer.enabled` does not mask its children.**
+  Item clipping is rectangular. A round photograph needs a real
+  `MultiEffect.maskSource`.
+- **Rotating a rectangle rotates it about its CENTRE.** A `w x h` strip turned
+  90 degrees has `h x w` bounds displaced around that centre — set a
+  Gradient's `orientation` instead of rotating the item that carries it.
 - **`Keys` has no `onHomePressed` / `onEndPressed`.** Only the arrows, Return,
   Enter, Escape, Space, Tab, Backtab, Delete and the digits get named
   handlers; everything else needs a key check inside `Keys.onPressed`.
@@ -83,7 +105,7 @@ Each cost real time once. None is findable by reading the code.
 ## Open question for the owner
 
 `gallery/` re-implements each component a second time, in HTML and CSS. That
-was a fair trade while the library was leaves; at 41 types it is a second
+was a fair trade while the library was leaves; at 42 types it is a second
 implementation of one system in another language, and every new component now
 costs two. Either it stops being a mirror — a token sheet and a palette only,
 which is what a React page can honestly show — or it goes. Left compiling and
