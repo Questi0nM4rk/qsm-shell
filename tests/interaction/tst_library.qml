@@ -98,7 +98,6 @@ TestCase {
         primary: "Volume Control"
         supporting: "volume control"
     }
-    AppIcon { id: appIcon; width: 32; height: 32 }
     TextField { id: text2; width: 200 }
     Switch { id: toggle2 }
     Checkbox { id: check2 }
@@ -157,7 +156,7 @@ TestCase {
             disclosure, scrim, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, slider, calendar,
-            notification, sessionButton, ring, deviceRow, resultRow, echoRow, appIcon,
+            notification, sessionButton, ring, deviceRow, resultRow, echoRow,
             text2, toggle2, check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);

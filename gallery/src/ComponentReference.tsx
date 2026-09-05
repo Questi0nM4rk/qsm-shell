@@ -150,20 +150,6 @@ function resultSamples(): Sample[] {
   }))
 }
 
-function appIconSamples(): Sample[] {
-  const cls = (state: string) =>
-    state === 'missing'
-      ? 'ref-svg-icon ref-svg-icon--disabled'
-      : state === 'resolved'
-        ? 'ref-svg-icon ref-svg-icon--selected'
-        : 'ref-svg-icon'
-  return ['resting', 'resolved', 'missing'].map((state) => ({
-    state,
-    className: '',
-    node: <span className={cls(state)}><Icon name="apps" /></span>,
-  }))
-}
-
 function menuRowItemSamples(): Sample[] {
   return ['resting', 'selected', 'danger', 'header', 'separator', 'disabled'].map((state) => ({
     state,
@@ -325,7 +311,6 @@ const SAMPLES: Record<ReferenceId, Sample[]> = {
   divider: dividerSamples(),
   'empty-state': emptyStateSamples(),
   'key-value': keyValueSamples(),
-  'app-icon': appIconSamples(),
 }
 
 // Deterministic primitive reference. All meaningful states render as labeled

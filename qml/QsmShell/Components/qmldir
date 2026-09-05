@@ -26,7 +26,6 @@ Kbd 1.0 Kbd.qml
 Avatar 1.0 Avatar.qml
 ArmedAction 1.0 ArmedAction.qml
 Card 1.0 Card.qml
-AppIcon 1.0 AppIcon.qml
 MonthCalendar 1.0 MonthCalendar.qml
 NotificationCard 1.0 NotificationCard.qml
 SessionButton 1.0 SessionButton.qml

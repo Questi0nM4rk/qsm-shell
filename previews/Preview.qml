@@ -232,6 +232,5 @@ Rectangle {
                 }
             }
         }
-        AppIcon { visible: root.component === "app-icon"; Layout.preferredWidth: 48; Layout.preferredHeight: 48; sourceUrl: root.variant === "resolved" ? Qt.resolvedUrl("../qml/QsmShell/assets/icons/sparkle.svg") : "" }
     }
 }

@@ -18,7 +18,6 @@
   "scroll": { "component": "scroll", "variant": "overflowing", "viewport": [800, 500] },
   "field": { "component": "field", "variant": "error", "viewport": [800, 500] },
   "segmented": { "component": "segmented", "variant": "second", "viewport": [800, 500] },
-  "app-icon": { "component": "app-icon", "variant": "resolved", "viewport": [800, 500] },
   "calendar": { "component": "calendar", "variant": "august-2026", "viewport": [800, 500] },
   "capsule": { "component": "capsule", "variant": "active", "viewport": [800, 500] },
   "card": { "component": "card", "variant": "resting", "viewport": [800, 500] },

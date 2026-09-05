@@ -20,7 +20,6 @@ export const REFERENCE_IDS = [
   'divider',
   'empty-state',
   'key-value',
-  'app-icon',
 ] as const
 
 export type ReferenceId = (typeof REFERENCE_IDS)[number]
@@ -47,5 +46,4 @@ export const REFERENCE_TITLES: Record<ReferenceId, string> = {
   divider: 'Divider',
   'empty-state': 'EmptyState',
   'key-value': 'KeyValueRow',
-  'app-icon': 'AppIcon',
 }

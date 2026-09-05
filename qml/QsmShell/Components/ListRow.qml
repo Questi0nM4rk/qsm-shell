@@ -42,7 +42,18 @@ Item {
 
     // ── consumer-owned state ────────────────────────────────────────────
     property bool selected: false
+    // UNAVAILABLE: the action exists but cannot be taken right now. Dims, and
+    // stops answering.
     property bool disabled: false
+    // A row that only REPORTS. It is not unavailable — an unmanaged interface
+    // or a wired profile someone else owns is showing you the truth at full
+    // strength — it simply is not a target, so it must not offer a pointer
+    // cursor and a press bounce for a click that does nothing.
+    //
+    // The two are different states and were being conflated: dimming a row to
+    // 35% to say "you cannot click this" also says "this reading is stale",
+    // which is the opposite of what a live readout means.
+    property bool interactive: true
     property bool danger: false
     // Structural rows. They are rows so a keyboard cursor can step past them
     // without the model and the view disagreeing about how many rows there are.
@@ -66,7 +77,7 @@ Item {
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
     readonly property bool _normal: !header && !separator
-    readonly property bool selectable: _normal && !disabled
+    readonly property bool selectable: _normal && !disabled && interactive
     readonly property bool hovered: layer.hovered
     // The leading box every visual sits in.
     readonly property int leadingSize: _sm ? Style.iconMd : Style.iconLg
