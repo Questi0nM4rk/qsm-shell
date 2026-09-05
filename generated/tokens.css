@@ -44,8 +44,6 @@
   --qsm-font-technicalFamily: monospace;
   --qsm-geometry-rolloutRadius: 28px;
   --qsm-geometry-frameThickness: 16px;
-  --qsm-geometry-levelThumbSize: 16px;
-  --qsm-geometry-levelTrackHeight: 4px;
   --qsm-geometry-controlHeight: 40px;
   --qsm-geometry-controlHeightSm: 32px;
   --qsm-geometry-notificationWidth: 380px;
@@ -53,6 +51,9 @@
   --qsm-geometry-controlHeightLg: 52px;
   --qsm-geometry-markThickness: 3px;
   --qsm-geometry-markHeight: 18px;
+  --qsm-geometry-sliderTrackThickness: 4px;
+  --qsm-geometry-sliderThumbSize: 12px;
+  --qsm-geometry-sliderThumbLift: 2px;
   --qsm-line-tight: 1.2;
   --qsm-line-heading: 1.25;
   --qsm-line-body: 1.55;

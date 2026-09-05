@@ -48,8 +48,6 @@ QtObject {
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28
     readonly property int geometryFrameThickness: 16
-    readonly property int geometryLevelThumbSize: 16
-    readonly property int geometryLevelTrackHeight: 4
     readonly property int geometryControlHeight: 40
     readonly property int geometryControlHeightSm: 32
     readonly property int geometryNotificationWidth: 380
@@ -57,6 +55,9 @@ QtObject {
     readonly property int geometryControlHeightLg: 52
     readonly property int geometryMarkThickness: 3
     readonly property int geometryMarkHeight: 18
+    readonly property int geometrySliderTrackThickness: 4
+    readonly property int geometrySliderThumbSize: 12
+    readonly property int geometrySliderThumbLift: 2
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

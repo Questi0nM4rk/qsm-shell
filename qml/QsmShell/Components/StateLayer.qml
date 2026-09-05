@@ -47,6 +47,17 @@ Item {
     readonly property bool pressed: interactive && tap.pressed
     signal clicked
 
+    // A hover-enter that is allowed to CLAIM the selection. A list binds its
+    // cursor to this rather than to `hovered`, and then a pointer that never
+    // moved cannot take the selection from the keyboard — see
+    // Interaction.pointerSelects, which the consumer owns.
+    signal hoveredEntered
+
+    onHoveredChanged: {
+        if (root.hovered && Interaction.pointerSelects)
+            root.hoveredEntered();
+    }
+
     // 1 at rest. Exposed as a number, not merely applied, so a host can drive
     // something more apt than scale with it while still following one curve.
     property real response: pressed ? pressScale : hovered ? hoverScale : 1

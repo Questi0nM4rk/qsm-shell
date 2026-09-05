@@ -22,6 +22,9 @@ Item {
     property bool danger: false
     property bool selected: false
     property bool expanded: false
+    // Keyboard focus. Defaults to this item's own, so a control that takes
+    // focus rings without wiring; a list that owns focus for its rows binds it.
+    property bool focused: root.activeFocus
     // Consumer-owned action controls (placed here by the consumer).
     default property alias actions: actionHost.data
 
@@ -30,13 +33,12 @@ Item {
     implicitWidth: Style.notificationWidth
     implicitHeight: expanded ? headline.height + details.implicitHeight + Style.space2 : headline.height
 
-    Rectangle {
+    SelectionMark {
         anchors.left: parent.left
         anchors.verticalCenter: headline.verticalCenter
-        width: root.selected ? Style.markThickness + Style.spaceTight : Style.markThickness
-        height: Style.markHeight
-        radius: width / 2
-        color: root.danger ? Style.danger : root.accent
+        shown: true
+        strong: root.selected
+        markColor: root.danger ? Style.danger : root.accent
     }
     RowLayout {
         id: headline
@@ -63,6 +65,8 @@ Item {
     StateLayer {
         anchors.fill: parent
         target: null
+        focused: root.focused
+        focusRadius: Style.radiusLg
         onClicked: root.expanded = !root.expanded
     }
     ColumnLayout {

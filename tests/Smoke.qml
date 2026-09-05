@@ -30,8 +30,8 @@ Item {
         property string technicalFontFamily: "Test Mono"
         property real surfaceOpacity: 0.9
         property real opacityDisabled: 0.23
-        property int levelThumbSize: 19
-        property int levelTrackHeight: 7
+        property int sliderThumbSize: 19
+        property int sliderTrackThickness: 7
         property int controlHeight: 53
         property int controlHeightSm: 29
     }
@@ -63,11 +63,8 @@ Item {
         if (!require(capsule.implicitHeight === backend.controlHeight,
                 "Capsule did not consume backend height"))
             return;
-        if (!require(level.implicitHeight === backend.levelThumbSize,
-                "LevelBar did not consume backend thumb size"))
-            return;
-        if (!require(level.children[0].height === backend.levelTrackHeight,
-                "LevelBar did not consume backend track height"))
+        if (!require(level.implicitHeight === backend.sliderThumbSize,
+                "Slider did not consume backend thumb size"))
             return;
         if (!require(disabledButton.opacity === backend.opacityDisabled,
                 "IconButton did not consume backend disabled opacity"))
@@ -113,7 +110,7 @@ Item {
         label: "Default"
     }
 
-    LevelBar {
+    Slider {
         id: level
         width: 100
         value: 0.5

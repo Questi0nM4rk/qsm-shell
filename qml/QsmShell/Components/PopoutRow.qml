@@ -48,7 +48,7 @@ Item {
                 color: root.hovered && root.actionDanger ? Style.danger : Style.textMuted
                 opacity: root.hovered ? 1 : Style.opacityDisabled
                 onClicked: root.actionTriggered()
-                Behavior on opacity { NumberAnimation { duration: Motion.micro } }
+                Behavior on opacity { NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
             }
         }
 

@@ -38,6 +38,9 @@ Item {
 
     // ── generic interaction ─────────────────────────────────────────────
     readonly property bool hovered: interaction.hovered
+    // Keyboard focus. Defaults to this item's own, so a control that takes
+    // focus rings without wiring; a list that owns focus for its rows binds it.
+    property bool focused: root.activeFocus
     signal activated
 
     // ── derived presentation ────────────────────────────────────────────
@@ -50,15 +53,11 @@ Item {
         : root.header ? Style.space4 + Style.space2 : Style.space3
 
     // Left selection accent (only on selectable rows).
-    Rectangle {
-        visible: root._normal && root.selected
+    SelectionMark {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        width: Style.markThickness
-        height: Style.markHeight
-        radius: width / 2
-        color: root.accent
-        Behavior on height { NumberAnimation { duration: Motion.micro } }
+        shown: root._normal && root.selected
+        markColor: root.accent
     }
 
     // Activation / hover layer. Nonselectable rows are never interactive, so a
@@ -70,6 +69,8 @@ Item {
         visible: root.selectable
         target: glyph
         interactive: root.selectable
+        focused: root.focused
+        focusRadius: Style.radiusSm
         hoverScale: 1.12
         pressScale: 0.92
         onClicked: root.activated()
@@ -115,7 +116,7 @@ Item {
         anchors.rightMargin: Style.space3
         spacing: Style.space2
         opacity: root.selected ? 1 : (root.disabled ? Style.opacityDisabled : 0.45)
-        Behavior on opacity { NumberAnimation { duration: Motion.micro } }
+        Behavior on opacity { NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
 
         // Leading content: custom slot wins; otherwise convenience icon.
         Item { id: leadingSlot; visible: children.length > 0 }
@@ -138,7 +139,7 @@ Item {
                 font.family: Style.fontFamily
                 font.pixelSize: Style.textSm
                 font.weight: Style.weightMedium
-                Behavior on color { ColorAnimation { duration: Motion.micro } }
+                Behavior on color { ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
             }
             Text {
                 Layout.fillWidth: true

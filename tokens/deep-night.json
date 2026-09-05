@@ -61,15 +61,16 @@
   "geometry": {
     "rolloutRadius": 28,
     "frameThickness": 16,
-    "levelThumbSize": 16,
-    "levelTrackHeight": 4,
     "controlHeight": 40,
     "controlHeightSm": 32,
     "notificationWidth": 380,
     "notificationCollapsedHeight": 36,
     "controlHeightLg": 52,
     "markThickness": 3,
-    "markHeight": 18
+    "markHeight": 18,
+    "sliderTrackThickness": 4,
+    "sliderThumbSize": 12,
+    "sliderThumbLift": 2
   },
   "line": {
     "tight": 1.2,

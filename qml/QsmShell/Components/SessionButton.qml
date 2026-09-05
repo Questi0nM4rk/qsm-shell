@@ -17,6 +17,9 @@ Item {
     property color armedColor: Style.danger
     property real buttonWidth: 96
     property real buttonHeight: 72
+    // Keyboard focus. Defaults to this item's own, so a control that takes
+    // focus rings without wiring; a list that owns focus for its rows binds it.
+    property bool focused: root.activeFocus
     signal entered
     signal exited
     signal activated
@@ -31,7 +34,7 @@ Item {
         color: root.armed ? Qt.rgba(root.armedColor.r, root.armedColor.g, root.armedColor.b, .25)
             : root.selected ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, .22)
             : Qt.rgba(Style.surfaceHover.r, Style.surfaceHover.g, Style.surfaceHover.b, .5)
-        Behavior on color { ColorAnimation { duration: Motion.micro } }
+        Behavior on color { ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
     }
     Column {
         anchors.centerIn: parent
@@ -47,6 +50,8 @@ Item {
     }
     StateLayer {
         anchors.fill: parent
+        focused: root.focused
+        focusRadius: Style.radiusMd
         hoverScale: 1.06
         pressScale: .94
         onClicked: root.activated()

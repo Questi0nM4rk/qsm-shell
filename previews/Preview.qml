@@ -72,13 +72,31 @@ Rectangle {
             color: root.variant === "selected" ? Style.accent : Style.textMuted
         }
         Capsule { visible: root.component === "capsule"; icon: "bell"; label: "Notifications"; detail: root.variant === "active" ? "2" : ""; active: root.variant === "active" }
-        LevelBar { visible: root.component === "level"; Layout.preferredWidth: 260; value: root.variant === "high" ? .82 : .42; wheelStep: .05 }
+        Slider { visible: root.component === "level"; Layout.preferredWidth: 260; value: root.variant === "high" ? .82 : .42; wheelStep: .05 }
         PopoutRow { visible: root.component === "popout-row"; Layout.preferredWidth: 260; icon: "wifi"; label: "qsm-lab"; value: "Connected"; active: root.variant === "active"; actionIcon: "trash-2" }
         MonthCalendar { visible: root.component === "calendar"; Layout.preferredWidth: 300; shown: new Date(2026, 7, 1); today: new Date(2026, 7, 28) }
         SearchField { visible: root.component === "search"; Layout.preferredWidth: 400; placeholder: "Search components" }
         ResultRow { visible: root.component === "result"; Layout.preferredWidth: 500; item: root.variant === "header" ? { kind: "header", label: "Tools" } : { kind: "action", label: "Pick a colour", sub: "Open colour picker", icon: "sparkle" }; selected: root.variant !== "idle" }
         IconButton { visible: root.component === "icon-button"; icon: "sparkle"; color: Style.accent }
-        OsdSlider { visible: root.component === "osd-slider"; icon: "volume"; color: Style.accent; value: root.variant === "high" ? .82 : .42 }
+        Slider {
+            visible: root.component === "osd-slider"
+            orientation: Qt.Vertical
+            Layout.preferredHeight: 180
+            thickness: 40
+            thumbSize: 32
+            raised: true
+            trackColor: Qt.darker(Style.surface, 1.35)
+            value: root.variant === "high" ? .82 : .42
+            thumbContent: Text {
+                anchors.centerIn: parent
+                text: Math.round((root.variant === "high" ? .82 : .42) * 100)
+                color: Style.background
+                font.family: Style.fontFamily
+                font.pixelSize: Style.textSm
+                font.weight: Style.weightBold
+            }
+            after: IconButton { icon: "volume"; size: Style.iconMd; padding: Style.space2 }
+        }
         NotificationCard { visible: root.component === "notification"; Layout.preferredWidth: 380; selected: root.variant === "selected"; expanded: root.variant === "expanded"; title: "Reference shell updated"; body: "A deterministic notification fixture for the component library."; source: "qsm-test"; icon: "bell"; accent: Style.accent }
         SessionButton { visible: root.component === "session-button"; icon: "power"; label: "Power off"; selected: root.variant === "selected"; armed: root.variant === "armed" }
         MenuRowItem {

@@ -87,8 +87,12 @@ QtObject {
     readonly property int controlHeight: backend?.controlHeight ?? Tokens.geometryControlHeight
     readonly property int controlHeightSm: backend?.controlHeightSm ?? Tokens.geometryControlHeightSm
     readonly property int controlHeightLg: backend?.controlHeightLg ?? Tokens.geometryControlHeightLg
-    readonly property int levelThumbSize: backend?.levelThumbSize ?? Tokens.geometryLevelThumbSize
-    readonly property int levelTrackHeight: backend?.levelTrackHeight ?? Tokens.geometryLevelTrackHeight
+    // The slider, in one thickness and one thumb. A control that needs a
+    // fatter track states it at the call site; the library keeps one default.
+    readonly property int sliderTrackThickness: backend?.sliderTrackThickness
+        ?? Tokens.geometrySliderTrackThickness
+    readonly property int sliderThumbSize: backend?.sliderThumbSize ?? Tokens.geometrySliderThumbSize
+    readonly property int sliderThumbLift: backend?.sliderThumbLift ?? Tokens.geometrySliderThumbLift
     readonly property int rolloutRadius: backend?.rolloutRadius ?? Tokens.geometryRolloutRadius
     readonly property int frameThickness: backend?.frameThickness ?? Tokens.geometryFrameThickness
     readonly property int notificationWidth: backend?.notificationWidth ?? Tokens.geometryNotificationWidth
