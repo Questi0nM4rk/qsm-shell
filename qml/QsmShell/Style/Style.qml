@@ -93,4 +93,26 @@ QtObject {
     // current. It is one idiom, so it is one pair of numbers.
     readonly property int markThickness: backend?.markThickness ?? Tokens.geometryMarkThickness
     readonly property int markHeight: backend?.markHeight ?? Tokens.geometryMarkHeight
+
+    // THE concentric rule, as a function rather than as arithmetic every call
+    // site is expected to redo. A rounded thing inside a rounded thing must
+    // curve at the outer radius MINUS the gap between them; give both the same
+    // radius and the two curves read as a seam instead of as one surface
+    // sitting inside another.
+    //
+    //     Rectangle { radius: Style.childRadius(this) }
+    //
+    // It reads the parent and the real inset, so it stays right when the
+    // padding changes and there is no number to keep in sync. A parent that is
+    // not rounded gives 0, which is the correct answer rather than a guess.
+    function childRadius(item: Item): int {
+        const parent = item?.parent ?? null;
+        if (!parent || parent.radius === undefined)
+            return 0;
+
+        const inset = Math.min(item.x, item.y,
+            parent.width - (item.x + item.width),
+            parent.height - (item.y + item.height));
+        return Math.max(0, parent.radius - Math.max(0, inset));
+    }
 }
