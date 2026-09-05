@@ -26,3 +26,45 @@
 - Do not claim completion from mocks, lint, screenshots of different surfaces,
   or tests that expect production to fail.
 - Run `npm test` before handing work back.
+
+## Component laws
+
+Earned, each from a specific failure. Break one and name which.
+
+- **A type is a concept, never a surface.** `OsdSlider` and `LevelBar` were one
+  slider wearing two names because two surfaces asked for it; they differed in
+  three numbers. If a name contains where it is used, it is wrong. A library
+  that grows a type per call site stops being a library.
+- **No numbers in a component.** Every measurement comes from `Style`. Where a
+  scale had a gap, components filled it by typing a literal, and 16, 18 and 22
+  all became "the small icon" in three files. A call site that needs a different
+  value passes it as a property; the library keeps one default.
+- **Never read `Tokens` from a component.** Read `Style`. A value taken from
+  `Tokens` is a value the consumer cannot retheme, which is two sources of
+  truth wearing one name.
+- **Every interactive component defines all five states**: rest, hover, press,
+  focus, disabled. `StateLayer` owns them and the component FORWARDS them —
+  owning a state the component cannot express is the same as not having it.
+  Focus was missing for a keyboard-first shell, which meant a person driving by
+  keyboard had nothing telling them where they were.
+- **Content goes in slots, not properties.** What sits above, below or inside a
+  control is the consumer's business. A slider that hardcodes an icon under its
+  track is a slider that has to be rewritten for the second surface. An empty
+  slot takes no space.
+- **A component never manages its own dismissal.** It reports `hovered`; the
+  surface holding it decides what that means. Otherwise the component has to be
+  told about every surface it might ever sit in.
+- **One fact, one place.** A rule components need but cannot see — who is
+  driving, whether a hover may claim a selection — lives in one singleton the
+  consumer sets. Three surfaces each repeating the same guard means the fourth
+  will forget it.
+- **Prefer a function over a rule people must remember.** `Style.childRadius`
+  exists because "inner radius = outer minus inset" is arithmetic every call
+  site would otherwise redo and keep in sync with a padding it does not own.
+- **`lineHeight` belongs to wrapping text only.** On a single line it grows the
+  line box and the glyphs stop sitting in the middle of it.
+- **Centre row content by filling the row, not by baseline.** `RowLayout`
+  baseline-aligns text and an icon has no baseline to share, which put a button
+  label half a pixel below its own pill. Half a pixel reads as "not centred".
+- **A number that moves the wrong way is worse than no number.** Anything
+  derived from an instantaneous reading gets averaged before it is shown.
