@@ -37,7 +37,12 @@ Rectangle {
     }
 
     implicitHeight: shape === "line" ? _lineHeight : Style.controlHeight
-    implicitWidth: parent ? parent.width * Math.max(0, Math.min(1, fraction)) : 0
+    // An intrinsic width, NOT one taken from the parent. Reading the parent
+    // collapses to zero inside any layout whose own width comes from its
+    // children — which is most of them — and a placeholder with no width is a
+    // placeholder that placeholds nothing. A call site that wants a fraction
+    // of a known width states it: `Layout.preferredWidth: parent.width * .6`.
+    implicitWidth: Style.notificationWidth * Math.max(0, Math.min(1, fraction))
     radius: shape === "line" ? height / 2 : Style.radiusSm
     color: Style.surfaceHover
 

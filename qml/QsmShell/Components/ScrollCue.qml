@@ -92,16 +92,20 @@ Item {
     // The gradient reaches FULL opacity before the edge and holds. A linear
     // ramp is still translucent at the boundary, so the last row is visible
     // being cut rather than sinking out of view.
+    // The gradient's DIRECTION is set by the Gradient, not by rotating the
+    // rectangle. Rotating a `fadeDepth × height` strip 90 degrees about its
+    // centre gives `height × fadeDepth` bounds displaced around that centre —
+    // so the horizontal fades sat across the middle of the list instead of on
+    // its edges, and were the wrong shape besides.
     Rectangle {
         width: root.vertical ? root.width : root.fadeDepth
         height: root.vertical ? root.fadeDepth : root.height
         visible: root.fade && root._at > 0.0001
-        rotation: root.vertical ? 180 : 270
-        transformOrigin: Item.Center
         gradient: Gradient {
-            GradientStop { position: 0; color: "transparent" }
-            GradientStop { position: 0.7; color: root.fadeColor }
-            GradientStop { position: 1; color: root.fadeColor }
+            orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
+            GradientStop { position: 0; color: root.fadeColor }
+            GradientStop { position: 0.3; color: root.fadeColor }
+            GradientStop { position: 1; color: "transparent" }
         }
     }
     Rectangle {
@@ -110,9 +114,8 @@ Item {
         x: root.vertical ? 0 : root.width - root.fadeDepth
         y: root.vertical ? root.height - root.fadeDepth : 0
         visible: root.fade && root._at + root._ratio < 0.9999
-        rotation: root.vertical ? 0 : 90
-        transformOrigin: Item.Center
         gradient: Gradient {
+            orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
             GradientStop { position: 0; color: "transparent" }
             GradientStop { position: 0.7; color: root.fadeColor }
             GradientStop { position: 1; color: root.fadeColor }

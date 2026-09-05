@@ -95,7 +95,7 @@ TestCase {
     Slider { id: slider; width: 120; value: 0.5 }
     MonthCalendar { id: calendar; width: 260; shown: new Date(2026, 7, 1); today: new Date(2026, 7, 28) }
     NotificationCard { id: notification; title: "Updated"; body: "Body"; source: "test" }
-    SessionButton { id: sessionButton; icon: "power"; label: "Power off" }
+    ActionTile { id: actionTile; icon: "power"; label: "Power off" }
     StatRing { id: ring; value: 0.7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
     // A device row: read, not picked, so it does not recede its neighbours.
     ListRow {
@@ -185,7 +185,7 @@ TestCase {
             disclosure, scrim, shortCue, longCue, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, slider, calendar,
-            notification, sessionButton, ring, deviceRow, resultRow, echoRow,
+            notification, actionTile, ring, deviceRow, resultRow, echoRow,
             text2, toggle2, check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);

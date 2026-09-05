@@ -35,7 +35,11 @@ Item {
         // The line has to fit INSIDE the box: an arc stroked on the boundary
         // loses half its width to the clip and reads thinner at the top than
         // at the sides.
-        readonly property real thickness: Math.max(1, root.size / 10)
+        // Proportional to the ring, because a fixed stroke on a 12px spinner
+        // is a disc and on a 48px one is a hairline. The ratio is the library's
+        // ring stroke against its ring diameter, so the two read as one family.
+        readonly property real thickness: Math.max(1,
+            root.size * (Style.ringStroke / Style.ringDiameter) * 3)
 
         onPaint: {
             const c = getContext("2d");

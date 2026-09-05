@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 
 import qs.QsmShell.Style
 
@@ -44,14 +45,21 @@ Item {
             anchors.centerIn: parent
             visible: portrait.status !== Image.Ready
             role: "title"
-            font.pixelSize: Math.round(root.size / 2.6)
+            // Big enough to read at a glance, small enough that two letters
+            // clear the circle at every size. Two-fifths of the diameter is
+            // the whole rule.
+            font.pixelSize: Math.round(root.size * 0.4)
             muted: true
             text: root.initials
         }
     }
 
-    // Clipped to the same circle the ground draws, so a square photograph
-    // does not sit in a round hole.
+    // A round photograph needs a real alpha MASK. Item clipping is
+    // rectangular, and a Rectangle with a radius and `layer.enabled` does not
+    // mask its children either — the first version did exactly that and the
+    // photograph stayed square, sitting over the round ground it was supposed
+    // to fill. `MultiEffect.maskSource` is the mechanism that actually cuts
+    // the corners.
     Image {
         id: portrait
         anchors.fill: parent
@@ -61,17 +69,22 @@ Item {
         asynchronous: true
         visible: false
     }
+
     Rectangle {
+        id: circleMask
         anchors.fill: parent
         radius: width / 2
-        visible: portrait.status === Image.Ready
+        color: "black"
+        visible: false
         layer.enabled: true
-        Image {
-            anchors.fill: parent
-            source: portrait.source
-            sourceSize: portrait.sourceSize
-            fillMode: Image.PreserveAspectCrop
-        }
+    }
+
+    MultiEffect {
+        anchors.fill: parent
+        visible: portrait.status === Image.Ready
+        source: portrait
+        maskEnabled: true
+        maskSource: circleMask
     }
 
     Badge {

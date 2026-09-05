@@ -81,11 +81,16 @@
     "badgeHeight": 16,
     "trackThickness": 6,
     "ringDiameter": 150,
-    "ringStroke": 8
+    "ringStroke": 8,
+    "tileWidth": 96,
+    "tileHeight": 72
   },
   "line": {
     "tight": 1.2,
     "heading": 1.25,
     "body": 1.55
+  },
+  "tracking": {
+    "wide": 1.4
   }
 }

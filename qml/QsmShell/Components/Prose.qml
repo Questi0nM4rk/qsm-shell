@@ -74,15 +74,17 @@ Text {
         default: return Style.weightMedium;
         }
     }
-    // A big number is set tight — at 44px the default leading opens a gap the
-    // eye reads as two separate things.
-    lineHeight: _wraps ? Style.lineBody
-        : role === "hero" || role === "display" || role === "heading" ? Style.lineHeading
-        : 1
+    // ONLY the wrapping role gets a line height. Everything else is a single
+    // line, where a ratio above 1 grows the line box and the glyphs stop
+    // sitting in the middle of it — the library's own law, broken here for
+    // three roles because a big number "looked like it wanted air". It does
+    // not: at 44px the default leading already opens a gap the eye reads as
+    // two separate things.
+    lineHeight: _wraps ? Style.lineBody : 1
     // The section rule is the one role whose shape is not just size and
     // weight: it is small, spaced out, and capitalised, and those three
     // together are what make it read as a rule rather than as a short label.
-    font.letterSpacing: role === "section" ? 1.4 : 0
+    font.letterSpacing: role === "section" ? Style.trackingWide : 0
     font.capitalization: role === "section" ? Font.AllUppercase : Font.MixedCase
 
     // Numbers that change must not shift the text beside them. This is why a

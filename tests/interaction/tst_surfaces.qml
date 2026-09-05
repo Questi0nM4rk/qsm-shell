@@ -51,6 +51,33 @@ TestCase {
 
         Rectangle { id: topAnchor; x: 20; y: 4; width: 40; height: 20 }
 
+        // A viewport too short for the panel on either side of the anchor.
+        Item {
+            id: cramped
+            y: 120
+            width: 200
+            height: 70
+
+            Rectangle { id: midAnchor; x: 10; y: 25; width: 30; height: 20 }
+
+            Popover {
+                id: boxed
+                anchorItem: midAnchor
+                bounds: cramped
+                placement: "top"
+
+                Card { width: 60; height: 50 }
+            }
+        }
+
+        Popover {
+            id: asker
+            anchorItem: topAnchor
+            trigger: "hover"
+
+            Card { width: 40; height: 30 }
+        }
+
         Popover {
             id: squeezed
             anchorItem: topAnchor
@@ -120,8 +147,28 @@ TestCase {
     // An anchored panel that is right in the middle of a surface and wrong at
     // its edge is wrong.
     function test_popover_flips_when_it_does_not_fit() {
+        squeezed.resampleBounds();
         squeezed.resample();
         compare(squeezed.side, "bottom", "a popover with no room above did not flip below");
+    }
+
+    // Flipping BLIND is how a panel with too little room on both sides lands
+    // off the far edge instead of the near one. With no room either way it has
+    // to pick the larger side and then clamp into the bounds.
+    function test_popover_with_no_room_either_way_stays_inside() {
+        boxed.resampleBounds();
+        boxed.resample();
+        verify(boxed.y >= 0, "a popover with no room either way went off the top");
+        verify(boxed.y + boxed.height <= cramped.height + 0.01,
+            "a popover with no room either way went off the bottom");
+    }
+
+    // The popover REQUESTS; the surface decides. A component that opens itself
+    // has to be told about every surface it might sit in.
+    function test_popover_asks_rather_than_opening_itself() {
+        compare(asker.open, false, "the popover opened without being told to");
+        asker.openRequested();
+        compare(asker.open, false, "the popover opened itself on its own request");
     }
 
     // The modal contract, and half of it is worse than none because a

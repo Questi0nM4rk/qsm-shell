@@ -205,7 +205,7 @@ function notificationSamples(): Sample[] {
   }))
 }
 
-function sessionButtonSamples(): Sample[] {
+function actionTileSamples(): Sample[] {
   return ['resting', 'selected', 'armed'].map((state) => ({
     state,
     className: '',
@@ -303,7 +303,7 @@ const SAMPLES: Record<ReferenceId, Sample[]> = {
   'result-row': resultSamples(),
   'osd-slider': osdSliderSamples(),
   notification: notificationSamples(),
-  'session-button': sessionButtonSamples(),
+  'action-tile': actionTileSamples(),
   menu: menuSamples(),
   'list-row': menuRowItemSamples(),
   segmented: tabsSamples(),

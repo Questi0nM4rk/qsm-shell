@@ -33,7 +33,19 @@ Item {
     // bar is something you nudge.
     property real wheelStep: 0
     property color fill: Style.accent
+    // The colour at the LEADING end of the fill — the end the thumb is at.
+    // Left equal to `fill` it is a flat bar; set differently, the lead is a
+    // two-stop gradient that is brightest where the thumb is, so a level reads
+    // as one channel's identity rather than as a slab of colour.
+    property color fillLead: fill
     property color trackColor: Style.surfaceHover
+    // What the thumb is. It defaults to the library's rule — the lightest
+    // thing on the surface, which is what makes it read as raised out of the
+    // track rather than as a hole cut into it — and a consumer with a fourth
+    // state (a muted channel) states its own.
+    property color thumbColor: raised && !active ? Qt.darker(Style.text, 1.4) : Style.text
+    // The gap between the track and whatever sits in the end slots.
+    property real slotGap: Style.space2
 
     // The track's short axis, and the thumb that rides it. A call site that
     // wants a fat track says so; the library keeps one default rather than a
@@ -97,38 +109,46 @@ Item {
         height: children.length > 0 ? childrenRect.height : 0
     }
 
+    // Geometry, not anchors, and it is not a style preference. A ternary that
+    // yields `undefined` does NOT withdraw an anchor: Qt still sees left,
+    // right and horizontalCenter all declared on one item, warns about it on
+    // every run, and resolves the conflict however it likes. Two orientations
+    // in one item is exactly the case anchors cannot express, so the item
+    // states its own rectangle.
     Rectangle {
         id: track
 
-        anchors.horizontalCenter: root.vertical ? parent.horizontalCenter : undefined
-        anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
-        anchors.top: root.vertical ? beforeSlot.bottom : undefined
-        anchors.topMargin: root.vertical && beforeSlot.height > 0 ? Style.space2 : 0
-        anchors.bottom: root.vertical ? afterSlot.top : undefined
-        anchors.bottomMargin: root.vertical && afterSlot.height > 0 ? Style.space2 : 0
-        anchors.left: root.vertical ? undefined : beforeSlot.right
-        anchors.leftMargin: !root.vertical && beforeSlot.width > 0 ? Style.space2 : 0
-        anchors.right: root.vertical ? undefined : afterSlot.left
-        anchors.rightMargin: !root.vertical && afterSlot.width > 0 ? Style.space2 : 0
+        readonly property real _lead: (root.vertical ? beforeSlot.height : beforeSlot.width) > 0
+            ? (root.vertical ? beforeSlot.height : beforeSlot.width) + root.slotGap
+            : 0
+        readonly property real _trail: (root.vertical ? afterSlot.height : afterSlot.width) > 0
+            ? (root.vertical ? afterSlot.height : afterSlot.width) + root.slotGap
+            : 0
 
-        width: root.vertical ? root.thickness : undefined
-        height: root.vertical ? undefined : root.thickness
+        x: root.vertical ? (root.width - root.thickness) / 2 : _lead
+        y: root.vertical ? _lead : (root.height - root.thickness) / 2
+        width: root.vertical ? root.thickness : Math.max(0, root.width - _lead - _trail)
+        height: root.vertical ? Math.max(0, root.height - _lead - _trail) : root.thickness
         radius: (root.vertical ? width : height) / 2
         color: root.trackColor
         opacity: root.enabled ? 1 : Style.opacityDisabled
 
-        // The filled lead: from the bottom up, or from the left across.
+        // The filled lead: from the bottom up, or from the left across. Same
+        // reason as the track — one item, two orientations, so it states its
+        // rectangle instead of declaring anchors it means to withdraw.
         Rectangle {
-            anchors.left: parent.left
-            anchors.right: root.vertical ? parent.right : undefined
-            anchors.bottom: root.vertical ? parent.bottom : undefined
-            anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
-            width: root.vertical ? undefined : parent.width * root.clampedFraction(root.value)
+            x: 0
+            y: root.vertical ? parent.height - height : 0
+            width: root.vertical ? parent.width : parent.width * root.clampedFraction(root.value)
             height: root.vertical
                 ? parent.height * root.clampedFraction(root.value)
                 : parent.height
             radius: parent.radius
+            // Flat when the two ends agree, a gradient when they do not. The
+            // lead colour sits at the thumb's end: the top of a vertical
+            // slider, the right of a horizontal one.
             color: root.fill
+            gradient: root.fill === root.fillLead ? null : fillRamp
             Behavior on width {
                 NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
             }
@@ -136,6 +156,13 @@ Item {
                 NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
             }
         }
+    }
+
+    Gradient {
+        id: fillRamp
+        orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
+        GradientStop { position: 0; color: root.vertical ? root.fillLead : root.fill }
+        GradientStop { position: 1; color: root.vertical ? root.fill : root.fillLead }
     }
 
     // Shadow under a raised thumb, lifted further while dragging.
@@ -150,6 +177,9 @@ Item {
         height: width
         radius: width / 2
         color: Qt.rgba(0, 0, 0, .45)
+
+        Behavior on x { NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing } }
+        Behavior on y { NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing } }
     }
 
     Rectangle {
@@ -161,10 +191,16 @@ Item {
         y: root.vertical
             ? track.y + root._thumbOffset
             : track.y + (track.height - root.thumbSize) / 2
+        Behavior on x { NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing } }
+        Behavior on y { NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing } }
         width: root.thumbSize
         height: width
         radius: width / 2
-        color: root.raised && !root.active ? Qt.darker(Style.text, 1.4) : Style.text
+        color: root.thumbColor
+
+        Behavior on color {
+            ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
 
         Item {
             id: thumbSlot

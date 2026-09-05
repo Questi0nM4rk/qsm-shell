@@ -72,7 +72,15 @@ Canvas {
         c.stroke();
     }
 
+    // EVERY painted input needs a trigger. A Canvas repaints when it is told
+    // to and at no other time, so a property that changes the picture and has
+    // no handler here leaves stale pixels until something else happens to
+    // change.
     onValuesChanged: requestPaint()
     onColorChanged: requestPaint()
     onAreaChanged: requestPaint()
+    onMinimumChanged: requestPaint()
+    onMaximumChanged: requestPaint()
+    onWidthChanged: requestPaint()
+    onHeightChanged: requestPaint()
 }

@@ -27,14 +27,45 @@ Rectangle {
 
     signal clicked
 
-    // Relative luminance, the same weighting contrast ratios use. A swatch
-    // decides its own ink so no call site has to.
-    readonly property color ink: (0.2126 * sample.r + 0.7152 * sample.g + 0.0722 * sample.b) > 0.5
-        ? Style.background
-        : Style.text
+    // The swatch decides its own ink so no call site has to, and it decides it
+    // by MEASURING rather than by assuming the theme is dark. The first
+    // version returned `Style.background` for a pale sample and `Style.text`
+    // for a dark one, which is only right while background is the dark one —
+    // under a light backend it hands a pale swatch pale ink.
+    //
+    // The sample is composited over the surface first: a 20%-alpha colour is
+    // not the colour you would measure, and reading the raw value picks ink
+    // for a swatch nobody can see.
+    readonly property color _seen: Qt.rgba(
+        sample.r * sample.a + Style.surface.r * (1 - sample.a),
+        sample.g * sample.a + Style.surface.g * (1 - sample.a),
+        sample.b * sample.a + Style.surface.b * (1 - sample.a),
+        1)
+
+    // WCAG relative luminance: sRGB has to be linearised first, and skipping
+    // that is why mid-tones get the wrong answer.
+    function _luminance(channel: real): real {
+        return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+    }
+    function _relative(sampled: color): real {
+        return 0.2126 * _luminance(sampled.r)
+            + 0.7152 * _luminance(sampled.g)
+            + 0.0722 * _luminance(sampled.b);
+    }
+    function _contrast(a: color, b: color): real {
+        const la = root._relative(a);
+        const lb = root._relative(b);
+        return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    }
+
+    // Whichever of the theme's two inks actually reads on this sample.
+    readonly property color ink: _contrast(_seen, Style.text) >= _contrast(_seen, Style.background)
+        ? Style.text
+        : Style.background
 
     implicitWidth: size
     implicitHeight: size
+    opacity: enabled ? 1 : Style.opacityDisabled
     radius: Style.radiusSm
     // Transparent, because the sample is painted INSIDE, over the alpha check.
     // A Rectangle fills behind all of its children, so a check drawn as a
@@ -42,14 +73,6 @@ Rectangle {
     color: "transparent"
     clip: true
 
-    // Selection is a ring OUTSIDE the fill, because a mark drawn on top of the
-    // sample changes the thing being sampled.
-    border.width: root.selected ? Style.markThickness - 1 : 0
-    border.color: Style.accent
-
-    Behavior on border.width {
-        NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-    }
 
     // The alpha check, first, so a translucent sample composites over it.
     // Without it a 20%-alpha colour reads as a different opaque colour, which
@@ -77,6 +100,25 @@ Rectangle {
         color: root.sample
     }
 
+    // The selection ring is drawn LAST, over the sample.
+    //
+    // It used to be the root's own `border`, which a Rectangle paints behind
+    // its children — so the opaque sample filling the root covered it, and
+    // `clip: true` finished the job. The advertised ring was never once
+    // visible. It is still a ring rather than a mark ON the swatch, because a
+    // mark drawn on top changes the thing being sampled.
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        radius: root.radius
+        border.width: root.selected ? Style.markThickness - 1 : 0
+        border.color: Style.accent
+
+        Behavior on border.width {
+            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
+    }
+
     Prose {
         anchors.centerIn: parent
         visible: root.reading.length > 0
@@ -88,10 +130,14 @@ Rectangle {
 
     StateLayer {
         anchors.fill: parent
+        interactive: root.enabled
         focused: root.focused
         focusRadius: root.radius
         hoverScale: 1.08
         pressScale: 0.94
         onClicked: root.clicked()
     }
+
+    Keys.onSpacePressed: if (root.enabled) root.clicked()
+    Keys.onReturnPressed: if (root.enabled) root.clicked()
 }

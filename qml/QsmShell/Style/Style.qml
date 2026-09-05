@@ -71,6 +71,9 @@ QtObject {
     readonly property real lineTight: backend?.lineTight ?? Tokens.lineTight
     readonly property real lineHeading: backend?.lineHeading ?? Tokens.lineHeading
     readonly property real lineBody: backend?.lineBody ?? Tokens.lineBody
+    // The one letter-spacing in the system: what turns a small bold label into
+    // a RULE over a group rather than just a small bold label.
+    readonly property real trackingWide: backend?.trackingWide ?? Tokens.trackingWide
     readonly property int weightRegular: backend?.weightRegular ?? Font.Normal
     readonly property int weightMedium: backend?.weightMedium ?? Font.Medium
     readonly property int weightBold: backend?.weightBold ?? Font.DemiBold
@@ -125,6 +128,10 @@ QtObject {
     // needed them.
     // The ring, at the size a performance card wants it. A card fitting three
     // of them states its own; the library keeps one default.
+    // A tile: an icon over its label, big enough to hit without aiming.
+    readonly property int tileWidth: backend?.tileWidth ?? Tokens.geometryTileWidth
+    readonly property int tileHeight: backend?.tileHeight ?? Tokens.geometryTileHeight
+
     readonly property int ringDiameter: backend?.ringDiameter ?? Tokens.geometryRingDiameter
     readonly property int ringStroke: backend?.ringStroke ?? Tokens.geometryRingStroke
 

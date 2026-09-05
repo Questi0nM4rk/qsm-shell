@@ -69,7 +69,10 @@ QtObject {
     readonly property int geometryTrackThickness: 6
     readonly property int geometryRingDiameter: 150
     readonly property int geometryRingStroke: 8
+    readonly property int geometryTileWidth: 96
+    readonly property int geometryTileHeight: 72
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55
+    readonly property real trackingWide: 1.4
 }

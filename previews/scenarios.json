@@ -34,7 +34,7 @@
   "result-row": { "component": "result-row", "variant": "selected", "viewport": [800, 500] },
   "search": { "component": "search", "variant": "filled", "viewport": [800, 500] },
   "prose": { "component": "prose", "variant": "heading", "viewport": [800, 500] },
-  "session-button": { "component": "session-button", "variant": "armed", "viewport": [800, 500] },
+  "action-tile": { "component": "action-tile", "variant": "armed", "viewport": [800, 500] },
   "state-layer": { "component": "state-layer", "variant": "hover", "viewport": [800, 500] },
   "stat-ring": { "component": "stat-ring", "variant": "open", "viewport": [800, 500] },
   "svg-icon": { "component": "svg-icon", "variant": "selected", "viewport": [800, 500] },

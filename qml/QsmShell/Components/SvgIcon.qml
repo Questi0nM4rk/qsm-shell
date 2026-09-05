@@ -3,8 +3,13 @@ import QtQuick.Effects
 
 import qs.QsmShell.Style
 
-// Bundled library icon. Unlike qsm-desktop's copy, this resolves against the
-// library tree so consumers do not need to expose their shell root.
+// A bundled icon, tinted to the theme.
+//
+// It resolves against the LIBRARY's own tree, so a consumer never has to
+// expose its application root or ship a second copy of the set. The shipped
+// SVGs are one stroke set normalised to a WHITE stroke, because MultiEffect
+// colorises by multiplying luminance: white tints exactly to `color`, and a
+// black or currentColor stroke would stay black.
 Item {
     id: root
 

@@ -68,11 +68,32 @@ Rectangle {
     function setText(value: string): void { input.text = value; }
     function selectAll(): void { input.selectAll(); }
 
+    // How wide the field wants to be when nothing tells it. `row.implicitWidth`
+    // alone is not that: the middle column is a fill-width Item with no
+    // implicit width of its own, so neither the input nor the placeholder
+    // contributed and a standalone field measured 48px -- the two slot margins
+    // and nothing else.
+    property real naturalWidth: Style.notificationWidth
+
     implicitHeight: _sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight
-    implicitWidth: row.implicitWidth + Style.space3 * 2
+    implicitWidth: Math.max(naturalWidth,
+        leadingSlot.implicitWidth + trailingSlot.implicitWidth
+            + Math.max(input.implicitWidth, placeholder.implicitWidth)
+            + Style.space3 * 4)
     radius: Style.radiusMd
-    color: Style.surface
     opacity: enabled ? 1 : Style.opacityDisabled
+
+    // Hover and press are answered by the SURFACE, not by growth. Every other
+    // control in the library grows, and a text box must not: the caret and the
+    // text have to stay where the eye put them, and a field that jumps under
+    // the pointer is a field you cannot aim a click into. So the layer owns
+    // the states — the five exist and are defined — and the response is a
+    // lift in the ground rather than a change in size.
+    color: layer.hovered || root.focused ? Style.surfaceHover : Style.surface
+
+    Behavior on color {
+        ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+    }
 
     // The one border in the library, and it earns it: a text box is the only
     // control whose EDGE is the affordance — it says "your typing goes inside
@@ -104,6 +125,7 @@ Rectangle {
             Layout.fillHeight: true
 
             Prose {
+                id: placeholder
                 anchors.fill: parent
                 visible: input.text.length === 0
                 role: "label"
@@ -194,13 +216,22 @@ Rectangle {
     // Clicking anywhere in the box puts the caret in it. Without this the
     // person has to hit the text itself, which on an empty field is a
     // zero-width target sitting behind a placeholder.
+    //
+    // `target: null` because nothing here scales, and the I-beam rather than
+    // the pointing hand because this is a place to type, not a thing to press.
+    StateLayer {
+        id: layer
+        anchors.fill: parent
+        target: null
+        interactive: root.enabled && !root.readOnly
+        focused: root.focused
+        focusRadius: root.radius
+        onClicked: input.forceActiveFocus()
+    }
+
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.LeftButton
+        acceptedButtons: Qt.NoButton
         cursorShape: Qt.IBeamCursor
-        onPressed: event => {
-            input.forceActiveFocus();
-            event.accepted = false;
-        }
     }
 }

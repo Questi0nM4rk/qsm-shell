@@ -65,7 +65,10 @@
   --qsm-geometry-trackThickness: 6px;
   --qsm-geometry-ringDiameter: 150px;
   --qsm-geometry-ringStroke: 8px;
+  --qsm-geometry-tileWidth: 96px;
+  --qsm-geometry-tileHeight: 72px;
   --qsm-line-tight: 1.2;
   --qsm-line-heading: 1.25;
   --qsm-line-body: 1.55;
+  --qsm-tracking-wide: 1.4px;
 }

@@ -7,22 +7,29 @@ import qs.QsmShell.Style
 // A surface that belongs to another surface: it appears NEXT TO the thing that
 // summoned it and it goes away again.
 //
-// One type covers the tooltip, the hover popout and the click-menu, because
-// those differ only in what starts them and what is inside. `trigger` names
-// the first; the content slot answers the second. Two components here would
-// have been the same placement arithmetic written twice, and placement
-// arithmetic is where this gets hard — an anchored panel that is right at the
-// centre of the screen and wrong at its edge is wrong.
+// It is the PLACEMENT, not a finished control. Where an anchored panel sits,
+// which way it has to flip to stay on screen, and how long a pointer has to
+// linger before anything happens. That arithmetic is where anchored surfaces
+// actually go wrong — a panel that is right in the middle of a screen and
+// wrong at its edge is wrong — and it is the same arithmetic for a tooltip, a
+// hover popout and a click menu.
+//
+// It is NOT all three of those. They differ in focus entry and return, in
+// keyboard activation, and in whether their content can be reached at all,
+// and a component claiming to be all of them would be none of them properly.
+// Compose the control you need over this; do not expect this to be it.
 //
 // ── what it owns ─────────────────────────────────────────────────────────
-// Where it sits, when it appears, when it starts leaving, and whether it has
-// to flip to stay on screen.
+// Position, flipping, clamping, and the delays.
 //
 // ── what it does NOT own ─────────────────────────────────────────────────
-// Whether it may close. It reports `dismissRequested` and the surface decides:
-// a popout the pointer has moved INTO must not close because the pointer left
-// its trigger, and only the surface knows that. A component that closes itself
-// has to be told about every surface it might ever sit in.
+// Whether it is open. It REQUESTS — `openRequested` when a trigger has been
+// held long enough, `dismissRequested` when the pointer has been gone long
+// enough — and the surface decides. A popout the pointer has moved INTO must
+// not close because the pointer left its trigger; a menu guarding an armed
+// action must not close on a stray move. Only the surface knows, and a
+// component that opens and closes itself has to be told about every surface it
+// might ever sit in.
 Item {
     id: root
 
@@ -52,15 +59,22 @@ Item {
     // which is 0 forever, so every popover was zero by zero.
     default property alias content: contentHost.data
 
+    signal openRequested
     signal dismissRequested
 
     // Which side it ACTUALLY landed on, after flipping. A caller drawing a
     // tail or a seam needs this, not the preference.
-    readonly property string side: placement === "top" && !_fitsAbove ? "bottom"
-        : placement === "bottom" && !_fitsBelow ? "top"
-        : placement === "left" && !_fitsLeft ? "right"
-        : placement === "right" && !_fitsRight ? "left"
-        : placement
+    // The preferred side if it fits; otherwise the side with MORE room, not
+    // simply the opposite one. Flipping blind is how a panel with too little
+    // space on both sides ends up off the other edge instead of this one.
+    readonly property string side: {
+        switch (placement) {
+        case "top": return _fitsAbove ? "top" : (_roomBelow > _roomAbove ? "bottom" : "top");
+        case "bottom": return _fitsBelow ? "bottom" : (_roomAbove > _roomBelow ? "top" : "bottom");
+        case "left": return _fitsLeft ? "left" : (_roomRight > _roomLeft ? "right" : "left");
+        default: return _fitsRight ? "right" : (_roomLeft > _roomRight ? "left" : "right");
+        }
+    }
 
     // Anchor rectangle in this item's own coordinates.
     //
@@ -87,42 +101,85 @@ Item {
 
     FrameAnimation {
         running: root.open || root.opacity > 0
-        onTriggered: root.resample()
+        onTriggered: {
+            root.resample();
+            root.resampleBounds();
+        }
     }
 
-    onOpenChanged: if (root.open) root.resample()
-    Component.onCompleted: root.resample()
+    onOpenChanged: if (root.open) { root.resample(); root.resampleBounds(); }
+    Component.onCompleted: { root.resample(); root.resampleBounds(); }
 
-    readonly property real _boundsWidth: bounds ? bounds.width : 0
-    readonly property real _boundsHeight: bounds ? bounds.height : 0
+    // The bounds rectangle in the SAME space as the anchor. Reading only its
+    // width and height put its origin at (0, 0), so a bounds item that is
+    // translated — a panel inset inside a scene, which is the normal case —
+    // was clamped against the wrong rectangle entirely.
+    property rect _bounds: Qt.rect(0, 0, 0, 0)
 
-    readonly property bool _fitsAbove: _anchor.y - gap - height >= 0
-    readonly property bool _fitsBelow: _anchor.y + _anchor.height + gap + height <= _boundsHeight
-    readonly property bool _fitsLeft: _anchor.x - gap - width >= 0
-    readonly property bool _fitsRight: _anchor.x + _anchor.width + gap + width <= _boundsWidth
+    function resampleBounds(): void {
+        if (!root.bounds || !root.parent)
+            return;
+        const origin = root.bounds.mapToItem(root.parent, 0, 0);
+        const next = Qt.rect(origin.x, origin.y, root.bounds.width, root.bounds.height);
+        if (next !== root._bounds)
+            root._bounds = next;
+    }
+
+    // Room on each side, as a number rather than a yes/no. A flip that only
+    // asks "does the preferred side fit" will happily flip to a side that does
+    // not fit either; asking WHICH side has more room cannot.
+    readonly property real _roomAbove: _anchor.y - _bounds.y - gap
+    readonly property real _roomBelow: _bounds.y + _bounds.height - (_anchor.y + _anchor.height) - gap
+    readonly property real _roomLeft: _anchor.x - _bounds.x - gap
+    readonly property real _roomRight: _bounds.x + _bounds.width - (_anchor.x + _anchor.width) - gap
+
+    readonly property bool _fitsAbove: _roomAbove >= height
+    readonly property bool _fitsBelow: _roomBelow >= height
+    readonly property bool _fitsLeft: _roomLeft >= width
+    readonly property bool _fitsRight: _roomRight >= width
 
     // Along the anchor's cross axis: start / centre / end, then CLAMPED into
     // the bounds. Clamping after aligning is what keeps a centred popover on
     // a corner control from hanging off the screen.
-    function _align(anchorStart: real, anchorSize: real, ownSize: real, limit: real): real {
+    function _align(anchorStart: real, anchorSize: real, ownSize: real,
+            origin: real, extent: real): real {
         const raw = root.alignment === "start" ? anchorStart
             : root.alignment === "end" ? anchorStart + anchorSize - ownSize
             : anchorStart + (anchorSize - ownSize) / 2;
-        return Math.max(0, Math.min(raw, Math.max(0, limit - ownSize)));
+        return root._clamp(raw, origin, extent, ownSize);
+    }
+
+    // Both axes end in a clamp. The cross axis is aligned then clamped; the
+    // main axis is placed then clamped, because a side that does not fit still
+    // has to put the panel somewhere a person can see it.
+    function _clamp(position: real, origin: real, extent: real, ownSize: real): real {
+        return Math.max(origin, Math.min(position, origin + Math.max(0, extent - ownSize)));
     }
 
     x: {
         switch (root.side) {
-        case "left": return root._anchor.x - root.gap - root.width;
-        case "right": return root._anchor.x + root._anchor.width + root.gap;
-        default: return root._align(root._anchor.x, root._anchor.width, root.width, root._boundsWidth);
+        case "left":
+            return root._clamp(root._anchor.x - root.gap - root.width,
+                root._bounds.x, root._bounds.width, root.width);
+        case "right":
+            return root._clamp(root._anchor.x + root._anchor.width + root.gap,
+                root._bounds.x, root._bounds.width, root.width);
+        default:
+            return root._align(root._anchor.x, root._anchor.width, root.width,
+                root._bounds.x, root._bounds.width);
         }
     }
     y: {
         switch (root.side) {
-        case "top": return root._anchor.y - root.gap - root.height;
-        case "bottom": return root._anchor.y + root._anchor.height + root.gap;
-        default: return root._align(root._anchor.y, root._anchor.height, root.height, root._boundsHeight);
+        case "top":
+            return root._clamp(root._anchor.y - root.gap - root.height,
+                root._bounds.y, root._bounds.height, root.height);
+        case "bottom":
+            return root._clamp(root._anchor.y + root._anchor.height + root.gap,
+                root._bounds.y, root._bounds.height, root.height);
+        default:
+            return root._align(root._anchor.y, root._anchor.height, root.height,
+                root._bounds.y, root._bounds.height);
         }
     }
 
@@ -174,13 +231,16 @@ Item {
     TapHandler {
         enabled: root.trigger === "press"
         parent: root.anchorItem
-        onTapped: root.open ? root.dismissRequested() : root.open = true
+        onTapped: root.open ? root.dismissRequested() : root.openRequested()
     }
 
     Timer {
         id: openTimer
         interval: root.openDelay
-        onTriggered: root.open = true
+        // Asking, not opening. The surface may be holding a different tier
+        // open on the same edge, and two surfaces on one hotspot is the
+        // collision this component must not cause.
+        onTriggered: root.openRequested()
     }
     Timer {
         id: closeTimer
