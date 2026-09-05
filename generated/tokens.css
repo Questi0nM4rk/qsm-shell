@@ -36,6 +36,8 @@
   --qsm-motion-press: 80ms;
   --qsm-motion-micro: 130ms;
   --qsm-motion-fast: 180ms;
+  --qsm-motion-medium: 260ms;
+  --qsm-motion-large: 400ms;
   --qsm-opacity-disabled: 0.35;
   --qsm-opacity-surface: 0.9;
   --qsm-font-family: sans-serif;
@@ -51,4 +53,7 @@
   --qsm-geometry-controlHeightLg: 52px;
   --qsm-geometry-markThickness: 3px;
   --qsm-geometry-markHeight: 18px;
+  --qsm-line-tight: 1.2;
+  --qsm-line-heading: 1.25;
+  --qsm-line-body: 1.55;
 }

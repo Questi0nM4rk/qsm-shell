@@ -46,6 +46,13 @@ QtObject {
     readonly property int textMd: backend?.textMd ?? Tokens.typeMd
     readonly property int textLg: backend?.textLg ?? Tokens.typeLg
     readonly property int textXl: backend?.textXl ?? Tokens.typeXl
+    // Line height is a RATIO, and it is the difference between a paragraph and
+    // a stack of lines. Three roles, because that is how many kinds of text a
+    // shell has: a label that must not add height, a heading that must hold
+    // together, and a body that must be readable.
+    readonly property real lineTight: backend?.lineTight ?? Tokens.lineTight
+    readonly property real lineHeading: backend?.lineHeading ?? Tokens.lineHeading
+    readonly property real lineBody: backend?.lineBody ?? Tokens.lineBody
     readonly property int weightRegular: backend?.weightRegular ?? Font.Normal
     readonly property int weightMedium: backend?.weightMedium ?? Font.Medium
     readonly property int weightBold: backend?.weightBold ?? Font.DemiBold

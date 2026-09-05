@@ -40,6 +40,8 @@ QtObject {
     readonly property int motionPress: 80
     readonly property int motionMicro: 130
     readonly property int motionFast: 180
+    readonly property int motionMedium: 260
+    readonly property int motionLarge: 400
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySurface: 0.9
     readonly property string fontFamily: "sans-serif"
@@ -55,4 +57,7 @@ QtObject {
     readonly property int geometryControlHeightLg: 52
     readonly property int geometryMarkThickness: 3
     readonly property int geometryMarkHeight: 18
+    readonly property real lineTight: 1.2
+    readonly property real lineHeading: 1.25
+    readonly property real lineBody: 1.55
 }

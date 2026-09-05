@@ -80,6 +80,7 @@ Item {
             text: root.body
             textFormat: Text.PlainText
             wrapMode: Text.WordWrap
+            lineHeight: Style.lineBody
             color: Style.textMuted
             font.pixelSize: Style.textSm
         }

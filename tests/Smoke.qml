@@ -102,7 +102,7 @@ Item {
 
     Capsule {
         id: compactCapsule
-        compact: true
+        size: "sm"
         icon: "check"
         label: "Compact"
     }

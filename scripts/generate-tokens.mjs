@@ -23,7 +23,7 @@ const qmlValue = (group, value) =>
 const cssValue = (group, value) => {
   if (typeof value === 'string') return value
   if (group === 'motion') return `${value}ms`
-  if (group === 'opacity') return `${value}`
+  if (group === 'opacity' || group === 'line') return `${value}`
   return `${value}px`
 }
 

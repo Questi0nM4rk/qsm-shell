@@ -46,7 +46,9 @@
   "motion": {
     "press": 80,
     "micro": 130,
-    "fast": 180
+    "fast": 180,
+    "medium": 260,
+    "large": 400
   },
   "opacity": {
     "disabled": 0.35,
@@ -68,5 +70,10 @@
     "controlHeightLg": 52,
     "markThickness": 3,
     "markHeight": 18
+  },
+  "line": {
+    "tight": 1.2,
+    "heading": 1.25,
+    "body": 1.55
   }
 }
