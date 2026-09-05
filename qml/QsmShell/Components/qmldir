@@ -28,12 +28,10 @@ ArmedAction 1.0 ArmedAction.qml
 Card 1.0 Card.qml
 AppIcon 1.0 AppIcon.qml
 MonthCalendar 1.0 MonthCalendar.qml
-PopoutRow 1.0 PopoutRow.qml
-ResultRow 1.0 ResultRow.qml
 NotificationCard 1.0 NotificationCard.qml
 SessionButton 1.0 SessionButton.qml
 Menu 1.0 Menu.qml
-MenuRowItem 1.0 MenuRowItem.qml
+ListRow 1.0 ListRow.qml
 StatRing 1.0 StatRing.qml
 Divider 1.0 Divider.qml
 EmptyState 1.0 EmptyState.qml

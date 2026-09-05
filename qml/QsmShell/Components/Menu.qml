@@ -9,13 +9,13 @@ import qs.QsmShell.Style
 // categories, nested command routes, confirmation policy, service calls, or
 // desktop shortcuts — those remain with the consumer. It provides only generic,
 // deterministic keyboard stepping that skips nonselectable (header/separator/
-// disabled) rows and a generic `activated(index)` hook. Rows are MenuRowItem
+// disabled) rows and a generic `activated(index)` hook. Rows are ListRow
 // instances supplied by the consumer via `content` or a `delegate`.
 Item {
     id: root
 
     // ── consumer-owned composition ───────────────────────────────────────
-    // Static rows (MenuRowItem instances) added directly as content.
+    // Static rows (ListRow instances) added directly as content.
     default property alias content: body.data
     // Model-backed rows via `delegate`.
     property var model: null

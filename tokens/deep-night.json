@@ -58,7 +58,8 @@
   },
   "opacity": {
     "disabled": 0.35,
-    "surface": 0.9
+    "surface": 0.9,
+    "recede": 0.45
   },
   "font": {
     "family": "sans-serif",

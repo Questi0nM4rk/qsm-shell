@@ -68,8 +68,36 @@ TestCase {
     NotificationCard { id: notification; title: "Updated"; body: "Body"; source: "test" }
     SessionButton { id: sessionButton; icon: "power"; label: "Power off" }
     StatRing { id: ring; value: 0.7; label: "CPU"; reading: "70%" }
-    PopoutRow { id: popoutRow; width: 240; icon: "wifi"; label: "qsm-lab"; value: "Connected" }
-    ResultRow { id: resultRow; width: 300; item: ({ label: "Pick a colour", sub: "Opens the picker", icon: "sparkle" }); selected: true }
+    // A device row: read, not picked, so it does not recede its neighbours.
+    ListRow {
+        id: deviceRow
+        width: 240
+        size: "sm"
+        recede: false
+        icon: "wifi"
+        primary: "qsm-lab"
+        Prose { role: "reading"; font.pixelSize: Style.textXs; muted: true; text: "Connected" }
+    }
+
+    // A launcher row: one thing is wanted, so the rest recede hard.
+    ListRow {
+        id: resultRow
+        width: 400
+        size: "lg"
+        icon: "sparkle"
+        primary: "Pick a colour"
+        supporting: "Opens the picker"
+        selected: true
+    }
+
+    // The supporting line that only repeats the name -- the case desktop
+    // entries produce constantly ("Volume Control / Volume Control").
+    ListRow {
+        id: echoRow
+        width: 400
+        primary: "Volume Control"
+        supporting: "volume control"
+    }
     AppIcon { id: appIcon; width: 32; height: 32 }
     TextField { id: text2; width: 200 }
     Switch { id: toggle2 }
@@ -79,8 +107,8 @@ TestCase {
         id: menu
         width: 200
         height: 200
-        MenuRowItem { id: firstRow; primary: "First" }
-        MenuRowItem { primary: "Second" }
+        ListRow { id: firstRow; primary: "First" }
+        ListRow { primary: "Second" }
     }
 
     property int chosen: -1
@@ -129,7 +157,7 @@ TestCase {
             disclosure, scrim, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, slider, calendar,
-            notification, sessionButton, ring, popoutRow, resultRow, appIcon,
+            notification, sessionButton, ring, deviceRow, resultRow, echoRow, appIcon,
             text2, toggle2, check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);
@@ -227,6 +255,21 @@ TestCase {
     function test_scroll_area_sizes_from_content_alone() {
         compare(scroller.viewport.contentHeight, 400, "the viewport did not size from its content");
         verify(scroller._overflows, "400px of content in a 100px viewport did not overflow");
+    }
+
+    // A list you READ must not dim the nine rows that are not current to mark
+    // the one that is; a list you PICK from must. That difference is the only
+    // real one the three old row types had between them.
+    function test_recede_is_the_only_axis_between_a_read_list_and_a_pick_list() {
+        verify(deviceRow.selectable, "a device row was not selectable");
+        compare(deviceRow.leadingSize, Style.iconMd, "a compact row did not take the compact leading box");
+        compare(resultRow.leadingSize, Style.iconLg, "a large row did not take the large leading box");
+    }
+
+    // A leading visual sits in a box of ONE size so the name's left edge does
+    // not move between rows of different kinds.
+    function test_leading_box_is_one_size_per_row_size() {
+        verify(resultRow.leadingSize > deviceRow.leadingSize, "both row sizes shared a leading box");
     }
 
     function test_menu_selects_a_real_row() {

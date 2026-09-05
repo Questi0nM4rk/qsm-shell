@@ -56,6 +56,12 @@ Card {
     implicitWidth: content.implicitWidth + Style.space3 * 2 + rule.width
     radius: Style.radiusMd
     surfaceColor: Qt.tint(Style.surface, Qt.rgba(_tone.r, _tone.g, _tone.b, 0.1))
+    // The severity rule runs the full height flush against the leading edge,
+    // and Qt clamps a rectangle's radius to half its SHORT side -- so a 3px
+    // rule cannot curve at the card's 12px corner and pokes out of it at both
+    // ends. Clipping is the honest fix; the render pass is paid only while a
+    // callout exists, which is only when something has gone wrong.
+    clip: true
 
     // The severity rule down the leading edge. It is the third channel — after
     // the mark and the hue — and the only one readable from the corner of an
@@ -66,9 +72,6 @@ Card {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: Style.markThickness
-        // The rule is flush against the card's own corner, so it curves with
-        // it rather than cutting a straight edge across a rounded one.
-        radius: Style.childRadius(this)
         color: root._tone
     }
 

@@ -153,22 +153,22 @@ Item {
 
         onActivated: index => root.activatedIndex = index
 
-        MenuRowItem {
+        ListRow {
             header: true
             primary: "Section"
         }
 
-        MenuRowItem {
+        ListRow {
             id: first
             primary: "First"
         }
 
-        MenuRowItem {
+        ListRow {
             disabled: true
             primary: "Disabled"
         }
 
-        MenuRowItem {
+        ListRow {
             id: second
             primary: "Second"
         }

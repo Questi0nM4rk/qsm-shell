@@ -46,6 +46,7 @@
   --qsm-motion-pulse: 1400ms;
   --qsm-opacity-disabled: 0.35;
   --qsm-opacity-surface: 0.9;
+  --qsm-opacity-recede: 0.45;
   --qsm-font-family: sans-serif;
   --qsm-font-technicalFamily: monospace;
   --qsm-geometry-rolloutRadius: 28px;

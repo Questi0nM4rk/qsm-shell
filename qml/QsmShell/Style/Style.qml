@@ -44,6 +44,11 @@ QtObject {
     // ── opacity ─────────────────────────────────────────────────────────
     readonly property real opacityDisabled: backend?.opacityDisabled ?? Tokens.opacityDisabled
     readonly property real surfaceOpacity: backend?.surfaceOpacity ?? Tokens.opacitySurface
+    // "Not the one you are looking at." A list recedes its non-current rows so
+    // the current one is the only thing at full strength; it is a different
+    // number from `opacityDisabled`, because receding says "later" and
+    // disabled says "never".
+    readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
 
     // ── type ────────────────────────────────────────────────────────────
     readonly property string fontFamily: backend?.fontFamily ?? Tokens.fontFamily

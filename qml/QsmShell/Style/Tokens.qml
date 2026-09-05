@@ -50,6 +50,7 @@ QtObject {
     readonly property int motionPulse: 1400
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySurface: 0.9
+    readonly property real opacityRecede: 0.45
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28

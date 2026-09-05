@@ -73,10 +73,53 @@ Rectangle {
         }
         Capsule { visible: root.component === "capsule"; icon: "bell"; label: "Notifications"; detail: root.variant === "active" ? "2" : ""; active: root.variant === "active" }
         Slider { visible: root.component === "level"; Layout.preferredWidth: 260; value: root.variant === "high" ? .82 : .42; wheelStep: .05 }
-        PopoutRow { visible: root.component === "popout-row"; Layout.preferredWidth: 260; icon: "wifi"; label: "qsm-lab"; value: "Connected"; active: root.variant === "active"; actionIcon: "trash-2" }
+        // A row in a list you READ: no recession, a reading and a tertiary
+        // action in the trailing slot.
+        ListRow {
+            visible: root.component === "device-row"
+            Layout.preferredWidth: 260
+            size: "sm"
+            recede: false
+            icon: "wifi"
+            primary: "qsm-lab"
+            selected: root.variant === "active"
+
+            Prose { role: "reading"; font.pixelSize: Style.textXs; muted: true; text: "Connected" }
+            IconButton { icon: "trash-2"; size: Style.iconSm; padding: Style.space1; color: Style.textMuted }
+        }
         MonthCalendar { visible: root.component === "calendar"; Layout.preferredWidth: 300; shown: new Date(2026, 7, 1); today: new Date(2026, 7, 28) }
-        SearchField { visible: root.component === "search"; Layout.preferredWidth: 400; placeholder: "Search components" }
-        ResultRow { visible: root.component === "result"; Layout.preferredWidth: 500; item: root.variant === "header" ? { kind: "header", label: "Tools" } : { kind: "action", label: "Pick a colour", sub: "Open colour picker", icon: "sparkle" }; selected: root.variant !== "idle" }
+        // A search box is a text box with a magnifier in its leading slot.
+        TextField {
+            visible: root.component === "search"
+            Layout.preferredWidth: 400
+            size: "lg"
+            placeholder: "Search components"
+
+            leading: SvgIcon { name: "search"; size: Style.iconMd; color: Style.textMuted }
+        }
+        // The same component, named and failing -- the state a text box spends
+        // most of its life in once a person is actually using it.
+        Field {
+            visible: root.component === "field"
+            Layout.preferredWidth: 400
+            label: "Network name"
+            hint: "The SSID as the router broadcasts it"
+            error: root.variant === "error" ? "No network by that name is in range" : ""
+
+            TextField { width: parent.width; failed: root.variant === "error"; placeholder: "qsm-lab" }
+        }
+        // A row in a list you PICK from: large, and everything not current
+        // recedes hard.
+        ListRow {
+            visible: root.component === "result-row"
+            Layout.preferredWidth: 500
+            size: "lg"
+            header: root.variant === "header"
+            icon: "sparkle"
+            primary: root.variant === "header" ? "Tools" : "Pick a colour"
+            supporting: "Open colour picker"
+            selected: root.variant !== "idle"
+        }
         IconButton { visible: root.component === "icon-button"; icon: "sparkle"; color: Style.accent }
         Slider {
             visible: root.component === "osd-slider"
@@ -99,8 +142,8 @@ Rectangle {
         }
         NotificationCard { visible: root.component === "notification"; Layout.preferredWidth: 380; selected: root.variant === "selected"; expanded: root.variant === "expanded"; title: "Reference shell updated"; body: "A deterministic notification fixture for the component library."; source: "qsm-test"; icon: "bell"; accent: Style.accent }
         SessionButton { visible: root.component === "session-button"; icon: "power"; label: "Power off"; selected: root.variant === "selected"; armed: root.variant === "armed" }
-        MenuRowItem {
-            visible: root.component === "menu-row-item"
+        ListRow {
+            visible: root.component === "list-row"
             Layout.preferredWidth: 320
             icon: "sparkle"
             primary: "Pick a colour"
@@ -116,18 +159,79 @@ Rectangle {
             Layout.preferredWidth: 320
             Layout.preferredHeight: 240
             currentIndex: root.variant === "selected" ? 1 : 0
-            MenuRowItem { icon: "sparkle"; primary: "Pick a colour" }
-            MenuRowItem { icon: "copy"; primary: "Copy" }
-            MenuRowItem { header: true; primary: "Danger zone" }
-            MenuRowItem { icon: "trash-2"; primary: "Clear"; danger: true }
-            MenuRowItem { separator: true }
-            MenuRowItem { icon: "log-out"; primary: "Sign out" }
+            ListRow { icon: "sparkle"; primary: "Pick a colour" }
+            ListRow { icon: "copy"; primary: "Copy" }
+            ListRow { header: true; primary: "Danger zone" }
+            ListRow { icon: "trash-2"; primary: "Clear"; danger: true }
+            ListRow { separator: true }
+            ListRow { icon: "log-out"; primary: "Sign out" }
         }
-        TabStrip { visible: root.component === "tabs"; Layout.preferredWidth: 500; labels: ["Overview", "Media", "Performance"]; currentIndex: root.variant === "second" ? 1 : 0 }
+        Segmented {
+            visible: root.component === "segmented"
+            Layout.preferredWidth: 500
+            options: ["Overview", { label: "Media", badge: "2" }, { label: "Performance", disabled: true }]
+            currentIndex: root.variant === "second" ? 1 : 0
+        }
         StatRing { visible: root.component === "stat-ring"; value: .72; label: "CPU"; reading: "72%" }
         Divider { visible: root.component === "divider"; Layout.preferredWidth: 400; inset: 20 }
         EmptyState { visible: root.component === "empty-state"; Layout.preferredWidth: 260; icon: "bell"; title: "Nothing here"; detail: "A deterministic empty fixture." }
         KeyValueRow { visible: root.component === "key-value"; Layout.preferredWidth: 280; icon: "battery"; label: "Battery"; value: "68%"; valueColor: Style.accent }
+        Badge { visible: root.component === "badge"; tone: root.variant; text: "3" }
+        Spinner { visible: root.component === "spinner"; size: Style.iconLg }
+        ProgressBar { visible: root.component === "progress"; Layout.preferredWidth: 300; value: .62; indeterminate: root.variant === "unknown" }
+        Meter { visible: root.component === "meter"; Layout.preferredWidth: 300; value: root.variant === "low" ? .08 : .72; low: .15 }
+        Skeleton { visible: root.component === "skeleton"; Layout.preferredWidth: 300; shape: "line"; role: "title" }
+        Callout {
+            visible: root.component === "callout"
+            Layout.preferredWidth: 380
+            tone: root.variant
+            title: "Could not reach the network"
+            body: "The adapter is up but no route answered. Check that the access point is in range."
+
+            Capsule { size: "sm"; variant: "ghost"; icon: "rotate-cw"; label: "Retry" }
+        }
+        Switch { visible: root.component === "switch"; checked: root.variant === "on" }
+        Checkbox { visible: root.component === "checkbox"; label: "Include hidden"; checked: root.variant === "on"; indeterminate: root.variant === "some" }
+        Stat { visible: root.component === "stat"; value: "72"; unit: "%"; label: "CPU"; trend: "up"; good: "down" }
+        Sparkline { visible: root.component === "sparkline"; Layout.preferredWidth: 200; Layout.preferredHeight: 48; values: [4, 7, 3, 9, 6, 11, 8]; area: root.variant === "area" }
+        ColorSwatch { visible: root.component === "swatch"; sample: root.variant === "pale" ? "#f6f1f9" : "#c5a5e9"; reading: root.variant === "pale" ? "#F6F1F9" : "#C5A5E9"; size: 72 }
+        Kbd { visible: root.component === "kbd"; combo: "SUPER + SHIFT + Q" }
+        Avatar { visible: root.component === "avatar"; name: "Ada Lovelace"; size: 64; status: root.variant === "online" ? "success" : "" }
+        Marquee { visible: root.component === "marquee"; Layout.preferredWidth: 200; role: "title"; mode: "always"; text: "A now-playing title far longer than two hundred pixels" }
+        Section {
+            visible: root.component === "section"
+            Layout.preferredWidth: 380
+            title: "Devices"
+
+            action: IconButton { icon: "rotate-cw"; size: Style.iconSm; padding: Style.space1; color: Style.textMuted }
+
+            ListRow { size: "sm"; recede: false; icon: "headphones"; primary: "WH-1000XM4"; selected: true }
+            ListRow { size: "sm"; recede: false; icon: "mouse"; primary: "MX Master 3" }
+        }
+        Disclosure {
+            visible: root.component === "disclosure"
+            Layout.preferredWidth: 380
+            title: "Advanced"
+            badge: "3"
+            expanded: root.variant === "expanded"
+
+            KeyValueRow { Layout.fillWidth: true; label: "MTU"; value: "1500" }
+        }
+        ScrollArea {
+            visible: root.component === "scroll"
+            Layout.preferredWidth: 300
+            Layout.preferredHeight: 200
+            fadeColor: Style.background
+
+            Column {
+                width: 300
+                spacing: Style.space1
+                Repeater {
+                    model: 12
+                    ListRow { required property int index; width: 300; size: "sm"; recede: false; icon: "workspace"; primary: `Row ${index + 1}` }
+                }
+            }
+        }
         AppIcon { visible: root.component === "app-icon"; Layout.preferredWidth: 48; Layout.preferredHeight: 48; sourceUrl: root.variant === "resolved" ? Qt.resolvedUrl("../qml/QsmShell/assets/icons/sparkle.svg") : "" }
     }
 }
