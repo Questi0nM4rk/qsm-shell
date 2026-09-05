@@ -43,25 +43,25 @@ Public types are listed in `qml/QsmShell/Components/qmldir`.
 | --- | --- |
 | **foundation** | `Prose` (nine type roles), `SvgIcon`, `Card`, `Divider`, `StateLayer` |
 | **controls** | `Capsule`, `IconButton`, `TextField`, `Field`, `Switch`, `Checkbox`, `Segmented`, `Slider` |
-| **lists** | `ListRow`, `Menu`, `SelectionMark`, `ScrollArea`, `Section`, `Disclosure` |
+| **lists** | `ListRow`, `Menu`, `SelectionMark`, `ScrollArea`, `ScrollCue`, `Section`, `Disclosure` |
 | **state** | `Spinner`, `ProgressBar`, `Skeleton`, `Callout`, `EmptyState` |
 | **readouts** | `Badge`, `Meter`, `Stat`, `StatRing`, `Sparkline`, `KeyValueRow`, `Marquee`, `ColorSwatch`, `Kbd`, `Avatar` |
-| **surfaces** | `Popover`, `Dialog`, `Scrim`, `NotificationCard`, `MonthCalendar`, `SessionButton` |
+| **surfaces** | `Popover`, `Dialog`, `Scrim`, `NotificationCard`, `MonthCalendar`, `ActionTile` |
 | **behaviour** | `ArmedAction` |
 
 ## Develop
 
 ```bash
-npm run gallery
 npm run capture -- <scenario> /tmp/out.png
 npm test
 ```
 
-- `gallery` starts the React design playground.
 - `capture` renders one native QML preview offscreen; scenario names come from
   `previews/scenarios.json`, and every public type has one.
-- `test` regenerates tokens, lints QML, runs the native smoke and the
-  interaction tests, and builds and lints the gallery.
+- `test` regenerates tokens, lints QML, and runs the native smoke and the
+  interaction tests.
+
+A component is looked at in native QML and nowhere else.
 
 Add visible behavior first. Verify it in native QML, then add one focused
 regression check if the behavior can realistically regress.

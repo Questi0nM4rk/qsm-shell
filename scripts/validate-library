@@ -22,7 +22,4 @@ QT_QPA_PLATFORM=offscreen \
 QT_QUICK_BACKEND=software \
     /usr/lib/qt6/bin/qmltestrunner -import "$root/qml" -input "$root/tests/interaction"
 
-npm --prefix "$root/gallery" run build
-npm --prefix "$root/gallery" run lint
-
 printf 'qsm-shell validation passed\n'

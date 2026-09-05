@@ -101,12 +101,3 @@ Each cost real time once. None is findable by reading the code.
 - **`Keys` has no `onHomePressed` / `onEndPressed`.** Only the arrows, Return,
   Enter, Escape, Space, Tab, Backtab, Delete and the digits get named
   handlers; everything else needs a key check inside `Keys.onPressed`.
-
-## Open question for the owner
-
-`gallery/` re-implements each component a second time, in HTML and CSS. That
-was a fair trade while the library was leaves; at 42 types it is a second
-implementation of one system in another language, and every new component now
-costs two. Either it stops being a mirror — a token sheet and a palette only,
-which is what a React page can honestly show — or it goes. Left compiling and
-otherwise untouched this session.

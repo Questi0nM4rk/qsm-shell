@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "capture": "node scripts/capture-qml.mjs",
-    "gallery": "npm --prefix gallery run dev",
     "test": "bash scripts/validate-library",
     "tokens": "node scripts/generate-tokens.mjs",
     "validate": "npm test"

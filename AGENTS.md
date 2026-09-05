@@ -8,8 +8,11 @@
 - Add one focused regression check only after a real behavior works.
 - Keep `qsm-desktop` policy, services, persistence, and compositor integration
   out of this library.
-- Treat `gallery/` as a design playground. Native QML and the live desktop are
-  the runtime truth.
+- Native QML is the only place a component is looked at. `previews/` plus
+  `npm run capture` renders the real type offscreen; the live consumer is the
+  final judge. There is deliberately no second rendering of any component in
+  another language, because a mirror that shows the right colours and the
+  wrong shape is worse than no mirror.
 - Design every meaningful resting, hover, pressed, focused, selected, disabled,
   loading, empty, and error state that the component actually supports.
 - Pointer and keyboard routes must perform the same action, keep focus visible,
