@@ -48,10 +48,6 @@
   requires it.
 - Add SVG aliases and validation only when the first naming conflict appears.
 - Add a light theme only after its palette is designed and reviewed.
-- The type scale's bottom two steps are 11 and 12 — a ratio of 1.09, where a
-  scale wants ≥ ~1.125 per step. They are not distinguishable as steps; they
-  are one step with two names. Changing either moves text on every surface, so
-  it is an owner call, not a cleanup.
 
 ## Known Environment
 

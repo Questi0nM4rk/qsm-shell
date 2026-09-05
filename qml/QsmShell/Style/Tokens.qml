@@ -30,7 +30,7 @@ QtObject {
     readonly property int radiusXl: 20
     readonly property int radius2xl: 28
     readonly property int radiusPill: 999
-    readonly property int typeXs: 11
+    readonly property int typeXs: 10
     readonly property int typeSm: 12
     readonly property int typeMd: 14
     readonly property int typeLg: 18
