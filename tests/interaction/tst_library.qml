@@ -43,6 +43,31 @@ TestCase {
         // rather than resting at zero.
         Rectangle { width: 200; height: 400; color: "#333" }
     }
+    // The model-backed case: a ListView IS the Flickable, so the cue attaches
+    // to it rather than the list going inside a viewport.
+    ListView {
+        id: shortList
+        width: 200
+        height: 200
+        model: 2
+        delegate: Item { width: 200; height: 20 }
+
+        ScrollCue { id: shortCue; view: shortList }
+    }
+
+    // Enough rows that the mark's length cap matters: uncapped, a viewport
+    // showing most of its content gets a thumb nearly as tall as itself, which
+    // reads as a gauge rather than as a position.
+    ListView {
+        id: longList
+        width: 200
+        height: 100
+        model: 40
+        delegate: Item { width: 200; height: 20 }
+
+        ScrollCue { id: longCue; view: longList }
+    }
+
     Section { id: section; width: 300; title: "Devices" }
     Disclosure { id: disclosure; width: 300; title: "Advanced" }
     Scrim { id: scrim }
@@ -153,7 +178,7 @@ TestCase {
         // reaching this line with every id resolvable is the assertion.
         const types = [prose, badge, dotBadge, spinner, progress, unknownProgress,
             skeleton, callout, field, meter, fullMeter, scroller, section,
-            disclosure, scrim, stat, goodStat, sparkline, flatline, marquee,
+            disclosure, scrim, shortCue, longCue, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, slider, calendar,
             notification, sessionButton, ring, deviceRow, resultRow, echoRow,
@@ -253,7 +278,23 @@ TestCase {
     // binding loop this component shipped with, which `qmllint` cannot see.
     function test_scroll_area_sizes_from_content_alone() {
         compare(scroller.viewport.contentHeight, 400, "the viewport did not size from its content");
-        verify(scroller._overflows, "400px of content in a 100px viewport did not overflow");
+        verify(scroller.overflows, "400px of content in a 100px viewport did not overflow");
+    }
+
+    // A cue must never claim there is more when the content fits, and it must
+    // never take a click meant for the row beneath it.
+    function test_scroll_cue_reports_and_does_not_intercept() {
+        verify(!shortCue.overflows, "a cue on content that fits claimed there was more");
+        verify(!shortCue.enabled, "the cue was left able to take a pointer event");
+    }
+
+    // The mark reads the viewport's own scroll fraction. Raw `contentY` drifts
+    // on a ListView as delegates above the viewport are created and destroyed,
+    // and a thumb positioned from it eventually runs past the end.
+    function test_scroll_cue_reads_the_canonical_fraction() {
+        verify(longCue.overflows, "a cue on overflowing content said it fit");
+        compare(longCue._ratio, longList.visibleArea.heightRatio,
+            "the cue did not take its ratio from visibleArea");
     }
 
     // A list you READ must not dim the nine rows that are not current to mark

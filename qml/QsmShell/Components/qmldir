@@ -12,6 +12,7 @@ Switch 1.0 Switch.qml
 Checkbox 1.0 Checkbox.qml
 Segmented 1.0 Segmented.qml
 Meter 1.0 Meter.qml
+ScrollCue 1.0 ScrollCue.qml
 ScrollArea 1.0 ScrollArea.qml
 Section 1.0 Section.qml
 Disclosure 1.0 Disclosure.qml
