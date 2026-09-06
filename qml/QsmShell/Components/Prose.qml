@@ -2,7 +2,8 @@ import QtQuick
 
 import qs.QsmShell.Style
 
-// THE text. One type, one axis: what ROLE this text plays.
+// THE text. One axis carries almost everything: what ROLE this text plays.
+// The FACE is the one thing a role does not decide, and `technical` is it.
 //
 // WHY it exists, measured: `font.pixelSize` was typed by hand 104 times in the
 // one consuming shell and 40-odd more inside this library, always as the same
@@ -42,12 +43,25 @@ Text {
     // grey. A call site that needs a specific colour still sets `color`.
     property bool muted: false
 
+    // The mono face, as a SECOND axis rather than a consequence of the role.
+    //
+    // It was tied to `reading` alone, and that turned out to be the one thing
+    // that pushed text back out of this type: a clock is a hero AND technical,
+    // a temperature is a display AND technical, a percentage under an icon is
+    // metadata AND technical. None of those is a "reading" — they are their
+    // own roles, at their own sizes, that happen to be made of digits. Every
+    // one of them had to abandon Prose and hand-type family, size and weight
+    // to get the face, which is the exact three-line incantation this type
+    // exists to delete.
+    //
+    // It still DEFAULTS from the role, so a reading needs to say nothing.
+    property bool technical: role === "reading"
+
     readonly property bool _wraps: role === "body"
-    readonly property bool _technical: role === "reading"
 
     color: muted || role === "metadata" || role === "section" ? Style.textMuted : Style.text
 
-    font.family: _technical ? Style.technicalFontFamily : Style.fontFamily
+    font.family: technical ? Style.technicalFontFamily : Style.fontFamily
     font.pixelSize: {
         switch (role) {
         case "hero": return Style.textHero;
@@ -87,9 +101,10 @@ Text {
     font.letterSpacing: role === "section" ? Style.trackingWide : 0
     font.capitalization: role === "section" ? Font.AllUppercase : Font.MixedCase
 
-    // Numbers that change must not shift the text beside them. This is why a
-    // reading is a role and not just "body in the mono face".
-    font.kerning: !_technical
+    // Numbers that change must not shift the text beside them, which is the
+    // whole reason the face exists as its own axis: it is a TABULAR decision,
+    // and it applies at every size a number is written at.
+    font.kerning: !technical
 
     wrapMode: _wraps ? Text.WordWrap : Text.NoWrap
     textFormat: Text.PlainText

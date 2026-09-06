@@ -207,6 +207,24 @@ TestCase {
         values: [1, 4, 2, 8]
     }
 
+    Prose {
+        id: clockText
+        role: "hero"
+        technical: true
+        text: "14:17"
+    }
+
+    Prose {
+        id: readingText
+        role: "reading"
+        text: "72%"
+    }
+
+    Prose {
+        id: labelText
+        text: "Devices"
+    }
+
     function test_every_type_constructs() {
         // A binding that failed to resolve leaves the object null; a property
         // typo inside one leaves the object alive but wrong. Both show up as a
@@ -379,6 +397,19 @@ TestCase {
         compare(thinLine._thickness, 1.5, "a stated thickness was ignored");
         compare(autoLine._thickness, Math.max(1, autoLine.height / 12),
             "the derived thickness was lost");
+    }
+
+    // The face is its own axis: a role that is not "reading" can still be
+    // written in digits, and a reading still needs to say nothing.
+    function test_the_technical_face_is_not_tied_to_one_role() {
+        compare(clockText.font.family, Style.technicalFontFamily,
+            "a technical hero did not get the mono face");
+        compare(clockText.font.pixelSize, Style.textHero,
+            "asking for the mono face changed the role's size");
+        compare(readingText.font.family, Style.technicalFontFamily,
+            "a reading stopped defaulting to the mono face");
+        compare(labelText.font.family, Style.fontFamily,
+            "an ordinary label was given the mono face");
     }
 
     function test_menu_selects_a_real_row() {
