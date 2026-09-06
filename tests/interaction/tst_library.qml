@@ -18,7 +18,7 @@ TestCase {
 
     name: "Library"
     width: 600
-    height: 500
+    height: 900
     visible: true
     when: windowShown
 
@@ -94,7 +94,50 @@ TestCase {
     IconButton { id: iconButton; icon: "check" }
     Slider { id: slider; width: 120; value: 0.5 }
     MonthCalendar { id: calendar; width: 260; shown: new Date(2026, 7, 1); today: new Date(2026, 7, 28) }
-    NotificationCard { id: notification; title: "Updated"; body: "Body"; source: "test" }
+    property var liveEntry: ({
+        notificationId: 1,
+        appName: "Test App",
+        summary: "Something happened",
+        body: "Body",
+        urgency: "normal",
+        actions: [{ id: "act-open", label: "Open" }, { id: "act-dismiss", label: "Dismiss" }],
+        createdAt: Date.now(),
+        paused: false
+    })
+    property var archivedEntry: ({
+        appName: "Test App",
+        summary: "An old one",
+        urgency: "low",
+        archivedAt: new Date(2026, 0, 1, 9, 30).getTime()
+    })
+    property int notificationDismissCount: 0
+    property string notificationLastAction: ""
+    // Every fixture above (and most below) defaults to (0, 0) and stays
+    // small; a pointer test needs real screen room of its own, clear of
+    // anything that could sit on top of it and steal the click — including
+    // its own expanded height and its sibling below.
+    NotificationCard {
+        id: notification
+        y: 550
+        entry: probe.liveEntry
+        draggable: true
+        // A fixed test fixture is a reference instance, not a fresh arrival;
+        // the settle animation would otherwise leave `opacity`/`scale`
+        // mid-flight while the very next line clicks it.
+        animateEntrance: false
+        width: implicitWidth
+        height: implicitHeight
+        onDismissed: probe.notificationDismissCount++
+        onActionTriggered: id => probe.notificationLastAction = id
+    }
+    NotificationCard {
+        id: archivedNotification
+        y: 650
+        entry: probe.archivedEntry
+        alwaysExpanded: true
+        width: implicitWidth
+        height: implicitHeight
+    }
     ActionTile { id: actionTile; icon: "power"; label: "Power off" }
     StatRing { id: ring; value: 0.7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
     // A device row: read, not picked, so it does not recede its neighbours.
@@ -241,7 +284,7 @@ TestCase {
             disclosure, scrim, shortCue, longCue, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, slider, calendar,
-            notification, actionTile, ring, deviceRow, resultRow, echoRow,
+            notification, archivedNotification, actionTile, ring, deviceRow, resultRow, echoRow,
             text2, toggle2, check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);
@@ -447,5 +490,46 @@ TestCase {
         menu.step(1);
         compare(menu.currentIndex, 0, "the menu did not land on its first row");
         verify(firstRow.selected, "selection did not reach the row itself");
+    }
+
+    // A component never manages its own dismissal: a middle click reports it
+    // through a signal, and never writes into the entry the consumer owns.
+    function test_notification_card_reports_dismissal_without_touching_its_entry() {
+        probe.notificationDismissCount = 0;
+        mouseClick(notification, notification.width / 2, notification.height / 2, Qt.MiddleButton);
+        compare(probe.notificationDismissCount, 1, "a middle click did not report a dismissal");
+        compare(probe.liveEntry.paused, false, "the card wrote into its own entry");
+    }
+
+    // An action press reports WHICH action, by id, rather than invoking
+    // anything on the entry itself — the entry here carries no `invoke`, so a
+    // card that called it would throw instead of merely no-op-ing.
+    function test_notification_card_action_click_reports_the_action_id() {
+        probe.notificationLastAction = "";
+        // Actions render only while expanded (04: popups are display-only,
+        // the actions row belongs to the expanded view). The card's own
+        // height animates open on a `Behavior`, and `clip: true` means a row
+        // sitting below the not-yet-settled height is clipped out of both
+        // paint AND hit-testing — wait for the settle before clicking.
+        notification.alwaysExpanded = true;
+        wait(250);
+        const secondAction = findChild(notification, "notificationAction1");
+        verify(secondAction !== null, "the second action row did not construct");
+        mouseClick(secondAction);
+        compare(probe.notificationLastAction, "act-dismiss", "the wrong action id was reported");
+        notification.alwaysExpanded = false;
+    }
+
+    // The entry shape's two time fields are mutually exclusive by
+    // construction: a live entry with a fresh `createdAt` reads as relative
+    // once expanded, and an archived one always reads as its wall-clock time.
+    function test_notification_card_timestamp_follows_archived_vs_live() {
+        compare(archivedNotification.timestampText(), "09:30",
+            "an archived entry did not show its wall-clock time");
+        verify(notification.alwaysExpanded === false, "fixture drifted");
+        notification.alwaysExpanded = true;
+        compare(notification.timestampText(), "just now",
+            "a fresh live entry did not read as just now while expanded");
+        notification.alwaysExpanded = false;
     }
 }

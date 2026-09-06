@@ -50,6 +50,7 @@
   "motion": {
     "press": 80,
     "micro": 130,
+    "microPop": 120,
     "fast": 180,
     "medium": 260,
     "large": 400,
@@ -83,7 +84,11 @@
     "ringDiameter": 150,
     "ringStroke": 8,
     "tileWidth": 96,
-    "tileHeight": 72
+    "tileHeight": 72,
+    "notificationDividerInset": 20,
+    "notificationActionHitMargin": 5,
+    "notificationExpandDragPx": 20,
+    "notificationDismissFraction": 0.4
   },
   "line": {
     "tight": 1.2,

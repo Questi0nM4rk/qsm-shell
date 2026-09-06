@@ -24,6 +24,11 @@ QtObject {
     readonly property int press: Style.reducedMotion ? 40 : Tokens.motionPress
     // micro — hover, toggle, a colour or opacity settling.
     readonly property int micro: Style.reducedMotion ? 60 : Tokens.motionMicro
+    // microPop — a small surface arriving with a scale settle (a card's
+    // entrance). Distinct from `micro`: it carries its own tuned duration
+    // rather than reusing the hover/toggle number, so retuning one does not
+    // silently retune the other.
+    readonly property int microPop: Style.reducedMotion ? 60 : Tokens.motionMicroPop
     // fast — a control changing shape, a row disclosing. The ceiling for
     // anything the pointer or the keyboard is waiting on.
     readonly property int fast: Style.reducedMotion ? 80 : Tokens.motionFast

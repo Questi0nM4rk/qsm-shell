@@ -131,6 +131,19 @@ QtObject {
     // A tile: an icon over its label, big enough to hit without aiming.
     readonly property int tileWidth: backend?.tileWidth ?? Tokens.geometryTileWidth
     readonly property int tileHeight: backend?.tileHeight ?? Tokens.geometryTileHeight
+    // A notification's own geometry: the separator inset, the invisible
+    // margin that lifts a small action label to a 24px hit target, how far a
+    // vertical drag must travel before it counts as expand/collapse, and the
+    // fraction of the card's own width a horizontal swipe must cross before
+    // it counts as a dismiss rather than a spring-back.
+    readonly property int notificationDividerInset: backend?.notificationDividerInset
+        ?? Tokens.geometryNotificationDividerInset
+    readonly property int notificationActionHitMargin: backend?.notificationActionHitMargin
+        ?? Tokens.geometryNotificationActionHitMargin
+    readonly property int notificationExpandDragPx: backend?.notificationExpandDragPx
+        ?? Tokens.geometryNotificationExpandDragPx
+    readonly property real notificationDismissFraction: backend?.notificationDismissFraction
+        ?? Tokens.geometryNotificationDismissFraction
 
     readonly property int ringDiameter: backend?.ringDiameter ?? Tokens.geometryRingDiameter
     readonly property int ringStroke: backend?.ringStroke ?? Tokens.geometryRingStroke

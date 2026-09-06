@@ -140,7 +140,21 @@ Rectangle {
             }
             after: IconButton { icon: "volume"; size: Style.iconMd; padding: Style.space2 }
         }
-        NotificationCard { visible: root.component === "notification"; Layout.preferredWidth: 380; selected: root.variant === "selected"; expanded: root.variant === "expanded"; title: "Reference shell updated"; body: "A deterministic notification fixture for the component library."; source: "qsm-test"; icon: "bell"; accent: Style.accent }
+        NotificationCard {
+            visible: root.component === "notification"
+            Layout.preferredWidth: 380
+            selected: root.variant === "selected"
+            alwaysExpanded: root.variant === "expanded"
+            animateEntrance: false
+            entry: ({
+                notificationId: 1,
+                appName: "qsm-test",
+                summary: "Reference shell updated",
+                body: "A deterministic notification fixture for the component library.",
+                urgency: "normal",
+                createdAt: Date.now()
+            })
+        }
         ActionTile { visible: root.component === "action-tile"; icon: "power"; label: "Power off"; selected: root.variant === "selected"; armed: root.variant === "armed" }
         ListRow {
             visible: root.component === "list-row"

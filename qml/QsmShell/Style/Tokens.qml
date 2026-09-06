@@ -43,6 +43,7 @@ QtObject {
     readonly property int iconLg: 26
     readonly property int motionPress: 80
     readonly property int motionMicro: 130
+    readonly property int motionMicroPop: 120
     readonly property int motionFast: 180
     readonly property int motionMedium: 260
     readonly property int motionLarge: 400
@@ -71,6 +72,10 @@ QtObject {
     readonly property int geometryRingStroke: 8
     readonly property int geometryTileWidth: 96
     readonly property int geometryTileHeight: 72
+    readonly property int geometryNotificationDividerInset: 20
+    readonly property int geometryNotificationActionHitMargin: 5
+    readonly property int geometryNotificationExpandDragPx: 20
+    readonly property real geometryNotificationDismissFraction: 0.4
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

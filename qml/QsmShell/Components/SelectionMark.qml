@@ -23,12 +23,19 @@ Rectangle {
     // keyboard is on. Wider, not brighter: brightness is already spoken for.
     property bool strong: false
     property color markColor: Style.accent
+    // What a SHOWN-but-not-strong mark reads at. A list cursor is either gone
+    // or fully present, so this defaults to 1 and every existing consumer is
+    // unaffected. A mark that never leaves (a notification's urgency tick,
+    // present on every row and only THICKENING on select) needs a third,
+    // dimmer level for "here, but not the current one" — brightening it too
+    // would spend the same signal `strong` already owns.
+    property real restOpacity: 1
 
     width: root.strong ? Style.markThickness + Style.spaceTight : Style.markThickness
     height: root.shown ? Style.markHeight : 0
     radius: width / 2
     color: root.markColor
-    opacity: root.shown ? 1 : 0
+    opacity: root.shown ? (root.strong ? 1 : root.restOpacity) : 0
 
     // It grows in and shrinks away, and the two are not the same motion: an
     // arrival lands, a departure gets out of the way.
