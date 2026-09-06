@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 
 import qs.QsmShell.Style
 
@@ -33,6 +34,12 @@ Rectangle {
     property bool selected: false
     property bool focused: root.activeFocus
 
+    // The keyboard handlers below need focus, and nothing was giving it: no
+    // tab stop, and a pointer press that never moved focus here. The five
+    // states law counts a state the component cannot express as a state it
+    // does not have, and this one was written down and unreachable.
+    activeFocusOnTab: enabled
+
     signal clicked
 
     // The swatch decides its own ink so no call site has to, and it decides it
@@ -41,14 +48,24 @@ Rectangle {
     // for a dark one, which is only right while background is the dark one —
     // under a light backend it hands a pale swatch pale ink.
     //
-    // The sample is composited over the surface first: a 20%-alpha colour is
-    // not the colour you would measure, and reading the raw value picks ink
-    // for a swatch nobody can see.
-    readonly property color _seen: Qt.rgba(
-        sample.r * sample.a + Style.surface.r * (1 - sample.a),
-        sample.g * sample.a + Style.surface.g * (1 - sample.a),
-        sample.b * sample.a + Style.surface.b * (1 - sample.a),
-        1)
+    // The sample is composited over what is actually BEHIND it first: a
+    // 20%-alpha colour is not the colour you would measure, and reading the
+    // raw value picks ink for a swatch nobody can see.
+    //
+    // Behind a translucent sample is the alpha check, not the surface — two
+    // colours, not one. Measuring against the surface picked pale ink that
+    // then sat on the check's white cells and vanished. So a translucent
+    // sample is measured against BOTH cells and the ink has to survive the
+    // worse of them.
+    function _over(ground: color): color {
+        return Qt.rgba(sample.r * sample.a + ground.r * (1 - sample.a),
+            sample.g * sample.a + ground.g * (1 - sample.a),
+            sample.b * sample.a + ground.b * (1 - sample.a), 1);
+    }
+
+    readonly property color _seen: _over(Style.surface)
+    readonly property color _seenLight: _over("#ffffff")
+    readonly property color _seenDark: _over("#c0c0c0")
 
     // WCAG relative luminance: sRGB has to be linearised first, and skipping
     // that is why mid-tones get the wrong answer.
@@ -66,8 +83,17 @@ Rectangle {
         return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
     }
 
+    // The worst contrast this ink would face on this swatch. Opaque: one
+    // ground. Translucent: the two check cells, and the ink must read on both.
+    function _worst(candidate: color): real {
+        return root.sample.a < 1
+            ? Math.min(root._contrast(root._seenLight, candidate),
+                root._contrast(root._seenDark, candidate))
+            : root._contrast(root._seen, candidate);
+    }
+
     // Whichever of the theme's two inks actually reads on this sample.
-    readonly property color ink: _contrast(_seen, Style.text) >= _contrast(_seen, Style.background)
+    readonly property color ink: _worst(Style.text) >= _worst(Style.background)
         ? Style.text
         : Style.background
 
@@ -87,32 +113,64 @@ Rectangle {
     // anyway (it is rectangular).
 
 
-    // The alpha check, first, so a translucent sample composites over it.
-    // Without it a 20%-alpha colour reads as a different opaque colour, which
-    // is the one confusion a colour tool must not create.
+    // The FACE: the alpha check with the sample composited over it, masked to
+    // the swatch's own corner.
+    //
+    // The check comes first, because without it a 20%-alpha colour reads as a
+    // different opaque colour, which is the one confusion a colour tool must
+    // not create. A Rectangle radius does not round it: item clipping is
+    // rectangular, so the check's corner cells sat square outside the sample's
+    // curve. `MultiEffect.maskSource` is the mechanism that actually cuts
+    // them, and it is applied to the pair so they cannot disagree.
+    //
+    // The mask stops here. Everything that RESPONDS to a pointer — the ring,
+    // the reading, the state layer — is outside it, because a mask the size of
+    // the swatch would clip the hover growth back to nothing.
     Item {
+        id: face
         anchors.fill: parent
-        visible: !root.empty && root.sample.a < 1
+        visible: false
+        layer.enabled: true
 
-        Repeater {
-            model: 16
+        Item {
+            anchors.fill: parent
+            visible: root.sample.a < 1
 
-            delegate: Rectangle {
-                required property int index
-                width: root.width / 4
-                height: root.height / 4
-                x: (index % 4) * width
-                y: Math.floor(index / 4) * height
-                color: (index + Math.floor(index / 4)) % 2 === 0 ? "#ffffff" : "#c0c0c0"
+            Repeater {
+                model: 16
+
+                delegate: Rectangle {
+                    required property int index
+                    width: face.width / 4
+                    height: face.height / 4
+                    x: (index % 4) * width
+                    y: Math.floor(index / 4) * height
+                    color: (index + Math.floor(index / 4)) % 2 === 0 ? "#ffffff" : "#c0c0c0"
+                }
             }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: root.sample
         }
     }
 
     Rectangle {
+        id: faceMask
+        anchors.fill: parent
+        radius: root.radius
+        color: "black"
+        visible: false
+        layer.enabled: true
+    }
+
+    MultiEffect {
         anchors.fill: parent
         visible: !root.empty
-        radius: root.radius
-        color: root.sample
+        source: face
+        maskEnabled: true
+        maskSource: faceMask
     }
 
     // The empty slot: an outline and nothing else. Not a dashed border and not
@@ -167,7 +225,10 @@ Rectangle {
         focusRadius: root.radius
         hoverScale: 1.08
         pressScale: 0.94
-        onClicked: root.clicked()
+        onClicked: {
+            root.forceActiveFocus();
+            root.clicked();
+        }
     }
 
     Keys.onSpacePressed: if (root.enabled) root.clicked()

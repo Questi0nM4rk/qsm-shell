@@ -31,10 +31,21 @@ Item {
     property string status: ""
     // The stand-in for a thing rather than a person. Set this OR `name`.
     property string icon: ""
+    // How big the stand-in is drawn. Two-fifths of the diameter is the rule
+    // for initials — big enough to read, small enough that two letters clear
+    // the circle at every size — and it is only a DEFAULT for a glyph, whose
+    // weight varies with the icon. A consumer that had a size before this type
+    // existed states it rather than being silently resized.
+    property real glyphSize: Math.round(size * 0.4)
     // Round by default, because that is what a portrait is. A consumer that
     // frames a thing rather than a face states its own corner: album art is a
     // sleeve, and a sleeve is square with the room's rounding on it.
-    property real radius: size / 2
+    //
+    // Measured from the RENDERED box, not from `size`: a consumer that anchors
+    // or fills this item without touching `size` would otherwise keep the
+    // corner of a diameter it is no longer drawn at, and the ground and the
+    // mask would stop following the picture.
+    property real radius: Math.min(width, height) / 2
 
     readonly property string initials: {
         const words = name.trim().split(/\s+/).filter(word => word.length > 0);
@@ -58,7 +69,7 @@ Item {
             anchors.centerIn: parent
             visible: portrait.status !== Image.Ready && root.icon.length > 0
             name: root.icon
-            size: Math.round(root.size * 0.4)
+            size: root.glyphSize
             color: Style.textMuted
         }
 
@@ -66,10 +77,7 @@ Item {
             anchors.centerIn: parent
             visible: portrait.status !== Image.Ready && root.icon.length === 0
             role: "title"
-            // Big enough to read at a glance, small enough that two letters
-            // clear the circle at every size. Two-fifths of the diameter is
-            // the whole rule.
-            font.pixelSize: Math.round(root.size * 0.4)
+            font.pixelSize: root.glyphSize
             muted: true
             text: root.initials
         }

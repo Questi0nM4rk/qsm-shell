@@ -412,6 +412,25 @@ TestCase {
             "an ordinary label was given the mono face");
     }
 
+    // Advertised keyboard activation has to be REACHABLE: the handlers need
+    // focus, and nothing was giving the swatch any.
+    function test_a_swatch_can_be_reached_by_keyboard() {
+        verify(clearSwatch.activeFocusOnTab, "the swatch is not a tab stop");
+        clearSwatch.forceActiveFocus();
+        verify(clearSwatch.focused, "focus did not reach the swatch");
+        keyClick(Qt.Key_Space);
+        verify(true, "space on a focused swatch must not throw");
+    }
+
+    // A glyph stand-in keeps whatever size the consumer had, and the corner is
+    // measured from the box the item is actually drawn at.
+    function test_avatar_geometry_follows_what_is_drawn() {
+        compare(thing.glyphSize, Math.round(thing.size * 0.4),
+            "the default glyph size left the two-fifths rule");
+        compare(person.radius, Math.min(person.width, person.height) / 2,
+            "the corner was measured from `size` rather than from the box");
+    }
+
     function test_menu_selects_a_real_row() {
         menu.currentIndex = -1;
         menu.step(1);
