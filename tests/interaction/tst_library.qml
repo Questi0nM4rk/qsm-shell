@@ -138,6 +138,28 @@ TestCase {
         width: implicitWidth
         height: implicitHeight
     }
+    property var centerEntries: [
+        {
+            notificationId: 10,
+            appName: "Alpha",
+            summary: "Alpha live",
+            body: "",
+            actions: [{ id: "a1", label: "One" }, { id: "a2", label: "Two" }]
+        },
+        { archivedAt: 500, appName: "Alpha", summary: "Alpha archived", body: "" },
+        { notificationId: 11, appName: "Beta", summary: "Beta live", body: "" }
+    ]
+    property var centerDismissed: null
+    property var centerActionEntry: null
+    property string centerActionId: ""
+    NotificationCenter {
+        id: center
+        y: 780
+        width: 400
+        entries: probe.centerEntries
+        onDismissRequested: entry => probe.centerDismissed = entry
+        onActionTriggered: (entry, id) => { probe.centerActionEntry = entry; probe.centerActionId = id; }
+    }
     ActionTile { id: actionTile; icon: "power"; label: "Power off" }
     StatRing { id: ring; value: 0.7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
     // A device row: read, not picked, so it does not recede its neighbours.
@@ -284,7 +306,7 @@ TestCase {
             disclosure, scrim, shortCue, longCue, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, slider, calendar,
-            notification, archivedNotification, actionTile, ring, deviceRow, resultRow, echoRow,
+            notification, archivedNotification, center, actionTile, ring, deviceRow, resultRow, echoRow,
             text2, toggle2, check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);
@@ -531,5 +553,48 @@ TestCase {
         compare(notification.timestampText(), "just now",
             "a fresh live entry did not read as just now while expanded");
         notification.alwaysExpanded = false;
+    }
+
+    // Live beats archived within an app group; both apps here carry a live
+    // entry, so a stable sort keeps them in their original relative order —
+    // Alpha's own live-before-archived is the rule actually worth protecting.
+    function test_notification_center_groups_live_before_archived_within_an_app() {
+        const items = center.items;
+        compare(items.length, 3, "the flat entries list did not all survive filtering");
+        compare(items[0].notificationId, 10, "Alpha's live entry was not first in its group");
+        compare(items[1].archivedAt, 500, "Alpha's archived entry did not follow its live one");
+        compare(items[2].notificationId, 11, "Beta's entry left its own group");
+    }
+
+    function test_notification_center_query_filters_entries() {
+        compare(center.items.length, 3, "an empty query filtered entries out");
+        center.query = "zzzz-no-such-thing";
+        compare(center.items.length, 0, "a query with no match still returned entries");
+        center.query = "";
+        compare(center.items.length, 3, "clearing the query did not restore the full list");
+    }
+
+    // A component never manages its own dismissal: removing the selected
+    // entry reports it, and never touches the array the consumer owns.
+    function test_notification_center_remove_selected_reports_without_mutating_entries() {
+        probe.centerDismissed = null;
+        center.currentIndex = 0;
+        center.removeSelected();
+        verify(probe.centerDismissed !== null, "removeSelected did not report a dismissal");
+        compare(probe.centerDismissed.notificationId, 10, "the wrong entry was reported");
+        compare(probe.centerEntries.length, 3, "the entries array was mutated");
+    }
+
+    // Enter with an action focused activates that action by id; the same
+    // signal a mouse click on the card's own action row reports.
+    function test_notification_center_keyboard_action_activation_reports_the_id() {
+        probe.centerActionEntry = null;
+        probe.centerActionId = "";
+        center.currentIndex = 0;
+        center.toggleSelected();
+        center.moveAction(1);
+        center.activateSelected();
+        compare(probe.centerActionId, "a1", "the wrong action id was reported");
+        compare(probe.centerActionEntry.notificationId, 10, "the wrong entry was reported");
     }
 }

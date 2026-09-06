@@ -29,6 +29,7 @@ ArmedAction 1.0 ArmedAction.qml
 Card 1.0 Card.qml
 MonthCalendar 1.0 MonthCalendar.qml
 NotificationCard 1.0 NotificationCard.qml
+NotificationCenter 1.0 NotificationCenter.qml
 ActionTile 1.0 ActionTile.qml
 Menu 1.0 Menu.qml
 ListRow 1.0 ListRow.qml
