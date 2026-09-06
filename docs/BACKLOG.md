@@ -2,45 +2,60 @@
 
 ## Next
 
-- **Port the existing qsm-desktop edge shader unchanged**, then render one
-  `ShellBorder` with one dynamically anchored rollout, and review THAT live
-  before adding nesting, welding, resizing or fullscreen rules.
+### `ShellBorder` — decided 2026-09-06, not started
 
-  The consumer's `Rollout` (`qsm-desktop/shell/components/Rollout.qml`, ~390
-  lines) is the thing to lift, and it is the last real duplication between the
-  two repos. What makes it hard: it registers its live silhouette rect and its
-  hit rect into two registries owned by `EdgeScene`, which feed a single
-  full-screen SDF fragment shader per monitor. Lifting the rollout means
-  lifting the scene, the registries and the shader with it — that is the
-  `ShellBorder` system, not a component, and it wants an owner decision before
-  any code.
+The owner has ruled. The decision record is in the consumer repo at
+`qsm-desktop/docs/design-2026-09-06-shell-border.md` and the sub-phases in its
+`spec/13-implementation.md` phase 11. In short:
 
-  One rule it already carries and the library will need:
-  `contentCenterOffsetX/Y`. A rollout is the band BULGING, so content that
-  centres itself has to centre in body+band; centring in the body alone puts
-  it half a band-depth off, every time, on every rollout.
+- This library owns `Rollout`, both registries, the uniform packing, and the
+  `.frag` plus its committed `.qsb`. It therefore gains a `qsb` build step and
+  stops being pure QML. That cost is accepted, because the alternative — the
+  consumer keeping the shader — means a second consumer writes its own and the
+  two drift by construction.
+- It never names Wayland, monitors or input masks. It publishes plain
+  rectangles; the consumer turns them into a `Region`.
+- `Rollout` finds its host by DUCK TYPING: seven functions plus one
+  `fullscreen` read. Write that contract as a test BEFORE the move — it is the
+  only thing keeping the rollout honest once the host is untyped.
 
-- **`ScrollArea` still has no consumer** (`ScrollCue` has one: the cheat
-  sheet). Eight surfaces in qsm-desktop still
-  hand-roll a Flickable + a clip + a bar somebody drew + a fade somebody else
-  drew: `ColorPickContent`, `RailAppList`, `LauncherSurface`, `ThemeCarousel`,
-  `WorkspacesTab`, `NotificationCenterTab`, `ClipboardSurface`,
-  `CheatSheetSurface`. Migrating them is the check on whether the component is
-  actually right; until one uses it, it is a guess.
+Order, deliberately slow: port the shader unchanged, then ONE `ShellBorder`
+with one dynamically anchored rollout, then an owner live review before
+nesting, welding, resizing or fullscreen rules.
 
-- **`Dialog`, `Popover`, `Scrim`, `Skeleton`, `Avatar` and `Sparkline` have no
-  consumer either.** Each was built against a hand-rolled equivalent in
-  qsm-desktop (`ModalHost`, `BarPopouts` + `PopoutController`, the session
-  backdrop, the dashboard and performance tabs). Same rule: the migration is
-  the proof — and it is not a formality. Every component migrated so far
-  turned out to be missing a rule the hand-rolled version had learned:
-  `ScrollCue` was reading `contentY` instead of `visibleArea` and had no cap
-  on the mark's length, and `StatRing` could not draw a partial arc at all.
+One rule to carry on day one: `contentCenterOffsetX/Y`. A rollout is the band
+BULGING, so content that centres itself centres in body plus band; centring in
+the body alone is half a band-depth off, every time, on every rollout.
 
-- **`Popover` is placement, not a tooltip and not a menu.** Its own header now
-  says so. Building either of those over it is real work — focus entry and
-  return, keyboard activation, whether the content is reachable at all — and
-  it should wait for a surface that needs one rather than being guessed at.
+### Types with no consumer
+
+Each was built against a hand-rolled equivalent in qsm-desktop and none has
+been used yet. The migration IS the proof, and it is not a formality: every
+type migrated this session turned out to be missing a rule, and two of them
+(`ColorSwatch` clipping its own hover growth; its selection ring vanishing into
+an accent-coloured sample) were invisible until a real consumer used them.
+
+- `Dialog`, `Scrim`, `Skeleton` — and the desktop cannot supply consumers for
+  the first two: it has no focus trap anywhere, and its session backdrop must
+  be its own Wayland layer for compositor blur. Wait for a consumer that needs
+  them rather than forcing one.
+- `Popover` is PLACEMENT, not a tooltip and not a menu. Building either over it
+  is real work — focus entry and return, keyboard activation, whether the
+  content is reachable — and should wait for a surface that needs one.
+
+### The type scale has a missing step
+
+The consumer has 14 places wanting supporting text at `textSm`. No role offers
+it: `metadata` is `textXs`. Fourteen sites reaching for the same gap is an
+argument about the ladder, not about the sites. Settle it before the rest of
+that migration.
+
+### Notification popup stack
+
+`NotificationCard` and `NotificationCenter` landed. The popup stack did not:
+its eviction choreography needs `Motion.revealSmall` and `Motion.revealCurve`,
+which are `Rollout`'s tokens and arrive with the `ShellBorder` lift. It is
+waiting on that, not blocked by anything of its own.
 
 ## Later
 
@@ -63,6 +78,22 @@
 ## Measured Qt quirks
 
 Each cost real time once. None is findable by reading the code.
+
+- **`clip: true` shaves a child's hover growth.** A control that answers a
+  pointer by growing cannot sit inside a clipping ancestor sized to it — the
+  response is cut back to nothing and the control reads as dead. `ColorSwatch`
+  clipped itself this way to round its sample; the sample carries its own
+  corner now. Measured by the consumer's `ui-guard` at 1.3px off a 32px swatch.
+- **A `Rectangle` radius does not round its children, and `clip` does not
+  either.** Item clipping is RECTANGULAR. `Rectangle { radius; clip: true }`
+  around an `Image` leaves the picture square inside a round frame, and
+  `layer.enabled` on the child does not help. `MultiEffect.maskSource` is the
+  only mechanism that cuts the corners. Three surfaces in the consumer had this
+  bug and none of it was visible in the code.
+- **`Keys.onSpacePressed` needs focus, and nothing gives it by default.** A
+  component that declares key handlers without `activeFocusOnTab` and without
+  moving focus on pointer press has advertised a keyboard path that cannot be
+  reached. By the five-states law that is a state it does not have.
 
 - **`Keys.onPressed` accepting an event does NOT stop the per-key handler.**
   `Keys.onPressed` and `Keys.onDownPressed` hang off the same attached object,
