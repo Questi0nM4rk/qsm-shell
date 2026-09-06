@@ -47,6 +47,9 @@ QtObject {
     readonly property int motionFast: 180
     readonly property int motionMedium: 260
     readonly property int motionLarge: 400
+    readonly property int motionRevealLarge: 500
+    readonly property int motionRevealSmall: 250
+    readonly property int motionMorphGlide: 250
     readonly property int motionSpin: 900
     readonly property int motionPulse: 1400
     readonly property real opacityDisabled: 0.35

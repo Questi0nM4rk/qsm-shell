@@ -54,6 +54,9 @@
     "fast": 180,
     "medium": 260,
     "large": 400,
+    "revealLarge": 500,
+    "revealSmall": 250,
+    "morphGlide": 250,
     "spin": 900,
     "pulse": 1400
   },

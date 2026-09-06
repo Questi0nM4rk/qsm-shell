@@ -37,6 +37,39 @@ QtObject {
     // large — a whole surface rolling out or retracting.
     readonly property int large: Style.reducedMotion ? 120 : Tokens.motionLarge
 
+    // ── the rollout tier ────────────────────────────────────────────────
+    // A rollout is not a surface arriving on top of another one: it is the
+    // border BULGING, one continuous silhouette deforming. That is a different
+    // event from `large`, it is slower on purpose, and it carries its own
+    // curves -- which is why it gets its own names rather than reusing the
+    // surface tier at a different number.
+    //
+    // Two tiers, and the split is size: a whole panel unrolling reads wrong at
+    // the speed a popout should take, and a popout at panel speed reads as a
+    // hesitation.
+    readonly property int revealLarge: Style.reducedMotion ? 120 : Tokens.motionRevealLarge
+    readonly property int revealSmall: Style.reducedMotion ? 120 : Tokens.motionRevealSmall
+    // morphGlide -- one entry MORPHING into the next while both stay on
+    // screen. Same number as revealSmall today and deliberately its own token:
+    // a glide and a reveal are different events and must be retunable apart.
+    readonly property int morphGlide: Style.reducedMotion ? 120 : Tokens.motionMorphGlide
+
+    // The reveal curves are bezier control points, not durations, so they are
+    // constants rather than theme tokens: a theme changes how long the border
+    // takes, never what shape the deformation has.
+    //
+    // NO overshoot in either. A spring was tried and cut: overshoot made every
+    // reveal read as a popup landing on top of the shell rather than as the
+    // border itself moving. Where organic feel is wanted, the goo deformation
+    // supplies it -- the curve stays honest.
+    //
+    // Reveal is a strong decelerate: fast out of the border, soft landing.
+    readonly property var revealCurve: [0.05, 0.7, 0.1, 1.0, 1.0, 1.0]
+    // Retract is a gentle accelerate-decelerate. It is NOT an exit curve: the
+    // border does not leave, it returns to rest, and an exit curve there reads
+    // as the surface being yanked away.
+    readonly property var retractCurve: [0.3, 0.0, 0.2, 1.0, 1.0, 1.0]
+
     // ── loops ───────────────────────────────────────────────────────────
     // Everything above names a ONE-SHOT change: how long a thing takes to
     // arrive or to leave. A loop is a different quantity — it has a period,
