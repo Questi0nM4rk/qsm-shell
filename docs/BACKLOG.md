@@ -50,12 +50,16 @@ an accent-coloured sample) were invisible until a real consumer used them.
   is real work — focus entry and return, keyboard activation, whether the
   content is reachable — and should wait for a surface that needs one.
 
-### The type scale has a missing step
+### The type scale has a missing step — SETTLED 2026-09-07
 
-The consumer has 14 places wanting supporting text at `textSm`. No role offers
-it: `metadata` is `textXs`. Fourteen sites reaching for the same gap is an
-argument about the ladder, not about the sites. Settle it before the rest of
-that migration.
+`Prose` gained a tenth role, `supporting`: metadata's shape (muted, regular,
+single line, elided) one step up the scale at `textSm`. `body` + `muted` is not
+the same thing and was the tempting wrong answer -- it wraps and does not
+elide, so it is the role for a paragraph, not for the line under a title.
+
+The `prose-ladder` scenario captures title / body / supporting / metadata
+together, because the only question worth asking about a supporting role is
+whether it is tellable from its neighbours.
 
 ### Notification popup stack
 

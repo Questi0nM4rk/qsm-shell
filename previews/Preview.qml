@@ -71,6 +71,22 @@ Rectangle {
             role: root.variant
             text: `Prose / ${root.variant}`
         }
+        // The four roles that sit next to each other on the scale. They are
+        // captured TOGETHER because the only question worth asking about a
+        // supporting role is whether it is tellable from its neighbours.
+        ColumnLayout {
+            visible: root.component === "prose-ladder"
+            spacing: Style.space3
+            Repeater {
+                model: ["title", "body", "supporting", "metadata"]
+                ColumnLayout {
+                    required property string modelData
+                    spacing: 0
+                    Prose { role: "section"; text: modelData }
+                    Prose { role: parent.modelData; text: "The rail keeps its width while a popout is open" }
+                }
+            }
+        }
         Capsule { visible: root.component === "capsule"; icon: "bell"; label: "Notifications"; detail: root.variant === "active" ? "2" : ""; active: root.variant === "active" }
         Slider { visible: root.component === "level"; Layout.preferredWidth: 260; value: root.variant === "high" ? .82 : .42; wheelStep: .05 }
         // A row in a list you READ: no recession, a reading and a tertiary

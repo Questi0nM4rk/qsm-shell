@@ -22,7 +22,10 @@ import qs.QsmShell.Style
 //   title     the title of a thing inside a surface: a card, a row.
 //   body      prose that wraps. The only role that gets a body line height.
 //   label     the name of a control or a field. The default.
-//   metadata  supporting text: a timestamp, a source, a subtitle.
+//   metadata  the fine print: a timestamp, a source, a count.
+//   supporting  metadata's job one step up the scale: the line that explains
+//             the thing above it and is meant to be READ, not skimmed past.
+//             Same shape as metadata, at body size.
 //   reading   a VALUE, in the technical face — a percentage, an address, a
 //             key combination. Tabular by intent: numbers that change must not
 //             move the text around them.
@@ -35,7 +38,7 @@ import qs.QsmShell.Style
 Text {
     id: root
 
-    // hero | display | heading | title | body | label | metadata | reading | section
+    // hero | display | heading | title | body | label | supporting | metadata | reading | section
     property string role: "label"
 
     // Muted is a ROLE modifier, not a colour choice: it says "this text is
@@ -59,7 +62,7 @@ Text {
 
     readonly property bool _wraps: role === "body"
 
-    color: muted || role === "metadata" || role === "section" ? Style.textMuted : Style.text
+    color: muted || role === "supporting" || role === "metadata" || role === "section" ? Style.textMuted : Style.text
 
     font.family: technical ? Style.technicalFontFamily : Style.fontFamily
     font.pixelSize: {
@@ -69,6 +72,7 @@ Text {
         case "heading": return Style.textXl;
         case "title": return Style.textMd;
         case "body": return Style.textSm;
+        case "supporting": return Style.textSm;
         case "metadata": return Style.textXs;
         case "reading": return Style.textSm;
         case "section": return Style.textXs;
@@ -84,6 +88,7 @@ Text {
         case "reading":
         case "section": return Style.weightBold;
         case "body":
+        case "supporting":
         case "metadata": return Style.weightRegular;
         default: return Style.weightMedium;
         }
