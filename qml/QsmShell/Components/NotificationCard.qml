@@ -95,10 +95,12 @@ Item {
     // filter change) can skip the settle; a fresh arrival gets it.
     property bool animateEntrance: true
     property real entranceProgress: root.animateEntrance ? 0 : 1
-    opacity: root.entranceProgress
     // A small settle rather than a real button press — the same idiom every
-    // control's own `pressScale` uses, at its own tuned amount.
-    scale: 0.97 + root.entranceProgress * 0.03
+    // control's own `pressScale` uses, named as its own property rather than
+    // a literal in the scale expression below (same law, `pressScale` etc.).
+    property real entranceScale: 0.97
+    opacity: root.entranceProgress
+    scale: root.entranceScale + root.entranceProgress * (1 - root.entranceScale)
     Behavior on entranceProgress {
         NumberAnimation { duration: Motion.microPop; easing.type: Motion.emphasizedEasing }
     }
