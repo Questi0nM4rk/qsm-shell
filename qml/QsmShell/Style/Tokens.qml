@@ -16,6 +16,7 @@ QtObject {
     readonly property color colorSurfaceHover: "#382a48"
     readonly property color colorText: "#f6f1f9"
     readonly property color colorTextMuted: "#b6a8c2"
+    readonly property color colorBandFill: "#15081e"
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -50,11 +51,14 @@ QtObject {
     readonly property int motionRevealLarge: 500
     readonly property int motionRevealSmall: 250
     readonly property int motionMorphGlide: 250
+    readonly property real motionMicroPopScale: 0.97
     readonly property int motionSpin: 900
     readonly property int motionPulse: 1400
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.45
+    readonly property int opacityBandRimStrength: 0
+    readonly property real opacityBandStrokeStrength: 0.55
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28
@@ -79,6 +83,10 @@ QtObject {
     readonly property int geometryNotificationActionHitMargin: 5
     readonly property int geometryNotificationExpandDragPx: 20
     readonly property real geometryNotificationDismissFraction: 0.4
+    readonly property int geometryMeltSmoothing: 20
+    readonly property int geometryEdgeSnapReach: 32
+    readonly property int geometryBandRimWidth: 6
+    readonly property int geometryBandStrokeWidth: 2
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

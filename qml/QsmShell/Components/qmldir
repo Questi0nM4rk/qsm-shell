@@ -42,3 +42,5 @@ SvgIcon 1.0 SvgIcon.qml
 IconButton 1.0 IconButton.qml
 SelectionMark 1.0 SelectionMark.qml
 Slider 1.0 Slider.qml
+ShellBorder 1.0 ShellBorder.qml
+Rollout 1.0 Rollout.qml

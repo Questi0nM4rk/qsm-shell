@@ -12,7 +12,8 @@
     "surfaceRaised": "#2d1f3a",
     "surfaceHover": "#382a48",
     "text": "#f6f1f9",
-    "textMuted": "#b6a8c2"
+    "textMuted": "#b6a8c2",
+    "bandFill": "#15081e"
   },
   "space": {
     "tight": 2,
@@ -57,13 +58,16 @@
     "revealLarge": 500,
     "revealSmall": 250,
     "morphGlide": 250,
+    "microPopScale": 0.97,
     "spin": 900,
     "pulse": 1400
   },
   "opacity": {
     "disabled": 0.35,
     "surface": 0.9,
-    "recede": 0.45
+    "recede": 0.45,
+    "bandRimStrength": 0,
+    "bandStrokeStrength": 0.55
   },
   "font": {
     "family": "sans-serif",
@@ -91,7 +95,11 @@
     "notificationDividerInset": 20,
     "notificationActionHitMargin": 5,
     "notificationExpandDragPx": 20,
-    "notificationDismissFraction": 0.4
+    "notificationDismissFraction": 0.4,
+    "meltSmoothing": 20,
+    "edgeSnapReach": 32,
+    "bandRimWidth": 6,
+    "bandStrokeWidth": 2
   },
   "line": {
     "tight": 1.2,

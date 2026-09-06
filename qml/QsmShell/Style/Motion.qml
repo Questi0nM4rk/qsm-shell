@@ -29,6 +29,15 @@ QtObject {
     // rather than reusing the hover/toggle number, so retuning one does not
     // silently retune the other.
     readonly property int microPop: Style.reducedMotion ? 60 : Tokens.motionMicroPop
+    // microPopDuration — the same settle, named for a host whose content
+    // slot rides it directly (Rollout's `settleContent`). One fact, two
+    // names during the transition: retuning `microPop` retunes this too.
+    readonly property int microPopDuration: microPop
+    // microPopScale — the one settle scale every micro-pop entrance shares
+    // (0.97: barely a press, just enough to read as arriving rather than
+    // appearing). Unlike the duration it does not shorten under reduced
+    // motion; reduced motion asks for less TIME, not a smaller shape.
+    readonly property real microPopScale: Tokens.motionMicroPopScale
     // fast — a control changing shape, a row disclosing. The ceiling for
     // anything the pointer or the keyboard is waiting on.
     readonly property int fast: Style.reducedMotion ? 80 : Tokens.motionFast

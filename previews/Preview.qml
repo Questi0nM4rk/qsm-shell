@@ -273,4 +273,37 @@ Rectangle {
             }
         }
     }
+
+    // ShellBorder + Rollout: order-of-work step 2 (docs/design-2026-09-06-
+    // shell-border) — one host, one dynamically anchored rollout, reviewed
+    // live before anything else is added. Full-viewport, unlike every other
+    // scenario above: the band geometry only reads as a band at real size.
+    Item {
+        id: shellBorderStage
+        anchors.fill: parent
+        visible: root.component === "shell-border"
+
+        ShellBorder {
+            id: borderHost
+            anchors.fill: parent
+        }
+
+        Rollout {
+            host: borderHost
+            rolloutId: "preview-rollout"
+            edges: ["top"]
+            shouldBeActive: root.variant === "shown"
+
+            Rectangle {
+                width: 320
+                height: 140
+                color: "transparent"
+                Prose {
+                    anchors.centerIn: parent
+                    role: "section"
+                    text: "ShellBorder preview"
+                }
+            }
+        }
+    }
 }

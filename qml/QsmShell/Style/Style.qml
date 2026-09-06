@@ -40,6 +40,16 @@ QtObject {
     readonly property color surfaceRaised: backend?.surfaceRaised ?? Tokens.colorSurfaceRaised
     readonly property color text: backend?.text ?? Tokens.colorText
     readonly property color textMuted: backend?.textMuted ?? Tokens.colorTextMuted
+    // The band's own fill: the one colour drawn from the wallpaper's darkness
+    // rather than the palette ramp (spec 01-frame), so the melt silhouette
+    // reads as a frame around the content, not a panel floating on it.
+    readonly property color bandFill: backend?.bandFill ?? Tokens.colorBandFill
+    // Edge-readability rim and glass-edge stroke on the melt silhouette. Both
+    // default to an EXISTING role rather than a private hex, mirroring the
+    // consumer theme this was measured against: the rim is the outline
+    // colour, the stroke is the text colour, at low strength.
+    readonly property color bandRim: backend?.bandRim ?? outline
+    readonly property color bandStroke: backend?.bandStroke ?? text
 
     // ── opacity ─────────────────────────────────────────────────────────
     readonly property real opacityDisabled: backend?.opacityDisabled ?? Tokens.opacityDisabled
@@ -49,6 +59,11 @@ QtObject {
     // number from `opacityDisabled`, because receding says "later" and
     // disabled says "never".
     readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
+    // Melt silhouette rim and glass-edge strengths (LIVE-TUNE): 0 disables
+    // the rim entirely — the band separates by fill, not by a lit edge.
+    readonly property real bandRimStrength: backend?.bandRimStrength ?? Tokens.opacityBandRimStrength
+    readonly property real bandStrokeStrength: backend?.bandStrokeStrength
+        ?? Tokens.opacityBandStrokeStrength
 
     // ── type ────────────────────────────────────────────────────────────
     readonly property string fontFamily: backend?.fontFamily ?? Tokens.fontFamily
@@ -119,6 +134,17 @@ QtObject {
     readonly property int notificationWidth: backend?.notificationWidth ?? Tokens.geometryNotificationWidth
     readonly property int notificationCollapsedHeight: backend?.notificationCollapsedHeight
         ?? Tokens.geometryNotificationCollapsedHeight
+    // The melt reach every join neck derives from (spec 01-frame), how close
+    // a silhouette must come to a band before it fuses rather than leaves a
+    // sliver, and the rim/stroke thicknesses drawn on the merged shape.
+    readonly property int meltSmoothing: backend?.meltSmoothing ?? Tokens.geometryMeltSmoothing
+    readonly property int edgeSnapReach: backend?.edgeSnapReach ?? Tokens.geometryEdgeSnapReach
+    readonly property int bandRimWidth: backend?.bandRimWidth ?? Tokens.geometryBandRimWidth
+    readonly property int bandStrokeWidth: backend?.bandStrokeWidth ?? Tokens.geometryBandStrokeWidth
+    // How far a flush silhouette reaches into the neighbour it seams against
+    // (see ShellBorder.overlapSeams): derived from the stroke width, not its
+    // own token, because the seam only has to outrun the stroke's own depth.
+    readonly property real seamOverlap: bandStrokeWidth * 4
 
     // The "this one" mark: the same 3x18 pill the launcher, the menu rows, the
     // notification history and the device lists all use to say which row is

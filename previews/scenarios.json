@@ -326,5 +326,13 @@
       560,
       320
     ]
+  },
+  "shell-border": {
+    "component": "shell-border",
+    "variant": "shown",
+    "viewport": [
+      800,
+      500
+    ]
   }
 }
