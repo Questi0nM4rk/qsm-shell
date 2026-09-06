@@ -23,6 +23,10 @@ ColumnLayout {
     // The panel-height policy input: how tall the list may grow before it
     // scrolls. The floor (two rows' worth) is the centre's own opinion.
     property real maxListHeight: 420
+    // A rule the library cannot see (an application name, say) deciding an
+    // entry's card carries a colour instead of a glyph. Optional: an entry
+    // that already carries its own `swatch` field needs no function here.
+    property var swatchFor: null
 
     property string expandedKey: ""
     property int actionFocusIndex: -1
@@ -210,6 +214,7 @@ ColumnLayout {
                 actionFocusIndex: ListView.isCurrentItem ? root.actionFocusIndex : -1
                 animateEntrance: false
                 draggable: modelData.notificationId !== undefined
+                swatch: root.swatchFor ? root.swatchFor(modelData) : modelData.swatch
                 onDismissed: root.dismissRequested(modelData)
                 onActionTriggered: id => root.actionTriggered(modelData, id)
                 onHoveredChanged: root.hoverChanged(modelData, delegateCard.hovered)
