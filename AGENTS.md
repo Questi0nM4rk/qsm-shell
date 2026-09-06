@@ -26,6 +26,12 @@
   restatements of code do not belong in source comments.
 - Keep durable documentation to `README.md` and `docs/BACKLOG.md` unless a
   genuinely irreversible architectural decision needs a short record.
+- `docs/12-mechanism.md` is NORMATIVE code for the edge shader: use its exact
+  formulas, and changing behaviour means editing that file first. It moved here
+  with the shader; the consumer repo keeps only a pointer.
+- The shader is the one non-QML thing here. `.frag` and `.qsb` are committed
+  together -- rebuild with `bash scripts/build-shaders` and `npm test` fails on
+  drift, because the runtime reads only the `.qsb`.
 - Do not claim completion from mocks, lint, screenshots of different surfaces,
   or tests that expect production to fail.
 - Run `npm test` before handing work back.

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Compile the library's fragment shaders to .qsb. Both the .frag and the built
+# .qsb are committed: Quickshell loads the .qsb at runtime and consumers must
+# not need a Qt shader toolchain to run.
+#
+# WHY the library owns this at all: the melt is one silhouette law. If the
+# shader stayed with a consumer, a second consumer would write its own and the
+# two would drift by construction. The cost is that this repo stops being pure
+# QML and gains a build step. That cost is accepted (see docs/BACKLOG.md).
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source_dir="$root/qml/QsmShell/shaders"
+out_dir="$source_dir"
+qsb="${QSB_BIN:-/usr/lib/qt6/bin/qsb}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --source-dir) source_dir="$2"; shift 2 ;;
+    --out-dir) out_dir="$2"; shift 2 ;;
+    *) printf 'unknown argument: %s\n' "$1" >&2; exit 1 ;;
+  esac
+done
+
+command -v "$qsb" >/dev/null || {
+  printf 'missing required command: qsb (Qt Shader Baker) at %s\n' "$qsb" >&2
+  exit 1
+}
+
+shopt -s nullglob
+frag_files=("$source_dir"/*.frag)
+if [[ ${#frag_files[@]} -eq 0 ]]; then
+  printf 'no shaders found under %s\n' "$source_dir" >&2
+  exit 1
+fi
+
+for frag in "${frag_files[@]}"; do
+  out="$out_dir/$(basename "$frag").qsb"
+  "$qsb" --glsl 100es,120,150 --hlsl 50 --msl 12 -o "$out" "$frag"
+  printf 'built %s\n' "$(basename "$out")"
+done

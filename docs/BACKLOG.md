@@ -2,7 +2,7 @@
 
 ## Next
 
-### `ShellBorder` — decided 2026-09-06, not started
+### `ShellBorder` — decided 2026-09-06, 11a landed
 
 The owner has ruled. The decision record is in the consumer repo at
 `qsm-desktop/docs/design-2026-09-06-shell-border.md` and the sub-phases in its
@@ -22,6 +22,13 @@ The owner has ruled. The decision record is in the consumer repo at
 Order, deliberately slow: port the shader unchanged, then ONE `ShellBorder`
 with one dynamically anchored rollout, then an owner live review before
 nesting, welding, resizing or fullscreen rules.
+
+**11a is done (2026-09-06).** `qml/QsmShell/shaders/edgemelt.frag` and its
+`.qsb` moved here byte-for-byte, `scripts/build-shaders` came with them, and
+`docs/12-mechanism.md` is the normative reference code the shader implements.
+A rebuild after the move produced an identical `.qsb`, which is the proof the
+move changed nothing. Next is 11b, and its FIRST act is the seven-call host
+contract as a test -- written before `Rollout` moves, not after.
 
 One rule to carry on day one: `contentCenterOffsetX/Y`. A rollout is the band
 BULGING, so content that centres itself centres in body plus band; centring in

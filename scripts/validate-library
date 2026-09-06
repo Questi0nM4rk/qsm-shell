@@ -22,4 +22,18 @@ QT_QPA_PLATFORM=offscreen \
 QT_QUICK_BACKEND=software \
     /usr/lib/qt6/bin/qmltestrunner -import "$root/qml" -input "$root/tests/interaction"
 
+bash -n "$root/scripts/build-shaders"
+
+# Shader freshness: the committed .qsb must match what build-shaders
+# regenerates from the committed .frag. qsb output is deterministic, so a
+# difference means a .frag edit landed without a rebuild -- and the runtime
+# only ever reads the .qsb, so that edit would be invisible until it wasn't.
+shaders_dir="$root/qml/QsmShell/shaders"
+before="$(sha256sum "$shaders_dir"/*.qsb)"
+"$root/scripts/build-shaders" >/dev/null
+[[ "$before" == "$(sha256sum "$shaders_dir"/*.qsb)" ]] || {
+  printf 'shader .qsb drift: run scripts/build-shaders and commit the result\n' >&2
+  exit 1
+}
+
 printf 'qsm-shell validation passed\n'

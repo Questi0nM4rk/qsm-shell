@@ -6,8 +6,8 @@ It knows nothing about any application. Everything an application owns —
 services, state, persistence, compositor integration, which keys mean what —
 stays with the application; this supplies the vocabulary it draws with.
 
-It provides components and tokens. It does not yet provide the shader-backed
-`ShellBorder` system.
+It provides components, tokens, and the edge silhouette shader. It does not
+yet provide the `ShellBorder` system that shader exists for.
 
 ## Use
 
@@ -48,12 +48,14 @@ Public types are listed in `qml/QsmShell/Components/qmldir`.
 | **readouts** | `Badge`, `Meter`, `Stat`, `StatRing`, `Sparkline`, `KeyValueRow`, `Marquee`, `ColorSwatch`, `Kbd`, `Avatar` |
 | **surfaces** | `Popover`, `Dialog`, `Scrim`, `NotificationCard`, `MonthCalendar`, `ActionTile` |
 | **behaviour** | `ArmedAction` |
+| **shader** | `qml/QsmShell/shaders/edgemelt.frag` plus its committed `.qsb` |
 
 ## Develop
 
 ```bash
 npm run capture -- <scenario> /tmp/out.png
 npm test
+bash scripts/build-shaders   # only after editing a .frag; commit .frag + .qsb together
 ```
 
 - `capture` renders one native QML preview offscreen; scenario names come from
@@ -63,11 +65,16 @@ npm test
 
 A component is looked at in native QML and nowhere else.
 
+The shader is the one thing here that is not pure QML. Both the `.frag` and the
+built `.qsb` are committed, because Quickshell loads the `.qsb` at runtime and
+no consumer should need a Qt shader toolchain to run. `npm test` fails if the
+committed `.qsb` does not match a rebuild of its `.frag`.
+
 Add visible behavior first. Verify it in native QML, then add one focused
 regression check if the behavior can realistically regress.
 
 ## Next Milestones
 
-1. Port the existing edge shader unchanged.
+1. ~~Port the existing edge shader unchanged.~~ Done 2026-09-06.
 2. Render one `ShellBorder` with one dynamically anchored rollout.
 3. Review that result live before adding nesting, welding, or fullscreen rules.
