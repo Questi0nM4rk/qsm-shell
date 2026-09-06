@@ -239,6 +239,14 @@
       500
     ]
   },
+  "notification-stack": {
+    "component": "notification-stack",
+    "variant": "resting",
+    "viewport": [
+      800,
+      600
+    ]
+  },
   "osd-slider": {
     "component": "osd-slider",
     "variant": "high",

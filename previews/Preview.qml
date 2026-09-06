@@ -171,6 +171,37 @@ Rectangle {
                 createdAt: Date.now()
             })
         }
+        NotificationStack {
+            visible: root.component === "notification-stack"
+            Layout.preferredWidth: 380
+            stack: [
+                {
+                    notificationId: 3,
+                    appName: "qsm-test",
+                    summary: "Battery critical",
+                    body: "Plug in now — 2% remaining.",
+                    urgency: "critical",
+                    createdAt: Date.now()
+                },
+                {
+                    notificationId: 2,
+                    appName: "qsm-mail",
+                    summary: "New message from Ada",
+                    body: "Reference shell updated in the notification stack.",
+                    urgency: "normal",
+                    createdAt: Date.now()
+                },
+                {
+                    notificationId: 1,
+                    appName: "qsm-focus",
+                    summary: "Do not disturb ended",
+                    body: "Notifications are visible again.",
+                    urgency: "low",
+                    createdAt: Date.now()
+                }
+            ]
+            isAlive: id => [1, 2, 3].includes(id)
+        }
         ActionTile { visible: root.component === "action-tile"; icon: "power"; label: "Power off"; selected: root.variant === "selected"; armed: root.variant === "armed" }
         ListRow {
             visible: root.component === "list-row"

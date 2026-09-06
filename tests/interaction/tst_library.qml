@@ -160,6 +160,23 @@ TestCase {
         onDismissRequested: entry => probe.centerDismissed = entry
         onActionTriggered: (entry, id) => { probe.centerActionEntry = entry; probe.centerActionId = id; }
     }
+    property var stackDismissed: null
+    NotificationStack {
+        id: popupStack
+        y: 900
+        width: 380
+        stack: [{ notificationId: 20, appName: "Beta", summary: "Beta popup" }]
+        isAlive: id => id === 20
+        onDismissRequested: entry => probe.stackDismissed = entry
+    }
+    // Isolated from `popupStack` on purpose: the eviction test drives this
+    // one's `stack`/`isAlive` through several changes, and a shared
+    // fixture would make the two tests order-dependent on each other.
+    NotificationStack {
+        id: evictionStack
+        y: 1000
+        width: 380
+    }
     ActionTile { id: actionTile; icon: "power"; label: "Power off" }
     StatRing { id: ring; value: 0.7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
     // A device row: read, not picked, so it does not recede its neighbours.
@@ -306,10 +323,43 @@ TestCase {
             disclosure, scrim, shortCue, longCue, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, slider, calendar,
-            notification, archivedNotification, center, actionTile, ring, deviceRow, resultRow, echoRow,
+            notification, archivedNotification, center, popupStack, evictionStack, actionTile, ring, deviceRow, resultRow, echoRow,
             text2, toggle2, check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);
+    }
+
+    // The one choreography decision worth pinning down: a still-alive entry
+    // pushed out of the window is an EVICTION (slides into the band), while
+    // an entry that is simply gone (dismissed, expired) is ordinary reflow.
+    // Get the `isAlive` check backwards and every dismissal starts animating
+    // a phantom "eviction" of whatever it happened to push out.
+    function test_eviction_is_pushed_out_while_alive_not_merely_gone() {
+        let alive = [1, 2];
+        evictionStack.isAlive = id => alive.includes(id);
+        evictionStack.stack = [
+            { notificationId: 2, appName: "A", summary: "two" },
+            { notificationId: 1, appName: "A", summary: "one" }
+        ];
+        compare(evictionStack.evicting.length, 0, "the very first window seeded a spurious eviction");
+
+        // #3 arrives, pushing #1 out of the window while #1 stays alive
+        // elsewhere (`isAlive` still says yes) -- that is an eviction.
+        alive = [1, 2, 3];
+        evictionStack.stack = [
+            { notificationId: 3, appName: "A", summary: "three" },
+            { notificationId: 2, appName: "A", summary: "two" }
+        ];
+        compare(evictionStack.evicting.length, 1, "a still-alive entry pushed out of the window did not evict");
+        compare(evictionStack.evicting[0].notificationId, 1, "the wrong entry evicted");
+        wait(400);
+        compare(evictionStack.evicting.length, 0, "the eviction slide never settled");
+
+        // #2 is dismissed outright: gone from `stack` AND `isAlive` no
+        // longer answers for it. That is ordinary reflow, not an eviction.
+        alive = [1, 3];
+        evictionStack.stack = [{ notificationId: 3, appName: "A", summary: "three" }];
+        compare(evictionStack.evicting.length, 0, "a plain dismissal was treated as an eviction");
     }
 
     // A count must not resize its badge as it ticks; a dot must carry no
