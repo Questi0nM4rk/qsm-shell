@@ -4,7 +4,8 @@ import QtQuick
 
 import qs.QsmShell.Style
 
-// A colour, shown as itself, with its value readable.
+// A colour slot: the colour shown as itself with its value readable, or the
+// empty state when there is no colour in it yet.
 //
 // Three surfaces in the consuming shell drew this by hand — the picker's
 // history, the theme cards, the palette sheet — and each answered "is this
@@ -19,6 +20,13 @@ Rectangle {
     id: root
 
     required property color sample
+    // No colour in this slot YET, which is not the same as a transparent
+    // colour: transparent is a real sample and gets the alpha check, while an
+    // empty slot has nothing to show and says so with an outline. A picker's
+    // "click here to sample something" square is the case. `sample` stays
+    // required so a typo in a binding is still caught — an empty slot passes
+    // "transparent" and this flag, which says what it means out loud.
+    property bool empty: false
     // Shown on the swatch. Empty draws the sample alone.
     property string reading: ""
     property real size: Style.controlHeight
@@ -79,7 +87,7 @@ Rectangle {
     // is the one confusion a colour tool must not create.
     Item {
         anchors.fill: parent
-        visible: root.sample.a < 1
+        visible: !root.empty && root.sample.a < 1
 
         Repeater {
             model: 16
@@ -97,7 +105,20 @@ Rectangle {
 
     Rectangle {
         anchors.fill: parent
+        visible: !root.empty
         color: root.sample
+    }
+
+    // The empty slot: an outline and nothing else. Not a dashed border and not
+    // a plus glyph — both announce an action, and the slot is a place, with
+    // the action stated by whatever put it there.
+    Rectangle {
+        anchors.fill: parent
+        visible: root.empty
+        color: "transparent"
+        radius: root.radius
+        border.width: 1
+        border.color: Style.outline
     }
 
     // The selection ring is drawn LAST, over the sample.
@@ -121,7 +142,7 @@ Rectangle {
 
     Prose {
         anchors.centerIn: parent
-        visible: root.reading.length > 0
+        visible: !root.empty && root.reading.length > 0
         role: "reading"
         font.pixelSize: Style.textXs
         color: root.ink

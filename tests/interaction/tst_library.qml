@@ -185,6 +185,28 @@ TestCase {
         icon: "music"
     }
 
+    ColorSwatch {
+        id: emptySlot
+        sample: "transparent"
+        empty: true
+    }
+
+    ColorSwatch {
+        id: clearSwatch
+        sample: "transparent"
+    }
+
+    Sparkline {
+        id: thinLine
+        values: [1, 4, 2, 8]
+        thickness: 1.5
+    }
+
+    Sparkline {
+        id: autoLine
+        values: [1, 4, 2, 8]
+    }
+
     function test_every_type_constructs() {
         // A binding that failed to resolve leaves the object null; a property
         // typo inside one leaves the object alive but wrong. Both show up as a
@@ -342,6 +364,21 @@ TestCase {
         compare(person.icon, "", "a person avatar should carry no icon");
         compare(thing.icon, "music", "the thing avatar lost its icon");
         compare(thing.initials, "", "a thing with no name still produced initials");
+    }
+
+    // An empty slot is not a transparent colour: transparent is a real sample
+    // and earns the alpha check, an empty slot has nothing to show.
+    function test_an_empty_slot_is_not_a_transparent_colour() {
+        verify(emptySlot.empty, "the empty slot lost its flag");
+        verify(!clearSwatch.empty, "a transparent sample was mistaken for an empty slot");
+    }
+
+    // Two stacked series need a stated weight; one line in a small box does
+    // not, and 0 keeps the derived one.
+    function test_sparkline_thickness_falls_back_to_the_height() {
+        compare(thinLine._thickness, 1.5, "a stated thickness was ignored");
+        compare(autoLine._thickness, Math.max(1, autoLine.height / 12),
+            "the derived thickness was lost");
     }
 
     function test_menu_selects_a_real_row() {

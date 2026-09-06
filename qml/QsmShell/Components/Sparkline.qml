@@ -23,6 +23,15 @@ Canvas {
     // Shade under the line. Reads as volume rather than as a path — right for
     // a quantity, wrong for a rate.
     property bool area: false
+    // 0 = derive from the height, which is right for one line in a small box.
+    // A consumer STACKING two series on one scale has to state it: at the
+    // derived weight two lines in a 56px box are ~4.7px each and merge into a
+    // band, which reads as one thick trend rather than as two.
+    property real thickness: 0
+
+    readonly property real _thickness: thickness > 0
+        ? thickness
+        : Math.max(1, height / 12)
 
     readonly property real _min: isNaN(minimum) ? Math.min(...(values.length > 0 ? values : [0])) : minimum
     readonly property real _max: isNaN(maximum) ? Math.max(...(values.length > 0 ? values : [1])) : maximum
@@ -41,7 +50,7 @@ Canvas {
         // every point on the same line by dividing by zero rather than by
         // being flat. Centre it instead.
         const span = root._max - root._min;
-        const thickness = Math.max(1, root.height / 12);
+        const thickness = root._thickness;
         const usable = root.height - thickness;
         const step = root.width / (points.length - 1);
         const yOf = value => span === 0
@@ -79,6 +88,7 @@ Canvas {
     onValuesChanged: requestPaint()
     onColorChanged: requestPaint()
     onAreaChanged: requestPaint()
+    onThicknessChanged: requestPaint()
     onMinimumChanged: requestPaint()
     onMaximumChanged: requestPaint()
     onWidthChanged: requestPaint()
