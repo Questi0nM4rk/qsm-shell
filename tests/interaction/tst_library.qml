@@ -225,6 +225,12 @@ TestCase {
         text: "Devices"
     }
 
+    Avatar {
+        id: ringed
+        icon: "music"
+        progress: 0.4
+    }
+
     function test_every_type_constructs() {
         // A binding that failed to resolve leaves the object null; a property
         // typo inside one leaves the object alive but wrong. Both show up as a
@@ -422,13 +428,18 @@ TestCase {
         verify(true, "space on a focused swatch must not throw");
     }
 
-    // A glyph stand-in keeps whatever size the consumer had, and the corner is
-    // measured from the box the item is actually drawn at.
+    // A glyph stand-in keeps whatever size the consumer had, and `size` is
+    // always the PICTURE: a ring adds its own room instead of eating into it.
     function test_avatar_geometry_follows_what_is_drawn() {
         compare(thing.glyphSize, Math.round(thing.size * 0.4),
             "the default glyph size left the two-fifths rule");
-        compare(person.radius, Math.min(person.width, person.height) / 2,
-            "the corner was measured from `size` rather than from the box");
+        compare(person.implicitWidth, person.size,
+            "an unringed avatar is not exactly its size");
+        verify(ringed.implicitWidth > ringed.size,
+            "a ring did not ask for room of its own");
+        compare(ringed.implicitWidth,
+            ringed.size + (ringed.ringGap + ringed.ringWidth) * 2,
+            "the ring's room is not gap plus stroke on both sides");
     }
 
     function test_menu_selects_a_real_row() {

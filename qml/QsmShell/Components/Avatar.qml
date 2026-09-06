@@ -18,6 +18,13 @@ import qs.QsmShell.Style
 //
 // `status` rides the corner rather than tinting the whole mark: tinting a
 // photograph to say "online" damages the photograph and says it faintly.
+//
+// `progress` rides the RIM, for the same reason and one more: "a picture with
+// how-far-through drawn around it" is ONE thing, and a consumer assembling it
+// out of a ring and a picture assembles it differently every time. It was
+// built twice in the one consuming shell — a circle with a full ring on one
+// surface, a square with a half ring on another, the arc hidden behind the
+// square's own corners — which is the whole argument for this type owning it.
 Item {
     id: root
 
@@ -29,6 +36,19 @@ Item {
     property color background: Style.surfaceHover
     // Empty = no dot. Otherwise a Badge tone.
     property string status: ""
+
+    // How far through, 0..1, drawn as a ring around the picture. Below 0 there
+    // is no ring and the item is exactly `size`.
+    property real progress: -1
+    property color progressColor: Style.accent
+    property color progressTrack: Style.surfaceHover
+    property real ringWidth: Math.max(2, Math.round(size * 0.06))
+    // Air between the picture and its ring, so the two read as a thing and its
+    // frame rather than as one thick border.
+    property real ringGap: Style.spaceTight
+
+    readonly property bool _ringed: progress >= 0
+    readonly property real _ringRoom: _ringed ? (ringGap + ringWidth) * 2 : 0
     // The stand-in for a thing rather than a person. Set this OR `name`.
     property string icon: ""
     // How big the stand-in is drawn. Two-fifths of the diameter is the rule
@@ -41,11 +61,10 @@ Item {
     // frames a thing rather than a face states its own corner: album art is a
     // sleeve, and a sleeve is square with the room's rounding on it.
     //
-    // Measured from the RENDERED box, not from `size`: a consumer that anchors
-    // or fills this item without touching `size` would otherwise keep the
-    // corner of a diameter it is no longer drawn at, and the ground and the
-    // mask would stop following the picture.
-    property real radius: Math.min(width, height) / 2
+    // Measured from `size`, which IS the picture's box: the ground, the mask
+    // and this corner all follow the same number, and the item's own width may
+    // be larger because a ring asked for room.
+    property real radius: size / 2
 
     readonly property string initials: {
         const words = name.trim().split(/\s+/).filter(word => word.length > 0);
@@ -56,12 +75,26 @@ Item {
         return String(words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
     }
 
-    implicitWidth: size
-    implicitHeight: size
+    // `size` is always the PICTURE. A ring adds its own room, so a consumer
+    // that turns one on does not have to work out what to shrink.
+    implicitWidth: size + _ringRoom
+    implicitHeight: size + _ringRoom
+
+    StatRing {
+        anchors.fill: parent
+        visible: root._ringed
+        diameter: root.width
+        strokeWidth: root.ringWidth
+        value: root.progress
+        fill: root.progressColor
+        trackColor: root.progressTrack
+    }
 
     Rectangle {
         id: ground
-        anchors.fill: parent
+        anchors.centerIn: parent
+        width: root.size
+        height: root.size
         radius: root.radius
         color: root.background
 
@@ -91,7 +124,7 @@ Item {
     // the corners.
     Image {
         id: portrait
-        anchors.fill: parent
+        anchors.fill: ground
         source: root.source
         sourceSize: Qt.size(root.size * 2, root.size * 2)
         fillMode: Image.PreserveAspectCrop
@@ -101,7 +134,7 @@ Item {
 
     Rectangle {
         id: circleMask
-        anchors.fill: parent
+        anchors.fill: ground
         radius: root.radius
         color: "black"
         visible: false
@@ -109,7 +142,7 @@ Item {
     }
 
     MultiEffect {
-        anchors.fill: parent
+        anchors.fill: ground
         visible: portrait.status === Image.Ready
         source: portrait
         maskEnabled: true
@@ -117,8 +150,8 @@ Item {
     }
 
     Badge {
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
+        anchors.right: ground.right
+        anchors.bottom: ground.bottom
         visible: root.status.length > 0
         tone: root.status
         dot: true
