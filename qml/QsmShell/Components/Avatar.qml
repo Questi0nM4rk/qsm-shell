@@ -3,7 +3,11 @@ import QtQuick.Effects
 
 import qs.QsmShell.Style
 
-// A round picture, with something to show when there is no picture.
+// A masked picture, with something to show when there is no picture.
+//
+// Round by default. `radius` is here because the masking is the hard part and
+// it should exist once: a rounded SQUARE has exactly the same problem as a
+// circle, since item clipping is rectangular either way.
 //
 // For a PERSON the fallback is their initials, never a silhouette glyph: a row
 // of identical silhouettes distinguishes nobody, and the fallback is the state
@@ -27,6 +31,10 @@ Item {
     property string status: ""
     // The stand-in for a thing rather than a person. Set this OR `name`.
     property string icon: ""
+    // Round by default, because that is what a portrait is. A consumer that
+    // frames a thing rather than a face states its own corner: album art is a
+    // sleeve, and a sleeve is square with the room's rounding on it.
+    property real radius: size / 2
 
     readonly property string initials: {
         const words = name.trim().split(/\s+/).filter(word => word.length > 0);
@@ -43,7 +51,7 @@ Item {
     Rectangle {
         id: ground
         anchors.fill: parent
-        radius: width / 2
+        radius: root.radius
         color: root.background
 
         SvgIcon {
@@ -86,7 +94,7 @@ Item {
     Rectangle {
         id: circleMask
         anchors.fill: parent
-        radius: width / 2
+        radius: root.radius
         color: "black"
         visible: false
         layer.enabled: true
