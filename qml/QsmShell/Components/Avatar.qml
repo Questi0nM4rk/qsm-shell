@@ -3,11 +3,14 @@ import QtQuick.Effects
 
 import qs.QsmShell.Style
 
-// Who this is: a picture if there is one, their initials if there is not.
+// A round picture, with something to show when there is no picture.
 //
-// Initials rather than a silhouette glyph, because a row of identical
-// silhouettes distinguishes nobody — and the fallback is the state that
-// actually ships most of the time.
+// For a PERSON the fallback is their initials, never a silhouette glyph: a row
+// of identical silhouettes distinguishes nobody, and the fallback is the state
+// that actually ships most of the time. For a thing that has no name to
+// initialise — album art, a station logo — set `icon` instead and the glyph
+// stands in. One of the two, never both: `icon` wins if it is set, because a
+// caller that set it has said the initials would be meaningless.
 //
 // `status` rides the corner rather than tinting the whole mark: tinting a
 // photograph to say "online" damages the photograph and says it faintly.
@@ -22,6 +25,8 @@ Item {
     property color background: Style.surfaceHover
     // Empty = no dot. Otherwise a Badge tone.
     property string status: ""
+    // The stand-in for a thing rather than a person. Set this OR `name`.
+    property string icon: ""
 
     readonly property string initials: {
         const words = name.trim().split(/\s+/).filter(word => word.length > 0);
@@ -41,9 +46,17 @@ Item {
         radius: width / 2
         color: root.background
 
+        SvgIcon {
+            anchors.centerIn: parent
+            visible: portrait.status !== Image.Ready && root.icon.length > 0
+            name: root.icon
+            size: Math.round(root.size * 0.4)
+            color: Style.textMuted
+        }
+
         Prose {
             anchors.centerIn: parent
-            visible: portrait.status !== Image.Ready
+            visible: portrait.status !== Image.Ready && root.icon.length === 0
             role: "title"
             // Big enough to read at a glance, small enough that two letters
             // clear the circle at every size. Two-fifths of the diameter is

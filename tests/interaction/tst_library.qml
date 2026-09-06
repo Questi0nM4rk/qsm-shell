@@ -175,6 +175,16 @@ TestCase {
 
     // ── the invariants worth keeping ────────────────────────────────────
 
+    Avatar {
+        id: person
+        name: "Ada Byron"
+    }
+
+    Avatar {
+        id: thing
+        icon: "music"
+    }
+
     function test_every_type_constructs() {
         // A binding that failed to resolve leaves the object null; a property
         // typo inside one leaves the object alive but wrong. Both show up as a
@@ -323,6 +333,15 @@ TestCase {
     // not move between rows of different kinds.
     function test_leading_box_is_one_size_per_row_size() {
         verify(resultRow.leadingSize > deviceRow.leadingSize, "both row sizes shared a leading box");
+    }
+
+    // One stand-in or the other, never both: an album has no initials worth
+    // reading, and a person's icon would be the silhouette the type refuses.
+    function test_avatar_shows_one_fallback_at_a_time() {
+        compare(person.initials, "AB", "initials were not taken from the name");
+        compare(person.icon, "", "a person avatar should carry no icon");
+        compare(thing.icon, "music", "the thing avatar lost its icon");
+        compare(thing.initials, "", "a thing with no name still produced initials");
     }
 
     function test_menu_selects_a_real_row() {
