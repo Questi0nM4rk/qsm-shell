@@ -79,7 +79,12 @@ Rectangle {
     // A Rectangle fills behind all of its children, so a check drawn as a
     // child of the sample would cover the very thing it is there to reveal.
     color: "transparent"
-    clip: true
+    // NOT clipped. `clip` here shaved the StateLayer's hover growth back to
+    // the swatch's own bounds, so the swatch answered a pointer by not moving
+    // — measured by the consumer's ui-guard at 1.3px off a 32px swatch. The
+    // sample carries the corner itself instead, which is what the clip was
+    // doing for it, and item clipping never rounded the check's corners
+    // anyway (it is rectangular).
 
 
     // The alpha check, first, so a translucent sample composites over it.
@@ -106,6 +111,7 @@ Rectangle {
     Rectangle {
         anchors.fill: parent
         visible: !root.empty
+        radius: root.radius
         color: root.sample
     }
 
@@ -133,7 +139,12 @@ Rectangle {
         color: "transparent"
         radius: root.radius
         border.width: root.selected ? Style.markThickness - 1 : 0
-        border.color: Style.accent
+        // The ring is drawn in the ink this swatch already measured, not in
+        // the accent: an accent ring on an accent-coloured swatch is
+        // invisible, and a colour tool shows arbitrary colours by definition.
+        // Same law as the reading — contrast against the SAMPLE, never a
+        // fixed colour that happens to work on most of them.
+        border.color: root.empty ? Style.accent : root.ink
 
         Behavior on border.width {
             NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
