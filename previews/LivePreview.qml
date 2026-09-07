@@ -19,6 +19,7 @@ Item {
     property string targetVariant: argAfter(1, "resting")
     property int targetWidth: parseInt(argAfter(2, "1600"))
     property int targetHeight: parseInt(argAfter(3, "900"))
+    property string targetUnit: argAfter(4, "")
 
     width: targetWidth
     height: targetHeight
@@ -31,6 +32,7 @@ Item {
     Preview {
         anchors.fill: parent
         component: root.targetComponent
+        unit: root.targetUnit
         variant: root.targetVariant
         viewportWidth: root.targetWidth
         viewportHeight: root.targetHeight

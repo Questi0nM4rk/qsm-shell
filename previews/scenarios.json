@@ -1,6 +1,7 @@
 {
   "badge": {
     "component": "badge",
+    "unit": "Badge",
     "variant": "warning",
     "viewport": [
       800,
@@ -9,6 +10,7 @@
   },
   "spinner": {
     "component": "spinner",
+    "unit": "Spinner",
     "variant": "running",
     "viewport": [
       800,
@@ -17,6 +19,7 @@
   },
   "progress": {
     "component": "progress",
+    "unit": "ProgressBar",
     "variant": "unknown",
     "viewport": [
       800,
@@ -177,6 +180,7 @@
   },
   "divider": {
     "component": "divider",
+    "unit": "Divider",
     "variant": "default",
     "viewport": [
       800,

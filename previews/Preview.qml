@@ -7,6 +7,9 @@ Rectangle {
     id: root
     property string component: "capsule"
     property string variant: "resting"
+    // PascalCase basename under previews/units/. Empty means not migrated
+    // yet -- the inline children below keep working unchanged.
+    property string unit: ""
     property int viewportWidth: 1600
     property int viewportHeight: 900
     property var screenContext: ({ id: "preview-1", width: viewportWidth, height: viewportHeight, scale: 1, focused: true, safeInsets: Qt.rect(16, 16, 16, 16) })
@@ -28,6 +31,13 @@ Rectangle {
         anchors.centerIn: parent
         spacing: Style.space4
         Prose { role: "section"; text: `${root.component} / ${root.variant}` }
+        Loader {
+            id: unitLoader
+            active: root.unit !== ""
+            visible: active
+            source: root.unit === "" ? "" : "units/" + root.unit + ".qml"
+            onLoaded: item.variant = Qt.binding(() => root.variant)
+        }
         Card {
             visible: root.component === "card"
             Layout.preferredWidth: 260
@@ -244,12 +254,8 @@ Rectangle {
             startAngle: root.variant === "open" ? -225 : -90
             sweepAngle: root.variant === "open" ? 270 : 360
         }
-        Divider { visible: root.component === "divider"; Layout.preferredWidth: 400; inset: 20 }
         EmptyState { visible: root.component === "empty-state"; Layout.preferredWidth: 260; icon: "bell"; title: "Nothing here"; detail: "A deterministic empty fixture." }
         KeyValueRow { visible: root.component === "key-value"; Layout.preferredWidth: 280; icon: "battery"; label: "Battery"; value: "68%"; valueColor: Style.accent }
-        Badge { visible: root.component === "badge"; tone: root.variant; text: "3" }
-        Spinner { visible: root.component === "spinner"; size: Style.iconLg }
-        ProgressBar { visible: root.component === "progress"; Layout.preferredWidth: 300; value: .62; indeterminate: root.variant === "unknown" }
         Meter { visible: root.component === "meter"; Layout.preferredWidth: 300; value: root.variant === "low" ? .08 : .72; low: .15 }
         Skeleton { visible: root.component === "skeleton"; Layout.preferredWidth: 300; shape: "line"; role: "title" }
         Callout {

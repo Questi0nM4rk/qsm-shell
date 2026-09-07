@@ -4,6 +4,7 @@ Item {
     id: captureRoot
 
     property string targetComponent: "capsule"
+    property string targetUnit: ""
     property string targetVariant: "resting"
     property int targetWidth: 1600
     property int targetHeight: 900
@@ -23,6 +24,7 @@ Item {
         id: previewHost
         anchors.fill: parent
         component: captureRoot.targetComponent
+        unit: captureRoot.targetUnit
         variant: captureRoot.targetVariant
         viewportWidth: captureRoot.targetWidth
         viewportHeight: captureRoot.targetHeight

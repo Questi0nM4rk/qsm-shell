@@ -20,7 +20,7 @@ const [width, height] = scenario.viewport
 // drives both the capture path and the live window.
 const result = spawnSync(
   '/usr/lib/qt6/bin/qml',
-  ['-I', resolve(root, 'qml'), resolve(root, 'previews/LivePreview.qml'), '--', scenario.component, scenario.variant, String(width), String(height)],
+  ['-I', resolve(root, 'qml'), resolve(root, 'previews/LivePreview.qml'), '--', scenario.component, scenario.variant, String(width), String(height), scenario.unit ?? ''],
   {
     stdio: 'inherit',
     env: {

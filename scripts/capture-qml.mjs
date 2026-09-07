@@ -18,6 +18,7 @@ const template = readFileSync(resolve(root, 'previews/CapturePreview.qml'), 'utf
 const [width, height] = scenario.viewport
 const qml = template
   .replace('property string targetComponent: "capsule"', `property string targetComponent: "${scenario.component}"`)
+  .replace('property string targetUnit: ""', `property string targetUnit: "${scenario.unit ?? ''}"`)
   .replace('property string targetVariant: "resting"', `property string targetVariant: "${scenario.variant}"`)
   .replace('property int targetWidth: 1600', `property int targetWidth: ${width}`)
   .replace('property int targetHeight: 900', `property int targetHeight: ${height}`)

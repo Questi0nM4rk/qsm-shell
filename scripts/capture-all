@@ -18,7 +18,4 @@ for key in "${keys[@]}"; do
   fi
 done
 
-# Paths relative to $outdir so two runs in different directories diff cleanly.
-(cd "$outdir" && sha256sum ./*.png | sed 's#\./##' | sort -k2 > SHA256SUMS)
-
 printf 'capture-all: captured %d scenarios into %s\n' "${#keys[@]}" "$outdir"
