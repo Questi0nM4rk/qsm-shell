@@ -33,6 +33,7 @@ run_tests() {
   compgen -G "$dir"/*.qml >/dev/null || return 0
   QT_QPA_PLATFORM=offscreen \
   QT_QUICK_BACKEND=software \
+  QML_XHR_ALLOW_FILE_READ=1 \
       /usr/lib/qt6/bin/qmltestrunner -import "$root/qml" -input "$dir"
 }
 

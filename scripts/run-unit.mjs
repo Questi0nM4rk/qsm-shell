@@ -7,9 +7,13 @@ const args = process.argv.slice(2)
 const windowed = args.includes('--window')
 const name = args.find((arg) => arg !== '--window')
 
+// QML_XHR_ALLOW_FILE_READ lets tests/units read previews/scenarios.json, which
+// is how the unit walker learns which units exist. Qt disables local-file GET
+// by default. It belongs here rather than in package.json so the runner works
+// however it is invoked.
 const env = windowed
-  ? { QT_QPA_PLATFORM: 'wayland', QT_QUICK_BACKEND: 'opengl', QT_OPENGL: 'desktop' }
-  : { QT_QPA_PLATFORM: 'offscreen', QT_QUICK_BACKEND: 'software' }
+  ? { QT_QPA_PLATFORM: 'wayland', QT_OPENGL: 'desktop', QML_XHR_ALLOW_FILE_READ: '1' }
+  : { QT_QPA_PLATFORM: 'offscreen', QT_QUICK_BACKEND: 'software', QML_XHR_ALLOW_FILE_READ: '1' }
 
 function runInput(inputPath) {
   const result = spawnSync('/usr/lib/qt6/bin/qmltestrunner', ['-import', resolve(root, 'qml'), '-input', inputPath], {

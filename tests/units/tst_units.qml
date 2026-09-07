@@ -27,6 +27,12 @@ TestCase {
         const request = new XMLHttpRequest();
         request.open("GET", Qt.resolvedUrl("../../previews/scenarios.json"), false);
         request.send();
+        // Qt refuses local-file GET unless QML_XHR_ALLOW_FILE_READ is set, and
+        // the refusal arrives as an empty body rather than an error, which
+        // then surfaces as an unreadable JSON parse failure.
+        verify(request.responseText.length > 0,
+               "could not read previews/scenarios.json -- run through scripts/run-unit.mjs "
+               + "or scripts/validate-library, which set QML_XHR_ALLOW_FILE_READ");
         const scenarios = JSON.parse(request.responseText);
         const seen = {};
         const names = [];
