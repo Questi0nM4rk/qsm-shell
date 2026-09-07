@@ -87,12 +87,31 @@ Item {
     // reduced motion.
     property int closeDelay: Motion.hoverGrace
 
+    // Rects, in the HOST's coordinates, that OPEN this rollout -- the nub
+    // bulging out of the frame, or the rail cell a pointer points at. Unlike
+    // `hoverAreas`, empty means "no pointer trigger", never a fallback to the
+    // rollout's own silhouette: the honest default for a rollout something
+    // else opens (a keybind, a modal, an IPC call).
+    property var triggerAreas: []
+
+    // True while the pointer sits inside a trigger area right now. No delay
+    // of any kind -- the same honesty rule that split `hovered` from
+    // `keepOpen`. Deliberately NOT gated on `root.visible`: the whole point
+    // of a trigger area is to be found by a pointer BEFORE anything shows.
+    readonly property bool triggered: !!root.host && !!root.host.pointer
+        && root.triggerAreas.length > 0
+        && root.triggerAreas.some(area => root.host.pointer.contains(area))
+
     // True while the pointer sits inside a hover area right now. No delay of
     // any kind: false when there is no pointer, no host, or the rollout is
-    // not showing.
+    // not showing. `triggerAreas` count here too -- the nub that opened the
+    // rollout does not stop being part of it once the body reveals, and a
+    // consumer forced to repeat the nub rect in `hoverAreas` would eventually
+    // forget to. The own-silhouette fallback still only fires when
+    // `hoverAreas` itself is empty.
     readonly property bool hovered: root.visible && !!root.host && !!root.host.pointer
-        && (root.hoverAreas.length > 0 ? root.hoverAreas
-            : [Qt.rect(root.x, root.y, root.width, root.height)])
+        && [...root.triggerAreas, ...(root.hoverAreas.length > 0 ? root.hoverAreas
+            : [Qt.rect(root.x, root.y, root.width, root.height)])]
             .some(area => root.host.pointer.contains(area))
 
     // The keep-open verdict a consumer reads: `hovered`, extended by
@@ -105,6 +124,13 @@ Item {
     // component that closed itself would be the exact law this library
     // breaks nowhere else.
     readonly property bool keepOpen: root.visible && (hovered || closeDelayTimer.running)
+
+    // The verdict a surface binds `shouldBeActive` against: open because the
+    // pointer is on the trigger right now (which works even while closed),
+    // or open because `keepOpen` says so (which only ever applies once
+    // already showing). This component still never assigns
+    // `shouldBeActive` itself -- it only reports.
+    readonly property bool wantsOpen: root.triggered || root.keepOpen
 
     Timer {
         id: closeDelayTimer

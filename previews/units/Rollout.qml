@@ -3,13 +3,17 @@ import QtQuick.Layouts
 import qs.QsmShell.Components
 import qs.QsmShell.Style
 
-// A rollout stays open while the pointer sits inside its hover area,
-// plus a grace period after it leaves. The two boxes below are `hoverAreas`,
-// with a deliberate GAP between them -- sweep the pointer from one box
-// straight into the other and `keepOpen` never drops; leave both and it
-// stays true for the close delay before finally going false. This is what
-// proves the mechanism live: a static capture always lands on one frame of
-// one state.
+// A rollout has a small TRIGGER area that opens it while closed (the nub
+// bulging out of the frame) and a bigger HOVER area that keeps it open once
+// grown into (the body plus the corridors a hand sweeps through to reach
+// it). The top box is `triggerAreas`; the two lower boxes are `hoverAreas`,
+// with a deliberate GAP between them. `shouldBeActive` binds to `wantsOpen`
+// here exactly as a real surface would: point at the trigger box and the
+// rollout opens; sweep on into either hover box and it stays open; sweep
+// from one hover box straight into the other and it never drops; leave
+// everything and it stays open for the close delay before finally
+// retracting. This is what proves the mechanism live: a static capture
+// always lands on one frame of one state.
 Item {
     id: root
     property string variant: ""
@@ -34,21 +38,27 @@ Item {
         function unregisterFullscreenCapsule() {}
     }
 
-    readonly property rect areaLeft: Qt.rect(20, 90, 120, 80)
-    readonly property rect areaRight: Qt.rect(280, 90, 120, 80)
+    // The nub: small, sits ABOVE the body (and below the readout column),
+    // reachable while the rollout is fully closed.
+    readonly property rect areaTrigger: Qt.rect(180, 84, 60, 24)
+    readonly property rect areaLeft: Qt.rect(20, 110, 120, 80)
+    readonly property rect areaRight: Qt.rect(280, 110, 120, 80)
 
     // Sits IN the gap between the two hover areas, not touching either --
     // proof that what keeps it open is the union of `hoverAreas`, never its
-    // own silhouette.
+    // own silhouette. `shouldBeActive` binds to `wantsOpen`, the same
+    // decision a real surface makes: the trigger opens it, the hover keeps
+    // it, this component itself never decides.
     Rollout {
         id: rollout
         x: 165
-        y: 95
+        y: 115
         host: fakeHost
         rolloutId: "preview-rollout"
         edges: ["top"]
         tier: "small"
-        shouldBeActive: true
+        shouldBeActive: rollout.wantsOpen
+        triggerAreas: [root.areaTrigger]
         hoverAreas: [root.areaLeft, root.areaRight]
 
         Rectangle {
@@ -61,6 +71,15 @@ Item {
                 text: "rollout"
             }
         }
+    }
+
+    Rectangle {
+        x: root.areaTrigger.x; y: root.areaTrigger.y
+        width: root.areaTrigger.width; height: root.areaTrigger.height
+        radius: Style.radiusMd
+        color: "transparent"
+        border.width: 2
+        border.color: pointer.contains(root.areaTrigger) ? Style.accent : Style.outline
     }
 
     Rectangle {
@@ -88,6 +107,11 @@ Item {
         spacing: Style.space1
         RowLayout {
             spacing: Style.space4
+            Prose { role: "metadata"; text: "triggered" }
+            Prose { role: "reading"; text: rollout.triggered ? "true" : "false" }
+        }
+        RowLayout {
+            spacing: Style.space4
             Prose { role: "metadata"; text: "hovered" }
             Prose { role: "reading"; text: rollout.hovered ? "true" : "false" }
         }
@@ -95,6 +119,11 @@ Item {
             spacing: Style.space4
             Prose { role: "metadata"; text: "keepOpen" }
             Prose { role: "reading"; text: rollout.keepOpen ? "true" : "false" }
+        }
+        RowLayout {
+            spacing: Style.space4
+            Prose { role: "metadata"; text: "wantsOpen" }
+            Prose { role: "reading"; text: rollout.wantsOpen ? "true" : "false" }
         }
     }
 }
