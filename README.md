@@ -6,8 +6,10 @@ It knows nothing about any application. Everything an application owns —
 services, state, persistence, compositor integration, which keys mean what —
 stays with the application; this supplies the vocabulary it draws with.
 
-It provides components, tokens, and the edge silhouette shader. It does not
-yet provide the `ShellBorder` system that shader exists for.
+It provides components, tokens, the edge silhouette shader, and the
+`ShellBorder` system that shader exists for: a host that owns the rollout
+registries and publishes plain rectangles, leaving Wayland, monitors and input
+masks entirely to the consumer.
 
 ## Use
 
@@ -46,8 +48,9 @@ Public types are listed in `qml/QsmShell/Components/qmldir`.
 | **lists** | `ListRow`, `Menu`, `SelectionMark`, `ScrollArea`, `ScrollCue`, `Section`, `Disclosure` |
 | **state** | `Spinner`, `ProgressBar`, `Skeleton`, `Callout`, `EmptyState` |
 | **readouts** | `Badge`, `Meter`, `Stat`, `StatRing`, `Sparkline`, `KeyValueRow`, `Marquee`, `ColorSwatch`, `Kbd`, `Avatar` |
-| **surfaces** | `Popover`, `Dialog`, `Scrim`, `NotificationCard`, `MonthCalendar`, `ActionTile` |
-| **behaviour** | `ArmedAction` |
+| **surfaces** | `Popover`, `Dialog`, `Scrim`, `NotificationCard`, `NotificationCenter`, `NotificationStack`, `MonthCalendar`, `ActionTile` |
+| **behaviour** | `ArmedAction`, `ScenePointer` |
+| **frame** | `ShellBorder`, `Rollout` |
 | **shader** | `qml/QsmShell/shaders/edgemelt.frag` plus its committed `.qsb` |
 
 ## Develop
@@ -85,5 +88,11 @@ regression check if the behavior can realistically regress.
 ## Next Milestones
 
 1. ~~Port the existing edge shader unchanged.~~ Done 2026-09-06.
-2. Render one `ShellBorder` with one dynamically anchored rollout.
-3. Review that result live before adding nesting, welding, or fullscreen rules.
+2. ~~Render one `ShellBorder` with one dynamically anchored rollout, reviewed
+   live before nesting, welding or fullscreen rules.~~ Done 2026-09-07.
+3. Move the remaining types into `previews/units/`, one at a time, each with
+   its own behaviour test. 6 of ~45 done; `tests/interaction/tst_library.qml`
+   dies empty at the end of it.
+4. Teach `Rollout` to be the PARENT of a nested rollout. Until it can, the
+   consumer's rail popout cannot become a `Rollout` and keeps a second copy of
+   the keep-open logic.

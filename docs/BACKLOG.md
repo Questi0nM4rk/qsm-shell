@@ -145,29 +145,37 @@ slide finished. Rendered is not alive. The consumer now filters on liveness;
 the library was not wrong, but a consumer reading `cardGeometry()` must decide
 which of those rows still MEANS anything.
 
-### Incoming: the popout keep-open geometry belongs here — 2026-09-07
+### The popout keep-open geometry: half moved, half not -- 2026-09-08
 
-The consumer ratified a new law on 2026-09-07: a rollout is never kept open by
-TIME, only by where the pointer is. Its keep-open region is the union of the
-anchor cell, the band, the popout, every open descendant, and the travel
-triangle from anchor to the popout's near edge.
+Supersedes the 2026-09-07 entry that stood here, which is wrong twice over now.
+It quoted the consumer's law that a rollout is kept open by where the pointer
+is and NEVER by time; the owner overturned that on 2026-09-08. And it described
+the geometry as still living entirely in the consumer, which it no longer does.
 
-That is implemented in `qsm-desktop/shell/screen/EdgeScene.qml` right now as
-`rectContains`, `triangleContains` and two union predicates. Plain rectangles
-in, bool out. It belongs HERE, for the reason the ShellBorder ADR gives in its
-own words: the mechanism is geometry, and geometry is not about Wayland.
+What the law is now: a rollout is open while the pointer is inside a hitbox
+larger than the item, covering the corridors a hand sweeps through, plus a
+delay after the pointer leaves. The region still does the work of telling
+travelling from leaving; the delay only covers the last few pixels and the
+frame boundary, which is why it is 180ms and not the old 180ms grace's job.
 
-Why it matters more than tidiness: `EdgeScene` can never be tested -- it IS the
-Wayland window -- so the newest law in the consumer's spec has nothing checking
-it. Here it costs one test file beside 66 existing ones. The consumer keeps
-supplying the rects, which is the rule the whole split rests on.
+What moved here: `ScenePointer`, and `Rollout`'s `triggerAreas`, `hoverAreas`,
+`closeDelay` and its `triggered` / `hovered` / `keepOpen` / `wantsOpen`
+reports. `ShellBorder` takes the `pointer` so every rollout under a host reads
+one. The rollout never opens or closes itself; the surface decides. The
+consumer's OSD is on it.
 
-One thing to settle while moving it: the travel triangle is currently a
-geometric NO-OP, because the popout is flush with the band and the band already
-spans the full height. Either it is genuinely redundant and the law is satisfied
-by the rects alone, or flushness fails in some state and the triangle is
-load-bearing there. Nobody has checked which, and a test is exactly how to find
-out.
+What did not move, and why: the consumer's rail popout is `BarPopouts`, which
+is itself a HOST (`childHost`, `parentHost`, a seam derived from its parent's
+settled edge). `Rollout` cannot yet be the parent of a nested rollout, so
+`BarPopouts` cannot become one at all. Until it can, the rail keeps its own
+union predicate, fed by the shared `ScenePointer` and using the same 180ms
+token. The logic is in two places; the number is in one.
+
+Still unsettled, carried over unchanged: the travel triangle is a geometric
+NO-OP today, because the popout is flush with the band and the band already
+spans the full height. Either it is genuinely redundant, or flushness fails in
+some state and the triangle is load-bearing there. Nobody has checked which,
+and a test is exactly how to find out.
 
 ### `StateLayer` is the only public type with no test — 2026-09-07
 
