@@ -2,7 +2,7 @@
 
 ## Next
 
-### `ShellBorder` — decided 2026-09-06, 11a landed
+### `ShellBorder` — decided 2026-09-06, 11a/11b/11c ALL LANDED
 
 The owner has ruled. The decision record is in the consumer repo at
 `qsm-desktop/docs/design-2026-09-06-shell-border.md` and the sub-phases in its
@@ -23,7 +23,25 @@ Order, deliberately slow: port the shader unchanged, then ONE `ShellBorder`
 with one dynamically anchored rollout, then an owner live review before
 nesting, welding, resizing or fullscreen rules.
 
-**11a is done (2026-09-06).** `qml/QsmShell/shaders/edgemelt.frag` and its
+**All three sub-phases are done (11a 2026-09-06, 11b and 11c 2026-09-07).**
+The consumer no longer has a `Rollout` or a shader of its own: `EdgeScene.qml`
+went 1321 -> 999 lines and hosts a `ShellBorder`. Proof it was a MOVE and not a
+rewrite, measured rather than asserted: the ported `Rollout.qml` is
+byte-identical to the consumer's old file after substituting `host` back to
+`scene` and `Style` back to `Theme`, and the panel rollout's live
+`sceneBulgeDump` is identical before and after
+(`rect:[357,0,886,563] radius:[0,0,28,28] blend:0.4 outness:1 edgeBits:4`).
+
+`ShellBorder` gained ONE thing the port did not have: `entryFilter`, a
+consumer-supplied `(id) => bool` applied to `bulgeEntries`, `maskRects` and
+`fullscreenCapsuleEntries` alike. It exists because `Rollout.suppressed` does
+NOT cover the consumer's fullscreen/focus-mode allowlist -- its `BarPopouts`
+talks to the registry directly rather than through a `Rollout`, and its retract
+`Behavior` has no suppressed guard, so a shrinking popout stays registered for
+a full transition after the mode flips. Which surfaces survive a mode is policy
+and stays with the consumer; the filter is how it says so.
+
+**11a's own note (2026-09-06).** `qml/QsmShell/shaders/edgemelt.frag` and its
 `.qsb` moved here byte-for-byte, `scripts/build-shaders` came with them, and
 `docs/12-mechanism.md` is the normative reference code the shader implements.
 A rebuild after the move produced an identical `.qsb`, which is the proof the
@@ -61,12 +79,57 @@ The `prose-ladder` scenario captures title / body / supporting / metadata
 together, because the only question worth asking about a supporting role is
 whether it is tellable from its neighbours.
 
-### Notification popup stack
+### Notification popup stack — LANDED 2026-09-07
 
-`NotificationCard` and `NotificationCenter` landed. The popup stack did not:
-its eviction choreography needs `Motion.revealSmall` and `Motion.revealCurve`,
-which are `Rollout`'s tokens and arrive with the `ShellBorder` lift. It is
-waiting on that, not blocked by anything of its own.
+All three of the trio are here now: `NotificationCard`, `NotificationCenter`,
+`NotificationStack`. The stack was waiting on `Motion.revealSmall` and
+`revealCurve` becoming library tokens, which they did with the rollout tier.
+
+It takes `stack` (a plain pre-capped array) and `isAlive` as a QUERY FUNCTION
+rather than a snapshot array -- a snapshot can read stale against the same
+source's other bindings and made every dismissal look like an eviction. It
+emits `dismissRequested`, `hoverChanged` and `geometryChanged`, and exposes
+`cardGeometry()` so a consumer can drive per-row work (the desktop registers
+fullscreen capsules) without this type ever holding a screen reference.
+
+One defect this move CAUSED and its fix, because the shape recurs: the library
+keeps a dismissed row on screen for its eviction slide, which is right. The
+consumer then registered a capsule for every row `cardGeometry()` returned, so
+a row already gone from the service kept a hole in the input mask until its
+slide finished. Rendered is not alive. The consumer now filters on liveness;
+the library was not wrong, but a consumer reading `cardGeometry()` must decide
+which of those rows still MEANS anything.
+
+### Incoming: the popout keep-open geometry belongs here — 2026-09-07
+
+The consumer ratified a new law on 2026-09-07: a rollout is never held open by
+TIME, only by where the pointer is. Its keep-open region is the union of the
+anchor cell, the band, the popout, every open descendant, and the travel
+triangle from anchor to the popout's near edge.
+
+That is implemented in `qsm-desktop/shell/screen/EdgeScene.qml` right now as
+`rectContains`, `triangleContains` and two union predicates. Plain rectangles
+in, bool out. It belongs HERE, for the reason the ShellBorder ADR gives in its
+own words: the mechanism is geometry, and geometry is not about Wayland.
+
+Why it matters more than tidiness: `EdgeScene` can never be tested -- it IS the
+Wayland window -- so the newest law in the consumer's spec has nothing checking
+it. Here it costs one test file beside 66 existing ones. The consumer keeps
+supplying the rects, which is the rule the whole split rests on.
+
+One thing to settle while moving it: the travel triangle is currently a
+geometric NO-OP, because the popout is flush with the band and the band already
+spans the full height. Either it is genuinely redundant and the law is satisfied
+by the rects alone, or flushness fails in some state and the triangle is
+load-bearing there. Nobody has checked which, and a test is exactly how to find
+out.
+
+### `StateLayer` is the only public type with no test — 2026-09-07
+
+107 lines, and every type in `Components/` except this one is exercised
+somewhere under `tests/`. It is also, with some irony, the type that every
+`clip-growth` finding in the consumer's `ui-guard` is ABOUT -- three separate
+gate failures in one session, all naming a component nothing here tests.
 
 ## Later
 
