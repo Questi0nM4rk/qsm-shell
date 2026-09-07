@@ -231,7 +231,8 @@
   },
   "level": {
     "component": "level",
-    "variant": "high",
+    "unit": "Slider",
+    "variant": "horizontal-high",
     "viewport": [
       800,
       500
@@ -271,7 +272,8 @@
   },
   "osd-slider": {
     "component": "osd-slider",
-    "variant": "high",
+    "unit": "Slider",
+    "variant": "vertical-high",
     "viewport": [
       800,
       500

@@ -156,7 +156,6 @@ Rectangle {
             }
         }
         Capsule { visible: root.component === "capsule"; icon: "bell"; label: "Notifications"; detail: root.variant === "active" ? "2" : ""; active: root.variant === "active" }
-        Slider { visible: root.component === "level"; Layout.preferredWidth: 260; value: root.variant === "high" ? .82 : .42; wheelStep: .05 }
         // A row in a list you READ: no recession, a reading and a tertiary
         // action in the trailing slot.
         ListRow {
@@ -205,25 +204,6 @@ Rectangle {
             selected: root.variant !== "idle"
         }
         IconButton { visible: root.component === "icon-button"; icon: "sparkle"; color: Style.accent }
-        Slider {
-            visible: root.component === "osd-slider"
-            orientation: Qt.Vertical
-            Layout.preferredHeight: 180
-            thickness: 40
-            thumbSize: 32
-            raised: true
-            trackColor: Qt.darker(Style.surface, 1.35)
-            value: root.variant === "high" ? .82 : .42
-            thumbContent: Text {
-                anchors.centerIn: parent
-                text: Math.round((root.variant === "high" ? .82 : .42) * 100)
-                color: Style.background
-                font.family: Style.fontFamily
-                font.pixelSize: Style.textSm
-                font.weight: Style.weightBold
-            }
-            after: IconButton { icon: "volume"; size: Style.iconMd; padding: Style.space2 }
-        }
         NotificationCard {
             visible: root.component === "notification"
             Layout.preferredWidth: 380
