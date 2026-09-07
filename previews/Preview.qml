@@ -86,7 +86,12 @@ Rectangle {
         }
     }
     ColumnLayout {
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        // Centred in what is LEFT once the strip has taken the top, rather
+        // than in the whole host: a short window put the two on top of each
+        // other and the header read through the buttons.
+        anchors.verticalCenterOffset: controlStrip.visible ? controlStrip.height / 2 : 0
         spacing: Style.space4
         Prose { role: "section"; text: `${root.component} / ${root.variant}` }
         Loader {

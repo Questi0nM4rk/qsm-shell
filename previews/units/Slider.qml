@@ -20,6 +20,11 @@ Slider {
 
     orientation: root.decorated ? Qt.Vertical : Qt.Horizontal
     value: variant.indexOf("high") >= 0 ? .82 : .42
+    // `Slider` emits `moved` and never writes its own value -- the HOST owns
+    // it. A preview unit therefore has to BE the host, or the live window
+    // shows a control that answers no drag, no wheel and no arrow key. Every
+    // type that hands its state upward needs this line.
+    onMoved: v => root.value = v
     wheelStep: root.decorated ? 0 : .05
     raised: root.decorated
     thickness: root.decorated ? 40 : Style.sliderTrackThickness
