@@ -25,7 +25,9 @@ nesting, welding, resizing or fullscreen rules.
 
 **All three sub-phases are done (11a 2026-09-06, 11b and 11c 2026-09-07).**
 The consumer no longer has a `Rollout` or a shader of its own: `EdgeScene.qml`
-went 1321 -> 999 lines and hosts a `ShellBorder`. Proof it was a MOVE and not a
+went 1321 -> 999 lines and hosts a `ShellBorder`. It is 1166 again as of the
+same day, because the popout keep-open region was written INTO it a few hours
+later -- which is precisely why the next item says that geometry belongs here. Proof it was a MOVE and not a
 rewrite, measured rather than asserted: the ported `Rollout.qml` is
 byte-identical to the consumer's old file after substituting `host` back to
 `scene` and `Style` back to `Theme`, and the panel rollout's live
