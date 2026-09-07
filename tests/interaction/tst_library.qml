@@ -92,7 +92,6 @@ TestCase {
     SelectionMark { id: mark; shown: true }
     SvgIcon { id: icon; name: "check" }
     IconButton { id: iconButton; icon: "check" }
-    Slider { id: slider; width: 120; value: 0.5 }
     MonthCalendar { id: calendar; width: 260; shown: new Date(2026, 7, 1); today: new Date(2026, 7, 28) }
     property var liveEntry: ({
         notificationId: 1,
@@ -322,7 +321,7 @@ TestCase {
             skeleton, callout, field, meter, fullMeter, scroller, section,
             disclosure, scrim, shortCue, longCue, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
-            emptyState, keyValue, mark, icon, iconButton, slider, calendar,
+            emptyState, keyValue, mark, icon, iconButton, calendar,
             notification, archivedNotification, center, popupStack, evictionStack, actionTile, ring, deviceRow, resultRow, echoRow,
             text2, toggle2, check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
