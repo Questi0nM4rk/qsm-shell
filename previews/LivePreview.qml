@@ -36,5 +36,6 @@ Item {
         variant: root.targetVariant
         viewportWidth: root.targetWidth
         viewportHeight: root.targetHeight
+        interactive: true
     }
 }

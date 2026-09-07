@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.QsmShell.Components
@@ -15,6 +16,9 @@ Rectangle {
     property var screenContext: ({ id: "preview-1", width: viewportWidth, height: viewportHeight, scale: 1, focused: true, safeInsets: Qt.rect(16, 16, 16, 16) })
     property string theme: "deep-night"
     property var backend: null
+    // Buttons for a unit's declared `controls` only ever exist on the live
+    // path -- a capture is a picture of the component and must not grow them.
+    property bool interactive: false
     width: viewportWidth
     height: viewportHeight
     color: "#1c0e27"
@@ -27,9 +31,60 @@ Rectangle {
     // resolves tokens from the scenario theme.
     Component.onCompleted: Style.backend = root.activeBackend
     onActiveBackendChanged: Style.backend = root.activeBackend
+    // A loaded unit's type is only known at runtime, so `controls` cannot be
+    // typed on `Loader.item` -- read it through an untyped parameter instead
+    // of a direct `.controls` access qmllint cannot resolve.
+    function unitControls(item) {
+        return (item && Array.isArray(item.controls)) ? item.controls : [];
+    }
     ColumnLayout {
         anchors.centerIn: parent
         spacing: Style.space4
+        // A unit's `controls` reach every property-only state that isn't
+        // reachable by hovering, pressing or focusing the live window --
+        // `disabled`, `selected`, `indeterminate`, and the like.
+        ColumnLayout {
+            id: controlStrip
+            spacing: Style.space2
+            visible: root.interactive && root.unitControls(unitLoader.item).length > 0
+
+            // group label -> applied option label, so the matching button can
+            // show `active` for whatever was clicked last.
+            property var applied: ({})
+
+            function apply(groupLabel, option, optionLabel) {
+                if (option.call !== undefined) {
+                    unitLoader.item[option.call]();
+                } else {
+                    for (const key in option.set)
+                        unitLoader.item[key] = option.set[key];
+                }
+                const next = Object.assign({}, controlStrip.applied);
+                next[groupLabel] = optionLabel;
+                controlStrip.applied = next;
+            }
+
+            Repeater {
+                model: controlStrip.visible ? root.unitControls(unitLoader.item) : []
+                RowLayout {
+                    id: groupRow
+                    required property var modelData
+                    spacing: Style.space2
+                    Prose { role: "metadata"; text: groupRow.modelData.label }
+                    Repeater {
+                        model: groupRow.modelData.options
+                        Capsule {
+                            id: optionButton
+                            required property var modelData
+                            size: "sm"
+                            label: optionButton.modelData.label
+                            active: controlStrip.applied[groupRow.modelData.label] === optionButton.modelData.label
+                            onClicked: controlStrip.apply(groupRow.modelData.label, optionButton.modelData, optionButton.modelData.label)
+                        }
+                    }
+                }
+            }
+        }
         Prose { role: "section"; text: `${root.component} / ${root.variant}` }
         Loader {
             id: unitLoader
