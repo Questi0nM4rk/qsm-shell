@@ -11,6 +11,20 @@ import qs.QsmShell.Style
 Item {
     id: root
 
+    // Consumer suppression hook (11c gap: a second consumer's fullscreen or
+    // focus-mode policy is exactly the Wayland-shaped knowledge this type may
+    // never hold, per the design's boundary decision — yet a registration can
+    // outlive the moment such a consumer already decided it must stop
+    // painting/masking. `Rollout.suppressed` unregisters INSTANTLY for a
+    // caller built on it; a caller that talks to registerBulge or
+    // registerFullscreenCapsule directly, or one torn down through an async
+    // callback, can leave an entry behind for a frame the consumer already
+    // ruled out. `entryFilter` is a predicate over a registry id, applied to
+    // every derived view below (never to the raw registries themselves, so a
+    // trace or a dump still sees the truth). Absent (null, the default)
+    // filters nothing — the pre-hook behaviour.
+    property var entryFilter: null
+
     // ── the seven-call contract ─────────────────────────────────────────
     // Registration mechanism for rollout mask rects. Keyed by caller-owned
     // id; reassigned rather than mutated so bindings re-evaluate.
@@ -20,7 +34,9 @@ Item {
     // subscribe, and cannot deliver an update the consumer drops (ADR
     // "transport"). What the consumer does with these — a Wayland Region, a
     // mask, nothing at all — is the one thing this type may never know.
-    readonly property var maskRects: Object.keys(rolloutRegions).map(id => rolloutRegions[id])
+    readonly property var maskRects: Object.keys(rolloutRegions)
+        .filter(id => !root.entryFilter || root.entryFilter(id))
+        .map(id => rolloutRegions[id])
 
     function registerRolloutRegion(id, rect) {
         const next = Object.assign({}, rolloutRegions);
@@ -46,13 +62,16 @@ Item {
     // fit. (The eight-slot budget itself is not redesigned here — ADR "not
     // designed".)
     property var bulgeRegions: ({})
-    readonly property var bulgeEntries: Object.keys(bulgeRegions).map(id => bulgeRegions[id])
+    readonly property var bulgeEntries: Object.keys(bulgeRegions)
+        .filter(id => !root.entryFilter || root.entryFilter(id))
+        .map(id => bulgeRegions[id])
     readonly property int maxBulgeSlots: 8
 
     // Native fullscreen paint is a separate silhouette set. It deliberately
     // has no frame operand: only detached allowlisted capsules reach this set.
     property var fullscreenCapsules: ({})
     readonly property var fullscreenCapsuleEntries: Object.keys(fullscreenCapsules)
+        .filter(id => !root.entryFilter || root.entryFilter(id))
         .map(id => fullscreenCapsules[id])
     readonly property int maxFullscreenCapsuleSlots: 8
 
