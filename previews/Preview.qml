@@ -37,54 +37,57 @@ Rectangle {
     function unitControls(item) {
         return (item && Array.isArray(item.controls)) ? item.controls : [];
     }
+    // A unit's `controls` reach every property-only state that isn't
+    // reachable by hovering, pressing or focusing the live window --
+    // `disabled`, `selected`, `indeterminate`, and the like.
     ColumnLayout {
-        anchors.centerIn: parent
-        spacing: Style.space4
-        // A unit's `controls` reach every property-only state that isn't
-        // reachable by hovering, pressing or focusing the live window --
-        // `disabled`, `selected`, `indeterminate`, and the like.
-        ColumnLayout {
-            id: controlStrip
-            spacing: Style.space2
-            visible: root.interactive && root.unitControls(unitLoader.item).length > 0
+        id: controlStrip
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: Style.space4
+        spacing: Style.space2
+        visible: root.interactive && root.unitControls(unitLoader.item).length > 0
 
-            // group label -> applied option label, so the matching button can
-            // show `active` for whatever was clicked last.
-            property var applied: ({})
+        // group label -> applied option label, so the matching button can
+        // show `active` for whatever was clicked last.
+        property var applied: ({})
 
-            function apply(groupLabel, option, optionLabel) {
-                if (option.call !== undefined) {
-                    unitLoader.item[option.call]();
-                } else {
-                    for (const key in option.set)
-                        unitLoader.item[key] = option.set[key];
-                }
-                const next = Object.assign({}, controlStrip.applied);
-                next[groupLabel] = optionLabel;
-                controlStrip.applied = next;
+        function apply(groupLabel, option, optionLabel) {
+            if (option.call !== undefined) {
+                unitLoader.item[option.call]();
+            } else {
+                for (const key in option.set)
+                    unitLoader.item[key] = option.set[key];
             }
+            const next = Object.assign({}, controlStrip.applied);
+            next[groupLabel] = optionLabel;
+            controlStrip.applied = next;
+        }
 
-            Repeater {
-                model: controlStrip.visible ? root.unitControls(unitLoader.item) : []
-                RowLayout {
-                    id: groupRow
-                    required property var modelData
-                    spacing: Style.space2
-                    Prose { role: "metadata"; text: groupRow.modelData.label }
-                    Repeater {
-                        model: groupRow.modelData.options
-                        Capsule {
-                            id: optionButton
-                            required property var modelData
-                            size: "sm"
-                            label: optionButton.modelData.label
-                            active: controlStrip.applied[groupRow.modelData.label] === optionButton.modelData.label
-                            onClicked: controlStrip.apply(groupRow.modelData.label, optionButton.modelData, optionButton.modelData.label)
-                        }
+        Repeater {
+            model: controlStrip.visible ? root.unitControls(unitLoader.item) : []
+            RowLayout {
+                id: groupRow
+                required property var modelData
+                spacing: Style.space2
+                Prose { role: "metadata"; text: groupRow.modelData.label }
+                Repeater {
+                    model: groupRow.modelData.options
+                    Capsule {
+                        id: optionButton
+                        required property var modelData
+                        size: "sm"
+                        label: optionButton.modelData.label
+                        active: controlStrip.applied[groupRow.modelData.label] === optionButton.modelData.label
+                        onClicked: controlStrip.apply(groupRow.modelData.label, optionButton.modelData, optionButton.modelData.label)
                     }
                 }
             }
         }
+    }
+    ColumnLayout {
+        anchors.centerIn: parent
+        spacing: Style.space4
         Prose { role: "section"; text: `${root.component} / ${root.variant}` }
         Loader {
             id: unitLoader
