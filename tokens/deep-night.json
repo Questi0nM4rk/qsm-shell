@@ -60,7 +60,8 @@
     "morphGlide": 250,
     "microPopScale": 0.97,
     "spin": 900,
-    "pulse": 1400
+    "pulse": 1400,
+    "holdGrace": 180
   },
   "opacity": {
     "disabled": 0.35,

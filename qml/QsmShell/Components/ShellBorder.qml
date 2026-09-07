@@ -25,6 +25,14 @@ Item {
     // filters nothing — the pre-hook behaviour.
     property var entryFilter: null
 
+    // The pointer reader every Rollout's `held` needs (T6 keep-open rule).
+    // ShellBorder cannot declare its own `ScenePointer`: that reader has to
+    // sit on the ANCESTOR of the surfaces it watches, and ShellBorder is a
+    // SIBLING of those surfaces, not their ancestor -- so the consumer
+    // assigns its own here. Null is legal: a host with none assigned simply
+    // reports `held` false on every Rollout under it.
+    property var pointer: null
+
     // ── the seven-call contract ─────────────────────────────────────────
     // Registration mechanism for rollout mask rects. Keyed by caller-owned
     // id; reassigned rather than mutated so bindings re-evaluate.
