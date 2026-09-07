@@ -98,7 +98,15 @@ Item {
             pulseAnimation.restart();
     }
 
-    implicitWidth: body.implicitWidth
+    // The row's own horizontal inset, named once because three things need to
+    // agree on it: the header rail, the body, and the width the row asks for.
+    readonly property real _inset: Style.space3
+
+    // Body plus the inset the body then loses to its own margins. Asking for
+    // the body's width alone made a row sized to its OWN implicit width eat
+    // two insets of its content -- invisible for as long as every call site
+    // imposed a width, and truncated text the moment one did not.
+    implicitWidth: body.implicitWidth + root._inset * 2
     implicitHeight: {
         if (root.separator)
             return Style.space3;
@@ -161,8 +169,8 @@ Item {
     RowLayout {
         visible: root.header
         anchors.fill: parent
-        anchors.leftMargin: Style.space3
-        anchors.rightMargin: Style.space3
+        anchors.leftMargin: root._inset
+        anchors.rightMargin: root._inset
         spacing: Style.space2
 
         Divider { Layout.fillWidth: true; strength: 0.5 }
@@ -186,8 +194,8 @@ Item {
 
         visible: root._normal
         anchors.fill: parent
-        anchors.leftMargin: Style.space3
-        anchors.rightMargin: Style.space3
+        anchors.leftMargin: root._inset
+        anchors.rightMargin: root._inset
         spacing: Style.space2
         // Row-level, so the leading visual and the text fall back together and
         // the mark stays lit. A second fade inside would compound to

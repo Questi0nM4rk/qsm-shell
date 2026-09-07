@@ -31,15 +31,6 @@ ListRow {
     separator: variant.indexOf("separator") >= 0
     disabled: variant.indexOf("disabled") >= 0
 
-    // ListRow's own `implicitWidth: body.implicitWidth` reports the ROW
-    // BODY's natural span but never adds back the `leftMargin`/`rightMargin`
-    // that same body loses to its own `anchors.fill: parent`, so a caller
-    // that trusts the natural width (every other caller instead imposes one)
-    // gets a body 2*Style.space3 too narrow and its text elides. Compensating
-    // here rather than in the component itself, which this preview split may
-    // not touch.
-    width: implicitWidth + Style.space3 * 2
-
     // Real trailing content, loaded only for the reading look -- an inactive
     // Loader has no size, so the picking look reserves no space for either.
     Loader {
