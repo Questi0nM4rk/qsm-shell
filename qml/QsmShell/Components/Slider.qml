@@ -25,6 +25,11 @@ import qs.QsmShell.Style
 Item {
     id: root
 
+    // The keyboard handlers below need focus, and nothing was giving it: no
+    // tab stop, and a drag that never moves focus here. The five states law
+    // counts a state the component cannot express as a state it does not have.
+    activeFocusOnTab: enabled
+
     property int orientation: Qt.Horizontal
     readonly property bool vertical: orientation === Qt.Vertical
 
@@ -32,6 +37,12 @@ Item {
     // 0 disables the wheel. A seek bar wants a deliberate pointer; a volume
     // bar is something you nudge.
     property real wheelStep: 0
+    // The keyboard route does not hang off `wheelStep` -- that property means
+    // "the wheel is deliberately off" for a surface like a seek bar, and a
+    // slider with no wheel still needs a keyboard. Arrow keys move by
+    // `keyboardStep`; Page keys move by the larger `keyboardPageStep`.
+    property real keyboardStep: Style.sliderKeyboardStep
+    property real keyboardPageStep: Style.sliderKeyboardPageStep
     property color fill: Style.accent
     // The colour at the LEADING end of the fill — the end the thumb is at.
     // Left equal to `fill` it is a flat bar; set differently, the lead is a
@@ -70,6 +81,10 @@ Item {
     readonly property bool hovered: hover.hovered
     readonly property bool active: emphasized || dragging || hovered
     property bool dragging: false
+    // Keyboard focus. Defaults to this item's own, the same way every other
+    // focusable control in the library does, so a slider that takes focus
+    // rings without wiring.
+    property bool focused: root.activeFocus
 
     signal moved(real value)
 
@@ -218,7 +233,57 @@ Item {
         height: children.length > 0 ? childrenRect.height : 0
     }
 
-    HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
+    HoverHandler { id: hover; enabled: root.enabled; cursorShape: Qt.PointingHandCursor }
+
+    // The five states law again: `StateLayer` owns the focus ring so a
+    // keyboard user meets the same mark here as on every other control. It
+    // does NOT own hover/press for this one -- `target: null` withholds the
+    // scale-growth binding. A slider already answers hover and press through
+    // its own `active`/`dragging` (the fill, the thumb colour, the shadow
+    // lift), and `StateLayer.pressed` is a TAP, not a sustained drag; routing
+    // press through it would have the ring and the thumb disagree mid-drag.
+    // See the report for the full reasoning.
+    StateLayer {
+        anchors.fill: parent
+        target: null
+        interactive: root.enabled
+        focused: root.focused
+        focusRadius: (root.vertical ? width : height) / 2
+    }
+
+    Keys.onPressed: event => {
+        if (!root.enabled)
+            return;
+
+        switch (event.key) {
+        case Qt.Key_Right:
+        case Qt.Key_Up:
+            root.moved(root.clampedFraction(root.value + root.keyboardStep));
+            event.accepted = true;
+            break;
+        case Qt.Key_Left:
+        case Qt.Key_Down:
+            root.moved(root.clampedFraction(root.value - root.keyboardStep));
+            event.accepted = true;
+            break;
+        case Qt.Key_PageUp:
+            root.moved(root.clampedFraction(root.value + root.keyboardPageStep));
+            event.accepted = true;
+            break;
+        case Qt.Key_PageDown:
+            root.moved(root.clampedFraction(root.value - root.keyboardPageStep));
+            event.accepted = true;
+            break;
+        case Qt.Key_Home:
+            root.moved(0);
+            event.accepted = true;
+            break;
+        case Qt.Key_End:
+            root.moved(1);
+            event.accepted = true;
+            break;
+        }
+    }
 
     // A grab area reaching well past a track that may be only a few pixels
     // thick.

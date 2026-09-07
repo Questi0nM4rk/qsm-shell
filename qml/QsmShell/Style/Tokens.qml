@@ -74,6 +74,8 @@ QtObject {
     readonly property int geometrySliderTrackThickness: 4
     readonly property int geometrySliderThumbSize: 12
     readonly property int geometrySliderThumbLift: 2
+    readonly property real geometrySliderKeyboardStep: 0.05
+    readonly property real geometrySliderKeyboardPageStep: 0.2
     readonly property int geometryBadgeHeight: 16
     readonly property int geometryTrackThickness: 6
     readonly property int geometryRingDiameter: 150

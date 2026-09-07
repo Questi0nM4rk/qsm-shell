@@ -144,19 +144,17 @@ TestCase {
             "moving the pointer toward the TOP of a vertical slider did not increase value -- the axis is upside down");
     }
 
-    // `hovered` keeps reporting true while disabled -- confirmed by running
-    // this, not assumed. `HoverHandler` has no tie to `root.enabled` (unlike
-    // the drag `MouseArea`, which inherits Item's own enabled-propagation,
-    // and the `WheelHandler`, which the run below shows is also inert here).
-    // This is pinned down as current fact, not endorsed; see the report.
-    function test_disabled_ignores_both_pointer_and_wheel_though_hover_still_reports() {
+    // The drag `MouseArea`, the `WheelHandler` and now the keyboard route,
+    // and `HoverHandler` (tied to `root.enabled` alongside them), and Tab
+    // traversal (`activeFocusOnTab: enabled`) all go inert together on a
+    // disabled slider -- confirmed by running this, not assumed.
+    function test_disabled_ignores_pointer_wheel_and_keyboard_and_reports_no_hover() {
         sliderDisabled.value = 0.5;
         movedSpyDisabled.clear();
 
         mouseMove(sliderDisabled, 100, 16);
-        compare(sliderDisabled.hovered, true,
-            "hovered stopped reporting on a disabled slider -- if this now fails, HoverHandler "
-            + "gained an enabled tie to root.enabled; update this test and drop the finding");
+        compare(sliderDisabled.hovered, false,
+            "hovered still reports true on a disabled slider");
 
         mousePress(sliderDisabled, 30, 16);
         mouseMove(sliderDisabled, 170, 16);
@@ -166,30 +164,106 @@ TestCase {
         mouseWheel(sliderDisabled, 100, 16, 0, 120);
         compare(sliderDisabled.value, 0.5, "scrolling a disabled slider changed its value");
 
+        sliderDisabled.forceActiveFocus();
+        compare(sliderDisabled.activeFocus, false, "a disabled slider took keyboard focus");
+        keyClick(Qt.Key_Right);
+        compare(sliderDisabled.value, 0.5, "a keyboard step changed a disabled slider's value");
+
         compare(movedSpyDisabled.count, 0, "a disabled slider emitted moved from a route that should be inert");
     }
 
-    // Slider has no Keys handling and never takes focus today -- confirmed by
-    // reading the whole component. This test pins down that current fact so
-    // a silent regression (or a silent fix) does not slip past unnoticed; it
-    // is not a substitute for the missing route. See the report for the
-    // finding this stands in for.
-    function test_keyboard_route_does_nothing_today() {
+    // Right and Up both increase, Left and Down both decrease, on EITHER
+    // orientation -- there is no orientation branch in the handler. The
+    // vertical Up case is the one that silently gets built upside down.
+    function test_arrow_keys_move_value_by_one_step_in_the_right_direction_on_both_orientations() {
+        sliderH.forceActiveFocus();
+        sliderH.value = 0.5;
+
+        keyClick(Qt.Key_Right);
+        fuzzyCompare(sliderH.value, 0.5 + sliderH.keyboardStep, 0.0001,
+            "Right did not move a horizontal slider up by one step");
+        keyClick(Qt.Key_Left);
+        fuzzyCompare(sliderH.value, 0.5, 0.0001,
+            "Left did not undo the Right step on a horizontal slider");
+        keyClick(Qt.Key_Up);
+        fuzzyCompare(sliderH.value, 0.5 + sliderH.keyboardStep, 0.0001,
+            "Up did not move a horizontal slider up by one step");
+        keyClick(Qt.Key_Down);
+        fuzzyCompare(sliderH.value, 0.5, 0.0001,
+            "Down did not undo the Up step on a horizontal slider");
+
+        sliderVert.forceActiveFocus();
+        sliderVert.value = 0.5;
+
+        keyClick(Qt.Key_Up);
+        fuzzyCompare(sliderVert.value, 0.5 + sliderVert.keyboardStep, 0.0001,
+            "Up did not INCREASE a vertical slider -- this is the case that silently gets built upside down");
+        keyClick(Qt.Key_Down);
+        fuzzyCompare(sliderVert.value, 0.5, 0.0001,
+            "Down did not undo the Up step on a vertical slider");
+        keyClick(Qt.Key_Right);
+        fuzzyCompare(sliderVert.value, 0.5 + sliderVert.keyboardStep, 0.0001,
+            "Right did not move a vertical slider up by one step");
+        keyClick(Qt.Key_Left);
+        fuzzyCompare(sliderVert.value, 0.5, 0.0001,
+            "Left did not undo the Right step on a vertical slider");
+    }
+
+    function test_page_keys_move_by_the_larger_step_and_home_end_reach_the_bounds_exactly() {
+        sliderKeyboard.forceActiveFocus();
+        sliderKeyboard.value = 0.5;
+
+        keyClick(Qt.Key_PageUp);
+        fuzzyCompare(sliderKeyboard.value, 0.5 + sliderKeyboard.keyboardPageStep, 0.0001,
+            "PageUp did not move by the larger page step");
+        keyClick(Qt.Key_PageDown);
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001,
+            "PageDown did not undo the PageUp step");
+
+        keyClick(Qt.Key_Home);
+        compare(sliderKeyboard.value, 0, "Home did not reach the lower bound exactly");
+        keyClick(Qt.Key_End);
+        compare(sliderKeyboard.value, 1, "End did not reach the upper bound exactly");
+    }
+
+    function test_keyboard_route_is_clamped_at_both_ends_like_the_pointer_and_wheel() {
+        sliderKeyboard.forceActiveFocus();
+
+        sliderKeyboard.value = 0.98;
+        keyClick(Qt.Key_PageUp);
+        compare(sliderKeyboard.value, 1, "a page step that overshoots the top did not clamp exactly to 1");
+
+        sliderKeyboard.value = 0.02;
+        keyClick(Qt.Key_PageDown);
+        compare(sliderKeyboard.value, 0, "a page step that overshoots the bottom did not clamp exactly to 0");
+    }
+
+    function test_keyboard_emits_the_same_signal_a_drag_emits() {
+        sliderKeyboard.forceActiveFocus();
         sliderKeyboard.value = 0.5;
         movedSpyKeyboard.clear();
 
-        sliderKeyboard.forceActiveFocus();
         keyClick(Qt.Key_Right);
-        keyClick(Qt.Key_Left);
-        keyClick(Qt.Key_Up);
-        keyClick(Qt.Key_Down);
-        keyClick(Qt.Key_PageUp);
-        keyClick(Qt.Key_PageDown);
 
-        compare(sliderKeyboard.value, 0.5,
-            "a keyboard route changed value -- Slider gained key handling; update this test and drop the finding");
-        compare(movedSpyKeyboard.count, 0,
-            "a keyboard route fired moved -- Slider gained key handling; update this test and drop the finding");
+        compare(movedSpyKeyboard.count, 1, "a keyboard step did not fire moved exactly once");
+        fuzzyCompare(movedSpyKeyboard.signalArguments[0][0], 0.5 + sliderKeyboard.keyboardStep, 0.0001,
+            "moved's argument did not carry the new value");
+    }
+
+    // Tab order follows declaration order: sliderH, sliderWheel, sliderVert,
+    // sliderDisabled, sliderKeyboard, sliderProg. `sliderDisabled` sets
+    // `activeFocusOnTab: enabled` to false through `enabled: false`, so this
+    // proves both "Tab reaches a slider" and "a disabled one is skipped" in
+    // one pass.
+    function test_tab_reaches_the_slider_and_skips_the_disabled_one() {
+        sliderVert.forceActiveFocus();
+
+        keyClick(Qt.Key_Tab);
+
+        compare(sliderKeyboard.activeFocus, true,
+            "Tab from sliderVert did not skip the disabled slider and land on the next one");
+        compare(sliderKeyboard.focused, true,
+            "activeFocus is true but the public `focused` state disagrees");
     }
 
     function test_programmatic_value_write_does_not_emit_moved() {

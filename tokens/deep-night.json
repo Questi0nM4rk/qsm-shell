@@ -87,6 +87,8 @@
     "sliderTrackThickness": 4,
     "sliderThumbSize": 12,
     "sliderThumbLift": 2,
+    "sliderKeyboardStep": 0.05,
+    "sliderKeyboardPageStep": 0.2,
     "badgeHeight": 16,
     "trackThickness": 6,
     "ringDiameter": 150,
