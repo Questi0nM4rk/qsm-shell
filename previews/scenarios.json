@@ -248,6 +248,7 @@
   },
   "list-row": {
     "component": "list-row",
+    "unit": "ListRow",
     "variant": "selected",
     "viewport": [
       800,
@@ -281,7 +282,8 @@
   },
   "device-row": {
     "component": "device-row",
-    "variant": "active",
+    "unit": "ListRow",
+    "variant": "reading-selected",
     "viewport": [
       800,
       500
@@ -289,7 +291,8 @@
   },
   "result-row": {
     "component": "result-row",
-    "variant": "selected",
+    "unit": "ListRow",
+    "variant": "lg-selected",
     "viewport": [
       800,
       500

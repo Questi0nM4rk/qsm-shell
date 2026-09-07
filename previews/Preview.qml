@@ -161,20 +161,6 @@ Rectangle {
             }
         }
         Capsule { visible: root.component === "capsule"; icon: "bell"; label: "Notifications"; detail: root.variant === "active" ? "2" : ""; active: root.variant === "active" }
-        // A row in a list you READ: no recession, a reading and a tertiary
-        // action in the trailing slot.
-        ListRow {
-            visible: root.component === "device-row"
-            Layout.preferredWidth: 260
-            size: "sm"
-            recede: false
-            icon: "wifi"
-            primary: "qsm-lab"
-            selected: root.variant === "active"
-
-            Prose { role: "reading"; font.pixelSize: Style.textXs; muted: true; text: "Connected" }
-            IconButton { icon: "trash-2"; size: Style.iconSm; padding: Style.space1; color: Style.textMuted }
-        }
         MonthCalendar { visible: root.component === "calendar"; Layout.preferredWidth: 300; shown: new Date(2026, 7, 1); today: new Date(2026, 7, 28) }
         // A search box is a text box with a magnifier in its leading slot.
         TextField {
@@ -195,18 +181,6 @@ Rectangle {
             error: root.variant === "error" ? "No network by that name is in range" : ""
 
             TextField { width: parent.width; failed: root.variant === "error"; placeholder: "qsm-lab" }
-        }
-        // A row in a list you PICK from: large, and everything not current
-        // recedes hard.
-        ListRow {
-            visible: root.component === "result-row"
-            Layout.preferredWidth: 500
-            size: "lg"
-            header: root.variant === "header"
-            icon: "sparkle"
-            primary: root.variant === "header" ? "Tools" : "Pick a colour"
-            supporting: "Open colour picker"
-            selected: root.variant !== "idle"
         }
         IconButton { visible: root.component === "icon-button"; icon: "sparkle"; color: Style.accent }
         NotificationCard {
@@ -256,18 +230,6 @@ Rectangle {
             isAlive: id => [1, 2, 3].includes(id)
         }
         ActionTile { visible: root.component === "action-tile"; icon: "power"; label: "Power off"; selected: root.variant === "selected"; armed: root.variant === "armed" }
-        ListRow {
-            visible: root.component === "list-row"
-            Layout.preferredWidth: 320
-            icon: "sparkle"
-            primary: "Pick a colour"
-            supporting: "Open colour picker"
-            selected: root.variant === "selected"
-            danger: root.variant === "danger"
-            header: root.variant === "header"
-            separator: root.variant === "separator"
-            disabled: root.variant === "disabled"
-        }
         Menu {
             visible: root.component === "menu"
             Layout.preferredWidth: 320
