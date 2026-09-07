@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+outdir="${1:-/tmp/qsm-capture-all}"
+mkdir -p "$outdir"
+
+mapfile -t keys < <(node -e '
+const { readFileSync } = require("node:fs")
+const scenarios = JSON.parse(readFileSync(process.argv[1], "utf8"))
+for (const key of Object.keys(scenarios)) console.log(key)
+' "$root/previews/scenarios.json")
+
+for key in "${keys[@]}"; do
+  if ! (cd "$root" && npm run --silent capture -- "$key" "$outdir/$key.png" >/dev/null); then
+    printf 'capture-all: FAILED to capture scenario "%s"\n' "$key" >&2
+    exit 1
+  fi
+done
+
+# Paths relative to $outdir so two runs in different directories diff cleanly.
+(cd "$outdir" && sha256sum ./*.png | sed 's#\./##' | sort -k2 > SHA256SUMS)
+
+printf 'capture-all: captured %d scenarios into %s\n' "${#keys[@]}" "$outdir"
