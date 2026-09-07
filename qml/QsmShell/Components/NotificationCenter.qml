@@ -35,6 +35,16 @@ ColumnLayout {
     // row directly — landing on the entry that just arrived, say.
     property alias currentIndex: historyList.currentIndex
 
+    // What the scroll cue's fade fades TO, and it MUST come from the consumer.
+    // This list draws no ground of its own: it sits on whatever surface hosts
+    // it, and only the host knows what that is. Hardcoding `Style.surface`
+    // here was wrong in the one place it shipped -- the panel's feed scrolls
+    // directly on a shader silhouette, so the fade washed a card colour over
+    // a much darker ground and read as a grey smear rather than as a fade.
+    // ScrollCue's own comment says it: a gradient toward the wrong colour is
+    // more visible than no gradient at all.
+    property color fadeColor: Style.surface
+
     signal dismissRequested(var entry)
     signal actionTriggered(var entry, string actionId)
     // The card only REPORTS hover; whether that pauses anything is the
@@ -62,6 +72,35 @@ ColumnLayout {
 
     function selectedEntry(): var {
         return historyList.currentItem?.entry ?? null;
+    }
+
+    // The cursor follows the ENTRY, not the row number.
+    //
+    // `items` is recomputed from scratch whenever anything upstream moves: an
+    // entry archiving, a live timer, a search keystroke. Assigning the new
+    // array resets the view's numeric cursor, so acting on a row threw the
+    // person somewhere else in the list -- which is the one thing a keyboard
+    // list must never do, because the next keystroke then lands on a row they
+    // never chose. Remembering the KEY and finding it again in the new array
+    // makes the cursor mean "this notification" instead of "position 7".
+    //
+    // The launcher solved the same problem the same way and this list did not
+    // have it yet.
+    property string cursorKey: ""
+
+    function restoreCursor(): void {
+        if (root.cursorKey.length === 0)
+            return;
+        const at = root.items.findIndex(entry => root.entryKey(entry) === root.cursorKey);
+        if (at >= 0) {
+            historyList.currentIndex = at;
+            return;
+        }
+        // The entry is gone (dismissed, cleared, filtered out). Hold the
+        // position rather than jumping home: the neighbour is the nearest
+        // thing to where they were.
+        historyList.currentIndex = Math.max(0,
+            Math.min(historyList.currentIndex, root.items.length - 1));
     }
 
     function clearActionFocus(): void {
@@ -195,6 +234,17 @@ ColumnLayout {
             model: root.items
             boundsBehavior: Flickable.StopAtBounds
 
+            // Remember which entry the cursor is on, and put it back after the
+            // model is replaced. `onCountChanged` rather than the root's
+            // `onItemsChanged` on purpose: the restore has to run AFTER the
+            // view has taken the new model, and handler order against a
+            // binding re-evaluation is not something to rely on.
+            onCurrentIndexChanged: {
+                const entry = root.items[currentIndex];
+                root.cursorKey = entry ? root.entryKey(entry) : "";
+            }
+            onCountChanged: root.restoreCursor()
+
             section.property: "appName"
             section.delegate: Prose {
                 required property string section
@@ -245,7 +295,7 @@ ColumnLayout {
 
         ScrollCue {
             view: historyList
-            fadeColor: Style.surface
+            fadeColor: root.fadeColor
         }
     }
 }
