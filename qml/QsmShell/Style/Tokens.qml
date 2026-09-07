@@ -54,7 +54,7 @@ QtObject {
     readonly property real motionMicroPopScale: 0.97
     readonly property int motionSpin: 900
     readonly property int motionPulse: 1400
-    readonly property int motionHoldGrace: 180
+    readonly property int motionHoverGrace: 180
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.45

@@ -69,45 +69,53 @@ Item {
     // double-pop on the first appearance.
     property bool settleContent: true
 
-    // ── keep-open (T6): a rollout is held open while the pointer sits
-    // inside its hit area, plus a grace period after the pointer leaves ──
+    // ── keep-open: the most ordinary thing on the web — a hover
+    // area larger than the item, covering the approach corridors a pointer
+    // sweeps through to reach it. While the pointer is anywhere in that
+    // area the rollout stays open; once it leaves, a grace period runs
+    // before the rollout may close ──
     //
     // Rects, in the HOST's coordinates, that keep this rollout open. A LIST
-    // rather than one rect: a rail popout is held by its anchor cell, the
+    // rather than one rect: a rail popout is covered by its anchor cell, the
     // band it grew from, its own card, and any open child card, and
     // unioning those is the CONSUMER's business, not a shape this library
     // should try to know. Empty means "my own silhouette" -- the honest
     // default for a rollout nobody has told anything else about.
-    property var holdAreas: []
-    // How long `held` stays true after the pointer leaves every hold area.
-    // See Motion.holdGrace for why this does not shorten under reduced
-    // motion.
-    property int holdGrace: Motion.holdGrace
+    property var hoverAreas: []
+    // How long `keepOpen` stays true after the pointer leaves every hover
+    // area. See Motion.hoverGrace for why this does not shorten under
+    // reduced motion.
+    property int closeDelay: Motion.hoverGrace
 
-    // True while the pointer sits inside a hold area right now. False, with
-    // no grace, when there is no pointer, no host, or the rollout is not
-    // showing.
-    readonly property bool _pointerInHoldArea: root.visible && !!root.host && !!root.host.pointer
-        && (root.holdAreas.length > 0 ? root.holdAreas
+    // True while the pointer sits inside a hover area right now. No delay of
+    // any kind: false when there is no pointer, no host, or the rollout is
+    // not showing.
+    readonly property bool hovered: root.visible && !!root.host && !!root.host.pointer
+        && (root.hoverAreas.length > 0 ? root.hoverAreas
             : [Qt.rect(root.x, root.y, root.width, root.height)])
             .some(area => root.host.pointer.contains(area))
 
-    // The keep-open verdict a consumer reads. This component only REPORTS —
-    // never `shouldBeActive = false` here. The surface holding this rollout
-    // decides what `held` means; a component that closed itself would be
-    // the exact law this library breaks nowhere else.
-    readonly property bool held: root.visible && (_pointerInHoldArea || holdGraceTimer.running)
+    // The keep-open verdict a consumer reads: `hovered`, extended by
+    // `closeDelay` after it drops. Kept separate from `hovered` on purpose --
+    // a `hovered` that stayed true for `closeDelay` after the pointer left
+    // would be a name that lies, and this library has already been bitten by
+    // a name that said where a type was used rather than what it was. This
+    // component only REPORTS — never `shouldBeActive = false` here. The
+    // surface holding this rollout decides what `keepOpen` means; a
+    // component that closed itself would be the exact law this library
+    // breaks nowhere else.
+    readonly property bool keepOpen: root.visible && (hovered || closeDelayTimer.running)
 
     Timer {
-        id: holdGraceTimer
-        interval: root.holdGrace
+        id: closeDelayTimer
+        interval: root.closeDelay
     }
 
-    on_PointerInHoldAreaChanged: {
-        if (root._pointerInHoldArea || !root.visible)
-            holdGraceTimer.stop();
+    onHoveredChanged: {
+        if (root.hovered || !root.visible)
+            closeDelayTimer.stop();
         else
-            holdGraceTimer.restart();
+            closeDelayTimer.restart();
     }
 
     function attached(side: string): bool {

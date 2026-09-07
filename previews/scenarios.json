@@ -196,8 +196,8 @@
       500
     ]
   },
-  "rollout-hold": {
-    "component": "rollout-hold",
+  "rollout-hover": {
+    "component": "rollout-hover",
     "unit": "Rollout",
     "variant": "default",
     "viewport": [

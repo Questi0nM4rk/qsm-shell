@@ -104,7 +104,7 @@ which of those rows still MEANS anything.
 
 ### Incoming: the popout keep-open geometry belongs here — 2026-09-07
 
-The consumer ratified a new law on 2026-09-07: a rollout is never held open by
+The consumer ratified a new law on 2026-09-07: a rollout is never kept open by
 TIME, only by where the pointer is. Its keep-open region is the union of the
 anchor cell, the band, the popout, every open descendant, and the travel
 triangle from anchor to the popout's near edge.

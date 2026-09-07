@@ -91,12 +91,12 @@ QtObject {
     // pulse — one breath of a placeholder or a waiting surface.
     readonly property int pulse: Style.reducedMotion ? Tokens.motionPulse * 2 : Tokens.motionPulse
 
-    // holdGrace — how long a rollout stays reported `held` after the pointer
-    // leaves its hold area (Rollout.holdAreas). Neither a duration nor a
-    // period: it is an interaction TIMEOUT, not a visual transition, so it
-    // does not shorten under Style.reducedMotion the way a duration does —
+    // hoverGrace — how long a rollout stays reported `keepOpen` after the
+    // pointer leaves its hover area (Rollout.hoverAreas). Neither a duration
+    // nor a period: it is an interaction TIMEOUT, not a visual transition, so
+    // it does not shorten under Style.reducedMotion the way a duration does —
     // reduced motion asks for calmer animation, not a different dead-zone.
-    readonly property int holdGrace: Tokens.motionHoldGrace
+    readonly property int hoverGrace: Tokens.motionHoverGrace
 
     // Enter: decelerate in, so the arrival is where the eye lands.
     readonly property int standardEasing: Easing.OutCubic

@@ -3,12 +3,13 @@ import QtQuick.Layouts
 import qs.QsmShell.Components
 import qs.QsmShell.Style
 
-// T6: a rollout is held open while the pointer sits inside its hit area, plus
-// a grace period after it leaves. The two boxes below are `holdAreas`, with a
-// deliberate GAP between them -- sweep the pointer from one box straight into
-// the other and `held` never drops; leave both and it stays true for the
-// grace period before finally going false. This is what proves the mechanism
-// live: a static capture always lands on one frame of one state.
+// A rollout stays open while the pointer sits inside its hover area,
+// plus a grace period after it leaves. The two boxes below are `hoverAreas`,
+// with a deliberate GAP between them -- sweep the pointer from one box
+// straight into the other and `keepOpen` never drops; leave both and it
+// stays true for the close delay before finally going false. This is what
+// proves the mechanism live: a static capture always lands on one frame of
+// one state.
 Item {
     id: root
     property string variant: ""
@@ -36,8 +37,8 @@ Item {
     readonly property rect areaLeft: Qt.rect(20, 90, 120, 80)
     readonly property rect areaRight: Qt.rect(280, 90, 120, 80)
 
-    // Sits IN the gap between the two hold areas, not touching either --
-    // proof that what keeps it open is the union of `holdAreas`, never its
+    // Sits IN the gap between the two hover areas, not touching either --
+    // proof that what keeps it open is the union of `hoverAreas`, never its
     // own silhouette.
     Rollout {
         id: rollout
@@ -48,7 +49,7 @@ Item {
         edges: ["top"]
         tier: "small"
         shouldBeActive: true
-        holdAreas: [root.areaLeft, root.areaRight]
+        hoverAreas: [root.areaLeft, root.areaRight]
 
         Rectangle {
             width: 90
@@ -87,8 +88,13 @@ Item {
         spacing: Style.space1
         RowLayout {
             spacing: Style.space4
-            Prose { role: "metadata"; text: "held" }
-            Prose { role: "reading"; text: rollout.held ? "true" : "false" }
+            Prose { role: "metadata"; text: "hovered" }
+            Prose { role: "reading"; text: rollout.hovered ? "true" : "false" }
+        }
+        RowLayout {
+            spacing: Style.space4
+            Prose { role: "metadata"; text: "keepOpen" }
+            Prose { role: "reading"; text: rollout.keepOpen ? "true" : "false" }
         }
     }
 }
