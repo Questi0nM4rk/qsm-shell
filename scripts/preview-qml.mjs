@@ -28,7 +28,6 @@ const result = spawnSync(
       QT_FORCE_STDERR_LOGGING: '1',
       QT_OPENGL: 'desktop',
       QT_QPA_PLATFORM: 'wayland',
-      QT_QUICK_BACKEND: 'opengl',
       QSG_RHI_BACKEND: 'opengl',
     },
   },
