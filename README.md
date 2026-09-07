@@ -53,17 +53,26 @@ Public types are listed in `qml/QsmShell/Components/qmldir`.
 ## Develop
 
 ```bash
+npm run preview -- <scenario>
 npm run capture -- <scenario> /tmp/out.png
+npm run unit -- <Type>            # --window runs it on the compositor instead
 npm test
-bash scripts/build-shaders   # only after editing a .frag; commit .frag + .qsb together
+bash scripts/build-shaders        # only after editing a .frag; commit .frag + .qsb together
 ```
 
-- `capture` renders one native QML preview offscreen; scenario names come from
-  `previews/scenarios.json`, and every public type has one.
-- `test` regenerates tokens, lints QML, and runs the native smoke and the
-  interaction tests.
+- `preview` opens one native QML scenario in a real wayland window; scenario
+  names come from `previews/scenarios.json`, and every public type has one.
+- `capture` renders the same scenario offscreen to a PNG. It proves a scene
+  rendered, never that it looks right.
+- `unit` runs one type's test file under `tests/units/` (falling back to
+  `tests/interaction/` for types not yet migrated).
+- `test` regenerates tokens, lints QML, and runs the native smoke check plus
+  every test directory.
+- `bash scripts/capture-all <dir>` captures every scenario, to prove none
+  stopped rendering.
 
-A component is looked at in native QML and nowhere else.
+A component is judged in a live native QML window and nowhere else. See
+`AGENTS.md` for a unit's shape and the step-by-step loop for migrating one.
 
 The shader is the one thing here that is not pure QML. Both the `.frag` and the
 built `.qsb` are committed, because Quickshell loads the `.qsb` at runtime and

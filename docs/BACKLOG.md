@@ -2,6 +2,49 @@
 
 ## Next
 
+### Preview/test migration underway (2026-09-08)
+
+Every public type is getting its own `previews/units/<Type>.qml` proof
+harness and its own `tests/units/tst_<Type>.qml` behaviour test, draining
+`tests/interaction/tst_library.qml` one type at a time. 6 of ~45 are moved:
+`Badge`, `Spinner`, `ProgressBar`, `Divider`, `Slider`, `ListRow`. A type
+costs a unit file plus a test file, in that order, and neither is optional:
+the unit is what a person judges in a live window, the test is what a CI run
+can catch before that person ever looks.
+
+`ScenePointer` is a new type: a hover-position reader meant for an ANCESTOR
+of the surfaces it watches. `Rollout` (ported from the consumer 2026-09-07,
+see the `ShellBorder` entry below) gained the hover/trigger contract this
+same run: `hoverAreas`/`triggerAreas` in, `hovered`/`keepOpen`/`triggered`/
+`wantsOpen` out. Both got their first unit and test alongside the change.
+The consumer `qsm-desktop` now depends on both: `EdgeScene.qml`,
+`BarPopouts.qml` and the OSD/notification/panel/session surfaces all import
+them.
+
+OPEN, not investigated: the offscreen capture pipeline does not rasterise
+`SvgIcon` glyphs. A blank where an icon belongs is the pipeline, not the
+component, but it means every PNG check is blind to anything icon-shaped.
+
+OPEN: a synthetic `mouseWheel` from QtTest does not reach a `WheelHandler`
+under `--window` (real Qt6 Wayland QPA). Offscreen stays the only valid run
+for wheel behaviour until this is understood.
+
+OPEN, and one reason `BarPopouts` in the consumer is still NOT a `Rollout`:
+`Rollout` cannot yet be the PARENT of a nested rollout. `BarPopouts` talks to
+`registerBulge`/`unregisterBulge` directly instead of through a `Rollout`'s
+`host` -- its comment names its own caelestia-derived clamp geometry as a
+second reason, so this gap blocks it but is not the only thing that would.
+
+Fixed in the same run, worth the record: `Slider` had no keyboard route and
+no focus state at all, and a disabled `Slider` still reported `hovered`
+(`tests/units/tst_Slider.qml` carries the coverage for both).
+`ListRow.implicitWidth` reported its body's span while the body loses two
+insets to its own margins, truncating text in the first caller that trusted
+natural sizing. `QT_QUICK_BACKEND=opengl` was a value that never existed:
+`QT_QUICK_BACKEND` only knows `software`, `d3d12` and `openvg`, and the RHI
+backend Qt actually renders through is `QSG_RHI_BACKEND`, already set
+correctly beside it.
+
 ### `ShellBorder` — decided 2026-09-06, 11a/11b/11c ALL LANDED
 
 The owner has ruled. The decision record is in the consumer repo at
