@@ -187,6 +187,15 @@
       500
     ]
   },
+  "scene-pointer": {
+    "component": "scene-pointer",
+    "unit": "ScenePointer",
+    "variant": "default",
+    "viewport": [
+      800,
+      500
+    ]
+  },
   "empty-state": {
     "component": "empty-state",
     "variant": "default",

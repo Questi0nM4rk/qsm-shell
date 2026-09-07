@@ -45,3 +45,4 @@ SelectionMark 1.0 SelectionMark.qml
 Slider 1.0 Slider.qml
 ShellBorder 1.0 ShellBorder.qml
 Rollout 1.0 Rollout.qml
+ScenePointer 1.0 ScenePointer.qml
