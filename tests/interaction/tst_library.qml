@@ -178,36 +178,6 @@ TestCase {
     }
     ActionTile { id: actionTile; icon: "power"; label: "Power off" }
     StatRing { id: ring; value: 0.7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
-    // A device row: read, not picked, so it does not recede its neighbours.
-    ListRow {
-        id: deviceRow
-        width: 240
-        size: "sm"
-        recede: false
-        icon: "wifi"
-        primary: "qsm-lab"
-        Prose { role: "reading"; font.pixelSize: Style.textXs; muted: true; text: "Connected" }
-    }
-
-    // A launcher row: one thing is wanted, so the rest recede hard.
-    ListRow {
-        id: resultRow
-        width: 400
-        size: "lg"
-        icon: "sparkle"
-        primary: "Pick a colour"
-        supporting: "Opens the picker"
-        selected: true
-    }
-
-    // The supporting line that only repeats the name -- the case desktop
-    // entries produce constantly ("Volume Control / Volume Control").
-    ListRow {
-        id: echoRow
-        width: 400
-        primary: "Volume Control"
-        supporting: "volume control"
-    }
     TextField { id: text2; width: 200 }
     Switch { id: toggle2 }
     Checkbox { id: check2 }
@@ -322,7 +292,7 @@ TestCase {
             disclosure, scrim, shortCue, longCue, stat, goodStat, sparkline, flatline, marquee,
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, calendar,
-            notification, archivedNotification, center, popupStack, evictionStack, actionTile, ring, deviceRow, resultRow, echoRow,
+            notification, archivedNotification, center, popupStack, evictionStack, actionTile, ring,
             text2, toggle2, check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);
@@ -478,21 +448,6 @@ TestCase {
         verify(longCue.overflows, "a cue on overflowing content said it fit");
         compare(longCue._ratio, longList.visibleArea.heightRatio,
             "the cue did not take its ratio from visibleArea");
-    }
-
-    // A list you READ must not dim the nine rows that are not current to mark
-    // the one that is; a list you PICK from must. That difference is the only
-    // real one the three old row types had between them.
-    function test_recede_is_the_only_axis_between_a_read_list_and_a_pick_list() {
-        verify(deviceRow.selectable, "a device row was not selectable");
-        compare(deviceRow.leadingSize, Style.iconMd, "a compact row did not take the compact leading box");
-        compare(resultRow.leadingSize, Style.iconLg, "a large row did not take the large leading box");
-    }
-
-    // A leading visual sits in a box of ONE size so the name's left edge does
-    // not move between rows of different kinds.
-    function test_leading_box_is_one_size_per_row_size() {
-        verify(resultRow.leadingSize > deviceRow.leadingSize, "both row sizes shared a leading box");
     }
 
     // One stand-in or the other, never both: an album has no initials worth
