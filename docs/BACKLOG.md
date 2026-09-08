@@ -177,6 +177,41 @@ spans the full height. Either it is genuinely redundant, or flushness fails in
 some state and the triangle is load-bearing there. Nobody has checked which,
 and a test is exactly how to find out.
 
+### `ListRow` breaks two laws it is supposed to carry -- 2026-09-08
+
+Both found by writing `tests/units/tst_ListRow.qml`, both verified in the
+source, neither fixed: the first changes how the consumer's desktop looks right
+now and that is the owner's judgement, and the second is a layout change that
+wants its own look.
+
+**A report-only row is dimmed exactly like a disabled one.**
+
+    selectable: _normal && !disabled && interactive
+    proseColor: !selectable ? Style.textMuted : danger ? Style.danger : Style.text
+
+`interactive: false` is how a row says "I am a reading, not a target", and it
+lands in the same bucket as `disabled`. The law this type exists to carry says
+the opposite in as many words: unavailable dims, not-a-target does not, because
+dimming a reading also says the reading is stale. The consumer's device rows
+are exactly this shape, so every live value in them is drawn as though it were
+old. The test file pins the BEHAVIOUR (a report-only row refuses the routes
+without claiming `disabled`); the colour is not asserted, because appearance is
+judged in the live window.
+
+**An empty trailing slot takes space.**
+
+`trailingSlot` is a `RowLayout` with `spacing: Style.space2` and no gate on
+whether it has children, unlike `leadingBox` which checks. Measured with a
+throwaway probe: a bare row already carries the gap, and adding trailing
+content of implicit width 24 grew the row from 41 to 65, exactly 24 rather than
+24 plus the spacing, which is the proof the gap was paid while the slot was
+empty. The component's own comment and the AGENTS.md law both say an empty slot
+takes no space.
+
+Also not tested and not fixed: the supporting line hides itself when it repeats
+the primary, and reaching that `Prose` from a test would mean indexing into
+`children`, which couples a test to the component's internal shape.
+
 ### Three findings the owner has seen and left standing -- 2026-09-08
 
 Each ended in a decision, not a fix, so each needs its reason on the record.
