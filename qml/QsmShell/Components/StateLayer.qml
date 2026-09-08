@@ -43,7 +43,7 @@ Item {
     // radius is a warning plus a guess.
     property real focusRadius: 0
 
-    readonly property bool hovered: hover.hovered
+    readonly property bool hovered: interactive && hover.hovered
     readonly property bool pressed: interactive && tap.pressed
     signal clicked
 

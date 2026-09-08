@@ -109,29 +109,6 @@ Rectangle {
             surfaceOpacity: root.variant === "disabled" ? Style.opacityDisabled : Style.surfaceOpacity
             scale: root.variant === "pressed" ? 0.97 : 1
         }
-        Item {
-            visible: root.component === "state-layer"
-            Layout.preferredWidth: 260
-            Layout.preferredHeight: 76
-            Rectangle {
-                id: layerTarget
-                anchors.fill: parent
-                radius: Style.radiusLg
-                color: Style.surfaceRaised
-                opacity: root.variant === "disabled" ? Style.opacityDisabled : 1
-            }
-            Text {
-                anchors.centerIn: parent
-                text: `StateLayer / ${root.variant}`
-                color: Style.textMuted
-                font.pixelSize: Style.textXs
-            }
-            StateLayer {
-                anchors.fill: parent
-                target: layerTarget
-                interactive: root.variant !== "disabled"
-            }
-        }
         SvgIcon {
             visible: root.component === "svg-icon"
             name: "sparkle"
@@ -272,7 +249,6 @@ Rectangle {
 
             Capsule { size: "sm"; variant: "ghost"; icon: "rotate-cw"; label: "Retry" }
         }
-        Switch { visible: root.component === "switch"; checked: root.variant === "on" }
         Checkbox { visible: root.component === "checkbox"; label: "Include hidden"; checked: root.variant === "on"; indeterminate: root.variant === "some" }
         Stat { visible: root.component === "stat"; value: "72"; unit: "%"; label: "CPU"; trend: "up"; good: "down" }
         Sparkline { visible: root.component === "sparkline"; Layout.preferredWidth: 200; Layout.preferredHeight: 48; values: [4, 7, 3, 9, 6, 11, 8]; area: root.variant === "area" }

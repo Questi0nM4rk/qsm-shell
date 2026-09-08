@@ -52,6 +52,7 @@
   },
   "switch": {
     "component": "switch",
+    "unit": "Switch",
     "variant": "on",
     "viewport": [
       800,
@@ -324,6 +325,7 @@
   },
   "state-layer": {
     "component": "state-layer",
+    "unit": "StateLayer",
     "variant": "hover",
     "viewport": [
       800,

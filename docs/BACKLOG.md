@@ -6,9 +6,10 @@
 
 Every public type is getting its own `previews/units/<Type>.qml` proof
 harness and its own `tests/units/tst_<Type>.qml` behaviour test, draining
-`tests/interaction/tst_library.qml` one type at a time. 6 of ~45 are moved:
-`Badge`, `Spinner`, `ProgressBar`, `Divider`, `Slider`, `ListRow`. A type
-costs a unit file plus a test file, in that order, and neither is optional:
+`tests/interaction/tst_library.qml` one type at a time. 8 of ~45 are moved:
+`Badge`, `Spinner`, `ProgressBar`, `Divider`, `Slider`, `ListRow`, `StateLayer`,
+`Switch`. A type costs a unit file plus a test file, in that order, and neither
+is optional:
 the unit is what a person judges in a live window, the test is what a CI run
 can catch before that person ever looks.
 
@@ -197,15 +198,17 @@ with an empty body rather than an error. A direct `qmltestrunner` call without
 the variable fails on that check, not on a parse error.
 
 **The migration is a defect detector, not tidying, and should be scheduled as
-one.** Two types have been through the full loop and both turned up real
-defects the moment something drove them: `Slider` had no keyboard route and no
-focus state at all and reported hover while disabled; `ListRow` truncated its
-own content when sized naturally and breaks two of the laws it carries. Neither
-was visible to reading the source, to `qmllint`, or to a capture. Expect the
-remaining types to pay the same way, and budget for fixing what they surface
-rather than only for writing the unit and the test.
+one.** Four types have been through the full loop and turned up real defects
+the moment something drove them: `Slider` had no keyboard route and no focus
+state at all and reported hover while disabled; `ListRow` truncated its own
+content when sized naturally; `StateLayer` still reported hover when
+`interactive: false`; `Switch` had keyboard handlers without a Tab route, so
+keyboard activation was unreachable. None was visible to reading the source,
+to `qmllint`, or to a capture. Expect the remaining types to pay the same way,
+and budget for fixing what they surface rather than only for writing the unit
+and the test.
 
-**~39 types still to move.** `tests/interaction/tst_library.qml` is the meter:
+**~37 types still to move.** `tests/interaction/tst_library.qml` is the meter:
 it stood at 66 assertions before the drain and 64 after `ListRow` left. It dies
 empty.
 
@@ -276,9 +279,9 @@ BUTTON down and became `hovered` plus `keepOpen`. `Popover`'s own delay is a
 different mechanism and renaming it would change unrelated semantics, so it was
 left. Worth one look the next time that file is open.
 
-### `StateLayer` is the only public type with no test — 2026-09-07
+### `StateLayer` was the only public type with no test — CLOSED 2026-09-08
 
-107 lines, and every type in `Components/` except this one is exercised
+107 lines, and every type in `Components/` is now exercised
 somewhere under `tests/`. It is also, with some irony, the type that every
 `clip-growth` finding in the consumer's `ui-guard` is ABOUT -- three separate
 gate failures in one session, all naming a component nothing here tests.

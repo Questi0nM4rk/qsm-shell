@@ -19,6 +19,10 @@ import qs.QsmShell.Style
 Item {
     id: root
 
+    // The keyboard handlers need a real Tab route; disabled switches must leave
+    // that route at the same time as their pointer and key actions.
+    activeFocusOnTab: enabled
+
     property bool checked: false
     property color accentColor: Style.accent
     // Keyboard focus. Defaults to this item's own, so a switch that takes
