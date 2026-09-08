@@ -33,17 +33,21 @@ Rectangle {
     property alias text: input.text
     // sm | md | lg
     property string size: "md"
-    // Characters are hidden, but the person must still see them LANDING —
-    // a field that shows nothing at all cannot be told from one that is not
-    // receiving the keystrokes.
-    property bool masked: false
+    // text | password | number. A search box is still `text` with a
+    // magnifier in its leading slot -- search is not an input type.
+    property string inputType: "text"
     // Non-empty paints the failure. The message itself belongs to `Field`.
     property bool failed: false
     property bool readOnly: false
+    // A password stays a password -- including its input-method hints -- while
+    // its host decides whether a trailing reveal action shows the text.
+    property bool passwordVisible: false
 
     // ── slots ───────────────────────────────────────────────────────────
     property alias leading: leadingSlot.data
     property alias trailing: trailingSlot.data
+    property int leadingCursorShape: Qt.IBeamCursor
+    property int trailingCursorShape: Qt.PointingHandCursor
 
     // ── the one key hook ────────────────────────────────────────────────
     // Fires first, with the live event. Accept it to take the key.
@@ -59,26 +63,67 @@ Rectangle {
     // the text changed under the keyboard.
     signal selectionClaimed
 
+    // The input's own validity, surfaced so a HOST decides what "not a
+    // number yet" means. `acceptableInput` being false never paints `failed`
+    // on its own; the host reads it and owns the error copy.
+    readonly property bool acceptableInput: input.acceptableInput
+
+    // Host-overridable validator. The binding defaults to the built-in
+    // `number` validator (any double, no hardcoded range); assigning your own
+    // validator replaces the binding. `text` and `password` validate nothing.
+    // `var` because Qt Quick registers no `Validator` type -- only the
+    // concrete `DoubleValidator` / `IntValidator` /
+    // `RegularExpressionValidator`.
+    property var validator: inputType === "number" ? numericValidator : null
+
+    // Host-overridable input-method hints; the default derives from the
+    // input type, so a `number` field asks for a formatted-numbers pad and a
+    // `password` field hides text and suppresses prediction.
+    property int inputMethodHints: inputType === "number"
+        ? Qt.ImhFormattedNumbersOnly
+        : inputType === "password"
+            ? Qt.ImhHiddenText | Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
+            : 0
+
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
+    readonly property bool _password: inputType === "password"
     readonly property int fieldTextSize: _sm ? Style.textSm : _lg ? Style.textLg : Style.textMd
     readonly property bool focused: input.activeFocus
 
     function focusField(): void { input.forceActiveFocus(); }
     function setText(value: string): void { input.text = value; }
     function selectAll(): void { input.selectAll(); }
+    // The one semantic accept entry point: Return/Enter, and a consumer that
+    // wants to accept programmatically, both call it. Emits `accepted` only
+    // when the current text is acceptable and reports whether it did.
+    function accept(): bool {
+        if (!root.enabled || !input.acceptableInput)
+            return false;
+        root.accepted();
+        return true;
+    }
 
-    // How wide the field wants to be when nothing tells it. `row.implicitWidth`
-    // alone is not that: the middle column is a fill-width Item with no
-    // implicit width of its own, so neither the input nor the placeholder
-    // contributed and a standalone field measured 48px -- the two slot margins
-    // and nothing else.
+    // The built-in `number` validator. Any double: the Qt defaults are an
+    // unbounded range, so nothing is hardcoded here -- a host that wants a
+    // range or an integer supplies its own validator through `validator`.
+    DoubleValidator {
+        id: numericValidator
+        notation: DoubleValidator.StandardNotation
+    }
+
+    // How wide the field wants to be when nothing tells it. A text box's
+    // preferred width is a CONSTANT, never its content: the first version fed
+    // the input's own implicit width into this sum, so typing stretched the
+    // box across the screen instead of scrolling inside itself. The slots may
+    // demand more than the default; the characters typed into the middle never
+    // do. A consumer gives the field an explicit width or lets the layout
+    // decide; the field reports one fixed resting size either way.
     property real naturalWidth: Style.notificationWidth
 
     implicitHeight: _sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight
     implicitWidth: Math.max(naturalWidth,
         leadingSlot.implicitWidth + trailingSlot.implicitWidth
-            + Math.max(input.implicitWidth, placeholder.implicitWidth)
             + Style.space3 * 4)
     radius: Style.radiusMd
     opacity: enabled ? 1 : Style.opacityDisabled
@@ -111,7 +156,12 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: Style.space3
         anchors.rightMargin: Style.space3
-        spacing: Style.space3
+        // One step less than the box margin: a spacing step is the air the
+        // scroll-end caret keeps from the trailing action, and the owner's
+        // live ruler read the full step as too much room. Both sides shrink
+        // together, so the leading-to-text rhythm stays equal to the
+        // text-to-action rhythm.
+        spacing: Style.space2
 
         Item {
             id: leadingSlot
@@ -123,6 +173,10 @@ Rectangle {
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            // Long text scrolls INSIDE the box; it never stretches it. Without
+            // the clip, overflowing glyphs painted past the field's rounded
+            // edge.
+            clip: true
 
             Prose {
                 id: placeholder
@@ -137,20 +191,53 @@ Rectangle {
 
             TextInput {
                 id: input
+                objectName: "textFieldInput"
                 anchors.fill: parent
                 enabled: root.enabled
                 readOnly: root.readOnly
+                // A keyboard-first surface travels by Tab. The input is the
+                // focusable thing here (the root Rectangle is not a focus
+                // scope), so the tab stop lives on it -- it is skipped
+                // automatically while disabled.
+                activeFocusOnTab: true
                 color: Style.text
                 selectionColor: Style.accent
                 selectedTextColor: Style.background
                 verticalAlignment: TextInput.AlignVCenter
                 font.family: Style.fontFamily
                 font.pixelSize: root.fieldTextSize
-                // Show each character as it lands, then hide it. Hiding
-                // everything from the first keystroke leaves no way to tell a
-                // masked field from a dead one.
-                echoMode: root.masked ? TextInput.PasswordEchoOnEdit : TextInput.Normal
+                // The validator and the method hints travel together with the
+                // input type. `validator` is host-overridable but defaults to
+                // the built-in number validator; the hints ask the platform
+                // keyboard for the right pad.
+                validator: root.validator
+                inputMethodHints: root.inputMethodHints
+                // The password is ALWAYS masked, including the character being
+                // typed. Echo-on-edit was tried first because hiding the very
+                // first keystroke read as a dead field, but it revealed the
+                // WHOLE password while the field was being edited -- and since
+                // the dots turned into letters under the caret, it read as if
+                // typing wiped the text. A password that stops being a password
+                // exactly while a person works on it is not one.
+                echoMode: root._password && !root.passwordVisible
+                    ? TextInput.Password
+                    : TextInput.Normal
+                // The right inset is what keeps the caret legible at the end
+                // of a long value: without it the insertion point pins flush
+                // against the trailing action (and the row spacing alone reads
+                // as no air at all). The live ruler came back with one spacing
+                // step on the button -- the caret should land where the text
+                // would if the box were endless, not a third of the box back.
+                // So the inset is only as deep as needed to keep the full 2px
+                // bar on-screen past the clip: the scroll-end caret shows all
+                // of itself exactly one row-spacing step from the action.
+                rightPadding: Style.spaceTight
                 clip: true
+                // The library draws its own caret (see `caret` below). The
+                // stock one is a 1px line that hides during fast typing and
+                // loses itself against the scroll edge; nothing here controls
+                // that, so it renders nothing and the overlay takes over.
+                cursorDelegate: Item {}
 
                 onTextEdited: {
                     root.selectionClaimed();
@@ -165,7 +252,7 @@ Rectangle {
                 // version of this component had both, and a consumer that
                 // claimed Down got its own handler AND `moveDown` — a
                 // launcher list that moved two rows per keystroke.
-                // `tests/interaction/tst_textfield.qml` is that bug, kept.
+                // `tests/units/tst_TextField.qml` is that bug, kept.
                 //
                 // So the hook fires, and if it did not take the key this
                 // decides what the key means. No ordering to depend on.
@@ -188,7 +275,7 @@ Rectangle {
                     case Qt.Key_Return:
                     case Qt.Key_Enter:
                         root.selectionClaimed();
-                        root.accepted();
+                        root.accept();
                         event.accepted = true;
                         break;
                     case Qt.Key_Escape:
@@ -202,6 +289,24 @@ Rectangle {
                         break;
                     }
                 }
+            }
+
+            // The insertion point, drawn by the field itself. Qt's caret
+            // blinks away during fast typing and, at the scroll edge of a
+            // long value, sits flush against the trailing action where a 1px
+            // line is hard to read. `cursorRectangle` always reports where
+            // the caret really is, so an accent bar at that spot survives
+            // long text and a held key -- the two cases the stock caret loses.
+            Rectangle {
+                id: caret
+                objectName: "textFieldCaret"
+                x: input.x + input.cursorRectangle.x
+                y: input.y + input.cursorRectangle.y
+                width: 2
+                height: input.cursorRectangle.height
+                color: Style.accent
+                radius: 1
+                visible: input.activeFocus
             }
         }
 
@@ -226,12 +331,23 @@ Rectangle {
         interactive: root.enabled && !root.readOnly
         focused: root.focused
         focusRadius: root.radius
+        focusColor: root.failed ? Style.danger : Style.accent
         onClicked: input.forceActiveFocus()
     }
 
     MouseArea {
+        id: cursorArea
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
-        cursorShape: Qt.IBeamCursor
+        hoverEnabled: true
+        cursorShape: {
+            const leadingPoint = leadingSlot.mapFromItem(cursorArea, mouseX, mouseY);
+            const point = trailingSlot.mapFromItem(cursorArea, mouseX, mouseY);
+            if (leadingSlot.contains(leadingPoint))
+                return root.leadingCursorShape;
+            return trailingSlot.contains(point)
+                ? root.trailingCursorShape
+                : Qt.IBeamCursor;
+        }
     }
 }

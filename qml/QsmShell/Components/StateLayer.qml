@@ -42,6 +42,7 @@ Item {
     // plain Item as far as the type system is concerned and probing it for a
     // radius is a warning plus a guess.
     property real focusRadius: 0
+    property color focusColor: Style.accent
 
     readonly property bool hovered: interactive && hover.hovered
     readonly property bool pressed: interactive && tap.pressed
@@ -86,7 +87,7 @@ Item {
         color: "transparent"
         radius: root.focusRadius
         border.width: 1
-        border.color: Style.accent
+        border.color: root.focusColor
         opacity: root.focused ? 1 : 0
 
         Behavior on opacity {

@@ -299,9 +299,37 @@
       500
     ]
   },
+  "text-input": {
+    "component": "text-input",
+    "unit": "TextField",
+    "variant": "text-filled",
+    "viewport": [
+      800,
+      500
+    ]
+  },
   "search": {
     "component": "search",
-    "variant": "filled",
+    "unit": "TextField",
+    "variant": "search-filled",
+    "viewport": [
+      800,
+      500
+    ]
+  },
+  "password-input": {
+    "component": "password-input",
+    "unit": "TextField",
+    "variant": "password-filled",
+    "viewport": [
+      800,
+      500
+    ]
+  },
+  "number-input": {
+    "component": "number-input",
+    "unit": "TextField",
+    "variant": "number-filled",
     "viewport": [
       800,
       500

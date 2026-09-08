@@ -6,10 +6,10 @@
 
 Every public type is getting its own `previews/units/<Type>.qml` proof
 harness and its own `tests/units/tst_<Type>.qml` behaviour test, draining
-`tests/interaction/tst_library.qml` one type at a time. 8 of ~45 are moved:
+`tests/interaction/tst_library.qml` one type at a time. 9 of ~45 are moved:
 `Badge`, `Spinner`, `ProgressBar`, `Divider`, `Slider`, `ListRow`, `StateLayer`,
-`Switch`. A type costs a unit file plus a test file, in that order, and neither
-is optional:
+`Switch`, `TextField`. A type costs a unit file plus a test file, in that order,
+and neither is optional:
 the unit is what a person judges in a live window, the test is what a CI run
 can catch before that person ever looks.
 
@@ -45,6 +45,105 @@ natural sizing. `QT_QUICK_BACKEND=opengl` was a value that never existed:
 `QT_QUICK_BACKEND` only knows `software`, `d3d12` and `openvg`, and the RHI
 backend Qt actually renders through is `QSG_RHI_BACKEND`, already set
 correctly beside it.
+### `TextField` migration -- CLOSED 2026-09-08
+
+- [x] Move the public type to `previews/units/TextField.qml` and remove its
+  inline search rendering from `previews/Preview.qml`.
+- [x] Map `text-input`, `search`, `password-input` and `number-input` to the
+  one type unit, with coherent glyphs and actions for every purpose.
+- [x] Move behaviour coverage to `tests/units/tst_TextField.qml`, delete
+  `tests/interaction/tst_textfield.qml` and drain `text2` from
+  `tests/interaction/tst_library.qml`.
+- [x] Exercise text typing/clear, search submit, password reveal, number
+  validation, rest/hover/focus/failed/readOnly/disabled and sm/md/lg in native
+  Wayland QML.
+- [x] Run the focused test offscreen and on Wayland, capture all four scenario
+  keys, run `qmllint`, `npm test` and `git diff --check`. Final suite: 121
+  passed, 0 failed.
+
+`TextField` gained the tab stop it lacked: the inner `TextInput` had
+`activeFocusOnTab` false by default, so only a pointer click or
+`focusField()` could reach it, and a keyboard-first surface had no way to Tab
+into the field (`tests/units/tst_TextField.qml` pins both routes). Its public
+`masked` boolean became `inputType` (`text`/`password`/`number`): password
+stays masked with the hidden-input hints while being typed into and can be
+revealed without ceasing to be a password, number rides a host-overridable
+`validator` (any double, no
+hardcoded range) and rejects letter keystrokes, and `accept()` — the
+Return/Enter route — emits `accepted` only when `acceptableInput` is true, so a
+host owns its own error copy instead of a component auto-failing the paint
+(`tests/units/tst_TextField.qml` pins both).
+
+The live unit found two more production defects. `StateLayer`'s accent focus
+ring painted above the field's danger border, hiding failure while the field
+was focused; `focusColor` now carries the stronger semantic state through the
+ring. A full-field I-beam also overrode the hand cursor of slot actions;
+`TextField` now routes cursor shape by region. The same live pass settled the
+composition contract: plain text uses a type glyph and clear, search uses a
+magnifier that calls the same `accept()` as Return plus clear, password uses a
+key and eye/eye-off without dropping password semantics, and number uses a hash
+and clear. `type.svg`, `key.svg` and `hash.svg` join the bundled Lucide set.
+
+A live pass after that found the purpose switch was NOT glyph-swap only: the
+leading slot had silently changed WIDTH. Plain text/password/number put a bare
+24px `SvgIcon` in the slot, while search put an `IconButton` whose
+`implicitWidth` is `size + 2*padding = 32px`, so the whole text column moved
+8px right — and optically re-centring the search glyph (`glyphOffsetX`)
+aligned the glyph while the TEXT stayed displaced, which reads as "one field,
+two text starts". Rule: a slot action's layout footprint must equal the glyph's
+own width; the pointer target stays the glyph-sized box and the surrounding
+slots must never grow to fit a control's padding (`padding: 0` on the search
+action, pinned by `tests/units/tst_TextField.qml`). Intrinsic widths of slot
+children are column geometry, not decoration.
+
+The same live pass that settled the caret settled two more owner-ratified
+behaviours. A password field must mask EVERYTHING, including the character
+being typed: `PasswordEchoOnEdit` revealed the whole text while the field was
+being edited, and since the dots turned into letters under the caret, typing
+looked like it had wiped the field (`tests/units/tst_TextField.qml` pins
+always-mask and text preservation). And a text box's preferred width is a
+CONSTANT, never content-derived: the first `implicitWidth` fed the input's own
+implicit width into the sum, so typing stretched the box across the screen.
+Long values now scroll inside the clipped column; the box reports one fixed
+resting size. The stock caret lost both cases that matter -- it hides during
+fast/held typing and, at the scroll edge of a long value, reads as a 1px smudge
+next to the trailing action -- so `TextField` draws its own 2px accent caret
+from `cursorRectangle`, always visible while the field has focus. The first
+version pinned that caret flush at the scroll edge, and "flush" read as "under
+the button": the row spacing alone was too little air. A full spacing inset
+read as too far, so the owner's live ruler settled it: the scroll-end caret
+should land where the text would in an endless box -- one row-spacing step
+from the trailing action. The row's spacing is now `Style.space2` (one step
+down from the box margin; both slot sides shrink together), and the input's
+`rightPadding` is only as deep as needed to keep the whole 2px bar past the
+clip (`Style.spaceTight`). `test_caret_clears_the_trailing_action` pins the
+distance to the spacing step in both directions.
+Scanning gotcha while verifying live: the 1px focus border produces a
+continuous full-field accent run (top+bottom rows each hit the pixel
+threshold), which reads as a "selection" in a naive accent-colour scan. To
+find the caret, count accent hits PER COLUMN and keep only tall columns
+(`>=8`): the border contributes ~2, the 21px caret contributes ~26.
+
+### Component findings transferred from qsm-desktop -- 2026-09-08
+
+Only the neutral mechanism moves here; desktop data, policy and compositor
+integration stay with the consumer.
+
+- `NotificationCenter` needs a deterministic tie-break between app groups
+  that both contain a live entry. The current comparator can return equality
+  and split one app's section around another. Implementation waits on the
+  owner choosing alphabetical versus recency order.
+- `Segmented` may need one indicator that glides between cells rather than a
+  selected fill per cell. This changes every consumer's motion language, so it
+  needs `ui-design` and a live owner judgement before code.
+- `ColorSwatch` needs its painted sample size separated from its pointer target
+  if a compact consumer is to meet the 44px target floor without enlarging the
+  colour itself. The host still has to reserve a non-overlapping pitch; choose
+  that geometry in a live layout before changing the type.
+- A compact CPU/memory readout may replace a consumer's eight-dot handle.
+  Compose it from `Stat`, `Meter` and `Prose` first; add no surface-named type,
+  and only add a new neutral concept if the live design proves those primitives
+  cannot express it.
 
 ### `ShellBorder` — decided 2026-09-06, 11a/11b/11c ALL LANDED
 
@@ -198,17 +297,20 @@ with an empty body rather than an error. A direct `qmltestrunner` call without
 the variable fails on that check, not on a parse error.
 
 **The migration is a defect detector, not tidying, and should be scheduled as
-one.** Four types have been through the full loop and turned up real defects
+one.** Five types have been through the full loop and turned up real defects
 the moment something drove them: `Slider` had no keyboard route and no focus
 state at all and reported hover while disabled; `ListRow` truncated its own
 content when sized naturally; `StateLayer` still reported hover when
 `interactive: false`; `Switch` had keyboard handlers without a Tab route, so
-keyboard activation was unreachable. None was visible to reading the source,
-to `qmllint`, or to a capture. Expect the remaining types to pay the same way,
-and budget for fixing what they surface rather than only for writing the unit
-and the test.
+keyboard activation was unreachable; `TextField` had the same dead Tab route
+-- the inner `TextInput` had no tab stop, so only a pointer click or a
+programmatic `focusField()` could reach it, hid its failed border under the
+generic focus ring and showed an I-beam over its slot actions. None was visible
+to reading the source, to `qmllint`, or to an offscreen capture. Expect the
+remaining types to pay the same way, and budget for fixing what they surface
+rather than only for writing the unit and the test.
 
-**~37 types still to move.** `tests/interaction/tst_library.qml` is the meter:
+**~36 types still to move.** `tests/interaction/tst_library.qml` is the meter:
 it stood at 66 assertions before the drain and 64 after `ListRow` left. It dies
 empty.
 
@@ -295,6 +397,14 @@ gate failures in one session, all naming a component nothing here tests.
 
 ## Known Environment
 
+- OpenCode retired the `gpt-5.4-mini` runner models while the generated
+  `qsm-runner` manifest still named `openai/gpt-5.4-mini-fast`. The provider
+  accepted the catalog name but rejected execution for the ChatGPT/Codex
+  account, and Task surfaced only an empty result. A runtime override to
+  `openai/gpt-5.6-luna-fast` completed runner contracts and all verification
+  normally. The durable manifest correction belongs in qsm-marketplace, not
+  this library.
+
 - `/usr/bin/qmltestrunner` is Qt 5 and cannot test this Qt 6 module. **The Qt 6
   one is at `/usr/lib/qt6/bin/qmltestrunner` and works**, including real
   `mouseClick` / `keyClick` under `QT_QPA_PLATFORM=offscreen`. The note above
@@ -329,7 +439,7 @@ Each cost real time once. None is findable by reading the code.
   and setting `event.accepted` in the generic one does not suppress the
   specific one. A field carrying both moved a launcher list two rows per
   keystroke. Use ONE dispatcher.
-  `tests/interaction/tst_textfield.qml` keeps that bug.
+  `tests/units/tst_TextField.qml` keeps that bug.
 - **A `Flickable`'s declared children go into its `contentItem`.** They scroll
   with the content, and they count toward `childrenRect` — so chrome sized
   from the content is a binding loop. Chrome is a sibling of the viewport,

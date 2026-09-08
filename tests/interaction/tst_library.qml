@@ -178,7 +178,6 @@ TestCase {
     }
     ActionTile { id: actionTile; icon: "power"; label: "Power off" }
     StatRing { id: ring; value: 0.7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
-    TextField { id: text2; width: 200 }
     Checkbox { id: check2 }
 
     Menu {
@@ -292,7 +291,7 @@ TestCase {
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, calendar,
             notification, archivedNotification, center, popupStack, evictionStack, actionTile, ring,
-            text2, check2, menu, segmented, popover, armed, plainAction];
+            check2, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);
     }

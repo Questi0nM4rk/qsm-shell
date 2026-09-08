@@ -17,6 +17,13 @@
   naming a property the type does not have fails immediately.
 - Keep `qsm-desktop` policy, services, persistence, and compositor integration
   out of this library.
+- For every component design, interaction, or visual change, load `ui-design`
+  before writing, use `ux-audit` to verify interaction, and use `ui-audit` to
+  verify the native visual result. On this workstation,
+  `~/Downloads/design-system-blueprint.pdf` is an additional design source:
+  semantic tokens, the 4px spacing rhythm, explicit component states,
+  consistent type/icon scales, and purposeful motion. Project laws and measured
+  native QML still outrank generic guidance.
 - Native QML is the only place a component is looked at. A component lives
   once, under `qml/QsmShell/Components/`; `previews/units/<Type>.qml` is its
   one proof harness, and `npm run preview` opens it in a real wayland window
@@ -30,6 +37,10 @@
 - Pointer and keyboard routes must perform the same action, keep focus visible,
   and provide immediate feedback. Motion communicates state and respects
   `Style.reducedMotion`.
+- Every meaningful user action has one semantic entry point. Pointer and
+  keyboard routes call it, and consumers can call it directly; never implement
+  programmatic control by synthesizing pointer/key events. A controlled
+  component still reports intent and never mutates state owned by its host.
 - Review native captures for hierarchy, spacing, contrast, typography, and
   target clarity before calling a visual change complete.
 - Use `tokens/deep-night.json` for shared values and regenerate outputs with
@@ -61,8 +72,9 @@
 - `previews/Preview.qml` is a hybrid host: a `Loader` for names already
   moved to `previews/units/`, today's inline children for the rest. The
   hybrid lasts the whole migration and is what lets each type be proved
-  separately. 6 of ~45 types are moved so far: `Badge`, `Spinner`,
-  `ProgressBar`, `Divider`, `Slider`, `ListRow`.
+  separately. 9 of ~45 types are moved so far: `Badge`, `Spinner`,
+  `ProgressBar`, `Divider`, `Slider`, `ListRow`, `StateLayer`, `Switch`,
+  `TextField`.
 - A unit may declare `controls`: groups of buttons the live host renders
   above the scene, so property-only states (`disabled`, `selected`,
   `indeterminate`) are reachable by clicking. Shape:
@@ -74,6 +86,11 @@
   PNG; `npm run unit -- <Type>` runs one test file, `--window` runs the
   same file on the compositor; `bash scripts/capture-all <dir>` captures
   every scenario.
+- When an agent opens a preview, it announces that it is taking the pointer,
+  drives the whole planned state trace, then says the window is ready and
+  stops injecting input so the owner can judge it. If the owner says they are
+  away from the machine, the agent completes that judgement loop fully
+  automatically instead of waiting for a handoff that cannot happen.
 - Capturing the same STATIC scenario three times gives three different
   sha256 sums (GPU rasterisation noise, roughly 0.01% of a scenario's
   ~400,000 pixels differ), and an animated one lands on a different
@@ -236,3 +253,30 @@ Earned, each from a specific failure. Break one and name which.
   mouse button. `hovered` is the pointer being in the hitbox right now, and
   `keepOpen` is that plus the delay, because a `hovered` that stayed true
   after the pointer left would be a name that cannot be trusted.
+- **One type may have several purposes; its unit changes the whole
+  composition.** Plain text, search, password and number are one `TextField`,
+  not four field types. A purpose switch changes input semantics, leading
+  glyph, trailing action and sample value together. Changing only
+  `inputType` left a magnifier on a password field, which was a state no real
+  host would build. Separate scenario keys may all map to the one type unit.
+- **A generic focus ring never erases a stronger semantic state.**
+  `StateLayer`'s accent ring sat above `TextField`'s danger border, so a failed
+  field stopped looking failed exactly while a person focused it to repair
+  the value. The host passes the semantic colour through `focusColor`; error
+  remains error while focused.
+- **The cursor describes the region under it, not the outer component.** A
+  full-field I-beam covered the hand cursor of clear, reveal and submit
+  actions in the field's slots. The editable body stays I-beam, a trailing
+  action is a hand, and a leading action states its cursor explicitly. A
+  clickable glyph that still shows a text cursor is an affordance that denies
+  its own action.
+- **Reveal changes visibility, never input semantics.** A password reveal
+  keeps `inputType: "password"` and its sensitive-data/input-method hints; it
+  changes only `passwordVisible`. Turning a password into a text field to show
+  its characters silently drops the protections that made it a password.
+- **Invalid input is a fact; failed is a host verdict with copy.**
+  `acceptableInput` reports the validator, while `failed` is set by the host
+  that can explain what failed in `Field`. Intermediate number text must not
+  paint an unexplained error automatically. Return and a clickable submit
+  glyph both call `accept()`; keyboard-only facts such as `selectionClaimed`
+  stay on the keyboard route and are not invented by programmatic calls.

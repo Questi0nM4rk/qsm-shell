@@ -139,15 +139,6 @@ Rectangle {
         }
         Capsule { visible: root.component === "capsule"; icon: "bell"; label: "Notifications"; detail: root.variant === "active" ? "2" : ""; active: root.variant === "active" }
         MonthCalendar { visible: root.component === "calendar"; Layout.preferredWidth: 300; shown: new Date(2026, 7, 1); today: new Date(2026, 7, 28) }
-        // A search box is a text box with a magnifier in its leading slot.
-        TextField {
-            visible: root.component === "search"
-            Layout.preferredWidth: 400
-            size: "lg"
-            placeholder: "Search components"
-
-            leading: SvgIcon { name: "search"; size: Style.iconMd; color: Style.textMuted }
-        }
         // The same component, named and failing -- the state a text box spends
         // most of its life in once a person is actually using it.
         Field {
