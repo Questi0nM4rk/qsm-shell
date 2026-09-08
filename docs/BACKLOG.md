@@ -177,6 +177,38 @@ spans the full height. Either it is genuinely redundant, or flushness fails in
 some state and the triangle is load-bearing there. Nobody has checked which,
 and a test is exactly how to find out.
 
+### Three findings the owner has seen and left standing -- 2026-09-08
+
+Each ended in a decision, not a fix, so each needs its reason on the record.
+
+**The `volume` glyph is not centred in its own box, and its muted sibling is.**
+lucide's `volume-2` draws ink from x 2 to about 20.4 in a 24 box, so it sits
+left of the box centre and reads left of whatever it is centred under. Measured
+from the live objects, the layout is exact: `ListRow`-style slot centring puts
+`IconButton` on the track to the pixel, `delta = 0`. `volume-muted` is a
+different glyph (`volume-x`), symmetric, needing nothing. So the pair shifts
+sideways by about 0.68px whenever a channel mutes.
+
+The owner compared five offsets in a live window and judged +1px too far right,
+then chose to leave it at 0 rather than take a smaller value. Left deliberately.
+The one value with a non-taste argument behind it is +0.82 units, which is what
+makes `volume` and `volume-muted` land in the same place and stops the mute
+jump; it was offered and declined for now.
+
+**The preview control strip marks the last option CLICKED, not the state the
+unit is actually in.** Open a unit whose `variant` already sets a state and no
+button shows as active, which reads as "nothing is applied" when something is.
+Deriving it is only possible for `set` options: a `call` option invokes a method
+and leaves no property to compare against, so there is no uniform answer for
+both kinds. Left because the strip is harness chrome and the honest fix is a
+design decision about what `active` should mean on an action button.
+
+**`Popover.qml`'s comment says a trigger is "held long enough".** That is the
+same word the owner rejected on `Rollout`, where `held` read as holding a mouse
+BUTTON down and became `hovered` plus `keepOpen`. `Popover`'s own delay is a
+different mechanism and renaming it would change unrelated semantics, so it was
+left. Worth one look the next time that file is open.
+
 ### `StateLayer` is the only public type with no test — 2026-09-07
 
 107 lines, and every type in `Components/` except this one is exercised
