@@ -177,6 +177,38 @@ spans the full height. Either it is genuinely redundant, or flushness fails in
 some state and the triangle is load-bearing there. Nobody has checked which,
 and a test is exactly how to find out.
 
+### Carried notes from the migration -- 2026-09-08
+
+Small things nobody has to act on today, written down so the next session does
+not rediscover them.
+
+**`previews/Preview.qml:158` warns on unqualified `modelData`.** The
+`prose-ladder` `Repeater` reads it from a parent element. It predates the unit
+split and lives in the shrinking half of the hybrid host, so it dies with the
+inline children rather than needing a fix of its own. `previews/units/` is
+clean: `qmllint` reports zero warnings there.
+
+**`tests/units/tst_units.qml` reads `previews/scenarios.json` over
+XMLHttpRequest**, which Qt refuses for a local file unless
+`QML_XHR_ALLOW_FILE_READ=1` is set. `scripts/run-unit.mjs` and
+`scripts/validate-library` both set it, and the test says which script to go
+through when the body comes back empty, because Qt answers a forbidden read
+with an empty body rather than an error. A direct `qmltestrunner` call without
+the variable fails on that check, not on a parse error.
+
+**The migration is a defect detector, not tidying, and should be scheduled as
+one.** Two types have been through the full loop and both turned up real
+defects the moment something drove them: `Slider` had no keyboard route and no
+focus state at all and reported hover while disabled; `ListRow` truncated its
+own content when sized naturally and breaks two of the laws it carries. Neither
+was visible to reading the source, to `qmllint`, or to a capture. Expect the
+remaining types to pay the same way, and budget for fixing what they surface
+rather than only for writing the unit and the test.
+
+**~39 types still to move.** `tests/interaction/tst_library.qml` is the meter:
+it stood at 66 assertions before the drain and 64 after `ListRow` left. It dies
+empty.
+
 ### `ListRow` breaks two laws it is supposed to carry -- 2026-09-08
 
 Both found by writing `tests/units/tst_ListRow.qml`, both verified in the
