@@ -10,6 +10,9 @@ preview and capture), actions walk in `tst_units`, `StateLayer` host mode,
 `icon.lg` sized 24, GPL-3.0 licence, ADR 0001. `TextField` is the first type
 at the definition of done (states, actions, design record, unit, test),
 released 2026-09-09 after the owner's live judgement (DoD 8/8).
+`Slider` is the second, rebuilt on `T.Slider` 2026-09-09 (units instead of
+fractions, a wheel that accumulates, no Behavior during a gesture, `actions`,
+`committed`), pending owner judgement.
 
 Every public type is getting its own `previews/units/<Type>.qml` proof
 harness and its own `tests/units/tst_<Type>.qml` behaviour test, draining
@@ -35,6 +38,10 @@ component, but it means every PNG check is blind to anything icon-shaped.
 OPEN: a synthetic `mouseWheel` from QtTest does not reach a `WheelHandler`
 under `--window` (real Qt6 Wayland QPA). Offscreen stays the only valid run
 for wheel behaviour until this is understood.
+
+OPEN, found while rebuilding `Slider`: `MonthCalendar`'s `WheelHandler`
+treats any nonzero `angleDelta.y` as one month, the same non-accumulating
+shape `Slider` just lost. One touchpad flick pages through a year.
 
 OPEN, and one reason `BarPopouts` in the consumer is still NOT a `Rollout`:
 `Rollout` cannot yet be the PARENT of a nested rollout. `BarPopouts` talks to
