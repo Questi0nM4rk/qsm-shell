@@ -39,7 +39,8 @@ docs is better. Every line of either needs a reason.
    `controls` for states a pointer cannot reach. Point the scenario keys in
    `previews/scenarios.json` at it and delete the inline children from
    `previews/Preview.qml`.
-5. **Look at it.** `npm run preview -- <key>`. Announce you are taking the
+5. **Look at it.** `npm run preview -- <Type>`, one window for every scene
+   of the type. Announce you are taking the
    pointer, drive every state, then hand the window to the owner. Anything
    with a glyph is judged here only; captures do not rasterise icons.
 6. **Audit.** `ux-audit` for interaction, `ui-audit` for the native visual
