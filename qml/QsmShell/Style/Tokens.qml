@@ -41,7 +41,7 @@ QtObject {
     readonly property int iconXs: 12
     readonly property int iconSm: 16
     readonly property int iconMd: 20
-    readonly property int iconLg: 26
+    readonly property int iconLg: 24
     readonly property int motionPress: 80
     readonly property int motionMicro: 130
     readonly property int motionMicroPop: 120
