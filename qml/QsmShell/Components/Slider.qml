@@ -213,7 +213,21 @@ T.Slider {
     // thumb at 180ms including DURING the drag, so the thumb trailed the
     // finger. A level the system changed from elsewhere still eases in, so a
     // reading that moved on its own is not mistaken for one a hand moved.
-    property real _paintedPosition: root.visualPosition
+    //
+    // `visualPosition` carries both flips -- vertical runs bottom-up, and
+    // mirroring swaps the horizontal ends -- but Qt recomputes it from the
+    // orientation on every READ and emits no change signal when either flip
+    // happens. So a binding that names only `visualPosition` keeps painting
+    // the axis the control was BUILT with: a slider flipped to vertical at
+    // value .82 went on painting .82 from the top, at the wrong end of its
+    // own track. Every preview unit hits this, because the host writes the
+    // variant through `onLoaded`, after the scene was constructed. The two
+    // reads below are the binding's missing dependencies, not dead code.
+    property real _paintedPosition: {
+        root.orientation;
+        root.mirrored;
+        return root.visualPosition;
+    }
 
     // False while a gesture owns the value, and for the frame after one. Every
     // route sets it and hands it back through `Qt.callLater`, which collapses
@@ -245,8 +259,18 @@ T.Slider {
     // At least a comfortable hit target across the axis, whatever the track's
     // thickness is: a 4px track with a 12px thumb still has to be aimable.
     // Slot content can ask for more, and does on the OSD.
+    // A raised thumb's shadow drops `sliderThumbLift * 2` below it while
+    // pressed, and the thumb is CENTRED across the control, so containing
+    // that drop costs the same slack on the other side. The size a component
+    // asks for has to include what it paints: without this the shadow hung
+    // outside the control's own bounds, which is a caller sizing a row to a
+    // slider and getting a smudge over whatever sits under it.
+    readonly property real _thumbSpan: root.raised
+        ? root.thumbSize + Style.sliderThumbLift * 4
+        : root.thumbSize
+
     readonly property real _crossSize: Math.max(
-        Style.controlHeightSm, root.thickness, root.thumbSize,
+        Style.controlHeightSm, root.thickness, root._thumbSpan,
         root.vertical
             ? Math.max(beforeSlot.implicitWidth, afterSlot.implicitWidth)
             : Math.max(beforeSlot.implicitHeight, afterSlot.implicitHeight))
@@ -380,6 +404,7 @@ T.Slider {
 
         // Inside the handle so it travels and grows with it.
         Rectangle {
+            objectName: "sliderThumbShadow"
             visible: root.raised && root.enabled
             width: parent.width
             height: parent.height

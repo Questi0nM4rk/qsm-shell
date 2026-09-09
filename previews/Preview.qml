@@ -33,7 +33,11 @@ Rectangle {
     property var activeBackend: backend !== null && backend !== undefined ? backend : (_themeFixtures[theme] || null)
     // Install the active backend on the Style singleton so every component
     // resolves tokens from the scenario theme.
-    Component.onCompleted: Style.backend = root.activeBackend
+    Component.onCompleted: {
+        Style.backend = root.activeBackend;
+        if (root.interactive || root.captureDump)
+            settleDump.start();
+    }
     onActiveBackendChanged: Style.backend = root.activeBackend
     // A loaded unit's type is only known at runtime, so `controls` cannot be
     // typed on `Loader.item` -- read it through an untyped parameter instead
@@ -62,12 +66,18 @@ Rectangle {
         onActivated: root.dumpTree()
     }
 
+    // A dump has to describe a SETTLED scene, and one frame after load is not
+    // that: a unit gets its `variant` from `onLoaded`, after it completed, so
+    // the host's write starts a Behavior and the frame after load lands in the
+    // middle of it. Both slider scenarios reported a thumb a third of the way
+    // to where it belonged this way. `Motion.fast` is the library's ceiling
+    // for a control changing shape, and `Qt.callLater` adds the pass after its
+    // last frame; every dump goes through here, so a strip click reads the
+    // state it just asked for rather than the transition into it.
     Timer {
-        // One frame after load so layouts have settled; the first dump is
-        // the resting state the audit compares everything else against.
-        running: root.interactive || root.captureDump
-        interval: 0
-        onTriggered: root.dumpTree()
+        id: settleDump
+        interval: Motion.fast
+        onTriggered: Qt.callLater(root.dumpTree)
     }
     // A unit's `controls` reach every property-only state that isn't
     // reachable by hovering, pressing or focusing the live window --
@@ -94,7 +104,7 @@ Rectangle {
             const next = Object.assign({}, controlStrip.applied);
             next[groupLabel] = optionLabel;
             controlStrip.applied = next;
-            Qt.callLater(root.dumpTree);
+            settleDump.restart();
         }
 
         Repeater {

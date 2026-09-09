@@ -119,6 +119,15 @@ TestCase {
         }
     }
 
+    // Built HORIZONTAL and flipped at runtime, which is what every unit in a
+    // preview does: the host writes `variant` through `onLoaded`, after the
+    // scene was constructed. Sized for the vertical life it ends up in.
+    Slider {
+        id: sliderFlip
+        x: 340; y: 320; width: 40; height: 200
+        value: 0.82
+    }
+
     // Never gestured and never written by any case here, which is what makes
     // it the one instance that can answer what `committedValue` starts as.
     Slider {
@@ -320,6 +329,44 @@ TestCase {
         mouseRelease(sliderVert, 16, 60);
     }
 
+    // A flip has to land where a slider BUILT that way already sits, which is
+    // an oracle the geometry formula does not get to write. Qt recomputes
+    // `visualPosition` for the new axis but emits no change signal for an
+    // orientation flip, so a binding that names only `visualPosition` keeps
+    // painting the old axis: measured, a slider flipped to vertical at value
+    // .82 put its thumb at 0.82 of the travel from the TOP, which is .18 of
+    // the value, at the wrong end of the track.
+    function test_a_runtime_orientation_flip_repaints_the_thumb_at_the_value() {
+        compare(sliderFlip.vertical, false, "the flip case did not start out horizontal");
+
+        sliderVert.value = 0.82;
+        sliderFlip.orientation = Qt.Vertical;
+        verify(sliderFlip.vertical, "the flip did not reach the control");
+
+        const content = sliderFlip.contentItem;
+        const thumb = sliderFlip.handle;
+        const fill = findChild(sliderFlip, "sliderFill");
+        const builtThumb = sliderVert.handle;
+        const builtFill = findChild(sliderVert, "sliderFill");
+        verify(fill !== null && builtFill !== null, "a fill lost its objectName");
+
+        // Both eased: a flip and a written value are host changes, not
+        // gestures, so the settle is waited out rather than asserted away.
+        tryVerify(() => Math.abs(thumb.y - builtThumb.y) < 0.5, 1000,
+            "a slider flipped to vertical does not put its thumb where one built vertical does");
+        verify(Math.abs(fill.height - builtFill.height) < 0.5,
+            "the flipped fill is not the height the built-vertical one has -- off by "
+            + (fill.height - builtFill.height) + "px");
+
+        sliderFlip.value = sliderFlip.to;
+        tryVerify(() => Math.abs(thumb.y - content.y) < 0.5, 1000,
+            "at `to` the flipped slider's thumb is not flush with the TOP of its track");
+
+        sliderFlip.value = sliderFlip.from;
+        tryVerify(() => Math.abs((thumb.y + thumb.height) - (content.y + content.height)) < 0.5, 1000,
+            "at `from` the flipped slider's thumb is not flush with the BOTTOM of its track");
+    }
+
     // Paint order, which no tree walk can report: both the track and the fill
     // are children of the contentItem, and QQuickSlider completes its handle
     // BEFORE QQuickControl completes the contentItem, so the handle is the
@@ -359,6 +406,31 @@ TestCase {
             verify(thumb.y >= -0.5 && thumb.y + thumb.height <= sliderFat.height + 0.5,
                 "the thumb hangs outside the control's own bounds at thickness " + shape.thickness);
         }
+    }
+
+    // A raised thumb casts a shadow that drops further while pressed, and the
+    // control has to be big enough to hold it: a caller sizing a row to a
+    // slider otherwise gets a smudge over whatever sits under it. Pressed
+    // with a real pointer, because the deepest drop is a press state.
+    function test_a_raised_thumb_keeps_its_shadow_inside_the_control() {
+        sliderFat.raised = true;
+        sliderFat.thickness = Style.controlHeight;
+        sliderFat.thumbSize = Style.controlHeight;
+
+        const shadow = findChild(sliderFat, "sliderThumbShadow");
+        verify(shadow !== null, "the thumb shadow lost its objectName");
+
+        sliderFat.value = 0.5;
+        const midway = sliderFat.width / 2;
+        mousePress(sliderFat, midway, sliderFat.height / 2);
+        const bottom = shadow.mapToItem(sliderFat, 0, 0).y + shadow.height;
+        mouseRelease(sliderFat, midway, sliderFat.height / 2);
+
+        verify(bottom <= sliderFat.height + 0.5,
+            "a pressed raised thumb's shadow paints " + (bottom - sliderFat.height)
+            + "px below the control's own bottom edge");
+
+        sliderFat.raised = false;
     }
 
     // An empty slot takes no space, so a bare slider looks exactly like a
