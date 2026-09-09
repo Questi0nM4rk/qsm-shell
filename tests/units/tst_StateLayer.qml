@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Templates as T
 import QtTest
 
 import qs.QsmShell.Components
@@ -9,7 +10,7 @@ TestCase {
 
     name: "StateLayer"
     width: 360
-    height: 240
+    height: 260
     visible: true
     when: windowShown
 
@@ -94,5 +95,45 @@ TestCase {
     function test_host_focus_is_exposed_as_focused() {
         activeHost.forceActiveFocus();
         compare(activeLayer.focused, true, "host focus did not propagate to StateLayer.focused");
+    }
+
+    T.AbstractButton {
+        id: hostButton
+        x: 20; y: 200; width: 120; height: 32
+        hoverEnabled: true
+        focusPolicy: Qt.StrongFocus
+
+        StateLayer {
+            id: hostedLayer
+            anchors.fill: parent
+            target: hostButton
+            host: hostButton
+        }
+    }
+
+    function test_host_mode_reads_the_template_states() {
+        mouseMove(probe, 340, 220);
+        tryCompare(hostedLayer, "hovered", false, 500);
+
+        mouseMove(hostButton, 60, 16);
+        tryCompare(hostedLayer, "hovered", true, 500);
+        mousePress(hostButton, 60, 16);
+        tryCompare(hostedLayer, "pressed", true, 500);
+        mouseRelease(hostButton, 60, 16);
+        tryCompare(hostedLayer, "pressed", false, 500);
+
+        hostButton.enabled = false;
+        compare(hostedLayer.interactive, false, "a disabled host still had an answering layer");
+        hostButton.enabled = true;
+
+        // visualFocus is keyboard focus only; a click never sets it. The
+        // press/release above already gave hostButton active focus with
+        // MouseFocusReason (StrongFocus includes ClickFocus), and Qt does
+        // not re-fire a focus-in event for an item that already holds
+        // active focus, so the reason would never update without first
+        // moving focus away.
+        probe.forceActiveFocus();
+        hostButton.forceActiveFocus(Qt.TabFocusReason);
+        tryCompare(hostedLayer, "focused", true, 500);
     }
 }

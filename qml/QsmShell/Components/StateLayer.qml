@@ -29,23 +29,31 @@ import qs.QsmShell.Style
 Item {
     id: root
 
-    property bool interactive: true
+    // A template host (T.Control and friends) already owns hovered, pressed,
+    // visualFocus and enabled. Given one, the layer READS those and stops
+    // running handlers of its own, so a control has one source of every
+    // state. `var`, not `Item`: the properties live on the control subclass
+    // and a typed Item would make every read a qmllint warning.
+    property var host: null
+    readonly property bool _hosted: host !== null && host !== undefined
+
+    property bool interactive: _hosted ? host.enabled : true
     property Item target: parent
     property real hoverScale: 1.08
     property real pressScale: 0.94
 
-    // Keyboard focus. Defaults to the host's own activeFocus so a control that
-    // takes focus is answered without wiring; a host whose focus lives on some
-    // other item (a list that owns selection for its rows) binds it instead.
-    property bool focused: root.parent?.activeFocus ?? false
+    // Keyboard focus. In host mode it is `visualFocus`, which Qt sets only on
+    // keyboard-reason focus, so a click never paints the ring. Otherwise the
+    // host's activeFocus, as before.
+    property bool focused: _hosted ? host.visualFocus : (root.parent?.activeFocus ?? false)
     // The corner the ring follows. The host states it, because `parent` is a
     // plain Item as far as the type system is concerned and probing it for a
     // radius is a warning plus a guess.
     property real focusRadius: 0
     property color focusColor: Style.accent
 
-    readonly property bool hovered: interactive && hover.hovered
-    readonly property bool pressed: interactive && tap.pressed
+    readonly property bool hovered: interactive && (_hosted ? host.hovered : hover.hovered)
+    readonly property bool pressed: interactive && (_hosted ? (host.pressed ?? false) : tap.pressed)
     signal clicked
 
     // A hover-enter that is allowed to CLAIM the selection. A list binds its
@@ -97,12 +105,13 @@ Item {
 
     HoverHandler {
         id: hover
+        enabled: !root._hosted
         cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
     }
 
     TapHandler {
         id: tap
-        enabled: root.interactive
+        enabled: root.interactive && !root._hosted
         onTapped: root.clicked()
     }
 }
