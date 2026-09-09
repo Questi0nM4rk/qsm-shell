@@ -1,9 +1,9 @@
 # TextField
 
-states: rest hover press(caret lands, no other answer) focus(keyboard ring) disabled readOnly failed
+states: rest hover press(caret lands, no other answer) focus(keyboard ring) disabled(surface, text, placeholder, caret and danger border each through Style.disabled -- colour, never opacity on the frame, which would let whatever sits behind the field read through its own value) readOnly failed
 actions: Accept Clear Reveal(password only) Select all
 size: height controlHeight[Sm|Lg]; width naturalWidth constant, text scrolls inside
-tokens: space3 (box inset) space2 (slot gap) spaceTight (caret width, scroll-end inset) radiusMd surface surfaceHover accent danger opacityDisabled textSm|Md|Lg
+tokens: space3 (box inset) space2 (slot gap) spaceTight (caret width, scroll-end inset) radiusMd surface surfaceHover accent danger Style.disabled(opacityDisabled) textSm|Md|Lg
 motion: micro (surface, border) press (caret travel); blink = platform cursorFlashTime/2, off under reducedMotion
 not designed: multiline, autocomplete, floating label, filled/outlined variants
 notes: T.TextField root paints scrolled text under leftPadding (first glyph x = -206.3), so the root is T.Control with a clipped TextInput contentItem

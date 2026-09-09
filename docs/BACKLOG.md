@@ -13,6 +13,8 @@ released 2026-09-09 after the owner's live judgement (DoD 8/8).
 `Slider` is the second, rebuilt on `T.Slider` 2026-09-09 (units instead of
 fractions, a wheel that accumulates, no Behavior during a gesture, `actions`,
 `committed`), pending owner judgement.
+Disabled-by-colour law applies to `Slider` and `TextField`; remaining types
+adopt `Style.disabled` as they migrate.
 
 Every public type is getting its own `previews/units/<Type>.qml` proof
 harness and its own `tests/units/tst_<Type>.qml` behaviour test, draining
