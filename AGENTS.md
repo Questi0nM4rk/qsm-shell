@@ -149,6 +149,34 @@ follow the design sources.
   only.** Every `Preview` dumps and the last write wins. To inspect one
   scene, open that scenario key alone.
 
+## Surface ladder and borders
+
+One ladder, written in WCAG contrast against `background`. Every rung is
+`Style.lift(surface, by)`, so a theme tunes `surface` once and the rest
+follows; hand-tuned tokens drifted until raised sat at the resting value.
+
+| Rung | Contrast | Role |
+| --- | --- | --- |
+| background | 1.0 | the shell, the ground under everything |
+| `surface` | 1.2 | a component's resting body; the one hand-set colour |
+| `surfaceRaised` | +0.2 | a layer above the shell: popup, dialog, capsule |
+| `surfaceHover` | +0.4 | hover of a body that cannot grow (text, rows) |
+| `outline` | +0.8 | pressed where growth is impossible; dividers, tracks, the empty toggle's rim |
+| `accent` | | selected, focus, primary fill |
+
+- Hover is a lift of one step above the layer the item lies on. An item on
+  a raised layer hovers one step above raised. Controls that can grow keep
+  growth (`StateLayer`); tint is for what cannot scale.
+- Selected is identity, not a lift: `accent` at 12 % over the layer plus
+  accent content (text, glyph). A toggle with its own fill (Switch, Checkbox,
+  Radio) is selected as solid accent. Selected plus hover adds the step.
+- A border encodes a fact colour cannot, and there are five: a failed
+  value (danger), the shape of an empty toggle, containment of a foreign
+  colour (a swatch may equal the ground), the focus ring outside at a half
+  step, and a physical object the person knows from the world (a key cap in
+  `Kbd`, the convention GitHub, MDN and shadcn share). Layers are separated
+  by a rung, never by a line.
+
 ## Component laws
 
 Earned, each from a specific failure. Break one and name which.

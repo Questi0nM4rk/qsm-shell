@@ -10,9 +10,8 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   ignores `size`; trailing padding survives an emptied slot; caret lands on
   fractional x; disabled dims text, leading and trailing glyph in three
   different steps; search leading action is a 20x20 target.
-- `Slider`: the resting track is `Style.outline`, about 1.9:1 against the
-  shell background; a dedicated track token is the owner's call. Hosts set
-  `wheelUnits` per surface (a seek bar 0, a level bar the keyboard units).
+- `Slider`: hosts set `wheelUnits` per surface (a seek bar 0, a level bar
+  the keyboard units).
 - `MonthCalendar` takes the wheel with a `WheelHandler`, so it is dead in a
   live window and pages a month per any nonzero delta. Fix at its migration.
 - `Rollout` cannot be the PARENT of a nested rollout, so the consumer's

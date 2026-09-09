@@ -35,11 +35,19 @@ QtObject {
     readonly property color warning: backend?.warning ?? Tokens.colorWarning
     readonly property color info: backend?.info ?? Tokens.colorInfo
     readonly property color danger: backend?.danger ?? Tokens.colorDanger
-    readonly property color outline: backend?.outline ?? Tokens.colorOutline
     readonly property color background: backend?.background ?? Tokens.colorBackground
     readonly property color surface: backend?.surface ?? Tokens.colorSurface
-    readonly property color surfaceHover: backend?.surfaceHover ?? Tokens.colorSurfaceHover
-    readonly property color surfaceRaised: backend?.surfaceRaised ?? Tokens.colorSurfaceRaised
+    // The surface ladder (AGENTS.md). Every layer above the resting surface is
+    // DERIVED from it by contrast against the background, so a theme tunes
+    // `surface` once and hover, raised and outline follow: raised sits a half
+    // step (+0.2) above rest, hover a whole step (+0.4), outline and pressed
+    // two steps (+0.8). Hand-tuned tokens drifted -- raised had sunk to the
+    // resting value and the lift was gone -- and a backend cannot override
+    // these, because a raised colour below hover is a ladder with a rung
+    // missing.
+    readonly property color surfaceRaised: lift(surface, 0.2)
+    readonly property color surfaceHover: lift(surface, 0.4)
+    readonly property color outline: lift(surface, 0.8)
     readonly property color text: backend?.text ?? Tokens.colorText
     readonly property color textMuted: backend?.textMuted ?? Tokens.colorTextMuted
     // The band's own fill: the one colour drawn from the wallpaper's darkness
@@ -86,6 +94,42 @@ QtObject {
                        bg.g + (c.g - bg.g) * k,
                        bg.b + (c.b - bg.b) * k,
                        1);
+    }
+
+    // THE way a layer says "above this one". `lift(c, 0.4)` is `c` blended
+    // toward `text` until its WCAG contrast against `background` has risen by
+    // 0.4; the ladder in AGENTS.md is written in that unit (raised +0.2,
+    // hover +0.4, outline and pressed +0.8), so a rung is one call and a
+    // theme tunes `surface` alone. Luminance is not linear in the blend, so
+    // the fraction is found by bisection rather than solved; twenty halvings
+    // land within a quarter of an 8-bit step.
+    function contrast(a: color, b: color): real {
+        const hi = Math.max(_luminance(a), _luminance(b));
+        const lo = Math.min(_luminance(a), _luminance(b));
+        return (hi + 0.05) / (lo + 0.05);
+    }
+
+    function lift(c: color, by: real): color {
+        const target = contrast(c, root.background) + by;
+        const toward = root.text;
+        let lo = 0, hi = 1;
+        for (let i = 0; i < 20; i++) {
+            const mid = (lo + hi) / 2;
+            if (contrast(_blend(c, toward, mid), root.background) < target)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        return _blend(c, toward, hi);
+    }
+
+    function _blend(a: color, b: color, t: real): color {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1);
+    }
+
+    function _luminance(c: color): real {
+        const lin = v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
     }
 
     // ── type ────────────────────────────────────────────────────────────
