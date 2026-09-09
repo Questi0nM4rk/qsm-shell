@@ -53,6 +53,9 @@ T.Control {
     // ── slots ───────────────────────────────────────────────────────────
     property alias leading: leadingSlot.data
     property alias trailing: trailingSlot.data
+    // Cursor for the slot REGION when its content declares no cursor of its
+    // own. Content with its own `StateLayer` (any `IconButton`) states its
+    // own cursor and wins over this default.
     property int leadingCursorShape: Qt.IBeamCursor
     property int trailingCursorShape: Qt.PointingHandCursor
 

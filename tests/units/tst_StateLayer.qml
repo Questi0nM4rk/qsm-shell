@@ -16,6 +16,8 @@ TestCase {
 
     function cleanup() {
         Interaction.pointerSelects = true;
+        activeHost.focus = false;
+        hostButton.focus = false;
     }
 
     Item {

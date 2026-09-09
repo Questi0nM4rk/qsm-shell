@@ -332,13 +332,14 @@ TestCase {
         wait(0);
         const input = findChild(composedField, "textFieldInput");
         input.cursorPosition = input.length;
-        // The caret glides to a new position rather than jumping, so its
-        // geometry can only be read once the move has settled.
-        wait(Motion.press * 2);
         const caret = findChild(composedField, "textFieldCaret");
         const trailing = findChild(composedField, "textFieldTrailingAction");
         verify(caret !== null, "the caret overlay is not reachable");
         verify(trailing !== null, "a long value lost its trailing action");
+        // The caret glides to a new position rather than jumping, so its
+        // geometry can only be read once the move has settled.
+        tryVerify(() => Math.abs(caret.x - (input.x + input.cursorRectangle.x)) < 0.5,
+            500, "the caret did not settle after the cursor moved to the end");
         verify(caret.visible, "the caret hid while the field is focused");
 
         const caretRight = caret.mapToItem(composedField, caret.width, 0).x;
