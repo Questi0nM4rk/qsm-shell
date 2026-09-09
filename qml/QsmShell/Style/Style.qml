@@ -129,6 +129,21 @@ QtObject {
         ?? Tokens.geometrySliderTrackThickness
     readonly property int sliderThumbSize: backend?.sliderThumbSize ?? Tokens.geometrySliderThumbSize
     readonly property int sliderThumbLift: backend?.sliderThumbLift ?? Tokens.geometrySliderThumbLift
+    // The unit every non-pointer route walks in. It is never 0: at 0 Qt's own
+    // arrow keys fall back to 0.1 VALUE units (not 10% of the range) and the
+    // accessibility increase/decrease actions go inert. So the step is the
+    // token and the keyboard and page counts are whole numbers OF it, which is
+    // also what lets a route step through Qt's own increase()/decrease().
+    readonly property real sliderStep: backend?.sliderStep ?? Tokens.geometrySliderStep
+    readonly property int sliderKeyboardUnits: backend?.sliderKeyboardUnits
+        ?? Tokens.geometrySliderKeyboardUnits
+    readonly property int sliderPageUnits: backend?.sliderPageUnits ?? Tokens.geometrySliderPageUnits
+    // Natural length ALONG the axis. A slider's main-axis size is a constant,
+    // the same way a text box's width is: it is not a function of its content,
+    // and a call site that wants a different length states it.
+    readonly property int sliderLength: backend?.sliderLength ?? Tokens.geometrySliderLength
+    readonly property int sliderLengthVertical: backend?.sliderLengthVertical
+        ?? Tokens.geometrySliderLengthVertical
     // The wheel's own step is a per-call-site choice (0 disables it) and stays
     // out of this. A slider with no wheel still needs a keyboard, so the
     // arrow step and the larger page step are their own fractions.
