@@ -120,10 +120,10 @@ TestCase {
 
         mousePress(sliderH, 100, 16);
         mouseMove(sliderH, -50, 16);
-        compare(sliderH.value, sliderH.from, "dragging past the left end did not clamp exactly to `from`");
+        verify(sliderH.value === sliderH.from, "dragging past the left end did not clamp exactly to `from`");
 
         mouseMove(sliderH, 250, 16);
-        compare(sliderH.value, sliderH.to, "dragging past the right end did not clamp exactly to `to`");
+        verify(sliderH.value === sliderH.to, "dragging past the right end did not clamp exactly to `to`");
 
         mouseRelease(sliderH, 250, 16);
     }
@@ -161,6 +161,15 @@ TestCase {
         wait(50);
         fuzzyCompare(sliderWheel.value, 0.5, 0.0001,
             "a negative wheel notch did not undo it");
+
+        // A horizontal wheel on a HORIZONTAL slider, which is the one axis
+        // whose sign is not obvious: Qt reports a POSITIVE angleDelta.x when
+        // the top of the wheel goes LEFT, and left is the decreasing end.
+        mouseWheel(sliderWheel, 100, 16, -120, 0);
+        wait(50);
+        fuzzyCompare(sliderWheel.value, 0.5 + probe.keyStep, 0.0001,
+            "scrolling a horizontal slider to the RIGHT did not increase it -- "
+            + "angleDelta.x is positive leftward, so it has to be flipped");
     }
 
     // A high-resolution touchpad sends many small angleDelta values for one
@@ -200,7 +209,7 @@ TestCase {
 
         mouseWheel(sliderWheel, 100, 16, 0, 120);
         wait(50);
-        compare(sliderWheel.value, sliderWheel.to,
+        verify(sliderWheel.value === sliderWheel.to,
             "a wheel notch that overshoots the top did not clamp exactly to `to`");
     }
 
@@ -247,6 +256,7 @@ TestCase {
         compare(sliderDisabled.value, 0.5, "scrolling a disabled slider changed its value");
 
         sliderDisabled.forceActiveFocus();
+        compare(sliderDisabled.activeFocus, false, "a disabled slider took keyboard focus");
         keyClick(Qt.Key_Right);
         compare(sliderDisabled.value, 0.5, "a keyboard step changed a disabled slider's value");
         compare(sliderDisabled.stepBy(Style.sliderKeyboardUnits), false,
@@ -327,10 +337,10 @@ TestCase {
             "PageDown did not undo the PageUp step");
 
         keyClick(Qt.Key_Home);
-        compare(sliderKeyboard.value, sliderKeyboard.from,
+        verify(sliderKeyboard.value === sliderKeyboard.from,
             "Home did not reach the lower bound exactly -- a step count that rounds the drift away leaves it at 1e-16");
         keyClick(Qt.Key_End);
-        compare(sliderKeyboard.value, sliderKeyboard.to, "End did not reach the upper bound exactly");
+        verify(sliderKeyboard.value === sliderKeyboard.to, "End did not reach the upper bound exactly");
     }
 
     function test_keyboard_route_is_clamped_at_both_ends_like_the_pointer_and_wheel() {
@@ -338,12 +348,12 @@ TestCase {
 
         sliderKeyboard.value = 0.98;
         keyClick(Qt.Key_PageUp);
-        compare(sliderKeyboard.value, sliderKeyboard.to,
+        verify(sliderKeyboard.value === sliderKeyboard.to,
             "a page step that overshoots the top did not clamp exactly to `to`");
 
         sliderKeyboard.value = 0.02;
         keyClick(Qt.Key_PageDown);
-        compare(sliderKeyboard.value, sliderKeyboard.from,
+        verify(sliderKeyboard.value === sliderKeyboard.from,
             "a page step that overshoots the bottom did not clamp exactly to `from`");
     }
 
@@ -382,6 +392,20 @@ TestCase {
         mousePress(sliderH, 140, 16);
         mouseRelease(sliderH, 140, 16);
         compare(committedSpyH.count, 0, "a press that changed nothing still committed");
+
+        // A click on the track is a whole gesture with no move in it. Qt jumps
+        // the value on PRESS, so the pre-jump value has to be captured before
+        // that -- a commit that read it afterwards would see no change here.
+        committedSpyH.clear();
+        sliderH.value = 0.5;
+        mousePress(sliderH, 40, 16);
+        const jumped = sliderH.value;
+        verify(jumped < 0.5,
+            "a press on the track left of the thumb did not jump the value down to the pointer");
+        mouseRelease(sliderH, 40, 16);
+        compare(committedSpyH.count, 1,
+            "a click on the track jumped the value but never committed");
+        compare(sliderH.value, jumped, "the release moved the value after the jump");
     }
 
     function test_committed_fires_on_key_release_and_once_per_wheel_notch() {
@@ -431,11 +455,29 @@ TestCase {
         fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001, "the Decrease action did not undo it");
 
         sliderKeyboard.actions[3].trigger();
-        compare(sliderKeyboard.value, sliderKeyboard.to,
+        verify(sliderKeyboard.value === sliderKeyboard.to,
             "the Maximum action did not reach the upper bound exactly");
         sliderKeyboard.actions[2].trigger();
-        compare(sliderKeyboard.value, sliderKeyboard.from,
+        verify(sliderKeyboard.value === sliderKeyboard.from,
             "the Minimum action did not reach the lower bound exactly");
+    }
+
+    // Half a step lands on the next unit, and the DIRECTION must not decide
+    // whether it lands at all. `Math.round(-0.5)` is `-0`, which `stepBy`
+    // reads as no work, so half a step down was a silent no-op while half a
+    // step up moved. 0.01 -> 0.005 is the case where the halving is exact in
+    // binary, which is what it takes to reach the asymmetry at this stepSize.
+    function test_moveTo_takes_a_half_step_in_either_direction() {
+        sliderKeyboard.value = 0;
+        verify(sliderKeyboard.moveTo(Style.sliderStep / 2),
+            "half a step UP reported no change");
+        fuzzyCompare(sliderKeyboard.value, Style.sliderStep, 0.0001,
+            "half a step up did not land on the next unit");
+
+        verify(sliderKeyboard.moveTo(Style.sliderStep / 2),
+            "half a step DOWN reported no change -- Math.round(-0.5) is -0, which reads as no work");
+        verify(sliderKeyboard.value === sliderKeyboard.from,
+            "half a step down did not land on the previous unit");
     }
 
     // The reason no route assigns `value` from JavaScript: a JS write severs

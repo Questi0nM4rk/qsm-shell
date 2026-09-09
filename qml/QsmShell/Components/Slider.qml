@@ -133,20 +133,33 @@ T.Slider {
         return root._report(before);
     }
 
-    // Lands on the nearest unit, because that is the only place the value can
-    // be: `stepSize` quantises the drag too.
+    // Lands on the nearest unit from where the value is now, because a unit is
+    // the only distance the routes can walk. It is NOT a promise that the
+    // result is on the grid: a host binding writes `value` through the same
+    // setter the drag uses, and `SnapAlways` decides where that lands.
+    //
+    // The distance is rounded with its sign taken off and put back:
+    // `Math.round(-0.5)` is `-0`, which `stepBy` reads as no work, so half a
+    // step DOWN used to be a silent no-op while half a step up moved.
     function moveTo(target: real): bool {
         if (!root.enabled)
             return false;
         const clamped = Math.max(root.from, Math.min(root.to, target));
-        return root.stepBy(Math.round((clamped - root.value) / root.stepSize));
+        const distance = clamped - root.value;
+        return root.stepBy(Math.sign(distance) * Math.round(Math.abs(distance) / root.stepSize));
     }
 
-    // One unit PAST the end, deliberately. `increase()`/`decrease()` clamp, so
-    // the extra step costs nothing and it is what makes these land exactly on
-    // the bound: repeated adds of a fractional step drift, and a
-    // `moveTo(from)` that rounded the drift away would leave Home doing
-    // nothing while the value sat at 1e-16.
+    // One unit PAST the end, deliberately: `increase()`/`decrease()` clamp, so
+    // the extra step costs nothing and a count that is short by one cannot
+    // leave the value a step below the bound.
+    //
+    // Landing exactly ON the bound is Qt's arithmetic, not this count's. Under
+    // `SnapAlways` a step whose multiples are exactly representable reaches it
+    // (measured: `stepSize` 0.01 lands on 0 and 1), and one whose are not
+    // saturates just short and stays there however many units are walked
+    // (measured: `stepSize` 0.1 saturates at 0.9999999999999999, because
+    // Qt snaps AFTER it clamps). A host that needs an exact bound needs a
+    // `stepSize` that can express it.
     readonly property int _unitsInRange: Math.ceil((root.to - root.from) / root.stepSize)
     function toMinimum(): bool { return root.stepBy(-(root._unitsInRange + 1)); }
     function toMaximum(): bool { return root.stepBy(root._unitsInRange + 1); }
@@ -479,12 +492,12 @@ T.Slider {
     // One `committed` per key that actually moved something, however many
     // auto-repeats it fired on the way.
     //
-    // It ACCEPTS the release of every key the dispatcher takes on press, and
-    // that is not symmetry for its own sake: `QQuickSlider::keyReleaseEvent`
-    // clears `pressed` for ANY key, not only the arrows it handles. Left
-    // unaccepted, releasing any key during a pointer drag would clear
-    // `pressed` mid-drag, which fires `onPressedChanged`, commits early and
-    // re-arms the animation for the rest of the drag.
+    // It accepts the release of exactly the keys the press dispatcher took, so
+    // those never reach `QQuickSlider::keyReleaseEvent`, which clears
+    // `pressed` for any key it is given. The release of any OTHER key still
+    // reaches it -- widening the accept to swallow every release would take
+    // keys away from the surface, which is the opposite of what the on-axis
+    // rule above is for.
     Keys.onReleased: event => {
         const ours = root.vertical
             ? (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
@@ -518,7 +531,16 @@ T.Slider {
     WheelHandler {
         enabled: root.enabled && root.wheelUnits > 0
         onWheel: event => {
-            const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+            // On-axis, the same rule the arrows follow: a vertical slider
+            // ignores a horizontal wheel entirely, and a horizontal one takes
+            // it only when there is no vertical rotation to read. The sign is
+            // flipped because Qt reports a POSITIVE `angleDelta.x` when the
+            // top of the wheel is moved to the LEFT (QWheelEvent), and left is
+            // the decreasing end -- unflipped, scrolling right turned a volume
+            // bar down.
+            const delta = event.angleDelta.y !== 0
+                ? event.angleDelta.y
+                : (root.vertical ? 0 : -event.angleDelta.x);
             if (delta === 0)
                 return;
             if (Math.sign(delta) !== Math.sign(root._wheelAccumulator))

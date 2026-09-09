@@ -27,7 +27,7 @@ Slider {
 
     orientation: root.decorated ? Qt.Vertical : Qt.Horizontal
     value: variant.indexOf("high") >= 0 ? .82 : .42
-    wheelUnits: root.decorated ? 0 : Style.sliderKeyboardUnits
+    wheelUnits: Style.sliderKeyboardUnits
     raised: root.decorated
     // The OSD's fat track and big thumb, from the control scale rather than
     // the literals 40 and 32 this file used to type.
