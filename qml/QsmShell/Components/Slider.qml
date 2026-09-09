@@ -244,7 +244,6 @@ T.RangeSlider {
     readonly property color _paintedThumb: root.enabled ? root.thumbColor : Style.disabled(root.thumbColor)
     readonly property color _paintedThumbContent: root.enabled
         ? root.thumbContentColor : Style.disabled(root.thumbContentColor)
-    readonly property color _paintedLabel: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
 
     // ── responsiveness ──────────────────────────────────────────────────
     // The fill and the thumbs bind to these, and they animate ONLY when the
@@ -358,14 +357,15 @@ T.RangeSlider {
     bottomPadding: root._labelBelow + (root.vertical ? root._hoverGrowth + root._shadowDrop : 0)
 
     // The label, on the side `labelPosition` names, centred on the track
-    // along the other axis. A clickable label keeps a hit box at least one
-    // large icon tall, whatever its text measures.
-    Item {
+    // along the other axis. The same element `Field` puts above a text box.
+    ControlLabel {
         id: label
         objectName: "sliderLabel"
-        visible: root._hasLabel
-        implicitWidth: Math.max(labelRow.implicitWidth, root.labelClickable ? Style.iconLg : 0)
-        implicitHeight: Math.max(labelRow.implicitHeight, root.labelClickable ? Style.iconLg : 0)
+        text: root.labelText
+        icon: root.labelIcon
+        clickable: root.labelClickable
+        enabled: root.enabled
+        onClicked: root.labelClicked()
         width: implicitWidth
         height: implicitHeight
         x: root.labelPosition === "left" ? 0
@@ -374,37 +374,6 @@ T.RangeSlider {
         y: root.labelPosition === "above" ? 0
             : root.labelPosition === "below" ? root.height - height
             : root.topPadding + (root.availableHeight - height) / 2
-
-        Row {
-            id: labelRow
-            anchors.centerIn: parent
-            spacing: Style.space1
-
-            Loader {
-                active: root.labelIcon !== ""
-                anchors.verticalCenter: parent.verticalCenter
-                sourceComponent: SvgIcon {
-                    name: root.labelIcon
-                    size: Style.iconSm
-                    color: root._paintedLabel
-                }
-            }
-            Prose {
-                visible: root.labelText !== ""
-                anchors.verticalCenter: parent.verticalCenter
-                role: "metadata"
-                text: root.labelText
-                color: root._paintedLabel
-            }
-        }
-
-        StateLayer {
-            anchors.fill: parent
-            target: label
-            interactive: root.labelClickable && root.enabled
-            focusRadius: Style.radiusSm
-            onClicked: root.labelClicked()
-        }
     }
 
     // One track segment: a run along the axis, full radius at an end that

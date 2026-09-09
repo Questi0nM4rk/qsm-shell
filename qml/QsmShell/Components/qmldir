@@ -6,6 +6,7 @@ Spinner 1.0 Spinner.qml
 ProgressBar 1.0 ProgressBar.qml
 Skeleton 1.0 Skeleton.qml
 Callout 1.0 Callout.qml
+ControlLabel 1.0 ControlLabel.qml
 Field 1.0 Field.qml
 TextField 1.0 TextField.qml
 Switch 1.0 Switch.qml

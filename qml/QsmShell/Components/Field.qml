@@ -42,22 +42,10 @@ ColumnLayout {
 
     spacing: Style.space1
 
-    RowLayout {
-        Layout.fillWidth: true
-        visible: root.label.length > 0
-        spacing: Style.spaceTight
-
-        Prose {
-            role: "label"
-            muted: true
-            text: root.label
-        }
-        Prose {
-            visible: root.required
-            role: "label"
-            color: Style.danger
-            text: "*"
-        }
+    // The same label element a slider wears; one style for naming a control.
+    ControlLabel {
+        text: root.label
+        required: root.required
     }
 
     Item {
