@@ -8,7 +8,8 @@ ADR 0001 accepted 2026-09-09: controls go on `QtQuick.Templates.Control`
 with the `T.` types. Phase 0 items done: tree dump (`--inspect` flag on
 preview and capture), actions walk in `tst_units`, `StateLayer` host mode,
 `icon.lg` sized 24, GPL-3.0 licence, ADR 0001. `TextField` is the first type
-at the definition of done (states, actions, design record, unit, test).
+at the definition of done (states, actions, design record, unit, test),
+pending the owner's live judgement (DoD #8).
 
 Every public type is getting its own `previews/units/<Type>.qml` proof
 harness and its own `tests/units/tst_<Type>.qml` behaviour test, draining
