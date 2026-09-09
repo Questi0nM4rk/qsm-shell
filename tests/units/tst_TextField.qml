@@ -309,21 +309,22 @@ TestCase {
     }
 
     // The mark that says "focus did not arrive by key" is cleared when focus
-    // LEAVES the input, so a press that never focuses the input at all must
-    // not leave one behind: pressing the trailing action on an unfocused
-    // field would otherwise swallow the ring on the next Tab into it.
-    function test_a_press_that_does_not_focus_leaves_no_stale_mark() {
+    // LEAVES the input, so a press that never hands focus over must not leave
+    // one behind. A press on the PADDING dragged past the drag threshold is
+    // exactly that gesture: the tap is cancelled, nothing is focused, and a
+    // mark set at press time would swallow the ring on the next Tab in.
+    function test_a_press_that_hands_over_no_focus_leaves_no_stale_mark() {
         probe.forceActiveFocus();
-        const clear = findChild(composedField, "textFieldTrailingAction");
-        verify(clear !== null, "a filled field had no trailing action");
-        mouseClick(clear, clear.width / 2, clear.height / 2);
-        // Measured: the rejected press reaches BOTH the action and the frame's
-        // tap handler, so clearing a field also leaves a caret in it -- and
-        // that focus is what later clears the mark.
-        compare(composedField.focused, true,
-            "a press on a slot action did not reach the frame's tap handler");
-        field.forceActiveFocus();
+        verify(!field.focused, "the field held focus before the drag");
+
+        const drag = Application.styleHints.startDragDistance + 1;
+        mousePress(field, 4, 20);
+        mouseMove(field, 4 + drag, 20 + drag);
+        mouseRelease(field, 4 + drag, 20 + drag);
+        compare(field.focused, false, "a dragged press focused the field");
+
+        probe.forceActiveFocus();
         keyClick(Qt.Key_Tab);
-        tryCompare(composedField, "keyboardFocused", true, 500);
+        tryCompare(field, "keyboardFocused", true, 500);
     }
 }

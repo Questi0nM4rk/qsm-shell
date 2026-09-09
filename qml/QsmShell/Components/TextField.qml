@@ -162,12 +162,15 @@ T.Control {
         // caret and the text have to stay where the eye put them, and a field
         // that jumps under the pointer is a field you cannot aim a click into.
         color: root.hovered || root.focused ? Style.surfaceHover : Style.surface
-        // The one border in the library, and it earns it: a text box is the
-        // only control whose EDGE is the affordance -- it says "your typing
-        // goes inside this". Invisible at rest, on for focus, danger on
-        // failure.
-        border.width: root.failed || root.focused ? 1 : 0
-        border.color: root.failed ? Style.danger : Style.accent
+        // The one border in the library, and it means one thing: this field
+        // FAILED. Invisible otherwise. It used to double as the focus edge,
+        // which drew one state twice -- `StateLayer` owns the focus ring, so a
+        // focused-and-failed field would have painted a danger border under an
+        // accent ring and said "failed" in a channel already spoken for.
+        // Pointer focus is the surface lift plus the caret; keyboard focus is
+        // the ring.
+        border.width: root.failed ? 1 : 0
+        border.color: Style.danger
 
         Behavior on color {
             ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -267,9 +270,6 @@ T.Control {
             // Losing focus forgets how the last focus arrived, so the next
             // arrival is judged on its own route.
             onActiveFocusChanged: if (!input.activeFocus) root._focusOffTheKeyChain = false
-
-            // Losing focus forgets how the last focus arrived, so the next
-            // arrival is judged on its own route.
 
             // ONE dispatcher, and the reason is measured rather than
             // stylistic: `Keys.onPressed` and the per-key handlers
@@ -391,9 +391,11 @@ T.Control {
     // ring under the hand that put it there is noise. Qt will not tell us how
     // focus arrived -- `Item` has no `focusReason` in QML, and a `T.Control`
     // records reasons only for its OWN focus events, never for a descendant's
-    // -- so the routes that are not the key chain mark themselves: a pointer
-    // press anywhere in the frame, and a caller handing focus to the frame.
-    // What is left unmarked is Tab, Backtab and a shortcut.
+    // -- so the routes that are not the key chain mark themselves. Each marks
+    // at the point where it HANDS focus over, never merely where a press
+    // landed: a press that ends in a drag or a long press hands over nothing,
+    // and a mark left behind by one would have swallowed the ring on the next
+    // Tab in. What is left unmarked is Tab, Backtab and a shortcut.
     //
     // Not named `visualFocus`: `T.Control` already has one (always false here,
     // `focusPolicy` is `NoFocus`) and a shadow would be a duplicate property.
@@ -412,22 +414,28 @@ T.Control {
     TapHandler {
         // Tapping the padding focuses the input; slot actions sit above and
         // take their own taps first. A tap on the text never reaches here --
-        // the input accepts that press itself -- which is why the pointer mark
-        // lives on the overlay below rather than in this handler.
-        onTapped: input.forceActiveFocus(Qt.MouseFocusReason)
+        // the input accepts that press itself -- which is why the overlay
+        // below marks that route instead.
+        onTapped: {
+            root._focusOffTheKeyChain = true;
+            input.forceActiveFocus(Qt.MouseFocusReason);
+        }
     }
 
     MouseArea {
         id: cursorArea
         anchors.fill: parent
-        // The frontmost item in the frame, so it is the one place that sees
-        // every pointer press wherever it lands. It answers none of them: the
-        // press is rejected and travels on to the text, a slot action or the
-        // tap handler above.
+        // The frontmost item in the frame, so it is the one place that sees a
+        // press on the TEXT -- the input accepts that press itself, so no
+        // ancestor handler ever hears it. Focus arrives on the press there and
+        // nowhere else in the frame, so that is the only point this marks; the
+        // press is then rejected and travels on to the text, a slot action or
+        // the tap handler above.
         acceptedButtons: Qt.LeftButton
         hoverEnabled: true
         onPressed: mouse => {
-            root._focusOffTheKeyChain = true;
+            if (input.contains(input.mapFromItem(cursorArea, mouse.x, mouse.y)))
+                root._focusOffTheKeyChain = true;
             mouse.accepted = false;
         }
         // The cursor describes the region under it, not the outer component: a
