@@ -27,6 +27,13 @@ TextField {
 
     size: "lg"
     inputType: passwordExample ? "password" : numberExample ? "number" : "text"
+    // `failed` is a HOST verdict, never the validator's, so the unit plays the
+    // host for it: a number purpose reads `acceptableInput` and paints the
+    // failure itself. Without it Return on `42,42.` was a silent no-op in a
+    // frame identical to a valid field's. The `failed` control strip below
+    // assigns this property and so replaces this binding for that session,
+    // which is what a control strip is for.
+    failed: numberExample && text.length > 0 && !acceptableInput
     leadingCursorShape: purpose === "search" ? Qt.PointingHandCursor : Qt.IBeamCursor
     trailingCursorShape: readOnly && !passwordExample ? Qt.ArrowCursor : Qt.PointingHandCursor
     placeholder: textExample ? "Enter text"

@@ -156,12 +156,20 @@ T.Control {
     opacity: enabled ? 1 : Style.opacityDisabled
 
     background: Rectangle {
+        objectName: "textFieldSurface"
         radius: Style.radiusMd
         // Hover and press are answered by the SURFACE, not by growth. Every
         // other control in the library grows, and a text box must not: the
         // caret and the text have to stay where the eye put them, and a field
         // that jumps under the pointer is a field you cannot aim a click into.
-        color: root.hovered || root.focused ? Style.surfaceHover : Style.surface
+        // A read-only field REPORTS; it is not a target, and lifting under the
+        // pointer told a person it was one. They clicked, got no caret, typed,
+        // and the keystrokes vanished. `StateLayer` already stops answering
+        // while read-only, so the surface has to agree with it. Focus still
+        // lifts: a read-only value is selectable and copyable.
+        color: root.focused || (root.hovered && !input.readOnly)
+            ? Style.surfaceHover
+            : Style.surface
         // The one border in the library, and it means one thing: this field
         // FAILED. Invisible otherwise. It used to double as the focus edge,
         // which drew one state twice -- `StateLayer` owns the focus ring, so a
@@ -261,6 +269,16 @@ T.Control {
             // against the scroll edge; nothing here controls that, so it
             // renders nothing and the overlay takes over.
             cursorDelegate: Item {}
+
+            // The one place in the frame that sees a press on the TEXT: the
+            // input accepts that press itself, so no ancestor handler hears
+            // it. Focus arrives on the press here and nowhere else, so this is
+            // the only point the pointer route marks. A handler is delivered
+            // before its own item and this one only takes a PASSIVE grab, so
+            // the press still reaches the input and drag-selection survives.
+            TapHandler {
+                onPressedChanged: if (pressed) root._focusOffTheKeyChain = true
+            }
 
             onTextEdited: {
                 root.selectionClaimed();
@@ -422,30 +440,22 @@ T.Control {
         }
     }
 
-    MouseArea {
-        id: cursorArea
-        anchors.fill: parent
-        // The frontmost item in the frame, so it is the one place that sees a
-        // press on the TEXT -- the input accepts that press itself, so no
-        // ancestor handler ever hears it. Focus arrives on the press there and
-        // nowhere else in the frame, so that is the only point this marks; the
-        // press is then rejected and travels on to the text, a slot action or
-        // the tap handler above.
-        acceptedButtons: Qt.LeftButton
-        hoverEnabled: true
-        onPressed: mouse => {
-            if (input.contains(input.mapFromItem(cursorArea, mouse.x, mouse.y)))
-                root._focusOffTheKeyChain = true;
-            mouse.accepted = false;
-        }
-        // The cursor describes the region under it, not the outer component: a
-        // clickable glyph that still shows a text cursor denies its own action.
+    // The cursor describes the region under it, not the outer component: a
+    // clickable glyph that still shows a text cursor denies its own action.
+    //
+    // A HoverHandler, not a filling MouseArea. The MouseArea this replaced was
+    // the frontmost item in the frame with `hoverEnabled`, so it consumed hover
+    // from the slot actions underneath and their `StateLayer`s never grew --
+    // press and click survived, and the one state that says "this is a target"
+    // went missing. A hover reader belongs on the ANCESTOR of the surfaces,
+    // where it coexists with theirs instead of stacking on top of them.
+    HoverHandler {
+        id: cursorReader
         cursorShape: {
-            const leadingPoint = leadingSlot.mapFromItem(cursorArea, mouseX, mouseY);
-            const point = trailingSlot.mapFromItem(cursorArea, mouseX, mouseY);
-            if (leadingSlot.contains(leadingPoint))
+            const point = cursorReader.point.position;
+            if (leadingSlot.contains(leadingSlot.mapFromItem(root, point)))
                 return root.leadingCursorShape;
-            return trailingSlot.contains(point)
+            return trailingSlot.contains(trailingSlot.mapFromItem(root, point))
                 ? root.trailingCursorShape
                 : Qt.IBeamCursor;
         }

@@ -59,6 +59,7 @@ TestCase {
         probe.lastSeenKey = "";
         field.text = "";
         field.enabled = true;
+        field.readOnly = false;
         field.inputType = "text";
         field.forceActiveFocus();
         composedField.purposeOverride = "text";
@@ -179,6 +180,73 @@ TestCase {
         mouseClick(searchAction, 1, searchAction.height / 2);
         compare(probe.composedAccepts, 1,
             "the search action lost the edge of its glyph-sized pointer target");
+    }
+
+    // A slot action is a control in its own right, and it has to answer the
+    // pointer like one. An overlay spanning the frame used to consume hover
+    // from the slots, so the actions never grew under the pointer while their
+    // press and their click still worked -- the one state that went missing was
+    // the one that says "this is a target".
+    function test_slot_actions_answer_hover_under_the_pointer() {
+        const trailing = findChild(composedField, "textFieldTrailingAction");
+        verify(trailing !== null, "an editable filled field had no trailing action");
+        // `IconButton` grows its GLYPH and reports no hover of its own, so the
+        // state is read off the layer that owns it.
+        let layer = null;
+        for (let i = 0; i < trailing.children.length; i++) {
+            if (trailing.children[i].hoverScale !== undefined)
+                layer = trailing.children[i];
+        }
+        verify(layer !== null, "the trailing action has no StateLayer to answer hover");
+
+        mouseMove(trailing, trailing.width / 2, trailing.height / 2);
+        compare(composedField.hovered, true, "the pointer never arrived on the field");
+        tryCompare(layer, "hovered", true, 500);
+    }
+
+    // "Unavailable and not-a-target are different states": a read-only field
+    // reports, it is not a target. Its two state owners used to disagree --
+    // the layer stopped answering while the background lifted anyway, so a
+    // person got the editable-field answer, clicked, and got no caret.
+    function test_a_read_only_field_does_not_lift_under_the_pointer() {
+        probe.forceActiveFocus();
+        verify(!field.focused, "the field kept focus before the hover test");
+        const surface = findChild(field, "textFieldSurface");
+        verify(surface !== null, "the field surface is not reachable");
+
+        field.readOnly = true;
+        mouseMove(field, field.width / 2, field.height / 2);
+        compare(field.hovered, true, "the pointer never arrived on the read-only field");
+        // The surface animates, so the reading is only worth taking once the
+        // curve has settled -- polled from the first frame, a lift that is
+        // still leaving the rest colour reads as no lift at all.
+        wait(Motion.micro * 3);
+        compare(surface.color, Style.surface,
+            "a read-only field lifted under the pointer");
+
+        field.readOnly = false;
+        mouseMove(field, field.width / 2 + 1, field.height / 2);
+        compare(field.hovered, true, "the pointer never arrived on the editable field");
+        wait(Motion.micro * 3);
+        compare(surface.color, Style.surfaceHover,
+            "an editable field did not lift under the pointer");
+    }
+
+    // `failed` is the HOST's verdict, and the unit plays the host: a number
+    // purpose reads `acceptableInput` and paints the failure itself. Return on
+    // an unacceptable value was otherwise a silent no-op with a frame identical
+    // to a valid field's.
+    function test_the_number_host_paints_an_unacceptable_value_as_failed() {
+        composedField.purposeOverride = "number";
+        composedField.text = "12a";
+        compare(composedField.acceptableInput, false, "the number validator accepted letters");
+        compare(composedField.failed, true, "an unacceptable number was not reported as failed");
+
+        composedField.text = "12";
+        compare(composedField.failed, false, "a valid number was reported as failed");
+
+        composedField.text = "";
+        compare(composedField.failed, false, "an empty number field was reported as failed");
     }
 
     // Echo-on-edit showed the WHOLE password in cleartext the moment the field
