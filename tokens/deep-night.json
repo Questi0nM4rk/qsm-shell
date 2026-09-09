@@ -92,8 +92,6 @@
     "sliderPageUnits": 20,
     "sliderLength": 260,
     "sliderLengthVertical": 180,
-    "sliderKeyboardStep": 0.05,
-    "sliderKeyboardPageStep": 0.2,
     "badgeHeight": 16,
     "trackThickness": 6,
     "ringDiameter": 150,

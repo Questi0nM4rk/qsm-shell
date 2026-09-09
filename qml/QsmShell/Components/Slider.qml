@@ -1,176 +1,296 @@
 import QtQuick
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
 // THE slider. One track, one filled lead, one thumb, either orientation.
 //
-// There used to be two of these — a thin horizontal "level" and a fat vertical
-// "OSD" one — which is one concept wearing two names. They differ in three
-// numbers and in what the consumer hangs off them, and none of that is a
-// reason for a second component: a library that grows a type per call site
-// stops being a library.
+// There used to be two of these -- a thin horizontal "level" and a fat
+// vertical "OSD" one -- which is one concept wearing two names. They differed
+// in three numbers and in what the consumer hung off them, and none of that
+// is a reason for a second type.
 //
-// Three slots, because a slider is rarely only a slider. `before` and `after`
-// sit at its ends (an icon under a volume track, a label over a warmth one),
-// and `thumbContent` is drawn INSIDE the thumb. An empty slot takes no space,
-// so a bare slider looks exactly like a bare slider.
+// It stands on `T.Slider`, so the template owns the value range, the press
+// grab (no drag threshold, unstealable, and a click on the track jumps on
+// PRESS), snapping to `stepSize`, `LayoutMirroring`, focus and tab traversal,
+// and the accessibility value interface -- which needs no `Accessible` block
+// at all, because it duck-types the property names `value`, `from`, `to` and
+// `stepSize` off the root.
 //
-// `value` is 0..1 and the HOST owns it: this emits `moved` and never writes
-// its own value, so a level the system can also change from elsewhere never
-// fights the control that shows it.
+// What is NOT free from Qt and lives here: PageUp/PageDown/Home/End (Qt's
+// Slider has no handler for any of them), a wheel that ACCUMULATES rather
+// than stepping per event, the five states through `StateLayer`, the three
+// slots, and the look.
+//
+// `value` is host-owned in the sense that matters. Every route writes it
+// through Qt's own C++ setter -- the drag, `increase()`, `decrease()` -- which
+// leaves a consumer's `value:` binding installed and live, so a level the
+// system also changes from elsewhere still lands. Nothing here ever assigns
+// `value` from JavaScript: that severs the binding, and the keyboard would
+// then quietly behave differently from the pointer.
 //
 // Staying visible under the pointer is NOT this component's business. It
-// reports `hovered`; the surface holding it decides what that means, the same
-// way a menu does.
-Item {
+// reports `hovered`; the surface holding it decides what that means.
+T.Slider {
     id: root
 
-    // The keyboard handlers below need focus, and nothing was giving it: no
-    // tab stop, and a drag that never moves focus here. The five states law
-    // counts a state the component cannot express as a state it does not have.
-    activeFocusOnTab: enabled
+    from: 0
+    to: 1
+    // The unit every non-pointer route walks in, and never 0: at 0 Qt's own
+    // arrows fall back to 0.1 VALUE units and the accessibility
+    // increase/decrease actions go inert. A host that widens `from`/`to` must
+    // widen `stepSize` with it, because Home and End walk the range in units.
+    stepSize: Style.sliderStep
+    snapMode: T.Slider.SnapAlways
+    // A platform style HINT resolves `hoverEnabled` on a bare control, so it
+    // is stated rather than inherited: `hovered` is one third of `active`.
+    //
+    // Tied to `enabled`, because `QQuickControl::hoverEnterEvent` sets
+    // `hovered` to whatever `hoverEnabled` says and a disabled item is still
+    // delivered hover -- the HoverHandler below turns `acceptHoverEvents` on
+    // no matter what this says. Left at `true` a disabled slider reported
+    // `hovered` under the pointer, which is a state it cannot answer.
+    hoverEnabled: root.enabled
+    // Qt's own wheel is proportional but steps by `stepSize` and cannot be
+    // switched off per call site. `wheelUnits` below is ours.
+    wheelEnabled: false
+    opacity: enabled ? 1 : Style.opacityDisabled
 
-    property int orientation: Qt.Horizontal
-    readonly property bool vertical: orientation === Qt.Vertical
+    // 0 = no wheel. A seek bar wants a deliberate pointer; a volume bar is
+    // something you nudge. Counted in `stepSize` units like every other
+    // non-pointer route, so one number means one thing everywhere.
+    property int wheelUnits: 0
 
-    property real value: 0
-    // 0 disables the wheel. A seek bar wants a deliberate pointer; a volume
-    // bar is something you nudge.
-    property real wheelStep: 0
-    // The keyboard route does not hang off `wheelStep` -- that property means
-    // "the wheel is deliberately off" for a surface like a seek bar, and a
-    // slider with no wheel still needs a keyboard. Arrow keys move by
-    // `keyboardStep`; Page keys move by the larger `keyboardPageStep`.
-    property real keyboardStep: Style.sliderKeyboardStep
-    property real keyboardPageStep: Style.sliderKeyboardPageStep
     property color fill: Style.accent
-    // The colour at the LEADING end of the fill — the end the thumb is at.
+    // The colour at the LEADING end of the fill -- the end the thumb is at.
     // Left equal to `fill` it is a flat bar; set differently, the lead is a
     // two-stop gradient that is brightest where the thumb is, so a level reads
     // as one channel's identity rather than as a slab of colour.
     property color fillLead: fill
     property color trackColor: Style.surfaceHover
-    // What the thumb is. It defaults to the library's rule — the lightest
+    // What the thumb is. It defaults to the library's rule -- the lightest
     // thing on the surface, which is what makes it read as raised out of the
-    // track rather than as a hole cut into it — and a consumer with a fourth
+    // track rather than as a hole cut into it -- and a consumer with a fourth
     // state (a muted channel) states its own.
     property color thumbColor: raised && !active ? Qt.darker(Style.text, 1.4) : Style.text
     // The gap between the track and whatever sits in the end slots.
     property real slotGap: Style.space2
 
     // The track's short axis, and the thumb that rides it. A call site that
-    // wants a fat track says so; the library keeps one default rather than a
-    // token per surface that ever needed one.
+    // wants a fat track says so; the library keeps one default.
     property real thickness: Style.sliderTrackThickness
     property real thumbSize: Style.sliderThumbSize
-    // A raised thumb casts a shadow and lifts further while dragged, which is
+    // A raised thumb casts a shadow and lifts further while pressed, which is
     // what makes a big thumb read as picked up. A hairline level bar does not
     // want one.
     property bool raised: false
-    property bool showThumb: true
-
     // The consumer can force the emphasised look while the value is being
     // changed from somewhere other than this control.
     property bool emphasized: false
 
+    readonly property bool active: emphasized || pressed || hovered
+
     // ── slots ───────────────────────────────────────────────────────────
+    // `before` and `after` sit at the ends ALONG the axis and become padding,
+    // so the track and the thumb travel in what is left. On a vertical slider
+    // `before` is the top, which is the high end. An empty slot takes no
+    // space, so a bare slider looks exactly like a bare slider.
     property alias before: beforeSlot.data
     property alias after: afterSlot.data
+    // Drawn INSIDE the thumb, so it travels and scales with it.
     property alias thumbContent: thumbSlot.data
 
-    readonly property bool hovered: hover.hovered
-    readonly property bool active: emphasized || dragging || hovered
-    property bool dragging: false
-    // Keyboard focus. Defaults to this item's own, the same way every other
-    // focusable control in the library does, so a slider that takes focus
-    // rings without wiring.
-    property bool focused: root.activeFocus
+    // `moved()` is Qt's and carries no argument: it says a gesture changed the
+    // value, and the host reads `value`. `committed` is the END of one -- a
+    // release after a change, the release of a key that changed something, and
+    // each wheel notch that changed something, because a notch has no release
+    // to wait for. A host that writes on every `moved` gets a live level; a
+    // host that only wants the final value waits for this.
+    signal committed()
 
-    signal moved(real value)
+    // ── one route per action ────────────────────────────────────────────
+    // Every non-pointer route ends up here, and it steps by calling Qt's own
+    // `increase()`/`decrease()` rather than assigning `value`. That is not
+    // style: a JavaScript write severs the consumer's `value:` binding on the
+    // first arrow key, so a service that changes the level from elsewhere
+    // would stop reaching the control -- and only on the keyboard, which is
+    // the kind of split nobody finds. It is also why the tokens count UNITS
+    // rather than carrying a fraction: a unit is exactly one `increase()`.
+    function stepBy(units: int): bool {
+        if (!root.enabled || units === 0)
+            return false;
 
-    function clampedFraction(fraction: real): real {
-        return Math.max(0, Math.min(1, fraction));
+        const before = root.value;
+        root._hostDriven = false;
+        const count = Math.abs(units);
+        for (let i = 0; i < count; i++) {
+            if (units > 0)
+                root.increase();
+            else
+                root.decrease();
+        }
+        Qt.callLater(root._endGesture);
+        return root._report(before);
     }
 
-    readonly property real _span: vertical ? track.height : track.width
-    readonly property real _travel: Math.max(0, _span - thumbSize)
-    // Vertical runs bottom-up: full is at the top, which is where a person
-    // expects "more" to be.
-    readonly property real _thumbOffset:
-        (vertical ? 1 - clampedFraction(value) : clampedFraction(value)) * _travel
-
-    implicitWidth: vertical
-        ? Math.max(thickness, thumbSize, beforeSlot.width, afterSlot.width)
-        : 0
-    implicitHeight: vertical
-        ? beforeSlot.height + afterSlot.height + _slotGaps
-        : Math.max(thickness, thumbSize, beforeSlot.height, afterSlot.height)
-    readonly property real _slotGaps: (beforeSlot.height > 0 ? Style.space2 : 0)
-        + (afterSlot.height > 0 ? Style.space2 : 0)
-
-    function _setFrom(position: real): void {
-        const raw = (position - thumbSize / 2) / Math.max(1, _travel);
-        moved(clampedFraction(vertical ? 1 - raw : raw));
+    // Lands on the nearest unit, because that is the only place the value can
+    // be: `stepSize` quantises the drag too.
+    function moveTo(target: real): bool {
+        if (!root.enabled)
+            return false;
+        const clamped = Math.max(root.from, Math.min(root.to, target));
+        return root.stepBy(Math.round((clamped - root.value) / root.stepSize));
     }
 
-    // An empty slot has no size, so the layout closes up around it.
-    Item {
-        id: beforeSlot
-        anchors.horizontalCenter: root.vertical ? parent.horizontalCenter : undefined
-        anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
-        anchors.top: root.vertical ? parent.top : undefined
-        anchors.left: root.vertical ? undefined : parent.left
-        width: children.length > 0 ? childrenRect.width : 0
-        height: children.length > 0 ? childrenRect.height : 0
+    // One unit PAST the end, deliberately. `increase()`/`decrease()` clamp, so
+    // the extra step costs nothing and it is what makes these land exactly on
+    // the bound: repeated adds of a fractional step drift, and a
+    // `moveTo(from)` that rounded the drift away would leave Home doing
+    // nothing while the value sat at 1e-16.
+    readonly property int _unitsInRange: Math.ceil((root.to - root.from) / root.stepSize)
+    function toMinimum(): bool { return root.stepBy(-(root._unitsInRange + 1)); }
+    function toMaximum(): bool { return root.stepBy(root._unitsInRange + 1); }
+
+    function _report(before: real): bool {
+        if (root.value === before)
+            return false;
+        root.moved();
+        return true;
+    }
+
+    // What a consumer's action menu renders. Shortcuts are never set here:
+    // which key means what is the surface's call.
+    readonly property list<T.Action> actions: [
+        T.Action {
+            text: "Increase"
+            enabled: root.enabled && root.value < root.to
+            onTriggered: root.stepBy(Style.sliderKeyboardUnits)
+        },
+        T.Action {
+            text: "Decrease"
+            enabled: root.enabled && root.value > root.from
+            onTriggered: root.stepBy(-Style.sliderKeyboardUnits)
+        },
+        T.Action {
+            text: "Minimum"
+            enabled: root.enabled && root.value > root.from
+            onTriggered: root.toMinimum()
+        },
+        T.Action {
+            text: "Maximum"
+            enabled: root.enabled && root.value < root.to
+            onTriggered: root.toMaximum()
+        }
+    ]
+
+    // ── responsiveness ──────────────────────────────────────────────────
+    // The fill and the thumb bind to this, and it animates ONLY when the
+    // change did not come from a gesture. The old component animated fill and
+    // thumb at 180ms including DURING the drag, so the thumb trailed the
+    // finger. A level the system changed from elsewhere still eases in, so a
+    // reading that moved on its own is not mistaken for one a hand moved.
+    property real _paintedPosition: root.visualPosition
+
+    // False while a gesture owns the value, and for the frame after one. Every
+    // route sets it and hands it back through `Qt.callLater`, which collapses
+    // repeated calls to the same function into one.
+    property bool _hostDriven: true
+
+    function _endGesture(): void {
+        if (!root.pressed)
+            root._hostDriven = true;
+    }
+
+    Behavior on _paintedPosition {
+        // Reduced motion removes this one rather than shortening it. A slider
+        // is the one control whose whole job is to sit where it was put, and
+        // the library's general rule (shorten, never remove) is overridden
+        // here on the owner's ruling -- recorded in docs/components/Slider.md.
+        enabled: root._hostDriven && !Style.reducedMotion
+        NumberAnimation { duration: Motion.fast; easing.type: Motion.standardEasing }
+    }
+
+    readonly property real _mainSpan: root.vertical ? root.availableHeight : root.availableWidth
+    readonly property real _travel: Math.max(0, _mainSpan - root.thumbSize)
+    // `visualPosition` already carries both flips -- vertical runs bottom-up,
+    // and mirroring swaps the horizontal ends -- so this is one number with no
+    // orientation or RTL branch in it.
+    readonly property real _thumbOffset: root._paintedPosition * _travel
+    readonly property real _fillEnd: _thumbOffset + root.thumbSize / 2
+
+    // At least a comfortable hit target across the axis, whatever the track's
+    // thickness is: a 4px track with a 12px thumb still has to be aimable.
+    // Slot content can ask for more, and does on the OSD.
+    readonly property real _crossSize: Math.max(
+        Style.controlHeightSm, root.thickness, root.thumbSize,
+        root.vertical
+            ? Math.max(beforeSlot.implicitWidth, afterSlot.implicitWidth)
+            : Math.max(beforeSlot.implicitHeight, afterSlot.implicitHeight))
+
+    implicitWidth: root.vertical
+        ? _crossSize
+        : Math.max(Style.sliderLength, leftPadding + rightPadding)
+    implicitHeight: root.vertical
+        ? Math.max(Style.sliderLengthVertical, topPadding + bottomPadding)
+        : _crossSize
+
+    // Padding is where the slots sit, and the template owns the arithmetic
+    // from here: the contentItem gets exactly what is left over. The cross
+    // axis takes none, so the track keeps the full thickness it asked for.
+    leftPadding: root.horizontal && beforeSlot.hasContent
+        ? beforeSlot.implicitWidth + root.slotGap : 0
+    rightPadding: root.horizontal && afterSlot.hasContent
+        ? afterSlot.implicitWidth + root.slotGap : 0
+    topPadding: root.vertical && beforeSlot.hasContent
+        ? beforeSlot.implicitHeight + root.slotGap : 0
+    bottomPadding: root.vertical && afterSlot.hasContent
+        ? afterSlot.implicitHeight + root.slotGap : 0
+
+    // Does this slot hold anything? Counting children answered the wrong
+    // question, because a `Loader` never gives its footprint back: a Loader
+    // that unloads still reports an implicit size with `item` null, so a
+    // trailing icon that switched itself off went on reserving its width. A
+    // child that loads its content counts once it HAS it; any other child
+    // counts by being there.
+    //
+    // `slot` is untyped on purpose: `children` is a list of `Item`, and
+    // neither `sourceComponent` nor `item` is a member of `Item`.
+    function _slotHasContent(slot): bool {
+        for (let i = 0; i < slot.children.length; i++) {
+            const child = slot.children[i];
+            if (child.sourceComponent === undefined)
+                return true;
+            if (child.item !== null)
+                return true;
+        }
+        return false;
     }
 
     // Geometry, not anchors, and it is not a style preference. A ternary that
-    // yields `undefined` does NOT withdraw an anchor: Qt still sees left,
-    // right and horizontalCenter all declared on one item, warns about it on
-    // every run, and resolves the conflict however it likes. Two orientations
-    // in one item is exactly the case anchors cannot express, so the item
-    // states its own rectangle.
-    Rectangle {
-        id: track
+    // yields `undefined` does NOT withdraw an anchor: Qt still sees top, left
+    // and both centres declared on one item, warns on every run, and resolves
+    // the conflict however it likes. Two orientations in one item is exactly
+    // the case anchors cannot express, so each item states its own rectangle.
+    Item {
+        id: beforeSlot
+        readonly property bool hasContent: root._slotHasContent(beforeSlot)
+        x: root.vertical ? (root.width - width) / 2 : 0
+        y: root.vertical ? 0 : (root.height - height) / 2
+        implicitWidth: hasContent ? childrenRect.width : 0
+        implicitHeight: hasContent ? childrenRect.height : 0
+        width: implicitWidth
+        height: implicitHeight
+    }
 
-        readonly property real _lead: (root.vertical ? beforeSlot.height : beforeSlot.width) > 0
-            ? (root.vertical ? beforeSlot.height : beforeSlot.width) + root.slotGap
-            : 0
-        readonly property real _trail: (root.vertical ? afterSlot.height : afterSlot.width) > 0
-            ? (root.vertical ? afterSlot.height : afterSlot.width) + root.slotGap
-            : 0
-
-        x: root.vertical ? (root.width - root.thickness) / 2 : _lead
-        y: root.vertical ? _lead : (root.height - root.thickness) / 2
-        width: root.vertical ? root.thickness : Math.max(0, root.width - _lead - _trail)
-        height: root.vertical ? Math.max(0, root.height - _lead - _trail) : root.thickness
-        radius: (root.vertical ? width : height) / 2
-        color: root.trackColor
-        opacity: root.enabled ? 1 : Style.opacityDisabled
-
-        // The filled lead: from the bottom up, or from the left across. Same
-        // reason as the track — one item, two orientations, so it states its
-        // rectangle instead of declaring anchors it means to withdraw.
-        Rectangle {
-            x: 0
-            y: root.vertical ? parent.height - height : 0
-            width: root.vertical ? parent.width : parent.width * root.clampedFraction(root.value)
-            height: root.vertical
-                ? parent.height * root.clampedFraction(root.value)
-                : parent.height
-            radius: parent.radius
-            // Flat when the two ends agree, a gradient when they do not. The
-            // lead colour sits at the thumb's end: the top of a vertical
-            // slider, the right of a horizontal one.
-            color: root.fill
-            gradient: root.fill === root.fillLead ? null : fillRamp
-            Behavior on width {
-                NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
-            }
-            Behavior on height {
-                NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
-            }
-        }
+    Item {
+        id: afterSlot
+        readonly property bool hasContent: root._slotHasContent(afterSlot)
+        x: root.vertical ? (root.width - width) / 2 : root.width - width
+        y: root.vertical ? root.height - height : (root.height - height) / 2
+        implicitWidth: hasContent ? childrenRect.width : 0
+        implicitHeight: hasContent ? childrenRect.height : 0
+        width: implicitWidth
+        height: implicitHeight
     }
 
     Gradient {
@@ -180,135 +300,237 @@ Item {
         GradientStop { position: 1; color: root.vertical ? root.fill : root.fillLead }
     }
 
-    // Shadow under a raised thumb, lifted further while dragging.
-    Rectangle {
-        visible: root.showThumb && root.raised && root.enabled
-        x: root.vertical
-            ? track.x + (track.width - root.thumbSize) / 2
-            : track.x + root._thumbOffset
-        y: (root.vertical ? track.y + root._thumbOffset : track.y + (track.height - root.thumbSize) / 2)
-            + (root.dragging ? Style.sliderThumbLift * 2 : Style.sliderThumbLift)
-        width: root.thumbSize
-        height: width
-        radius: width / 2
-        color: Qt.rgba(0, 0, 0, .45)
+    contentItem: Item {
+        Rectangle {
+            id: track
+            objectName: "sliderTrack"
+            x: root.vertical ? (parent.width - width) / 2 : 0
+            y: root.vertical ? 0 : (parent.height - height) / 2
+            width: root.vertical ? root.thickness : parent.width
+            height: root.vertical ? parent.height : root.thickness
+            radius: (root.vertical ? width : height) / 2
+            color: root.trackColor
 
-        Behavior on x { NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing } }
-        Behavior on y { NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing } }
+            // The filled lead ends where the thumb is, on the value side of
+            // it: the bottom of a vertical slider, the left of a horizontal
+            // one, and the right of a mirrored one. Only the pinned edge
+            // branches -- the length is `_fillEnd` either way.
+            Rectangle {
+                objectName: "sliderFill"
+                x: root.vertical ? 0 : (root.mirrored ? root._fillEnd : 0)
+                y: root.vertical ? root._fillEnd : 0
+                width: root.vertical
+                    ? parent.width
+                    : (root.mirrored ? parent.width - root._fillEnd : root._fillEnd)
+                height: root.vertical ? parent.height - root._fillEnd : parent.height
+                radius: parent.radius
+                // Flat when the two ends agree, a gradient when they do not.
+                color: root.fill
+                gradient: root.fill === root.fillLead ? null : fillRamp
+            }
+        }
     }
 
-    Rectangle {
-        id: thumb
-        visible: root.showThumb && root.enabled
-        x: root.vertical
-            ? track.x + (track.width - root.thumbSize) / 2
-            : track.x + root._thumbOffset
-        y: root.vertical
-            ? track.y + root._thumbOffset
-            : track.y + (track.height - root.thumbSize) / 2
-        Behavior on x { NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing } }
-        Behavior on y { NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing } }
-        width: root.thumbSize
-        height: width
-        radius: width / 2
-        color: root.thumbColor
+    // The handle is positioned in the CONTROL's coordinates, not the content
+    // item's, so it carries the padding term the slots created. caelestia's
+    // FilledSlider omits it because it has no padding.
+    handle: Item {
+        id: handle
+        objectName: "sliderHandle"
+        x: root.leftPadding
+            + (root.vertical ? (root.availableWidth - width) / 2 : root._thumbOffset)
+        y: root.topPadding
+            + (root.vertical ? root._thumbOffset : (root.availableHeight - height) / 2)
+        implicitWidth: root.thumbSize
+        implicitHeight: root.thumbSize
+        width: implicitWidth
+        height: implicitHeight
 
-        Behavior on color {
-            ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        // Inside the handle so it travels and grows with it.
+        Rectangle {
+            visible: root.raised && root.enabled
+            width: parent.width
+            height: parent.height
+            y: root.pressed ? Style.sliderThumbLift * 2 : Style.sliderThumbLift
+            radius: width / 2
+            color: Qt.rgba(0, 0, 0, .45)
+
+            Behavior on y {
+                NumberAnimation { duration: Motion.press; easing.type: Motion.standardEasing }
+            }
         }
 
-        Item {
-            id: thumbSlot
+        Rectangle {
             anchors.fill: parent
+            radius: width / 2
+            color: root.thumbColor
+
+            Behavior on color {
+                ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+            }
+
+            Item {
+                id: thumbSlot
+                anchors.fill: parent
+            }
         }
     }
 
-    Item {
-        id: afterSlot
-        anchors.horizontalCenter: root.vertical ? parent.horizontalCenter : undefined
-        anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
-        anchors.bottom: root.vertical ? parent.bottom : undefined
-        anchors.right: root.vertical ? undefined : parent.right
-        width: children.length > 0 ? childrenRect.width : 0
-        height: children.length > 0 ? childrenRect.height : 0
-    }
-
-    HoverHandler { id: hover; enabled: root.enabled; cursorShape: Qt.PointingHandCursor }
-
-    // The five states law again: `StateLayer` owns the focus ring so a
-    // keyboard user meets the same mark here as on every other control. It
-    // does NOT own hover/press for this one -- `target: null` withholds the
-    // scale-growth binding. A slider already answers hover and press through
-    // its own `active`/`dragging` (the fill, the thumb colour, the shadow
-    // lift), and `StateLayer.pressed` is a TAP, not a sustained drag; routing
-    // press through it would have the ring and the thumb disagree mid-drag.
-    // See the report for the full reasoning.
+    // The five states, owned in one place. Host mode: `hovered`, `pressed`,
+    // `visualFocus` and the enabled cascade all come from the template, so
+    // there is one source of each. `target: handle` is the growth-not-tint
+    // rule applied where it belongs -- the THUMB grows, because growing the
+    // whole control would move the track under the finger holding it. The old
+    // component withheld growth entirely on the grounds that
+    // `StateLayer.pressed` is a tap rather than a sustained drag; in host mode
+    // `pressed` IS the sustained drag, so that objection is gone.
     StateLayer {
+        objectName: "sliderLayer"
         anchors.fill: parent
-        target: null
-        interactive: root.enabled
-        focused: root.focused
+        host: root
+        target: handle
         focusRadius: (root.vertical ? width : height) / 2
     }
 
+    // The cursor describes the region under it. A HoverHandler on the ANCESTOR
+    // of the slots, not a filling MouseArea: a frontmost hoverEnabled item
+    // would eat hover from slot content and its own StateLayer would never
+    // grow. Slot content with a StateLayer of its own states its own cursor
+    // and wins over this default.
+    HoverHandler {
+        cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+    }
+
+    // Captured in `onPressedChanged`, which Qt emits BEFORE it jumps the value
+    // to the press position (`mousePressEvent` calls the base class, then
+    // `handleMove`), so a click on the track commits too. Do not move this
+    // into anything that runs after the jump.
+    property real _pressValue: 0
+    property bool _keyMoved: false
+
+    onPressedChanged: {
+        if (root.pressed) {
+            root._pressValue = root.value;
+            root._hostDriven = false;
+            return;
+        }
+        Qt.callLater(root._endGesture);
+        if (root.value !== root._pressValue)
+            root.committed();
+    }
+
+    // Qt's own Slider handles the four arrows with `stepSize` as the step, so
+    // every arrow branch here MUST accept the event: `Keys` runs
+    // `BeforeItem` by default, and leaving one unaccepted means both routes
+    // run and a single press moves six units instead of five. Page, Home and
+    // End are ours entirely -- Qt has no handler for any of them, on either
+    // slider type -- and that is an EXTENSION, not parity, so a consumer
+    // should not assume a stock Qt slider does the same.
+    //
+    // The arrows are on-axis only, which is Qt's rule: a horizontal slider
+    // ignores Up and Down, and a vertical one ignores Left and Right, so the
+    // surface underneath keeps them. Which arrow increases follows the visual
+    // axis, so mirroring swaps the horizontal pair.
     Keys.onPressed: event => {
         if (!root.enabled)
             return;
 
+        const onAxis = root.vertical
+            ? (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
+            : (event.key === Qt.Key_Left || event.key === Qt.Key_Right);
+
+        if (onAxis) {
+            const forward = root.vertical
+                ? Qt.Key_Up
+                : (root.mirrored ? Qt.Key_Left : Qt.Key_Right);
+            const units = event.key === forward
+                ? Style.sliderKeyboardUnits
+                : -Style.sliderKeyboardUnits;
+            if (root.stepBy(units))
+                root._keyMoved = true;
+            event.accepted = true;
+            return;
+        }
+
         switch (event.key) {
-        case Qt.Key_Right:
-        case Qt.Key_Up:
-            root.moved(root.clampedFraction(root.value + root.keyboardStep));
-            event.accepted = true;
-            break;
-        case Qt.Key_Left:
-        case Qt.Key_Down:
-            root.moved(root.clampedFraction(root.value - root.keyboardStep));
-            event.accepted = true;
-            break;
         case Qt.Key_PageUp:
-            root.moved(root.clampedFraction(root.value + root.keyboardPageStep));
+            if (root.stepBy(Style.sliderPageUnits))
+                root._keyMoved = true;
             event.accepted = true;
             break;
         case Qt.Key_PageDown:
-            root.moved(root.clampedFraction(root.value - root.keyboardPageStep));
+            if (root.stepBy(-Style.sliderPageUnits))
+                root._keyMoved = true;
             event.accepted = true;
             break;
         case Qt.Key_Home:
-            root.moved(0);
+            if (root.toMinimum())
+                root._keyMoved = true;
             event.accepted = true;
             break;
         case Qt.Key_End:
-            root.moved(1);
+            if (root.toMaximum())
+                root._keyMoved = true;
             event.accepted = true;
             break;
         }
     }
 
-    // A grab area reaching well past a track that may be only a few pixels
-    // thick.
-    MouseArea {
-        anchors.fill: track
-        anchors.margins: -Style.space2
-        cursorShape: Qt.PointingHandCursor
-        onPressed: event => {
-            root.dragging = true;
-            root._setFrom((root.vertical ? event.y : event.x) - Style.space2);
-        }
-        onPositionChanged: event => {
-            if (pressed)
-                root._setFrom((root.vertical ? event.y : event.x) - Style.space2);
-        }
-        onReleased: root.dragging = false
-        onCanceled: root.dragging = false
+    // One `committed` per key that actually moved something, however many
+    // auto-repeats it fired on the way.
+    //
+    // It ACCEPTS the release of every key the dispatcher takes on press, and
+    // that is not symmetry for its own sake: `QQuickSlider::keyReleaseEvent`
+    // clears `pressed` for ANY key, not only the arrows it handles. Left
+    // unaccepted, releasing any key during a pointer drag would clear
+    // `pressed` mid-drag, which fires `onPressedChanged`, commits early and
+    // re-arms the animation for the rest of the drag.
+    Keys.onReleased: event => {
+        const ours = root.vertical
+            ? (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
+            : (event.key === Qt.Key_Left || event.key === Qt.Key_Right);
+        if (!ours
+            && event.key !== Qt.Key_PageUp && event.key !== Qt.Key_PageDown
+            && event.key !== Qt.Key_Home && event.key !== Qt.Key_End)
+            return;
+
+        event.accepted = true;
+        if (!root._keyMoved)
+            return;
+        root._keyMoved = false;
+        root.committed();
     }
 
+    // 120 is not a design number and deliberately NOT a token: it is the
+    // platform's own unit. Qt reports wheel rotation in eighths of a degree
+    // and one notch of a physical wheel is 15 degrees, so a theme that could
+    // retune this would be changing what a notch MEANS. Recorded as a
+    // deviation from the no-numbers law in docs/components/Slider.md.
+    readonly property int _wheelNotch: 120
+    property int _wheelAccumulator: 0
+
+    // A high-resolution touchpad sends many small deltas for one flick, so a
+    // notch is 120 units ACCUMULATED -- the same threshold caelestia's
+    // CustomMouseArea uses. The old handler treated any nonzero delta as a
+    // full step, which is why one gesture slammed the value. Reversing
+    // direction drops what was collected rather than cancelling into it, so a
+    // flick back does not start half a notch ahead.
     WheelHandler {
-        enabled: root.wheelStep > 0
+        enabled: root.enabled && root.wheelUnits > 0
         onWheel: event => {
-            if (event.angleDelta.y !== 0)
-                root.moved(root.clampedFraction(root.value
-                    + (event.angleDelta.y > 0 ? root.wheelStep : -root.wheelStep)));
+            const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+            if (delta === 0)
+                return;
+            if (Math.sign(delta) !== Math.sign(root._wheelAccumulator))
+                root._wheelAccumulator = 0;
+            root._wheelAccumulator += delta;
+
+            while (Math.abs(root._wheelAccumulator) >= root._wheelNotch) {
+                const up = root._wheelAccumulator > 0;
+                root._wheelAccumulator -= up ? root._wheelNotch : -root._wheelNotch;
+                if (root.stepBy(up ? root.wheelUnits : -root.wheelUnits))
+                    root.committed();
+            }
         }
     }
 }

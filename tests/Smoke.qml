@@ -65,7 +65,7 @@ Item {
         if (!require(capsule.implicitHeight === backend.controlHeight,
                 "Capsule did not consume backend height"))
             return;
-        if (!require(level.implicitHeight === backend.sliderThumbSize,
+        if (!require(level.thumbSize === backend.sliderThumbSize,
                 "Slider did not consume backend thumb size"))
             return;
         if (!require(disabledButton.opacity === backend.opacityDisabled,

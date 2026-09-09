@@ -5,39 +5,38 @@ import QtQuick
 import qs.QsmShell.Components
 import qs.QsmShell.Style
 
-// THE slider, wearing its two former surface names as VARIANTS instead of
-// two types. "level" and "osd-slider" differed in orientation, thickness,
-// decoration and nothing else -- one type, `variant` picks the look.
+// THE slider, wearing its two former surface names as VARIANTS instead of two
+// types. `level` and `osd-slider` differed in orientation, thickness and
+// decoration and nothing else.
+//
+// This unit no longer plays host. Every type that hands its state upward needs
+// a unit that answers, or the live window shows a control that ignores the
+// pointer -- but `Slider` no longer hands `value` up: Qt's own C++ setter
+// writes it, through the binding below rather than over it, so the drag, the
+// wheel and every arrow key work with no wiring here.
 Slider {
     id: root
     property string variant: ""
 
     // "vertical-*" is the raised, decorated look the OSD volume popup used;
     // anything else is the plain horizontal reading rail. `root.vertical` is
-    // the base component's own derived property (from `orientation`), not a
-    // second one -- redeclaring it here would shadow it. `decorated` is its
-    // own axis: the `orientation` control can flip a plain rail vertical
-    // without dragging the raised/thumbContent/after look along with it.
+    // the template's own derived property -- redeclaring it here would shadow
+    // it. `decorated` is its own axis: the `orientation` control can flip a
+    // plain rail vertical without dragging the raised look along with it.
     readonly property bool decorated: variant.indexOf("vertical") === 0
 
     orientation: root.decorated ? Qt.Vertical : Qt.Horizontal
     value: variant.indexOf("high") >= 0 ? .82 : .42
-    // `Slider` emits `moved` and never writes its own value -- the HOST owns
-    // it. A preview unit therefore has to BE the host, or the live window
-    // shows a control that answers no drag, no wheel and no arrow key. Every
-    // type that hands its state upward needs this line.
-    onMoved: v => root.value = v
-    wheelStep: root.decorated ? 0 : .05
+    wheelUnits: root.decorated ? 0 : Style.sliderKeyboardUnits
     raised: root.decorated
-    thickness: root.decorated ? 40 : Style.sliderTrackThickness
-    thumbSize: root.decorated ? 32 : Style.sliderThumbSize
+    // The OSD's fat track and big thumb, from the control scale rather than
+    // the literals 40 and 32 this file used to type.
+    thickness: root.decorated ? Style.controlHeight : Style.sliderTrackThickness
+    thumbSize: root.decorated ? Style.controlHeightSm : Style.sliderThumbSize
     trackColor: root.decorated ? Qt.darker(Style.surface, 1.35) : Style.surfaceHover
 
-    implicitWidth: root.vertical ? Math.max(thickness, thumbSize) : 260
-    implicitHeight: root.vertical ? 180 : Math.max(thickness, thumbSize)
-
     // Both slots are real, loaded only for the decorated look -- an inactive
-    // Loader has no size, so the plain rail reserves no space for either.
+    // Loader has no content, so the plain rail reserves no padding for either.
     thumbContent: Loader {
         anchors.centerIn: parent
         active: root.decorated
@@ -72,9 +71,9 @@ Slider {
             { label: "flat",   set: { raised: false } },
             { label: "raised", set: { raised: true } }
         ]},
-        { label: "thumb", options: [
-            { label: "shown",  set: { showThumb: true } },
-            { label: "hidden", set: { showThumb: false } }
+        { label: "wheel", options: [
+            { label: "off",   set: { wheelUnits: 0 } },
+            { label: "5 units", set: { wheelUnits: Style.sliderKeyboardUnits } }
         ]}
     ]
 }

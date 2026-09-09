@@ -144,12 +144,6 @@ QtObject {
     readonly property int sliderLength: backend?.sliderLength ?? Tokens.geometrySliderLength
     readonly property int sliderLengthVertical: backend?.sliderLengthVertical
         ?? Tokens.geometrySliderLengthVertical
-    // The wheel's own step is a per-call-site choice (0 disables it) and stays
-    // out of this. A slider with no wheel still needs a keyboard, so the
-    // arrow step and the larger page step are their own fractions.
-    readonly property real sliderKeyboardStep: backend?.sliderKeyboardStep ?? Tokens.geometrySliderKeyboardStep
-    readonly property real sliderKeyboardPageStep: backend?.sliderKeyboardPageStep
-        ?? Tokens.geometrySliderKeyboardPageStep
     readonly property int rolloutRadius: backend?.rolloutRadius ?? Tokens.geometryRolloutRadius
     readonly property int frameThickness: backend?.frameThickness ?? Tokens.geometryFrameThickness
     readonly property int notificationWidth: backend?.notificationWidth ?? Tokens.geometryNotificationWidth
