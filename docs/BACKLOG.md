@@ -4,14 +4,19 @@
 
 ### Preview/test migration underway (2026-09-08)
 
+ADR 0001 accepted 2026-09-09: controls go on `QtQuick.Templates.Control`
+with the `T.` types. Phase 0 items done: tree dump (`--inspect` flag on
+preview and capture), actions walk in `tst_units`, `StateLayer` host mode,
+`icon.lg` sized 24, GPL-3.0 licence, ADR 0001. `TextField` is the first type
+at the definition of done (states, actions, design record, unit, test).
+
 Every public type is getting its own `previews/units/<Type>.qml` proof
 harness and its own `tests/units/tst_<Type>.qml` behaviour test, draining
-`tests/interaction/tst_library.qml` one type at a time. 9 of ~45 are moved:
-`Badge`, `Spinner`, `ProgressBar`, `Divider`, `Slider`, `ListRow`, `StateLayer`,
-`Switch`, `TextField`. A type costs a unit file plus a test file, in that order,
-and neither is optional:
-the unit is what a person judges in a live window, the test is what a CI run
-can catch before that person ever looks.
+`tests/interaction/tst_library.qml` one type at a time. Next types in order:
+`Slider` (plus `RangeSlider`), `Switch`, `Checkbox` plus `Radio`, buttons on
+`T.AbstractButton`, `SpinBox`, `Segmented` on `T.TabBar`, `ScrollArea` on
+`T.ScrollBar`, popup family stays hand-rolled (spike 2026-09-09, see OPEN
+entry below).
 
 `ScenePointer` is a new type: a hover-position reader meant for an ANCESTOR
 of the surfaces it watches. `Rollout` (ported from the consumer 2026-09-07,
@@ -49,6 +54,7 @@ natural sizing. `QT_QUICK_BACKEND=opengl` was a value that never existed:
 `QT_QUICK_BACKEND` only knows `software`, `d3d12` and `openvg`, and the RHI
 backend Qt actually renders through is `QSG_RHI_BACKEND`, already set
 correctly beside it.
+
 ### `TextField` migration -- CLOSED 2026-09-08
 
 - [x] Move the public type to `previews/units/TextField.qml` and remove its

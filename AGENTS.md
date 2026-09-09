@@ -48,7 +48,10 @@
 - Comments explain non-obvious mechanics only. Git history, task history, and
   restatements of code do not belong in source comments.
 - Keep durable documentation to `README.md` and `docs/BACKLOG.md` unless a
-  genuinely irreversible architectural decision needs a short record.
+  genuinely irreversible architectural decision needs a short record. `docs/adr/`
+  holds the irreversible decisions (ADR 0001: controls on QtQuick.Templates) and
+  `docs/components/<Type>.md` holds one short design record per type, the
+  `expected` column an audit measures against.
 - `docs/12-mechanism.md` is NORMATIVE code for the edge shader: use its exact
   formulas, and changing behaviour means editing that file first. It moved here
   with the shader; the consumer repo keeps only a pointer.
@@ -85,7 +88,9 @@
   wayland window; `npm run capture -- <key>` still writes the offscreen
   PNG; `npm run unit -- <Type>` runs one test file, `--window` runs the
   same file on the compositor; `bash scripts/capture-all <dir>` captures
-  every scenario.
+  every scenario. `--inspect <file>` on `preview` and `capture` writes the
+  latest item-tree dump (same shape as the consumer's `qsm inspect`); F12
+  re-dumps in the live window.
 - When an agent opens a preview, it announces that it is taking the pointer,
   drives the whole planned state trace, then says the window is ready and
   stops injecting input so the owner can judge it. If the owner says they are
@@ -280,3 +285,8 @@ Earned, each from a specific failure. Break one and name which.
   paint an unexplained error automatically. Return and a clickable submit
   glyph both call `accept()`; keyboard-only facts such as `selectionClaimed`
   stay on the keyboard route and are not invented by programmatic calls.
+- **A text root paints under its own padding.** `T.TextField` scrolls long
+  text left under `leftPadding`, which is where a leading slot sits. A text
+  control with slots is a `T.Control` with a clipped `TextInput` content
+  item, the shape `T.SpinBox` uses; the template still owns padding and
+  states.
