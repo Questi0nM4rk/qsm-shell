@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Layouts
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -10,6 +10,13 @@ import qs.QsmShell.Style
 // is a text box with an icon in its leading slot; it is not a second kind of
 // text box, and the moment a second surface needed a plain one the library
 // would have grown a third.
+//
+// It stands on `T.Control` with a `TextInput` in a clipped `contentItem`, the
+// shape Qt's own `T.SpinBox` uses. A `T.TextField` root cannot host slots: it
+// scrolls its glyphs UNDER its own padding rather than clipping them at the
+// padding edge (measured -- with `leftPadding: 60` and a value twice the box
+// wide, the first glyph sits at x = -206), and the padding is exactly where a
+// leading magnifier or a trailing reveal has to live.
 //
 // ── keys ─────────────────────────────────────────────────────────────────
 // A text input sits in the middle of a keyboard argument it cannot settle:
@@ -26,7 +33,7 @@ import qs.QsmShell.Style
 //
 // That is one mechanism instead of four flags, and it covers the fifth key
 // the flags did not anticipate.
-Rectangle {
+T.Control {
     id: root
 
     property string placeholder: ""
@@ -38,7 +45,7 @@ Rectangle {
     property string inputType: "text"
     // Non-empty paints the failure. The message itself belongs to `Field`.
     property bool failed: false
-    property bool readOnly: false
+    property alias readOnly: input.readOnly
     // A password stays a password -- including its input-method hints -- while
     // its host decides whether a trailing reveal action shows the text.
     property bool passwordVisible: false
@@ -91,18 +98,33 @@ Rectangle {
     readonly property int fieldTextSize: _sm ? Style.textSm : _lg ? Style.textLg : Style.textMd
     readonly property bool focused: input.activeFocus
 
-    function focusField(): void { input.forceActiveFocus(); }
-    function setText(value: string): void { input.text = value; }
-    function selectAll(): void { input.selectAll(); }
-    // The one semantic accept entry point: Return/Enter, and a consumer that
-    // wants to accept programmatically, both call it. Emits `accepted` only
-    // when the current text is acceptable and reports whether it did.
+    // ── actions: the one route for pointer, keyboard and menus ──────────
+    // The one semantic accept entry point: Return/Enter, the Accept action and
+    // a consumer accepting programmatically all call it. Emits `accepted` only
+    // when the current text is acceptable, and reports whether it did.
     function accept(): bool {
         if (!root.enabled || !input.acceptableInput)
             return false;
         root.accepted();
         return true;
     }
+    function clear(): void { input.clear(); root.edited(input.text); }
+    function toggleReveal(): void { root.passwordVisible = !root.passwordVisible; }
+    function selectAll(): void { input.selectAll(); }
+
+    // What a consumer's action menu renders for this field. Shortcuts are
+    // never set here: which key means what is the surface's call.
+    readonly property list<T.Action> actions: [
+        T.Action { text: "Accept"; enabled: root.enabled && input.acceptableInput; onTriggered: root.accept() },
+        T.Action { text: "Clear"; enabled: root.enabled && !input.readOnly && input.length > 0; onTriggered: root.clear() },
+        T.Action {
+            text: "Reveal"
+            enabled: root.enabled && root._password
+            checkable: true
+            checked: root.passwordVisible
+            onTriggered: root.toggleReveal()
+        }
+    ]
 
     // The built-in `number` validator. Any double: the Qt defaults are an
     // unbounded range, so nothing is hardcoded here -- a host that wants a
@@ -115,231 +137,301 @@ Rectangle {
     // How wide the field wants to be when nothing tells it. A text box's
     // preferred width is a CONSTANT, never its content: the first version fed
     // the input's own implicit width into this sum, so typing stretched the
-    // box across the screen instead of scrolling inside itself. The slots may
-    // demand more than the default; the characters typed into the middle never
-    // do. A consumer gives the field an explicit width or lets the layout
-    // decide; the field reports one fixed resting size either way.
+    // box across the screen instead of scrolling inside itself.
     property real naturalWidth: Style.notificationWidth
 
+    implicitWidth: Math.max(naturalWidth, leftPadding + rightPadding)
     implicitHeight: _sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight
-    implicitWidth: Math.max(naturalWidth,
-        leadingSlot.implicitWidth + trailingSlot.implicitWidth
-            + Style.space3 * 4)
-    radius: Style.radiusMd
+
+    // Padding is where the slots sit, and the template owns the arithmetic
+    // from here: the contentItem gets exactly what is left over.
+    leftPadding: Style.space3 + (leadingSlot.hasContent ? leadingSlot.implicitWidth + Style.space2 : 0)
+    rightPadding: Style.space3 + (trailingSlot.hasContent ? trailingSlot.implicitWidth + Style.space2 : 0)
+
+    hoverEnabled: true
+    // Focus lands on the INPUT, never on the frame: the frame forwards it
+    // below, so a caller reaching for the public `forceActiveFocus()` gets a
+    // caret rather than a control that swallowed the keyboard.
+    focusPolicy: Qt.NoFocus
     opacity: enabled ? 1 : Style.opacityDisabled
 
-    // Hover and press are answered by the SURFACE, not by growth. Every other
-    // control in the library grows, and a text box must not: the caret and the
-    // text have to stay where the eye put them, and a field that jumps under
-    // the pointer is a field you cannot aim a click into. So the layer owns
-    // the states — the five exist and are defined — and the response is a
-    // lift in the ground rather than a change in size.
-    color: layer.hovered || root.focused ? Style.surfaceHover : Style.surface
+    background: Rectangle {
+        radius: Style.radiusMd
+        // Hover and press are answered by the SURFACE, not by growth. Every
+        // other control in the library grows, and a text box must not: the
+        // caret and the text have to stay where the eye put them, and a field
+        // that jumps under the pointer is a field you cannot aim a click into.
+        color: root.hovered || root.focused ? Style.surfaceHover : Style.surface
+        // The one border in the library, and it earns it: a text box is the
+        // only control whose EDGE is the affordance -- it says "your typing
+        // goes inside this". Invisible at rest, on for focus, danger on
+        // failure.
+        border.width: root.failed || root.focused ? 1 : 0
+        border.color: root.failed ? Style.danger : Style.accent
 
-    Behavior on color {
-        ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        Behavior on color {
+            ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
+        Behavior on border.color {
+            ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
     }
 
-    // The one border in the library, and it earns it: a text box is the only
-    // control whose EDGE is the affordance — it says "your typing goes inside
-    // this". It stays invisible at rest (the shell paints no boxes), appears
-    // on focus, and turns on failure.
-    border.width: root.failed || root.focused ? 1 : 0
-    border.color: root.failed ? Style.danger : Style.accent
-
-    Behavior on border.color {
-        ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+    // The slots live in the padding, outside the clipped content, so a glyph
+    // is never scrolled over by the text.
+    Item {
+        id: leadingSlot
+        readonly property bool hasContent: children.length > 0
+        x: Style.space3
+        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: hasContent ? childrenRect.width : 0
+        implicitHeight: hasContent ? childrenRect.height : 0
+        width: implicitWidth
+        height: implicitHeight
     }
 
-    RowLayout {
-        id: row
-        anchors.fill: parent
-        anchors.leftMargin: Style.space3
+    Item {
+        id: trailingSlot
+        readonly property bool hasContent: children.length > 0
+        anchors.right: parent.right
         anchors.rightMargin: Style.space3
-        // One step less than the box margin: a spacing step is the air the
-        // scroll-end caret keeps from the trailing action, and the owner's
-        // live ruler read the full step as too much room. Both sides shrink
-        // together, so the leading-to-text rhythm stays equal to the
-        // text-to-action rhythm.
-        spacing: Style.space2
+        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: hasContent ? childrenRect.width : 0
+        implicitHeight: hasContent ? childrenRect.height : 0
+        width: implicitWidth
+        height: implicitHeight
+    }
 
-        Item {
-            id: leadingSlot
-            Layout.alignment: Qt.AlignVCenter
-            implicitWidth: children.length > 0 ? childrenRect.width : 0
-            implicitHeight: children.length > 0 ? childrenRect.height : 0
+    contentItem: Item {
+        // Long text scrolls INSIDE the box; it never stretches it. Without the
+        // clip, overflowing glyphs painted past the field's rounded edge.
+        clip: true
+
+        Prose {
+            id: placeholder
+            anchors.fill: parent
+            visible: input.length === 0
+            role: "label"
+            muted: true
+            font.pixelSize: root.fieldTextSize
+            verticalAlignment: Text.AlignVCenter
+            text: root.placeholder
         }
 
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            // Long text scrolls INSIDE the box; it never stretches it. Without
-            // the clip, overflowing glyphs painted past the field's rounded
-            // edge.
-            clip: true
+        TextInput {
+            id: input
+            objectName: "textFieldInput"
+            anchors.fill: parent
+            enabled: root.enabled
+            // A keyboard-first surface travels by Tab. The input is the
+            // focusable thing here, so the tab stop lives on it -- it is
+            // skipped automatically while disabled.
+            activeFocusOnTab: true
+            color: Style.text
+            selectionColor: Style.accent
+            selectedTextColor: Style.background
+            verticalAlignment: TextInput.AlignVCenter
+            font.family: Style.fontFamily
+            font.pixelSize: root.fieldTextSize
+            // The validator and the method hints travel together with the
+            // input type. `validator` is host-overridable but defaults to the
+            // built-in number validator; the hints ask the platform keyboard
+            // for the right pad.
+            validator: root.validator
+            inputMethodHints: root.inputMethodHints
+            // The password is ALWAYS masked, including the character being
+            // typed. Echo-on-edit was tried first because hiding the very
+            // first keystroke read as a dead field, but it revealed the WHOLE
+            // password while the field was being edited -- and since the dots
+            // turned into letters under the caret, it read as if typing wiped
+            // the text. A password that stops being a password exactly while a
+            // person works on it is not one.
+            echoMode: root._password && !root.passwordVisible
+                ? TextInput.Password
+                : TextInput.Normal
+            // The right inset is what keeps the caret legible at the end of a
+            // long value: without it the insertion point pins flush against
+            // the clip edge and the bar loses half of itself off-screen.
+            rightPadding: Style.spaceTight
+            // The library draws its own caret (see `caret` below). The stock
+            // one is a 1px line that hides during fast typing and loses itself
+            // against the scroll edge; nothing here controls that, so it
+            // renders nothing and the overlay takes over.
+            cursorDelegate: Item {}
 
-            Prose {
-                id: placeholder
-                anchors.fill: parent
-                visible: input.text.length === 0
-                role: "label"
-                muted: true
-                font.pixelSize: root.fieldTextSize
-                verticalAlignment: Text.AlignVCenter
-                text: root.placeholder
+            onTextEdited: {
+                root.selectionClaimed();
+                root.edited(text);
             }
 
-            TextInput {
-                id: input
-                objectName: "textFieldInput"
-                anchors.fill: parent
-                enabled: root.enabled
-                readOnly: root.readOnly
-                // A keyboard-first surface travels by Tab. The input is the
-                // focusable thing here (the root Rectangle is not a focus
-                // scope), so the tab stop lives on it -- it is skipped
-                // automatically while disabled.
-                activeFocusOnTab: true
-                color: Style.text
-                selectionColor: Style.accent
-                selectedTextColor: Style.background
-                verticalAlignment: TextInput.AlignVCenter
-                font.family: Style.fontFamily
-                font.pixelSize: root.fieldTextSize
-                // The validator and the method hints travel together with the
-                // input type. `validator` is host-overridable but defaults to
-                // the built-in number validator; the hints ask the platform
-                // keyboard for the right pad.
-                validator: root.validator
-                inputMethodHints: root.inputMethodHints
-                // The password is ALWAYS masked, including the character being
-                // typed. Echo-on-edit was tried first because hiding the very
-                // first keystroke read as a dead field, but it revealed the
-                // WHOLE password while the field was being edited -- and since
-                // the dots turned into letters under the caret, it read as if
-                // typing wiped the text. A password that stops being a password
-                // exactly while a person works on it is not one.
-                echoMode: root._password && !root.passwordVisible
-                    ? TextInput.Password
-                    : TextInput.Normal
-                // The right inset is what keeps the caret legible at the end
-                // of a long value: without it the insertion point pins flush
-                // against the trailing action (and the row spacing alone reads
-                // as no air at all). The live ruler came back with one spacing
-                // step on the button -- the caret should land where the text
-                // would if the box were endless, not a third of the box back.
-                // So the inset is only as deep as needed to keep the full 2px
-                // bar on-screen past the clip: the scroll-end caret shows all
-                // of itself exactly one row-spacing step from the action.
-                rightPadding: Style.spaceTight
-                clip: true
-                // The library draws its own caret (see `caret` below). The
-                // stock one is a 1px line that hides during fast typing and
-                // loses itself against the scroll edge; nothing here controls
-                // that, so it renders nothing and the overlay takes over.
-                cursorDelegate: Item {}
+            // Losing focus forgets how the last focus arrived, so the next
+            // arrival is judged on its own route.
+            onActiveFocusChanged: if (!input.activeFocus) root._focusOffTheKeyChain = false
 
-                onTextEdited: {
+            // Losing focus forgets how the last focus arrived, so the next
+            // arrival is judged on its own route.
+
+            // ONE dispatcher, and the reason is measured rather than
+            // stylistic: `Keys.onPressed` and the per-key handlers
+            // (`Keys.onDownPressed` and friends) hang off the SAME
+            // attached object, and accepting the event in the generic one
+            // does not stop the specific one from running. The first
+            // version of this component had both, and a consumer that
+            // claimed Down got its own handler AND `moveDown` — a
+            // launcher list that moved two rows per keystroke.
+            // `tests/units/tst_TextField.qml` is that bug, kept.
+            //
+            // So the hook fires, and if it did not take the key this
+            // decides what the key means. No ordering to depend on.
+            Keys.onPressed: event => {
+                root.keyPressed(event);
+                if (event.accepted)
+                    return;
+
+                switch (event.key) {
+                case Qt.Key_Up:
                     root.selectionClaimed();
-                    root.edited(text);
+                    root.moveUp();
+                    event.accepted = true;
+                    break;
+                case Qt.Key_Down:
+                    root.selectionClaimed();
+                    root.moveDown();
+                    event.accepted = true;
+                    break;
+                case Qt.Key_Return:
+                case Qt.Key_Enter:
+                    root.selectionClaimed();
+                    root.accept();
+                    event.accepted = true;
+                    break;
+                case Qt.Key_Escape:
+                    root.escaped();
+                    event.accepted = true;
+                    break;
+                default:
+                    // Everything else is typing, and typing belongs to the
+                    // input. Leaving it unaccepted is what lets the caret,
+                    // selection and clipboard keys keep working.
+                    break;
                 }
-
-                // ONE dispatcher, and the reason is measured rather than
-                // stylistic: `Keys.onPressed` and the per-key handlers
-                // (`Keys.onDownPressed` and friends) hang off the SAME
-                // attached object, and accepting the event in the generic one
-                // does not stop the specific one from running. The first
-                // version of this component had both, and a consumer that
-                // claimed Down got its own handler AND `moveDown` — a
-                // launcher list that moved two rows per keystroke.
-                // `tests/units/tst_TextField.qml` is that bug, kept.
-                //
-                // So the hook fires, and if it did not take the key this
-                // decides what the key means. No ordering to depend on.
-                Keys.onPressed: event => {
-                    root.keyPressed(event);
-                    if (event.accepted)
-                        return;
-
-                    switch (event.key) {
-                    case Qt.Key_Up:
-                        root.selectionClaimed();
-                        root.moveUp();
-                        event.accepted = true;
-                        break;
-                    case Qt.Key_Down:
-                        root.selectionClaimed();
-                        root.moveDown();
-                        event.accepted = true;
-                        break;
-                    case Qt.Key_Return:
-                    case Qt.Key_Enter:
-                        root.selectionClaimed();
-                        root.accept();
-                        event.accepted = true;
-                        break;
-                    case Qt.Key_Escape:
-                        root.escaped();
-                        event.accepted = true;
-                        break;
-                    default:
-                        // Everything else is typing, and typing belongs to the
-                        // input. Leaving it unaccepted is what lets the caret,
-                        // selection and clipboard keys keep working.
-                        break;
-                    }
-                }
-            }
-
-            // The insertion point, drawn by the field itself. Qt's caret
-            // blinks away during fast typing and, at the scroll edge of a
-            // long value, sits flush against the trailing action where a 1px
-            // line is hard to read. `cursorRectangle` always reports where
-            // the caret really is, so an accent bar at that spot survives
-            // long text and a held key -- the two cases the stock caret loses.
-            Rectangle {
-                id: caret
-                objectName: "textFieldCaret"
-                x: input.x + input.cursorRectangle.x
-                y: input.y + input.cursorRectangle.y
-                width: 2
-                height: input.cursorRectangle.height
-                color: Style.accent
-                radius: 1
-                visible: input.activeFocus
             }
         }
 
-        Item {
-            id: trailingSlot
-            Layout.alignment: Qt.AlignVCenter
-            implicitWidth: children.length > 0 ? childrenRect.width : 0
-            implicitHeight: children.length > 0 ? childrenRect.height : 0
+        // The insertion point, drawn by the field itself. Qt's caret blinks
+        // away during fast typing and, at the scroll edge of a long value,
+        // sits flush against the trailing action where a 1px line is hard to
+        // read. `cursorRectangle` always reports where the caret really is, so
+        // an accent bar at that spot survives long text and a held key -- the
+        // two cases the stock caret loses.
+        //
+        // Moving it shows it solid for one half-cycle, so the mark a person is
+        // steering never blinks out from under them mid-move. The blink period
+        // is the platform's; a platform that turns blinking off reports zero
+        // and the timer stays down.
+        Rectangle {
+            id: caret
+            objectName: "textFieldCaret"
+            property bool holdSolid: false
+            readonly property int halfPeriod: Application.styleHints.cursorFlashTime / 2
+            x: input.x + input.cursorRectangle.x
+            y: input.y + input.cursorRectangle.y
+            width: Style.spaceTight
+            height: input.cursorRectangle.height
+            color: Style.accent
+            radius: Style.radiusXs
+            visible: input.activeFocus && !input.readOnly
+
+            onVisibleChanged: opacity = 1
+
+            Connections {
+                target: input
+                function onCursorPositionChanged(): void {
+                    caret.opacity = 1;
+                    caret.holdSolid = true;
+                    holdTimer.restart();
+                }
+            }
+
+            Timer {
+                id: holdTimer
+                interval: caret.halfPeriod
+                onTriggered: caret.holdSolid = false
+            }
+
+            Timer {
+                running: caret.visible && !caret.holdSolid
+                    && caret.halfPeriod > 0 && !Style.reducedMotion
+                repeat: true
+                interval: caret.halfPeriod
+                onTriggered: caret.opacity = caret.opacity === 1 ? 0 : 1
+            }
+
+            Behavior on x {
+                NumberAnimation { duration: Motion.press; easing.type: Motion.standardEasing }
+            }
         }
     }
 
-    // Clicking anywhere in the box puts the caret in it. Without this the
-    // person has to hit the text itself, which on an empty field is a
-    // zero-width target sitting behind a placeholder.
-    //
-    // `target: null` because nothing here scales, and the I-beam rather than
-    // the pointing hand because this is a place to type, not a thing to press.
+    // The five states, owned in one place. Host mode: hovered, pressed and the
+    // enabled cascade come from the control itself, so there is one source of
+    // every state. `target: null` because nothing here scales.
     StateLayer {
         id: layer
         anchors.fill: parent
         target: null
-        interactive: root.enabled && !root.readOnly
-        focused: root.focused
-        focusRadius: root.radius
+        host: root
+        interactive: root.enabled && !input.readOnly
+        focused: root.keyboardFocused
+        focusRadius: Style.radiusMd
         focusColor: root.failed ? Style.danger : Style.accent
-        onClicked: input.forceActiveFocus()
+    }
+
+    // The ring is a KEYBOARD mark: a pointer already says where it is, and a
+    // ring under the hand that put it there is noise. Qt will not tell us how
+    // focus arrived -- `Item` has no `focusReason` in QML, and a `T.Control`
+    // records reasons only for its OWN focus events, never for a descendant's
+    // -- so the routes that are not the key chain mark themselves: a pointer
+    // press anywhere in the frame, and a caller handing focus to the frame.
+    // What is left unmarked is Tab, Backtab and a shortcut.
+    //
+    // Not named `visualFocus`: `T.Control` already has one (always false here,
+    // `focusPolicy` is `NoFocus`) and a shadow would be a duplicate property.
+    property bool _focusOffTheKeyChain: false
+    readonly property bool keyboardFocused: input.activeFocus && !_focusOffTheKeyChain
+
+    // `forceActiveFocus()` on the frame means "put the caret in this field".
+    // A plain T.Control keeps that focus for itself, so the frame hands it on.
+    onActiveFocusChanged: {
+        if (!root.activeFocus)
+            return;
+        root._focusOffTheKeyChain = true;
+        input.forceActiveFocus();
+    }
+
+    TapHandler {
+        // Tapping the padding focuses the input; slot actions sit above and
+        // take their own taps first. A tap on the text never reaches here --
+        // the input accepts that press itself -- which is why the pointer mark
+        // lives on the overlay below rather than in this handler.
+        onTapped: input.forceActiveFocus(Qt.MouseFocusReason)
     }
 
     MouseArea {
         id: cursorArea
         anchors.fill: parent
-        acceptedButtons: Qt.NoButton
+        // The frontmost item in the frame, so it is the one place that sees
+        // every pointer press wherever it lands. It answers none of them: the
+        // press is rejected and travels on to the text, a slot action or the
+        // tap handler above.
+        acceptedButtons: Qt.LeftButton
         hoverEnabled: true
+        onPressed: mouse => {
+            root._focusOffTheKeyChain = true;
+            mouse.accepted = false;
+        }
+        // The cursor describes the region under it, not the outer component: a
+        // clickable glyph that still shows a text cursor denies its own action.
         cursorShape: {
             const leadingPoint = leadingSlot.mapFromItem(cursorArea, mouseX, mouseY);
             const point = trailingSlot.mapFromItem(cursorArea, mouseX, mouseY);

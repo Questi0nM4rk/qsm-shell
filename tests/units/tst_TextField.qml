@@ -57,13 +57,13 @@ TestCase {
         probe.composedAccepts = 0;
         probe.claimDown = false;
         probe.lastSeenKey = "";
-        field.setText("");
+        field.text = "";
         field.enabled = true;
         field.inputType = "text";
-        field.focusField();
+        field.forceActiveFocus();
         composedField.purposeOverride = "text";
         composedField.readOnly = false;
-        composedField.setText("Plain text");
+        composedField.text = "Plain text";
     }
 
     function test_unclaimed_keys_fall_through_to_the_field() {
@@ -114,13 +114,13 @@ TestCase {
         compare(field.text, "4", "a number field dropped a digit keystroke");
         verify(field.acceptableInput, "a valid number read as unacceptable");
 
-        field.setText("abc");
+        field.text = "abc";
         compare(field.acceptableInput, false, "an invalid programmatic value read as acceptable");
         probe.accepts = 0;
         compare(field.accept(), false, "accept() reported success on an invalid value");
         compare(probe.accepts, 0, "accept() emitted accepted on an invalid value");
 
-        field.setText("42");
+        field.text = "42";
         probe.accepts = 0;
         probe.claims = 0;
         compare(field.accept(), true, "accept() refused a valid value");
@@ -188,7 +188,7 @@ TestCase {
     // must survive the keystroke.
     function test_password_always_masks_and_preserves_text() {
         field.inputType = "password";
-        field.setText("secret");
+        field.text = "secret";
         const input = findChild(field, "textFieldInput");
         verify(input !== null, "the input is not reachable for echo-mode asserts");
         input.cursorPosition = input.length;
@@ -212,14 +212,12 @@ TestCase {
 
     // A text box's preferred width is a constant. Products scroll a single
     // line inside a fixed box; they never let the typed text stretch the box.
-    // A text box's preferred width is a constant. Products scroll a single
-    // line inside a fixed box; they never let the typed text stretch the box.
     function test_field_never_grows_with_typed_content() {
         const before = field.implicitWidth;
         let longText = "qsm-lab";
         for (let i = 0; i < 300; i++)
             longText += "x";
-        field.setText(longText);
+        field.text = longText;
         compare(field.implicitWidth, before,
             "typing a long value stretched the field's implicit width");
     }
@@ -231,11 +229,14 @@ TestCase {
     // its bar fully on-screen. The owner's live ruler chose that distance.
     function test_caret_clears_the_trailing_action() {
         composedField.readOnly = false;
-        composedField.setText("abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        composedField.focusField();
+        composedField.text = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        composedField.forceActiveFocus();
         wait(0);
         const input = findChild(composedField, "textFieldInput");
         input.cursorPosition = input.length;
+        // The caret glides to a new position rather than jumping, so its
+        // geometry can only be read once the move has settled.
+        wait(Motion.press * 2);
         const caret = findChild(composedField, "textFieldCaret");
         const trailing = findChild(composedField, "textFieldTrailingAction");
         verify(caret !== null, "the caret overlay is not reachable");
@@ -255,5 +256,74 @@ TestCase {
         const middle = input.parent;
         verify(caret.x + caret.width <= middle.width + 0.5,
             "caret right edge overflows the text column clip");
+    }
+
+    // The action list is the API a consumer's action menu renders. Each entry
+    // must be the same route the keyboard takes: Return and the Accept action
+    // both go through accept(), Clear empties through clear().
+    function test_actions_are_the_same_route_as_the_keys() {
+        field.text = "42";
+        const names = [];
+        for (let i = 0; i < field.actions.length; i++)
+            names.push(field.actions[i].text);
+        compare(names, ["Accept", "Clear", "Reveal"], "action list changed shape");
+
+        field.actions[0].trigger();
+        compare(probe.accepts, 1, "Accept action did not go through accept()");
+        keyClick(Qt.Key_Return);
+        compare(probe.accepts, 2, "Return and the Accept action are not one route");
+
+        field.actions[1].trigger();
+        compare(field.text, "", "Clear action did not clear");
+
+        compare(field.actions[2].enabled, false, "Reveal is enabled on a text field");
+        field.inputType = "password";
+        compare(field.actions[2].enabled, true, "Reveal is disabled on a password field");
+        field.actions[2].trigger();
+        compare(field.passwordVisible, true, "Reveal did not toggle passwordVisible");
+        field.inputType = "text";
+        field.passwordVisible = false;
+    }
+
+    // The ring is a KEYBOARD mark. A pointer already says where it is, so a
+    // click focuses the input without painting one; arriving down the Tab
+    // chain is the case that needs telling.
+    function test_focus_ring_follows_keyboard_focus_only() {
+        mouseClick(field, 150, 20);
+        compare(field.focused, true, "click did not focus the input");
+        compare(field.keyboardFocused, false, "a click painted the keyboard focus ring");
+
+        // Clicking the PADDING is the other pointer route -- it reaches the
+        // input through the frame's own tap handler, and must not ring either.
+        probe.forceActiveFocus();
+        mouseClick(field, 4, 20);
+        compare(field.focused, true, "a click on the padding did not focus the input");
+        compare(field.keyboardFocused, false, "a click on the padding painted the ring");
+
+        // Setting `focus` on the FRAME cannot take focus off the input inside
+        // it, so the probe takes it instead and Tab walks back in.
+        probe.forceActiveFocus();
+        verify(!field.focused, "the field kept focus before the Tab route");
+        keyClick(Qt.Key_Tab);
+        tryCompare(field, "keyboardFocused", true, 500);
+    }
+
+    // The mark that says "focus did not arrive by key" is cleared when focus
+    // LEAVES the input, so a press that never focuses the input at all must
+    // not leave one behind: pressing the trailing action on an unfocused
+    // field would otherwise swallow the ring on the next Tab into it.
+    function test_a_press_that_does_not_focus_leaves_no_stale_mark() {
+        probe.forceActiveFocus();
+        const clear = findChild(composedField, "textFieldTrailingAction");
+        verify(clear !== null, "a filled field had no trailing action");
+        mouseClick(clear, clear.width / 2, clear.height / 2);
+        // Measured: the rejected press reaches BOTH the action and the frame's
+        // tap handler, so clearing a field also leaves a caret in it -- and
+        // that focus is what later clears the mark.
+        compare(composedField.focused, true,
+            "a press on a slot action did not reach the frame's tap handler");
+        field.forceActiveFocus();
+        keyClick(Qt.Key_Tab);
+        tryCompare(composedField, "keyboardFocused", true, 500);
     }
 }

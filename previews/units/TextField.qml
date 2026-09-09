@@ -6,8 +6,9 @@ import qs.QsmShell.Components
 import qs.QsmShell.Style
 
 // THE text input, exercised as its own proof harness. Both slots are real:
-// a search glyph in the leading slot, a clear control in the trailing slot
-// that calls the public `setText("")` API. The unit is the component itself,
+// a search glyph in the leading slot, and a trailing control that calls the
+// same public functions the field's own actions and keys do -- `clear()` for
+// text, `toggleReveal()` for a password. The unit is the component itself,
 // not a wrapper -- the host decides layout, the unit proves the control.
 TextField {
     id: root
@@ -86,9 +87,9 @@ TextField {
             color: Style.textMuted
             onClicked: {
                 if (root.passwordExample)
-                    root.passwordVisible = !root.passwordVisible;
+                    root.toggleReveal();
                 else
-                    root.setText("");
+                    root.clear();
             }
         }
     }

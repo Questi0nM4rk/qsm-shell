@@ -64,7 +64,7 @@ ColumnLayout {
 
     spacing: Style.space3
 
-    function focusField(): void { searchField.focusField(); }
+    function focusField(): void { searchField.forceActiveFocus(); }
 
     function entryKey(entry: var): string {
         return String(entry.notificationId ?? `archive-${entry.archivedAt ?? ""}-${entry.appName}-${entry.summary}`);
