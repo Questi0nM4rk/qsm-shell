@@ -11,7 +11,9 @@ import qs.QsmShell.Style
 //
 // `clickable` makes it an action surface with the five states through
 // `StateLayer` and a hit box at least one large icon tall, whatever its text
-// measures. What the click means is the host's: a slider's mute, a field's
+// measures. The hit box overflows the footprint rather than growing it: when
+// it grew the footprint, a slider's track moved the moment its label became
+// clickable. What the click means is the host's: a slider's mute, a field's
 // focus. Off, it is a caption and takes no pointer.
 Item {
     id: root
@@ -27,8 +29,8 @@ Item {
     readonly property color _painted: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
 
     visible: hasContent
-    implicitWidth: Math.max(row.implicitWidth, root.clickable ? Style.iconLg : 0)
-    implicitHeight: Math.max(row.implicitHeight, root.clickable ? Style.iconLg : 0)
+    implicitWidth: row.implicitWidth
+    implicitHeight: row.implicitHeight
 
     Row {
         id: row
@@ -62,7 +64,11 @@ Item {
     }
 
     StateLayer {
-        anchors.fill: parent
+        // The target, not the footprint: at least one large icon each way,
+        // centred, so a two-line-tall hit box costs the layout nothing.
+        anchors.centerIn: parent
+        width: Math.max(parent.width, root.clickable ? Style.iconLg : 0)
+        height: Math.max(parent.height, root.clickable ? Style.iconLg : 0)
         target: root
         interactive: root.clickable && root.enabled
         focusRadius: Style.radiusSm

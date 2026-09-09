@@ -244,9 +244,13 @@ Earned, each from a specific failure. Break one and name which.
   A purpose switch changes input semantics, leading glyph, trailing action
   and sample value together. Changing only `inputType` left a magnifier on a
   password field.
-- **A slot action's layout footprint equals the glyph's own width.** The
-  pointer target stays the glyph-sized box; surrounding slots never grow to
-  fit a control's padding, or the text column moves with the purpose.
+- **An action never adds padding or footprint; the owning component decides
+  spacing.** A slot glyph's layout footprint is the glyph's own width and a
+  clickable label's is its text. A larger hit box overflows the footprint
+  (`StateLayer` centred, at least `Style.iconLg` each way) instead of growing
+  it. A slot that grew to fit a control's padding moved the text column with
+  the purpose; a label that grew to its hit box moved a slider's whole track
+  the moment it became clickable.
 - **A generic focus ring never erases a stronger semantic state.**
   `StateLayer`'s accent ring sat above `TextField`'s danger border, so a failed
   field stopped looking failed exactly while a person focused it to repair
