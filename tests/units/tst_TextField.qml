@@ -220,6 +220,20 @@ TestCase {
             "an emptied field kept its inactive trailing action's footprint");
     }
 
+    // The leading glyph is the host's content, so switching it off must give
+    // the padding it reserved back to the text, not leave a hole.
+    function test_a_field_without_a_leading_glyph_gives_the_space_back() {
+        composedField.showLeading = true;
+        wait(0);
+        verify(composedField.leftPadding > Style.space3,
+            "a field with a leading glyph reserved no room for it");
+
+        composedField.showLeading = false;
+        tryCompare(composedField, "leftPadding", Style.space3);
+
+        composedField.showLeading = true;
+    }
+
     // "Unavailable and not-a-target are different states": a read-only field
     // reports, it is not a target. Its two state owners used to disagree --
     // the layer stopped answering while the background lifted anyway, so a

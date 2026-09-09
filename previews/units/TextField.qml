@@ -25,6 +25,8 @@ TextField {
     readonly property bool passwordExample: purpose === "password"
     readonly property bool numberExample: purpose === "number"
 
+    property bool showLeading: true
+
     size: "lg"
     inputType: passwordExample ? "password" : numberExample ? "number" : "text"
     // `failed` is a HOST verdict, never the validator's, so the unit plays the
@@ -76,6 +78,7 @@ TextField {
     }
 
     leading: Loader {
+        active: root.showLeading
         sourceComponent: root.purpose === "search" ? searchAction : purposeGlyph
     }
 
@@ -118,6 +121,10 @@ TextField {
             { label: "number", set: {
                 purposeOverride: "number", passwordVisible: false, text: "42.5"
             }}
+        ]},
+        { label: "leading", options: [
+            { label: "glyph", set: { showLeading: true } },
+            { label: "none",  set: { showLeading: false } }
         ]},
         { label: "size", options: [
             { label: "sm", set: { size: "sm" } },
