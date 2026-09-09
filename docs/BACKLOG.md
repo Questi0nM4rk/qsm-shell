@@ -86,10 +86,17 @@ Each cost real time once. None is findable by reading the code.
   ring has to be the last child, not the root's `border`.
 - **Rotating a rectangle rotates it about its CENTRE.** Set a Gradient's
   `orientation` instead of rotating the item that carries it.
-- **`visualPosition` on `T.Slider` emits no change when orientation or
+- **`visualPosition` on a slider node emits no change when orientation or
   mirroring flips**; a painted position names both as dependencies.
-- **`QQuickSlider` completes its handle BEFORE the contentItem**, so the
-  handle is the earlier sibling however declared; it carries `z: 1`.
+- **`T.RangeSlider` picks the pressed node by VALUE distance, not by handle
+  geometry**, after a handle hit test that ignores `visible`. A parked node
+  needs a sizeless handle, and a single-thumb press has to move the live
+  node to the press point before Qt sees it.
+- **`T.RangeSlider` makes each handle a tab stop and its `focusInEvent`
+  hands focus to a handle.** Taking the stops away sends that hand-off in a
+  circle until the stack is gone; keep them and read the handle's focus.
+- **`T.RangeSlider` rewrites handle z on every press** (grabbed 1, other 0),
+  so anything meant to paint under both handles sits at -1.
 - **A `HoverHandler` forces `acceptHoverEvents` on its item even while
   disabled**, and `hoverEnterEvent` sets `hovered` from `hoverEnabled`.
 - **`setValue` refuses a write fuzzy-equal to the current value**, so a

@@ -44,7 +44,7 @@ Public types are listed in `qml/QsmShell/Components/qmldir`.
 | | |
 | --- | --- |
 | **foundation** | `Prose` (ten type roles), `SvgIcon`, `Card`, `Divider`, `StateLayer` |
-| **controls** | `Capsule`, `IconButton`, `TextField`, `Field`, `Switch`, `Checkbox`, `Segmented`, `Slider` |
+| **controls** | `Capsule`, `IconButton`, `TextField`, `Field`, `ControlLabel`, `Switch`, `Checkbox`, `Segmented`, `Slider` (one or two thumbs) |
 | **lists** | `ListRow`, `Menu`, `SelectionMark`, `ScrollArea`, `ScrollCue`, `Section`, `Disclosure` |
 | **state** | `Spinner`, `ProgressBar`, `Skeleton`, `Callout`, `EmptyState` |
 | **readouts** | `Badge`, `Meter`, `Stat`, `StatRing`, `Sparkline`, `KeyValueRow`, `Marquee`, `ColorSwatch`, `Kbd`, `Avatar` |

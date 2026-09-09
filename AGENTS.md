@@ -268,3 +268,11 @@ Earned, each from a specific failure. Break one and name which.
 - **A one-shot position animation is REMOVED under reduced motion, not
   shortened, and never runs during a gesture.** A slider's job is to sit
   where it was put.
+- **One label element names a control from outside.** `Field` puts
+  `ControlLabel` above a text box and `Slider` puts it on any of its four
+  sides; content INSIDE a control (a thumb's glyph or reading) is the
+  control's own. Two label rows with two type roles were one label wearing
+  two styles.
+- **One type, one or two thumbs.** `Slider` stands on `T.RangeSlider` and a
+  plain slider parks its low thumb; a second `RangeSlider` type would have
+  been the same slider wearing a second name.

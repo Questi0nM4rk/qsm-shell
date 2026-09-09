@@ -35,7 +35,7 @@ docs is better. Every line of either needs a reason.
    Every action a function listed in `actions`; pointer, keyboard and
    callers share it. State the host owns is reported, never written.
 4. **Build the unit.** `previews/units/<Type>.qml` takes `variant`, plays the
-   host (answers every upward signal), exercises the slots, declares
+   host (answers every upward signal), exercises every slot and label, declares
    `controls` for states a pointer cannot reach. Point the scenario keys in
    `previews/scenarios.json` at it and delete the inline children from
    `previews/Preview.qml`.
