@@ -660,8 +660,21 @@ T.Slider {
     // full step, which is why one gesture slammed the value. Reversing
     // direction drops what was collected rather than cancelling into it, so a
     // flick back does not start half a notch ahead.
-    WheelHandler {
+    //
+    // A `MouseArea`, and NOT a `WheelHandler`, and that is measured rather
+    // than a preference: in a live Wayland window on this Qt6 QPA a
+    // `WheelHandler` never receives a wheel event at all -- a real notch over
+    // one logs nothing while a `MouseArea.onWheel` sitting beside it reports
+    // `angleDelta (0, -120)`. Offscreen both work, which is how this route
+    // passed every test it has and was still dead under the owner's hand.
+    //
+    // `acceptedButtons: Qt.NoButton` and no hover: it takes the wheel and
+    // nothing else, so Qt's own press grab still starts the drag and slot
+    // content keeps its own hover and its own clicks.
+    MouseArea {
+        anchors.fill: parent
         enabled: root.enabled && root.wheelUnits > 0
+        acceptedButtons: Qt.NoButton
         onWheel: event => {
             // On-axis, the same rule the arrows follow: a vertical slider
             // ignores a horizontal wheel entirely, and a horizontal one takes

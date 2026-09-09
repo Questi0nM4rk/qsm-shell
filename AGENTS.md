@@ -109,10 +109,16 @@
   opening the same scene in a live window, where the glyph paints. So a
   capture proves layout and that a scene renders at all; anything with a
   glyph in it can only be judged in the live window.
-- **`--window` is not fully equivalent to offscreen.** Synthetic
-  `mouseWheel` from QtTest never reaches a `WheelHandler` under this Qt6
-  Wayland QPA plugin. Offscreen is the valid run for wheel behaviour.
-  Pointer, key and focus events work under both.
+- **A `WheelHandler` never sees a wheel event in a live Wayland window.**
+  Measured with a REAL wheel on this Qt6 Wayland QPA: a notch over a
+  `WheelHandler` logs nothing, while a `MouseArea.onWheel` sitting beside it
+  in the same scene reports `angleDelta (0, -120)`. Offscreen both work, so
+  a wheel route built on a handler passes every test it has and is dead
+  under a hand. This was recorded here for a day as "synthetic `mouseWheel`
+  does not reach a `WheelHandler` under `--window`", which read as a test
+  harness limitation and hid a live defect. Take the wheel with a
+  `MouseArea { acceptedButtons: Qt.NoButton }`; pointer, key and focus
+  events work under both platforms.
 
 ## Migrating a type
 
