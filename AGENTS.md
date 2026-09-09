@@ -39,8 +39,6 @@ follow the design sources.
   the native visual result after. Design every resting, hover, pressed,
   focused, selected, disabled, loading, empty and error state the component
   supports. Motion communicates state and respects `Style.reducedMotion`.
-- Nearest release: `TextField`. Then `Slider`, which works but whose look is
-  redesigned against the sources above.
 - No versioning in docs: no dates, no CLOSED/LANDED history, no counters. A
   doc says what is true now or it goes. Durable docs are `README.md`,
   `docs/BACKLOG.md` (open items only), `docs/components/<Type>.md` (one short

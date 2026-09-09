@@ -89,8 +89,4 @@ project skill `develop-component` holds the step loop for one type.
 
 ## Next
 
-1. `TextField` release.
-2. `Slider` look redesigned against `design-system-blueprint.pdf` and
-   caelestia.
-3. Remaining types move into `previews/units/`, each on its template, each
-   judged live. Open items: `docs/BACKLOG.md`.
+Open items, in order, live in `docs/BACKLOG.md`.
