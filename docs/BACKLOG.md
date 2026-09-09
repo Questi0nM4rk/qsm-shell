@@ -36,6 +36,10 @@ OPEN, and one reason `BarPopouts` in the consumer is still NOT a `Rollout`:
 `host` -- its comment names its own caelestia-derived clamp geometry as a
 second reason, so this gap blocks it but is not the only thing that would.
 
+OPEN, settled by spike: Popup spike 2026-09-09: T.Popup in a PanelWindow does
+not paint outside the window's own rect; NoAutoClose held. Decision:
+Menu/Popover/Dialog/ToolTip stay hand-rolled over Rollout/Popover.
+
 Fixed in the same run, worth the record: `Slider` had no keyboard route and
 no focus state at all, and a disabled `Slider` still reported `hovered`
 (`tests/units/tst_Slider.qml` carries the coverage for both).
