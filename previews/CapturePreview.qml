@@ -30,6 +30,7 @@ Item {
         viewportHeight: captureRoot.targetHeight
         theme: captureRoot.targetTheme
         backend: captureRoot.targetBackend
+        captureDump: true
     }
 
     // Let bindings and fonts settle before capture.

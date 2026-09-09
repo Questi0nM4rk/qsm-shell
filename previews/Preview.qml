@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.QsmShell.Components
 import qs.QsmShell.Style
+import "inspect.js" as Inspect
 
 Rectangle {
     id: root
@@ -19,6 +20,9 @@ Rectangle {
     // Buttons for a unit's declared `controls` only ever exist on the live
     // path -- a capture is a picture of the component and must not grow them.
     property bool interactive: false
+    // The Timer's load-time dump only fires under `interactive` on the live
+    // path; the capture host sets this instead so the same dump fires there.
+    property bool captureDump: false
     width: viewportWidth
     height: viewportHeight
     color: "#1c0e27"
@@ -36,6 +40,34 @@ Rectangle {
     // of a direct `.controls` access qmllint cannot resolve.
     function unitControls(item) {
         return (item && Array.isArray(item.controls)) ? item.controls : [];
+    }
+    // The audit skills need geometry, not a screenshot. One JSON line on
+    // stderr per dump; scripts/preview-qml.mjs turns the last one into a
+    // file. Dumped on load, after every control-strip click and on F12.
+    function inspect(visibleOnly: bool): var {
+        return {
+            "scene": `${root.component}/${root.variant}`,
+            "width": root.width,
+            "height": root.height,
+            "tree": Inspect.describe(root, visibleOnly)
+        };
+    }
+
+    function dumpTree(): void {
+        console.info("QSM_INSPECT " + JSON.stringify(root.inspect(true)));
+    }
+
+    Shortcut {
+        sequence: "F12"
+        onActivated: root.dumpTree()
+    }
+
+    Timer {
+        // One frame after load so layouts have settled; the first dump is
+        // the resting state the audit compares everything else against.
+        running: root.interactive || root.captureDump
+        interval: 0
+        onTriggered: root.dumpTree()
     }
     // A unit's `controls` reach every property-only state that isn't
     // reachable by hovering, pressing or focusing the live window --
@@ -62,6 +94,7 @@ Rectangle {
             const next = Object.assign({}, controlStrip.applied);
             next[groupLabel] = optionLabel;
             controlStrip.applied = next;
+            Qt.callLater(root.dumpTree);
         }
 
         Repeater {

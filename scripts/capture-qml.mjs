@@ -3,7 +3,13 @@ import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
-const [name, requestedOutput] = process.argv.slice(2)
+const rawArgs = process.argv.slice(2)
+const inspectIndex = rawArgs.indexOf('--inspect')
+const inspectPath = inspectIndex >= 0 ? rawArgs[inspectIndex + 1] : null
+// --inspect and its value are flags, not the positional <component>
+// [output.png] pair -- strip them before reading positional args.
+const positional = rawArgs.filter((arg, i) => arg !== '--inspect' && (inspectIndex < 0 || i !== inspectIndex + 1))
+const [name, requestedOutput] = positional
 const scenarios = JSON.parse(readFileSync(resolve(root, 'previews/scenarios.json'), 'utf8'))
 const scenario = scenarios[name]
 
@@ -41,6 +47,10 @@ const result = spawnSync('/usr/lib/qt6/bin/qml', ['-I', resolve(root, 'qml'), te
 })
 
 rmSync(temporary, { force: true })
+
+const dumps = (result.stderr || '').split('\n').filter((l) => l.includes('QSM_INSPECT '))
+if (inspectPath && dumps.length > 0)
+  writeFileSync(inspectPath, `${dumps.at(-1).slice(dumps.at(-1).indexOf('QSM_INSPECT ') + 'QSM_INSPECT '.length)}\n`)
 
 if (result.status !== 0 || !existsSync(output)) {
   console.error(result.stderr || result.stdout || 'QML capture failed')
