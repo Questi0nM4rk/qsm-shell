@@ -236,7 +236,7 @@
     "variant": "horizontal-high",
     "viewport": [
       800,
-      500
+      720
     ]
   },
   "menu": {
@@ -278,7 +278,7 @@
     "variant": "vertical-high",
     "viewport": [
       800,
-      500
+      720
     ]
   },
   "device-row": {
