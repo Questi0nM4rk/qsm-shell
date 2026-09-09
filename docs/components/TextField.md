@@ -7,5 +7,5 @@ tokens: space3 (box inset) space2 (slot gap) spaceTight (caret width, scroll-end
 motion: micro (surface, border) press (caret travel); blink = platform cursorFlashTime/2, off under reducedMotion
 not designed: multiline, autocomplete, floating label, filled/outlined variants
 notes: T.TextField root paints scrolled text under leftPadding (first glyph x = -206.3), so the root is T.Control with a clipped TextInput contentItem
-conflicts: none
+conflicts: UI-1 resting boundary (3:1 rubric vs no-box-at-rest law); UX-6 readOnly resting mark; both OPEN, owner rules
 audit: docs/audit-2026-09-09-textfield.md (0 blocker; majors UX-1..3 fixed; UI-1 source-conflict, owner rules)

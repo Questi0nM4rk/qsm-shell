@@ -1,4 +1,6 @@
-# Task 8 Step 1, TextField: ui-audit + ux-audit
+# TextField audit 2026-09-09 (ui-audit + ux-audit)
+
+Captures and tree dumps referenced below lived in the session scratchpad and were not kept; the tables carry the measured values.
 
 Target: the live `text-input` scenario (`previews/units/TextField.qml` hosting
 `qml/QsmShell/Components/TextField.qml`), theme `deep-night`.

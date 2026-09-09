@@ -432,8 +432,8 @@ T.Control {
     TapHandler {
         // Tapping the padding focuses the input; slot actions sit above and
         // take their own taps first. A tap on the text never reaches here --
-        // the input accepts that press itself -- which is why the overlay
-        // below marks that route instead.
+        // the input accepts that press itself -- which is why a `TapHandler`
+        // inside `input` marks that route instead.
         onTapped: {
             root._focusOffTheKeyChain = true;
             input.forceActiveFocus(Qt.MouseFocusReason);
