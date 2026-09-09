@@ -45,6 +45,10 @@ OPEN, settled by spike: Popup spike 2026-09-09: T.Popup in a PanelWindow does
 not paint outside the window's own rect; NoAutoClose held. Decision:
 Menu/Popover/Dialog/ToolTip stay hand-rolled over Rollout/Popover.
 
+OPEN, owner ruling: TextField resting boundary is 1.04:1 against the shell
+background (audit UI-1); the "no box at rest" law and the 3:1 boundary rubric
+disagree.
+
 Fixed in the same run, worth the record: `Slider` had no keyboard route and
 no focus state at all, and a disabled `Slider` still reported `hovered`
 (`tests/units/tst_Slider.qml` carries the coverage for both).

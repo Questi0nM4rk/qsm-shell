@@ -8,3 +8,4 @@ motion: micro (surface, border) press (caret travel); blink = platform cursorFla
 not designed: multiline, autocomplete, floating label, filled/outlined variants
 notes: T.TextField root paints scrolled text under leftPadding (first glyph x = -206.3), so the root is T.Control with a clipped TextInput contentItem
 conflicts: none
+audit: docs/audit-2026-09-09-textfield.md (0 blocker; majors UX-1..3 fixed; UI-1 source-conflict, owner rules)
