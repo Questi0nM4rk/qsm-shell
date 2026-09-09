@@ -269,6 +269,13 @@ Earned, each from a specific failure. Break one and name which.
   accent track (WCAG 2.4.13 wants 3:1 against the adjacent colour, and M3,
   Radix and Fluent all keep the indicator outside with a gap for that
   reason). A ring around the track, not the handle: the handle moves.
+- **A resting surface reads at 1.2:1 against the shell background; hover
+  and any highlight sit 0.4 above the rest.** The text box surface sat at
+  1.05:1 and an empty field was invisible; 3:1 (the rubric's line) shouted.
+  Judged in the window at 1.2 (`surface`) with hover at 1.6 (`surfaceHover`):
+  visible, quiet, and the lift still reads. WCAG contrast ratios, computed
+  against `background`, are the unit; a new surface token states both
+  numbers before it lands in `tokens/deep-night.json`.
 - **The cursor describes the region under it, not the outer component.** The
   editable body stays I-beam, a trailing action is a hand, and a leading
   action states its cursor explicitly.

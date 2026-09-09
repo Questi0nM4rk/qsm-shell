@@ -5,10 +5,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 
 ## Next
 
-- `TextField`: release. Open audit lines: resting boundary 1.04:1 against
-  the shell background while the rubric wants 3:1 and the "no box at rest"
-  law wants none (owner rules); `readOnly` has no resting mark (owner rules);
-  the 1px failed border and 1px focus ring render unevenly at dpr 1.2 (top
+- `TextField`: release. Open audit lines: the 1px failed border and 1px focus ring render unevenly at dpr 1.2 (top
   6.07:1, side 4.03:1); slot glyphs 20 and 16 in one row; leading glyph
   ignores `size`; trailing padding survives an emptied slot; caret lands on
   fractional x; disabled dims text, leading and trailing glyph in three

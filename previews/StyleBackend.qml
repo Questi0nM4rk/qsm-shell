@@ -5,8 +5,8 @@ import QtQuick
 QtObject {
     property bool reducedMotion: false
     property color accent: "#c5a5e9"
-    property color surface: "#21142b"
-    property color surfaceHover: "#382a48"
+    property color surface: "#2d2036"
+    property color surfaceHover: "#413450"
     property color surfaceRaised: "#2d1f3a"
     property color text: "#f6f1f9"
     property color textMuted: "#b6a8c2"
