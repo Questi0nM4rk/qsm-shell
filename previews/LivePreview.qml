@@ -1,41 +1,51 @@
 import QtQuick
 
-// Live counterpart to CapturePreview.qml: same Preview host, no grab/quit,
-// meant to be run with the wayland platform instead of offscreen. Args land
-// after "--" in Qt.application.arguments (component, variant, width, height).
+// Live counterpart to CapturePreview.qml: the same Preview host, no grab or
+// quit, run on the wayland platform. One window shows every scene it is
+// given side by side, so a TYPE is judged in one place. Args land after "--"
+// in Qt.application.arguments in groups of five: component, variant, width,
+// height, unit.
 Item {
     id: root
 
-    function argAfter(index, fallback) {
-        const args = Qt.application.arguments
-        const separator = args.indexOf("--")
+    readonly property var scenes: {
+        const args = Qt.application.arguments;
+        const separator = args.indexOf("--");
+        const list = [];
         if (separator < 0)
-            return fallback
-        const value = args[separator + 1 + index]
-        return value === undefined ? fallback : value
+            return [{ component: "capsule", variant: "resting", width: 1600, height: 900, unit: "" }];
+        for (let i = separator + 1; i + 4 < args.length; i += 5) {
+            list.push({
+                component: args[i],
+                variant: args[i + 1],
+                width: parseInt(args[i + 2]),
+                height: parseInt(args[i + 3]),
+                unit: args[i + 4]
+            });
+        }
+        return list;
     }
 
-    property string targetComponent: argAfter(0, "capsule")
-    property string targetVariant: argAfter(1, "resting")
-    property int targetWidth: parseInt(argAfter(2, "1600"))
-    property int targetHeight: parseInt(argAfter(3, "900"))
-    property string targetUnit: argAfter(4, "")
-
-    width: targetWidth
-    height: targetHeight
+    width: root.scenes.reduce((sum, scene) => sum + scene.width, 0)
+    height: root.scenes.reduce((max, scene) => Math.max(max, scene.height), 0)
 
     Rectangle {
         anchors.fill: parent
         color: "#1c0e27"
     }
 
-    Preview {
-        anchors.fill: parent
-        component: root.targetComponent
-        unit: root.targetUnit
-        variant: root.targetVariant
-        viewportWidth: root.targetWidth
-        viewportHeight: root.targetHeight
-        interactive: true
+    Row {
+        Repeater {
+            model: root.scenes
+            Preview {
+                required property var modelData
+                component: modelData.component
+                unit: modelData.unit
+                variant: modelData.variant
+                viewportWidth: modelData.width
+                viewportHeight: modelData.height
+                interactive: true
+            }
+        }
     }
 }

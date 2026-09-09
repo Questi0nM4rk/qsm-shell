@@ -1,14 +1,14 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
-// THE slider. One track, one filled lead, one thumb, either orientation.
-//
-// There used to be two of these -- a thin horizontal "level" and a fat
-// vertical "OSD" one -- which is one concept wearing two names. They differed
-// in three numbers and in what the consumer hung off them, and none of that
-// is a reason for a second type.
+// THE slider. One track, one fill, one thumb, either orientation, three
+// sizes: `sm` is a hairline reading rail, `md` is the everyday control, `lg`
+// is a hardware level (volume, brightness) whose thumb rides inside a
+// control-height capsule.
 //
 // It stands on `T.Slider`, so the template owns the value range, the press
 // grab (no drag threshold, unstealable, and a click on the track jumps on
@@ -19,8 +19,8 @@ import qs.QsmShell.Style
 //
 // What is NOT free from Qt and lives here: PageUp/PageDown/Home/End (Qt's
 // Slider has no handler for any of them), a wheel that ACCUMULATES rather
-// than stepping per event, the five states through `StateLayer`, the three
-// slots, and the look.
+// than stepping per event, the five states through `StateLayer`, the slots,
+// the label, and the look.
 //
 // `value` is host-owned in the sense that matters. Every route writes it
 // through Qt's own C++ setter -- the drag, `increase()`, `decrease()` -- which
@@ -29,8 +29,10 @@ import qs.QsmShell.Style
 // `value` from JavaScript: that severs the binding, and the keyboard would
 // then quietly behave differently from the pointer.
 //
-// Staying visible under the pointer is NOT this component's business. It
-// reports `hovered`; the surface holding it decides what that means.
+// Every colour is the host's. The component paints what it is given and dims
+// it through `Style.disabled` when unavailable; it never recolours a part to
+// say hover or press, because the host may have spent that colour on meaning
+// (a muted channel, a clipping level).
 T.Slider {
     id: root
 
@@ -42,14 +44,10 @@ T.Slider {
     // widen `stepSize` with it, because Home and End walk the range in units.
     stepSize: Style.sliderStep
     snapMode: T.Slider.SnapAlways
-    // A platform style HINT resolves `hoverEnabled` on a bare control, so it
-    // is stated rather than inherited: `hovered` is one third of `active`.
-    //
     // Tied to `enabled`, because `QQuickControl::hoverEnterEvent` sets
     // `hovered` to whatever `hoverEnabled` says and a disabled item is still
     // delivered hover -- the HoverHandler below turns `acceptHoverEvents` on
-    // no matter what this says. Left at `true` a disabled slider reported
-    // `hovered` under the pointer, which is a state it cannot answer.
+    // no matter what this says.
     hoverEnabled: root.enabled
     // Qt's own wheel is proportional but steps by `stepSize` and cannot be
     // switched off per call site. `wheelUnits` below is ours.
@@ -60,87 +58,80 @@ T.Slider {
     // non-pointer route, so one number means one thing everywhere.
     property int wheelUnits: 0
 
+    // ── colours, all the host's ────────────────────────────────────────
     property color fill: Style.accent
-    // The colour at the LEADING end of the fill -- the end the thumb is at.
-    // Left equal to `fill` it is a flat bar; set differently, the lead is a
-    // two-stop gradient that is brightest where the thumb is, so a level reads
-    // as one channel's identity rather than as a slab of colour.
-    property color fillLead: fill
-    property color trackColor: Style.surfaceHover
-    // What the thumb is: the lightest thing on the surface, which is what
-    // makes it read as raised out of the track rather than as a hole cut into
-    // it. One colour, in every state -- a raised thumb at rest used to paint
-    // DARKER than its own fill (measured 1.06:1), so its fill-side half had
-    // no edge at all, which is the opposite of what this rule is for. A
-    // consumer with a fourth state (a muted channel) states its own.
+    property color trackColor: Style.outline
     property color thumbColor: Style.text
-    // The gap between the track and whatever sits in the end slots.
-    property real slotGap: Style.space2
+    // What paints INSIDE the thumb, over `thumbColor`.
+    property color thumbContentColor: Style.background
 
-    // sm | md | lg. The preset is only the DEFAULT shape: `thickness` and
-    // `thumbSize` below stay the primary API, and a call site that states one
-    // keeps it through a later size change.
+    // ── shape ──────────────────────────────────────────────────────────
+    // sm | md | lg. The preset is only the DEFAULT: `thickness` and
+    // `thumbSize` stay the primary API, and a call site that states one keeps
+    // it through a later size change.
     property string size: "md"
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
+    // The thumb is never flush with its track: md and lg keep one step of
+    // track showing around a circle riding in it.
+    property real thumbSize: root._sm ? Style.iconSm : root._lg ? Style.controlHeight : Style.iconLg
+    property real thickness: root._sm ? Style.space1 : root.thumbSize - Style.space1
 
-    // The track's short axis, and the thumb that rides it. A call site that
-    // wants a fat track says so; the library keeps one default per size.
-    property real thickness: root._sm ? Style.space1 : Style.space2
-    property real thumbSize: root._sm
-        ? Style.iconSm
-        : root._lg ? Style.controlHeightSm : Style.iconLg
+    // circle | pill. A circle rides ON the track and can carry a glyph or a
+    // reading; a pill is Material's narrow bar standing in a gap cut through
+    // the track, and carries nothing. It stands one spacing step proud of the
+    // track, whatever `thumbSize` says, because a bar that only matched the
+    // track would vanish into the cut.
+    property string thumbStyle: "circle"
+    readonly property bool _pill: thumbStyle === "pill"
+    readonly property real _thumbCross: root._pill ? root.thickness + Style.space2 : root.thumbSize
+
     // A raised thumb casts a shadow and lifts further while pressed, which is
-    // what makes a big thumb read as picked up. A hairline level bar does not
-    // want one.
+    // what makes a big thumb read as picked up out of its capsule. A hairline
+    // rail does not want one, and a pill never has one.
     property bool raised: false
-    // The consumer can force the emphasised look while the value is being
-    // changed from somewhere other than this control.
-    property bool emphasized: false
 
-    readonly property bool active: emphasized || pressed || hovered
+    // The gap between the track and whatever sits in the end slots.
+    property real slotGap: Style.space2
 
-    // Disabled dims by COLOUR, never by `opacity` on this control. Opacity
-    // here would apply to the track, the fill and the thumb separately, and a
-    // 0.35 thumb sitting on a 0.35 fill shows the fill straight through
-    // itself -- the three layers stop being three things exactly when the
-    // reading matters least. Every painted colour goes through
-    // `Style.disabled`, which blends toward the background and stays opaque.
-    readonly property color _paintedTrack: root.enabled
-        ? root.trackColor : Style.disabled(root.trackColor)
-    readonly property color _paintedFill: root.enabled
-        ? root.fill : Style.disabled(root.fill)
-    readonly property color _paintedFillLead: root.enabled
-        ? root.fillLead : Style.disabled(root.fillLead)
-    readonly property color _paintedThumb: root.enabled
-        ? root.thumbColor : Style.disabled(root.thumbColor)
+    // ── content ────────────────────────────────────────────────────────
+    // Inside the thumb: a glyph or a reading, never both. Ignored on a pill.
+    property string thumbIcon: ""
+    property string thumbText: ""
+    // Beside the control, on any of its four sides, whatever the orientation:
+    // above | below | left | right. The label takes padding on its side, the
+    // way a slot does, so the track never moves to make room for it.
+    property string labelText: ""
+    property string labelIcon: ""
+    property string labelPosition: "below"
+    // The label is the slider's one action surface. Off, it is a caption and
+    // takes no pointer; on, it is a button and the host decides what a click
+    // means (mute, reset, open the mixer) in `onLabelClicked`.
+    property bool labelClickable: false
+    signal labelClicked()
+    readonly property bool _hasLabel: labelText !== "" || labelIcon !== ""
+    readonly property real _labelAbove: _hasLabel && labelPosition === "above" ? label.implicitHeight + Style.space2 : 0
+    readonly property real _labelBelow: _hasLabel && labelPosition === "below" ? label.implicitHeight + Style.space2 : 0
+    readonly property real _labelLeft: _hasLabel && labelPosition === "left" ? label.implicitWidth + Style.space2 : 0
+    readonly property real _labelRight: _hasLabel && labelPosition === "right" ? label.implicitWidth + Style.space2 : 0
 
-    // ── slots ───────────────────────────────────────────────────────────
     // `before` and `after` sit at the ends ALONG the axis and become padding,
     // so the track and the thumb travel in what is left. On a vertical slider
     // `before` is the top, which is the high end. An empty slot takes no
     // space, so a bare slider looks exactly like a bare slider.
     property alias before: beforeSlot.data
     property alias after: afterSlot.data
-    // Drawn INSIDE the thumb, so it travels and scales with it.
-    property alias thumbContent: thumbSlot.data
 
     // `moved()` is Qt's and carries no argument: it says a gesture changed the
     // value, and the host reads `value`. `committed` is the END of one -- a
     // release after a change, the release of a key that changed something, and
     // each wheel notch that changed something, because a notch has no release
-    // to wait for. A host that writes on every `moved` gets a live level; a
-    // host that only wants the final value waits for this.
+    // to wait for.
     signal committed()
 
-    // The value the last gesture left behind. A host that writes on every
-    // `moved` never needs it; a host that only acts on a finished gesture
-    // compares against it instead of keeping its own copy of the same fact.
-    //
-    // The private backing property is what makes it honestly read-only: a
-    // `readonly property` cannot be assigned from anywhere, and a binding to
-    // `value` would make it follow the drag, which is the one thing it must
-    // not do. It is set at completion rather than bound, for the same reason.
+    // The value the last gesture left behind. Set at completion rather than
+    // bound, because a binding to `value` would make it follow the drag,
+    // which is the one thing it must not do.
     readonly property real committedValue: root._committedValue
     property real _committedValue: 0
 
@@ -148,13 +139,10 @@ T.Slider {
     onCommitted: root._committedValue = root.value
 
     // ── one route per action ────────────────────────────────────────────
-    // Every non-pointer route ends up here, and it steps by calling Qt's own
-    // `increase()`/`decrease()` rather than assigning `value`. That is not
-    // style: a JavaScript write severs the consumer's `value:` binding on the
-    // first arrow key, so a service that changes the level from elsewhere
-    // would stop reaching the control -- and only on the keyboard, which is
-    // the kind of split nobody finds. It is also why the tokens count UNITS
-    // rather than carrying a fraction: a unit is exactly one `increase()`.
+    // Every non-pointer route steps by calling Qt's own `increase()` /
+    // `decrease()` rather than assigning `value`: a JavaScript write severs
+    // the consumer's `value:` binding on the first arrow key. It is also why
+    // the tokens count UNITS: a unit is exactly one `increase()`.
     function stepBy(units: int): bool {
         if (!root.enabled || units === 0)
             return false;
@@ -172,14 +160,9 @@ T.Slider {
         return root._report(before);
     }
 
-    // Lands on the nearest unit from where the value is now, because a unit is
-    // the only distance the routes can walk. It is NOT a promise that the
-    // result is on the grid: a host binding writes `value` through the same
-    // setter the drag uses, and `SnapAlways` decides where that lands.
-    //
-    // The distance is rounded with its sign taken off and put back:
-    // `Math.round(-0.5)` is `-0`, which `stepBy` reads as no work, so half a
-    // step DOWN used to be a silent no-op while half a step up moved.
+    // Lands on the nearest unit from where the value is now. The distance is
+    // rounded with its sign taken off and put back: `Math.round(-0.5)` is
+    // `-0`, which `stepBy` reads as no work.
     function moveTo(target: real): bool {
         if (!root.enabled)
             return false;
@@ -188,14 +171,9 @@ T.Slider {
         return root.stepBy(Math.sign(distance) * Math.round(Math.abs(distance) / root.stepSize));
     }
 
-    // The whole range in units, which is every step either of these can need
-    // from anywhere in it. There is no extra unit past the end: `setValue`
-    // clamps, so an overshoot cannot help, and it also refuses a write that is
-    // `qFuzzyCompare`-equal to the value it already holds, so once a value has
-    // landed within 1e-12 of a bound no further step reaches the bound itself
-    // (measured: `stepSize` 0.1 saturates at 0.9999999999999999 and stays
-    // there, while 0.01 lands on 0 and 1 exactly). A host that needs an exact
-    // bound needs a `stepSize` whose multiples can express it.
+    // The whole range in units. `setValue` clamps, so an overshoot cannot
+    // help, and it refuses a write fuzzy-equal to what it holds, so only a
+    // `stepSize` whose multiples can express a bound reaches it exactly.
     readonly property int _unitsInRange: Math.ceil((root.to - root.from) / root.stepSize)
     function toMinimum(): bool { return root.stepBy(-root._unitsInRange); }
     function toMaximum(): bool { return root.stepBy(root._unitsInRange); }
@@ -232,31 +210,29 @@ T.Slider {
         }
     ]
 
+    // ── painted colours ────────────────────────────────────────────────
+    readonly property color _paintedTrack: root.enabled ? root.trackColor : Style.disabled(root.trackColor)
+    readonly property color _paintedFill: root.enabled ? root.fill : Style.disabled(root.fill)
+    readonly property color _paintedThumb: root.enabled ? root.thumbColor : Style.disabled(root.thumbColor)
+    readonly property color _paintedThumbContent: root.enabled
+        ? root.thumbContentColor : Style.disabled(root.thumbContentColor)
+    readonly property color _paintedLabel: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+
     // ── responsiveness ──────────────────────────────────────────────────
     // The fill and the thumb bind to this, and it animates ONLY when the
-    // change did not come from a gesture. The old component animated fill and
-    // thumb at 180ms including DURING the drag, so the thumb trailed the
-    // finger. A level the system changed from elsewhere still eases in, so a
-    // reading that moved on its own is not mistaken for one a hand moved.
+    // change did not come from a gesture, so the thumb never trails the
+    // finger while a level the system changed from elsewhere still eases in.
     //
-    // `visualPosition` carries both flips -- vertical runs bottom-up, and
-    // mirroring swaps the horizontal ends -- but Qt recomputes it from the
-    // orientation on every READ and emits no change signal when either flip
-    // happens. So a binding that names only `visualPosition` keeps painting
-    // the axis the control was BUILT with: a slider flipped to vertical at
-    // value .82 went on painting .82 from the top, at the wrong end of its
-    // own track. Every preview unit hits this, because the host writes the
-    // variant through `onLoaded`, after the scene was constructed. The two
-    // reads below are the binding's missing dependencies, not dead code.
+    // `visualPosition` carries both flips but Qt emits no change signal when
+    // the orientation or the mirroring flips, so the two reads below are the
+    // binding's missing dependencies, not dead code.
     property real _paintedPosition: {
         root.orientation;
         root.mirrored;
         return root.visualPosition;
     }
 
-    // False while a gesture owns the value, and for the frame after one. Every
-    // route sets it and hands it back through `Qt.callLater`, which collapses
-    // repeated calls to the same function into one.
+    // False while a gesture owns the value, and for the frame after one.
     property bool _hostDriven: true
 
     function _endGesture(): void {
@@ -265,91 +241,97 @@ T.Slider {
     }
 
     Behavior on _paintedPosition {
-        // Reduced motion removes this one rather than shortening it. A slider
-        // is the one control whose whole job is to sit where it was put, and
-        // the library's general rule (shorten, never remove) is overridden
-        // here on the owner's ruling -- recorded in docs/components/Slider.md.
+        // Reduced motion REMOVES this one rather than shortening it: a slider
+        // is the one control whose whole job is to sit where it was put.
         enabled: root._hostDriven && !Style.reducedMotion
         NumberAnimation { duration: Motion.fast; easing.type: Motion.standardEasing }
     }
 
+    // ── geometry along the axis ────────────────────────────────────────
+    // The thumb's extent ALONG the axis: its diameter as a circle, one step
+    // as a pill. Across the axis it is `_thumbCross`.
+    readonly property real _thumbMain: root._pill ? Style.space1 : root.thumbSize
+    // A pill stands in a gap cut through the track; a circle covers the seam.
+    // The cut ends are nearly square (Material's 2dp) so the two segments read
+    // as one track with a bar through it, not as two pills.
+    readonly property real _gap: root._pill ? Style.space1 : 0
+    readonly property real _innerRadius: root._pill ? Style.radiusXs / 2 : root.thickness / 2
     readonly property real _mainSpan: root.vertical ? root.availableHeight : root.availableWidth
-    readonly property real _travel: Math.max(0, _mainSpan - root.thumbSize)
-    // `visualPosition` already carries both flips -- vertical runs bottom-up,
-    // and mirroring swaps the horizontal ends -- so this is one number with no
-    // orientation or RTL branch in it.
+    readonly property real _travel: Math.max(0, _mainSpan - root._thumbMain)
     readonly property real _thumbOffset: root._paintedPosition * _travel
-    readonly property real _fillEnd: _thumbOffset + root.thumbSize / 2
+    // The track is two segments with the thumb between them. `visualPosition`
+    // already runs a vertical slider bottom-up and swaps a mirrored one, so
+    // the only orientation branch left is which segment is the VALUE.
+    readonly property bool _valueAtStart: root.horizontal && !root.mirrored
+    readonly property real _segAEnd: root._pill
+        ? root._thumbOffset - root._gap
+        : root._thumbOffset + root._thumbMain / 2
+    readonly property real _segBStart: root._pill
+        ? root._thumbOffset + root._thumbMain + root._gap
+        : root._thumbOffset + root._thumbMain / 2
+    readonly property real _fillStart: root._valueAtStart ? 0 : root._segBStart
+    readonly property real _fillLength: Math.max(0, root._valueAtStart ? root._segAEnd : root._mainSpan - root._segBStart)
+    readonly property real _restStart: root._valueAtStart ? root._segBStart : 0
+    readonly property real _restLength: Math.max(0, root._valueAtStart ? root._mainSpan - root._segBStart : root._segAEnd)
 
-    // How far the thumb grows PER SIDE under the pointer (see the handle
-    // below). It is reserved at rest as well as while hovered: reserving it
-    // only on hover would move the track under the pointer that is hovering
-    // it.
+    // ── geometry across the axis ───────────────────────────────────────
+    // How far the thumb grows PER SIDE under the pointer. Reserved at rest as
+    // well: reserving it only on hover would move the track under the pointer
+    // that is hovering it. A pill grows along its length only, and twice as
+    // far because that is the only cue it has.
     readonly property real _hoverGrowth: Style.space1
-    // How far the shadow drops below the thumb at its deepest, which is while
-    // pressed. It drops along `y` in BOTH orientations -- it is gravity, not
-    // the axis -- so the slack it needs is CROSS-axis on a horizontal slider
-    // and MAIN-axis on a vertical one. Spending it on the cross axis either
-    // way is what left a vertical raised thumb painting its shadow 2px (4px
-    // pressed) below the control at the low bound, where the thumb is flush
-    // with the end of the track and there is nothing left to give.
-    readonly property real _shadowDrop: root.raised ? Style.sliderThumbLift * 2 : 0
-
-    // At least a comfortable hit target across the axis, whatever the track's
-    // thickness is: a 4px track with a 16px thumb still has to be aimable.
-    // Slot content can ask for more, and does on the OSD.
-    //
-    // The size a component asks for has to include what it PAINTS, and the
-    // thumb is centred across this axis: its own size, plus its hover growth
-    // on both sides, plus the shadow's drop on both sides when the drop is
-    // across this axis.
-    readonly property real _thumbSpan: root.thumbSize + root._hoverGrowth * 2
+    readonly property real _crossGrowth: root._hoverGrowth * (root._pill ? 2 : 1)
+    // The shadow drops along `y` in BOTH orientations -- it is gravity, not
+    // the axis -- so its slack is cross-axis on a horizontal slider and
+    // main-axis on a vertical one.
+    readonly property real _shadowDrop: root.raised && !root._pill ? Style.sliderThumbLift * 2 : 0
+    readonly property real _thumbSpan: root._thumbCross + root._crossGrowth * 2
         + (root.vertical ? 0 : root._shadowDrop * 2)
 
+    // At least a comfortable hit target across the axis, whatever the track's
+    // thickness: a 4px track with a 16px thumb still has to be aimable.
     readonly property real _crossSize: Math.max(
         Style.controlHeightSm, root.thickness, root._thumbSpan,
         root.vertical
             ? Math.max(beforeSlot.implicitWidth, afterSlot.implicitWidth)
             : Math.max(beforeSlot.implicitHeight, afterSlot.implicitHeight))
 
+    // The main axis is a constant PLUS what the slots take, so the track keeps
+    // its natural length whatever sits at its ends. Sized by content, a slot
+    // ate a quarter of the travel.
     implicitWidth: root.vertical
-        ? _crossSize
-        : Math.max(Style.sliderLength, leftPadding + rightPadding)
+        ? root._crossSize + root.leftPadding + root.rightPadding
+        : Style.sliderLength + root.leftPadding + root.rightPadding
     implicitHeight: root.vertical
-        ? Math.max(Style.sliderLengthVertical, topPadding + bottomPadding)
-        : _crossSize
+        ? Style.sliderLengthVertical + root.topPadding + root.bottomPadding
+        : root._crossSize + root.topPadding + root.bottomPadding
 
-    // Padding is where the slots sit, and the template owns the arithmetic
-    // from here: the contentItem gets exactly what is left over. The cross
-    // axis takes none, so the track keeps the full thickness it asked for.
-    //
-    // Both ends of the MAIN axis also keep `_hoverGrowth`, because at either
-    // bound the thumb is flush with the end of the track and its growth has
-    // nowhere else to go; the bottom of a vertical one keeps the shadow's
-    // drop for the same reason. The slots sit INSIDE that reserve, so the gap
-    // between a glyph and the track stays exactly `slotGap`.
-    leftPadding: (root.horizontal && beforeSlot.hasContent
-        ? beforeSlot.implicitWidth + root.slotGap : 0)
-        + (root.horizontal ? root._hoverGrowth : 0)
-    rightPadding: (root.horizontal && afterSlot.hasContent
-        ? afterSlot.implicitWidth + root.slotGap : 0)
-        + (root.horizontal ? root._hoverGrowth : 0)
-    topPadding: (root.vertical && beforeSlot.hasContent
-        ? beforeSlot.implicitHeight + root.slotGap : 0)
-        + (root.vertical ? root._hoverGrowth : 0)
-    bottomPadding: (root.vertical && afterSlot.hasContent
-        ? afterSlot.implicitHeight + root.slotGap : 0)
-        + (root.vertical ? root._hoverGrowth + root._shadowDrop : 0)
+    // Padding is where the slots and the label sit, and the template owns
+    // the arithmetic from here: the contentItem gets exactly what is left.
+    // Both ends of the MAIN axis keep `_hoverGrowth`, because at either bound
+    // the thumb is flush with the end of the track and its growth has nowhere
+    // else to go; the bottom of a vertical one keeps the shadow's drop too.
+    // On a mirrored horizontal slider `before` sits at the RIGHT. The label
+    // is outermost on its side, then the slot, then the growth.
+    readonly property var _startSlot: root.horizontal && root.mirrored ? afterSlot : beforeSlot
+    readonly property var _endSlot: root.horizontal && root.mirrored ? beforeSlot : afterSlot
 
-    // Does this slot hold anything? Counting children answered the wrong
-    // question, because a `Loader` never gives its footprint back: a Loader
-    // that unloads still reports an implicit size with `item` null, so a
-    // trailing icon that switched itself off went on reserving its width. A
-    // child that loads its content counts once it HAS it; any other child
-    // counts by being there.
-    //
-    // `slot` is untyped on purpose: `children` is a list of `Item`, and
-    // neither `sourceComponent` nor `item` is a member of `Item`.
+    leftPadding: root._labelLeft + (root.horizontal
+        ? (root._startSlot.hasContent ? root._startSlot.implicitWidth + root.slotGap : 0) + root._hoverGrowth
+        : 0)
+    rightPadding: root._labelRight + (root.horizontal
+        ? (root._endSlot.hasContent ? root._endSlot.implicitWidth + root.slotGap : 0) + root._hoverGrowth
+        : 0)
+    topPadding: root._labelAbove + (root.vertical
+        ? (beforeSlot.hasContent ? beforeSlot.implicitHeight + root.slotGap : 0) + root._hoverGrowth
+        : 0)
+    bottomPadding: root._labelBelow + (root.vertical
+        ? (afterSlot.hasContent ? afterSlot.implicitHeight + root.slotGap : 0) + root._hoverGrowth + root._shadowDrop
+        : 0)
+
+    // Does this slot hold anything? A `Loader` that unloads still reports an
+    // implicit size with `item` null, so a child that loads its content
+    // counts once it HAS it; any other child counts by being there.
     function _slotHasContent(slot): bool {
         for (let i = 0; i < slot.children.length; i++) {
             const child = slot.children[i];
@@ -361,16 +343,19 @@ T.Slider {
         return false;
     }
 
-    // Geometry, not anchors, and it is not a style preference. A ternary that
-    // yields `undefined` does NOT withdraw an anchor: Qt still sees top, left
-    // and both centres declared on one item, warns on every run, and resolves
-    // the conflict however it likes. Two orientations in one item is exactly
-    // the case anchors cannot express, so each item states its own rectangle.
+    // Geometry, not anchors: a ternary that yields `undefined` does NOT
+    // withdraw an anchor, so an item that works in two orientations states
+    // its own rectangle.
     Item {
         id: beforeSlot
         readonly property bool hasContent: root._slotHasContent(beforeSlot)
-        x: root.vertical ? (root.width - width) / 2 : root._hoverGrowth
-        y: root.vertical ? root._hoverGrowth : (root.height - height) / 2
+        readonly property bool atStart: root.vertical || !root.mirrored
+        x: root.vertical
+            ? root.leftPadding + (root.availableWidth - width) / 2
+            : (atStart ? root._labelLeft + root._hoverGrowth : root.width - width - root._labelRight - root._hoverGrowth)
+        y: root.vertical
+            ? root._labelAbove + root._hoverGrowth
+            : root.topPadding + (root.availableHeight - height) / 2
         implicitWidth: hasContent ? childrenRect.width : 0
         implicitHeight: hasContent ? childrenRect.height : 0
         width: implicitWidth
@@ -380,97 +365,150 @@ T.Slider {
     Item {
         id: afterSlot
         readonly property bool hasContent: root._slotHasContent(afterSlot)
+        readonly property bool atStart: root.horizontal && root.mirrored
         x: root.vertical
-            ? (root.width - width) / 2
-            : root.width - width - root._hoverGrowth
+            ? root.leftPadding + (root.availableWidth - width) / 2
+            : (atStart ? root._labelLeft + root._hoverGrowth : root.width - width - root._labelRight - root._hoverGrowth)
         y: root.vertical
-            ? root.height - height - root._hoverGrowth
-            : (root.height - height) / 2
+            ? root.height - height - root._labelBelow - root._hoverGrowth - root._shadowDrop
+            : root.topPadding + (root.availableHeight - height) / 2
         implicitWidth: hasContent ? childrenRect.width : 0
         implicitHeight: hasContent ? childrenRect.height : 0
         width: implicitWidth
         height: implicitHeight
     }
 
-    Gradient {
-        id: fillRamp
-        orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
-        GradientStop { position: 0; color: root.vertical ? root._paintedFillLead : root._paintedFill }
-        GradientStop { position: 1; color: root.vertical ? root._paintedFill : root._paintedFillLead }
-    }
+    // The label, on the side `labelPosition` names, centred on the track
+    // along the other axis. A clickable label keeps a hit box at least one
+    // large icon tall, whatever its text measures.
+    Item {
+        id: label
+        objectName: "sliderLabel"
+        visible: root._hasLabel
+        implicitWidth: Math.max(labelRow.implicitWidth, root.labelClickable ? Style.iconLg : 0)
+        implicitHeight: Math.max(labelRow.implicitHeight, root.labelClickable ? Style.iconLg : 0)
+        width: implicitWidth
+        height: implicitHeight
+        x: root.labelPosition === "left" ? 0
+            : root.labelPosition === "right" ? root.width - width
+            : root.leftPadding + (root.availableWidth - width) / 2
+        y: root.labelPosition === "above" ? 0
+            : root.labelPosition === "below" ? root.height - height
+            : root.topPadding + (root.availableHeight - height) / 2
 
-    contentItem: Item {
-        Rectangle {
-            id: track
-            objectName: "sliderTrack"
-            x: root.vertical ? (parent.width - width) / 2 : 0
-            y: root.vertical ? 0 : (parent.height - height) / 2
-            width: root.vertical ? root.thickness : parent.width
-            height: root.vertical ? parent.height : root.thickness
-            radius: (root.vertical ? width : height) / 2
-            color: root._paintedTrack
+        Row {
+            id: labelRow
+            anchors.centerIn: parent
+            spacing: Style.space1
 
-            // The filled lead ends where the thumb is, on the value side of
-            // it: the bottom of a vertical slider, the left of a horizontal
-            // one, and the right of a mirrored one. Only the pinned edge
-            // branches -- the length is `_fillEnd` either way.
-            Rectangle {
-                objectName: "sliderFill"
-                x: root.vertical ? 0 : (root.mirrored ? root._fillEnd : 0)
-                y: root.vertical ? root._fillEnd : 0
-                width: root.vertical
-                    ? parent.width
-                    : (root.mirrored ? parent.width - root._fillEnd : root._fillEnd)
-                height: root.vertical ? parent.height - root._fillEnd : parent.height
-                radius: parent.radius
-                // Flat when the two ends agree, a gradient when they do not.
-                color: root._paintedFill
-                gradient: root.fill === root.fillLead ? null : fillRamp
+            Loader {
+                active: root.labelIcon !== ""
+                anchors.verticalCenter: parent.verticalCenter
+                sourceComponent: SvgIcon {
+                    name: root.labelIcon
+                    size: Style.iconSm
+                    color: root._paintedLabel
+                }
             }
+            Prose {
+                visible: root.labelText !== ""
+                anchors.verticalCenter: parent.verticalCenter
+                role: "metadata"
+                text: root.labelText
+                color: root._paintedLabel
+            }
+        }
+
+        StateLayer {
+            anchors.fill: parent
+            target: label
+            interactive: root.labelClickable && root.enabled
+            focusRadius: Style.radiusSm
+            onClicked: root.labelClicked()
         }
     }
 
-    // The handle is positioned in the CONTROL's coordinates, not the content
-    // item's, so it carries the padding term the slots created. caelestia's
-    // FilledSlider omits it because it has no padding.
+    contentItem: Item {
+        // The remaining track, on the far side of the thumb.
+        Rectangle {
+            id: track
+            objectName: "sliderTrack"
+            x: root.vertical ? (parent.width - width) / 2 : root._restStart
+            y: root.vertical ? root._restStart : (parent.height - height) / 2
+            width: root.vertical ? root.thickness : root._restLength
+            height: root.vertical ? root._restLength : root.thickness
+            color: root._paintedTrack
+            // The end that faces the thumb is the inner one.
+            readonly property bool innerAtEnd: !root._valueAtStart
+            radius: root.thickness / 2
+            topLeftRadius: innerAtEnd ? radius : root._innerRadius
+            bottomRightRadius: innerAtEnd ? root._innerRadius : radius
+            topRightRadius: root.horizontal
+                ? (innerAtEnd ? root._innerRadius : radius) : (innerAtEnd ? radius : root._innerRadius)
+            bottomLeftRadius: root.horizontal
+                ? (innerAtEnd ? radius : root._innerRadius) : (innerAtEnd ? root._innerRadius : radius)
+
+            // Material's stop indicator: where the range ends, in the fill's
+            // colour, so a pill at 5% still reads as a slider and not a bar.
+            Rectangle {
+                visible: root._pill && root._restLength > Style.space1 * 3
+                width: Style.space1
+                height: Style.space1
+                radius: Style.space1 / 2
+                color: root._paintedFill
+                x: root.vertical
+                    ? (parent.width - width) / 2
+                    : (root._valueAtStart ? parent.width - width - Style.space1 : Style.space1)
+                y: root.vertical
+                    ? (root._valueAtStart ? parent.height - height - Style.space1 : Style.space1)
+                    : (parent.height - height) / 2
+            }
+        }
+
+        // The value, from the low end to the thumb.
+        Rectangle {
+            objectName: "sliderFill"
+            x: root.vertical ? (parent.width - width) / 2 : root._fillStart
+            y: root.vertical ? root._fillStart : (parent.height - height) / 2
+            width: root.vertical ? root.thickness : root._fillLength
+            height: root.vertical ? root._fillLength : root.thickness
+            color: root._paintedFill
+            readonly property bool innerAtEnd: root._valueAtStart
+            radius: root.thickness / 2
+            topLeftRadius: innerAtEnd ? radius : root._innerRadius
+            bottomRightRadius: innerAtEnd ? root._innerRadius : radius
+            topRightRadius: root.horizontal
+                ? (innerAtEnd ? root._innerRadius : radius) : (innerAtEnd ? radius : root._innerRadius)
+            bottomLeftRadius: root.horizontal
+                ? (innerAtEnd ? radius : root._innerRadius) : (innerAtEnd ? root._innerRadius : radius)
+        }
+    }
+
+    // The handle is positioned in the CONTROL's coordinates, so it carries
+    // the padding term the slots and the label created.
     handle: Item {
         id: handle
         objectName: "sliderHandle"
-        // Declaration order cannot express this: QQuickSlider completes its
-        // handle before QQuickControl completes the contentItem, so the
-        // handle is the earlier sibling however the two are written, and the
-        // track and the fill painted over the thumb -- the accent line ran
-        // straight through it. 1 is a stacking index, not a measurement, so
-        // it is not a value a theme could retune; recorded as a deviation
-        // from the no-numbers law in docs/components/Slider.md.
+        // QQuickSlider completes its handle before QQuickControl completes the
+        // contentItem, so the handle is the earlier sibling however the two
+        // are written, and the track painted over the thumb. A stacking
+        // index, not a measurement.
         z: 1
-        x: root.leftPadding
-            + (root.vertical ? (root.availableWidth - width) / 2 : root._thumbOffset)
-        y: root.topPadding
-            + (root.vertical ? root._thumbOffset : (root.availableHeight - height) / 2)
-        implicitWidth: root.thumbSize
-        implicitHeight: root.thumbSize
+        x: root.leftPadding + (root.vertical ? (root.availableWidth - width) / 2 : root._thumbOffset)
+        y: root.topPadding + (root.vertical ? root._thumbOffset : (root.availableHeight - height) / 2)
+        implicitWidth: root.vertical ? root._thumbCross : root._thumbMain
+        implicitHeight: root.vertical ? root._thumbMain : root._thumbCross
         width: implicitWidth
         height: implicitHeight
 
-        // What the thumb actually paints. It GROWS under the pointer by a
-        // fixed `_hoverGrowth` per side rather than by a percentage: 8% of a
-        // 12px thumb was 0.96px of diameter, which is an answer nobody can
-        // see. The handle's own box stays `thumbSize`, so the travel, the
-        // fill end and the flush-at-the-bound geometry are untouched, and the
-        // control reserves the growth at both ends of both axes instead.
-        //
-        // `pressed` is in the condition as well as `hovered`, because a drag
-        // that leaves the control keeps the press: a thumb that shrank there
-        // would be the control letting go under the finger holding it.
-        property real span: root.thumbSize
-            + (layer.hovered || layer.pressed ? root._hoverGrowth * 2 : 0)
-        // Press is a LIFT, and only a lift. The old press cue also scaled the
-        // thumb DOWN 6% while its shadow said it had just risen, which is two
-        // cues contradicting each other.
-        property real lift: root.pressed
-            ? Style.sliderThumbLift * 2
-            : Style.sliderThumbLift
+        // What the thumb paints across the axis. It GROWS under the pointer by
+        // a fixed step per side rather than by a percentage: 8% of a 12px
+        // thumb was under a pixel. `pressed` is in the condition as well,
+        // because a drag that leaves the control keeps the press.
+        property real span: root._thumbCross
+            + (layer.hovered || layer.pressed ? root._crossGrowth * 2 : 0)
+        // Press is a LIFT, and only a lift; a shrink contradicted it.
+        property real lift: root.pressed ? Style.sliderThumbLift * 2 : Style.sliderThumbLift
 
         Behavior on span {
             NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -479,11 +517,9 @@ T.Slider {
             NumberAnimation { duration: Motion.press; easing.type: Motion.standardEasing }
         }
 
-        // Inside the handle so it travels with it, and the same size as the
-        // thumb so it grows with it too.
         Rectangle {
             objectName: "sliderThumbShadow"
-            visible: root.raised && root.enabled
+            visible: root.raised && !root._pill && root.enabled
             width: handle.span
             height: handle.span
             x: (handle.width - width) / 2
@@ -493,72 +529,86 @@ T.Slider {
         }
 
         Rectangle {
+            id: thumb
             objectName: "sliderThumb"
-            width: handle.span
-            height: handle.span
+            width: root._pill && root.horizontal ? root._thumbMain : handle.span
+            height: root._pill && root.vertical ? root._thumbMain : handle.span
             x: (handle.width - width) / 2
             y: (handle.height - height) / 2
-            radius: width / 2
+            radius: Math.min(width, height) / 2
             color: root._paintedThumb
 
             Behavior on color {
                 ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
             }
 
-            Item {
-                id: thumbSlot
-                anchors.fill: parent
+            // The glyph fits the thumb with one step of air per side; below
+            // the smallest icon there is no glyph a person can read.
+            Loader {
+                active: !root._pill && root.thumbIcon !== ""
+                anchors.centerIn: parent
+                sourceComponent: SvgIcon {
+                    name: root.thumbIcon
+                    size: Math.max(Style.iconXs, root.thumbSize - Style.space2 * 2)
+                    color: root._paintedThumbContent
+                }
+            }
+
+            Loader {
+                active: !root._pill && root.thumbIcon === "" && root.thumbText !== ""
+                anchors.centerIn: parent
+                width: root.thumbSize - Style.space1 * 2
+                height: width
+                sourceComponent: Text {
+                    text: root.thumbText
+                    color: root._paintedThumbContent
+                    font.family: Style.fontFamily
+                    font.pixelSize: Style.textSm
+                    font.weight: Style.weightBold
+                    fontSizeMode: Text.Fit
+                    minimumPixelSize: Style.textXs
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
         }
     }
 
     // The five states, owned in one place. Host mode: `hovered`, `pressed`,
-    // `visualFocus` and the enabled cascade all come from the template, so
-    // there is one source of each.
+    // `visualFocus` and the enabled cascade all come from the template.
     //
-    // `target: null` because a SCALE is the wrong unit here. Growth is still
-    // the rule and the THUMB is still what grows -- growing the whole control
-    // would move the track under the finger holding it -- but it grows by
-    // pixels off the handle's `span` above, because a percentage of a thumb
-    // the call site chose is a different number at every size, and at the
-    // sizes a reading rail uses it rounds to nothing.
+    // It covers the TRACK and the thumb's growth, not the slots or the label:
+    // a focus ring drawn around an action sitting in a slot said the action
+    // was focused. `target: null` because a scale is the wrong unit here;
+    // the thumb grows by pixels off `span` above.
     StateLayer {
         id: layer
         objectName: "sliderLayer"
-        // Level with the thumb rather than under it: the focus ring follows
-        // the control's own edge, which the thumb reaches at either bound,
-        // and a thumb painted over the ring is a keyboard user losing the one
-        // mark that says where they are. Equal z, later child, so the ring
-        // wins without a second number.
+        // Level with the thumb rather than under it, so the ring wins at the
+        // bounds without a second number.
         z: handle.z
-        anchors.fill: parent
         host: root
         target: null
-        focusRadius: (root.vertical ? width : height) / 2
+        x: root.horizontal
+            ? root.leftPadding - root._hoverGrowth
+            : root.leftPadding + (root.availableWidth - root._thumbSpan) / 2
+        y: root.horizontal
+            ? root.topPadding + (root.availableHeight - root._thumbSpan) / 2
+            : root.topPadding - root._hoverGrowth
+        width: root.horizontal ? root.availableWidth + root._hoverGrowth * 2 : root._thumbSpan
+        height: root.horizontal ? root._thumbSpan : root.availableHeight + root._hoverGrowth * 2
+        focusRadius: Math.min(width, height) / 2
     }
 
     // The cursor describes the region under it. A HoverHandler on the ANCESTOR
-    // of the slots, and NOT an item that accepts hover: a frontmost
-    // hoverEnabled item would eat hover from slot content and its own
-    // StateLayer would never grow.
-    //
-    // The wheel `MouseArea` below fills the control as well and is not that
-    // case: with `hoverEnabled` left false and `acceptedButtons: Qt.NoButton`
-    // it is skipped for both hover and press delivery and receives only the
-    // wheel, so a slot action underneath keeps its own hover, its own press
-    // and its own click. That is proved with a real `IconButton` in a slot in
-    // `tests/units/tst_Slider.qml`, not assumed from the flags.
-    //
-    // Slot content with a StateLayer of its own states its own cursor and
-    // wins over this default.
+    // of the slots, not an item that accepts hover: a frontmost hoverEnabled
+    // item would eat hover from slot content.
     HoverHandler {
         cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
     }
 
     // Captured in `onPressedChanged`, which Qt emits BEFORE it jumps the value
-    // to the press position (`mousePressEvent` calls the base class, then
-    // `handleMove`), so a click on the track commits too. Do not move this
-    // into anything that runs after the jump.
+    // to the press position, so a click on the track commits too.
     property real _pressValue: 0
     property bool _keyMoved: false
 
@@ -574,17 +624,9 @@ T.Slider {
     }
 
     // Qt's own Slider handles the four arrows with `stepSize` as the step, so
-    // every arrow branch here MUST accept the event: `Keys` runs
-    // `BeforeItem` by default, and leaving one unaccepted means both routes
-    // run and a single press moves six units instead of five. Page, Home and
-    // End are ours entirely -- Qt has no handler for any of them, on either
-    // slider type -- and that is an EXTENSION, not parity, so a consumer
-    // should not assume a stock Qt slider does the same.
-    //
-    // The arrows are on-axis only, which is Qt's rule: a horizontal slider
-    // ignores Up and Down, and a vertical one ignores Left and Right, so the
-    // surface underneath keeps them. Which arrow increases follows the visual
-    // axis, so mirroring swaps the horizontal pair.
+    // every arrow branch here MUST accept the event or both routes run. Page,
+    // Home and End are ours entirely -- an EXTENSION, not parity. Arrows are
+    // on-axis only, which is Qt's rule, so the surface keeps the other pair.
     Keys.onPressed: event => {
         if (!root.enabled)
             return;
@@ -631,14 +673,9 @@ T.Slider {
     }
 
     // One `committed` per key that actually moved something, however many
-    // auto-repeats it fired on the way.
-    //
-    // It accepts the release of exactly the keys the press dispatcher took, so
-    // those never reach `QQuickSlider::keyReleaseEvent`, which clears
-    // `pressed` for any key it is given. The release of any OTHER key still
-    // reaches it -- widening the accept to swallow every release would take
-    // keys away from the surface, which is the opposite of what the on-axis
-    // rule above is for.
+    // auto-repeats it fired. It accepts the release of exactly the keys the
+    // press dispatcher took, so those never reach QQuickSlider's release
+    // handler, which clears `pressed` for any key it is given.
     Keys.onReleased: event => {
         const ours = root.vertical
             ? (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
@@ -655,53 +692,31 @@ T.Slider {
         root.committed();
     }
 
-    // 120 is not a design number and deliberately NOT a token: it is the
-    // platform's own unit. Qt reports wheel rotation in eighths of a degree
-    // and one notch of a physical wheel is 15 degrees, so a theme that could
-    // retune this would be changing what a notch MEANS. Recorded as a
-    // deviation from the no-numbers law in docs/components/Slider.md.
+    // 120 is the platform's own unit, not a design number: Qt reports wheel
+    // rotation in eighths of a degree and one notch is 15 degrees.
     readonly property int _wheelNotch: 120
     property int _wheelAccumulator: 0
 
-    // A high-resolution touchpad sends many small deltas for one flick, so a
-    // notch is 120 units ACCUMULATED -- the same threshold caelestia's
-    // CustomMouseArea uses. The old handler treated any nonzero delta as a
-    // full step, which is why one gesture slammed the value. Reversing
-    // direction drops what was collected rather than cancelling into it, so a
-    // flick back does not start half a notch ahead.
-    //
-    // A `MouseArea`, and NOT a `WheelHandler`, and that is measured rather
-    // than a preference: in a live Wayland window on this Qt6 QPA a
-    // `WheelHandler` never receives a wheel event at all -- a real notch over
-    // one logs nothing while a `MouseArea.onWheel` sitting beside it reports
-    // `angleDelta (0, -120)`. Offscreen both work, which is how this route
-    // passed every test it has and was still dead under the owner's hand.
-    //
-    // `acceptedButtons: Qt.NoButton` and no hover: it takes the wheel and
-    // nothing else, so Qt's own press grab still starts the drag and slot
-    // content keeps its own hover and its own clicks.
+    // A `MouseArea`, NOT a `WheelHandler`: in a live Wayland window on this
+    // Qt6 QPA a `WheelHandler` never receives a wheel event at all, while a
+    // `MouseArea.onWheel` does; offscreen both work. `acceptedButtons:
+    // Qt.NoButton` and no hover: it takes the wheel and nothing else, so Qt's
+    // own press grab still starts the drag and slot content keeps its own
+    // hover and clicks. A notch is 120 units ACCUMULATED, so a touchpad flick
+    // is one step and not one per delta.
     MouseArea {
         anchors.fill: parent
         enabled: root.enabled && root.wheelUnits > 0
         acceptedButtons: Qt.NoButton
         onWheel: event => {
-            // On-axis, the same rule the arrows follow: a vertical slider
-            // ignores a horizontal wheel entirely, and a horizontal one takes
-            // it only when there is no vertical rotation to read. The sign is
-            // flipped because Qt reports a POSITIVE `angleDelta.x` when the
-            // top of the wheel is moved to the LEFT (QWheelEvent), and left is
-            // the decreasing end -- unflipped, scrolling right turned a volume
-            // bar down.
+            // On-axis, the same rule the arrows follow. The sign is flipped
+            // because Qt reports a POSITIVE `angleDelta.x` when the top of the
+            // wheel is moved to the LEFT.
             const delta = event.angleDelta.y !== 0
                 ? event.angleDelta.y
                 : (root.vertical ? 0 : -event.angleDelta.x);
-            // Nothing on this axis to answer, so the event is handed BACK
-            // rather than swallowed: a horizontal wheel over a vertical
-            // slider belongs to whatever encloses it, and an area that keeps
-            // an event it did nothing with is an area that silently disables
-            // its host's scrolling. A `wheelUnits: 0` slider never reaches
-            // this at all -- the area is `enabled: false` and the wheel is
-            // delivered straight past it.
+            // Nothing on this axis to answer: hand the event BACK, or this
+            // area silently disables its host's scrolling.
             if (delta === 0) {
                 event.accepted = false;
                 return;

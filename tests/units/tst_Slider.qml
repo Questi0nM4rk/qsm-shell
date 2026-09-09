@@ -626,13 +626,13 @@ TestCase {
     // made on purpose.
     function test_size_presets_resolve_the_track_and_thumb_scale() {
         compare(sliderFresh.size, "md", "the default size is not md");
-        compare(sliderFresh.thickness, Style.space2, "the md preset did not reach thickness");
+        compare(sliderFresh.thickness, Style.iconLg - Style.space1, "the md preset did not reach thickness");
         compare(sliderFresh.thumbSize, Style.iconLg, "the md preset did not reach thumbSize");
 
         const shapes = [
             { size: "sm", thickness: Style.space1, thumb: Style.iconSm },
-            { size: "md", thickness: Style.space2, thumb: Style.iconLg },
-            { size: "lg", thickness: Style.space2, thumb: Style.controlHeightSm }
+            { size: "md", thickness: Style.iconLg - Style.space1, thumb: Style.iconLg },
+            { size: "lg", thickness: Style.controlHeight - Style.space1, thumb: Style.controlHeight }
         ];
 
         for (let i = 0; i < shapes.length; i++) {
@@ -665,13 +665,13 @@ TestCase {
         verify(thumb !== null, "the thumb lost its objectName");
 
         compare(sliderVertRaised.raised, true, "the raised case is not raised");
-        compare(sliderVertRaised.active, false, "the raised case was still active at rest");
+        compare(sliderVertRaised.hovered, false, "the raised case was still hovered at rest");
         tryCompare(thumb, "color", Style.text, 500,
             "a raised thumb at rest is not the library's thumb colour -- it is darker than "
             + "the fill it sits on and loses its edge");
 
         mouseMove(sliderVertRaised, sliderVertRaised.width / 2, sliderVertRaised.height / 2);
-        compare(sliderVertRaised.active, true, "the pointer never reached the raised case");
+        compare(sliderVertRaised.hovered, true, "the pointer never reached the raised case");
         tryCompare(thumb, "color", Style.text, 500, "the active thumb changed colour");
         mouseMove(probe, 5, 5);
     }
@@ -811,7 +811,7 @@ TestCase {
 
         tryCompare(thumb, "color", Style.disabled(Style.text), 500,
             "a disabled thumb is not its rest colour blended toward the background");
-        compare(track.color, Style.disabled(Style.surfaceHover),
+        compare(track.color, Style.disabled(Style.outline),
             "a disabled track is not its rest colour blended toward the background");
         compare(fill.color, Style.disabled(Style.accent),
             "a disabled fill is not its rest colour blended toward the background");

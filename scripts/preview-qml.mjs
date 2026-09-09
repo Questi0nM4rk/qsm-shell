@@ -6,24 +6,34 @@ const root = resolve(import.meta.dirname, '..')
 const args = process.argv.slice(2)
 const inspectIndex = args.indexOf('--inspect')
 const inspectPath = inspectIndex >= 0 ? args[inspectIndex + 1] : null
-const name = args.find((arg, i) => arg !== '--inspect' && (inspectIndex < 0 || i !== inspectIndex + 1))
+const names = args.filter((arg, i) => arg !== '--inspect' && (inspectIndex < 0 || i !== inspectIndex + 1))
 const scenarios = JSON.parse(readFileSync(resolve(root, 'previews/scenarios.json'), 'utf8'))
-const scenario = scenarios[name]
 
-if (!scenario) {
-  console.error(`usage: npm run preview -- <component>`)
-  console.error(`components: ${Object.keys(scenarios).join(', ')}`)
+// A scenario key opens that scene; a unit's PascalCase name opens every
+// scene that maps to it, side by side in one window, so a TYPE is judged in
+// one place.
+const keys = names.flatMap((name) =>
+  scenarios[name] ? [name] : Object.keys(scenarios).filter((key) => scenarios[key].unit === name),
+)
+
+if (names.length === 0 || keys.length === 0) {
+  console.error(`usage: npm run preview -- <scenario>... | <Unit>`)
+  console.error(`scenarios: ${Object.keys(scenarios).join(', ')}`)
   process.exit(1)
 }
 
-const [width, height] = scenario.viewport
+const sceneArgs = keys.flatMap((key) => {
+  const scenario = scenarios[key]
+  const [width, height] = scenario.viewport
+  return [scenario.component, scenario.variant, String(width), String(height), scenario.unit ?? '']
+})
 
-// No temp file: LivePreview.qml reads component/variant/width/height straight
-// from Qt.application.arguments after "--", so the same scenario definition
-// drives both the capture path and the live window.
+// No temp file: LivePreview.qml reads the scenes straight from
+// Qt.application.arguments after "--", so the same scenario definition drives
+// both the capture path and the live window.
 const child = spawn(
   '/usr/lib/qt6/bin/qml',
-  ['-I', resolve(root, 'qml'), resolve(root, 'previews/LivePreview.qml'), '--', scenario.component, scenario.variant, String(width), String(height), scenario.unit ?? ''],
+  ['-I', resolve(root, 'qml'), resolve(root, 'previews/LivePreview.qml'), '--', ...sceneArgs],
   {
     stdio: ['inherit', 'inherit', 'pipe'],
     env: {
