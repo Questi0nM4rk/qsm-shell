@@ -290,3 +290,8 @@ Earned, each from a specific failure. Break one and name which.
   control with slots is a `T.Control` with a clipped `TextInput` content
   item, the shape `T.SpinBox` uses; the template still owns padding and
   states.
+- **Disabled dims by colour, never by opacity on a composite.** Opacity on a
+  control applies to each child separately, so a translucent thumb shows the
+  translucent fill through it and three layers stop being three things.
+  `Style.disabled(colour)` blends each colour toward the background opaquely
+  and the layers stay layers.

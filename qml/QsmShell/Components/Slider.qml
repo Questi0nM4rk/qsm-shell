@@ -54,7 +54,6 @@ T.Slider {
     // Qt's own wheel is proportional but steps by `stepSize` and cannot be
     // switched off per call site. `wheelUnits` below is ours.
     wheelEnabled: false
-    opacity: enabled ? 1 : Style.opacityDisabled
 
     // 0 = no wheel. A seek bar wants a deliberate pointer; a volume bar is
     // something you nudge. Counted in `stepSize` units like every other
@@ -89,6 +88,21 @@ T.Slider {
     property bool emphasized: false
 
     readonly property bool active: emphasized || pressed || hovered
+
+    // Disabled dims by COLOUR, never by `opacity` on this control. Opacity
+    // here would apply to the track, the fill and the thumb separately, and a
+    // 0.35 thumb sitting on a 0.35 fill shows the fill straight through
+    // itself -- the three layers stop being three things exactly when the
+    // reading matters least. Every painted colour goes through
+    // `Style.disabled`, which blends toward the background and stays opaque.
+    readonly property color _paintedTrack: root.enabled
+        ? root.trackColor : Style.disabled(root.trackColor)
+    readonly property color _paintedFill: root.enabled
+        ? root.fill : Style.disabled(root.fill)
+    readonly property color _paintedFillLead: root.enabled
+        ? root.fillLead : Style.disabled(root.fillLead)
+    readonly property color _paintedThumb: root.enabled
+        ? root.thumbColor : Style.disabled(root.thumbColor)
 
     // ── slots ───────────────────────────────────────────────────────────
     // `before` and `after` sit at the ends ALONG the axis and become padding,
@@ -344,8 +358,8 @@ T.Slider {
     Gradient {
         id: fillRamp
         orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
-        GradientStop { position: 0; color: root.vertical ? root.fillLead : root.fill }
-        GradientStop { position: 1; color: root.vertical ? root.fill : root.fillLead }
+        GradientStop { position: 0; color: root.vertical ? root._paintedFillLead : root._paintedFill }
+        GradientStop { position: 1; color: root.vertical ? root._paintedFill : root._paintedFillLead }
     }
 
     contentItem: Item {
@@ -357,7 +371,7 @@ T.Slider {
             width: root.vertical ? root.thickness : parent.width
             height: root.vertical ? parent.height : root.thickness
             radius: (root.vertical ? width : height) / 2
-            color: root.trackColor
+            color: root._paintedTrack
 
             // The filled lead ends where the thumb is, on the value side of
             // it: the bottom of a vertical slider, the left of a horizontal
@@ -373,7 +387,7 @@ T.Slider {
                 height: root.vertical ? parent.height - root._fillEnd : parent.height
                 radius: parent.radius
                 // Flat when the two ends agree, a gradient when they do not.
-                color: root.fill
+                color: root._paintedFill
                 gradient: root.fill === root.fillLead ? null : fillRamp
             }
         }
@@ -418,9 +432,10 @@ T.Slider {
         }
 
         Rectangle {
+            objectName: "sliderThumb"
             anchors.fill: parent
             radius: width / 2
-            color: root.thumbColor
+            color: root._paintedThumb
 
             Behavior on color {
                 ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }

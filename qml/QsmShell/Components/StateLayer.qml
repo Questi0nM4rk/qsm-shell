@@ -19,8 +19,11 @@ import qs.QsmShell.Style
 //               anything, and a ring is the only mark that says "here" while
 //               the surface is otherwise still. It exists only while focused,
 //               so the resting surface stays boxless.
-//   disabled    the host dims itself; the layer simply stops answering, and
-//               stops offering a hand it will not shake.
+//   disabled    the host dims itself BY COLOUR -- every painted role through
+//               `Style.disabled(colour)`, never `opacity` on the composite,
+//               which would dim each child separately and let a translucent
+//               thumb show the translucent fill through it. The layer simply
+//               stops answering, and stops offering a hand it will not shake.
 //
 // `target` is what grows, and defaults to the layer's own parent because at
 // most call sites the parent IS the affordance. A host that expresses growth

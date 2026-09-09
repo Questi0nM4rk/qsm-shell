@@ -161,7 +161,6 @@ T.Control {
     // below, so a caller reaching for the public `forceActiveFocus()` gets a
     // caret rather than a control that swallowed the keyboard.
     focusPolicy: Qt.NoFocus
-    opacity: enabled ? 1 : Style.opacityDisabled
 
     background: Rectangle {
         objectName: "textFieldSurface"
@@ -175,9 +174,19 @@ T.Control {
         // and the keystrokes vanished. `StateLayer` already stops answering
         // while read-only, so the surface has to agree with it. Focus still
         // lifts: a read-only value is selectable and copyable.
-        color: root.focused || (root.hovered && !input.readOnly)
-            ? Style.surfaceHover
-            : Style.surface
+        //
+        // Disabled dims by COLOUR, never by `opacity` on the frame: opacity
+        // would apply to the surface, the text and the caret separately, and a
+        // translucent surface lets whatever sits behind the field read through
+        // its own value. `Style.disabled` blends toward the background and
+        // stays opaque. It is read off the REST colour rather than off the
+        // expression above, because `hoverEnabled` is unconditional here and a
+        // disabled field under the pointer still reports `hovered`.
+        color: !root.enabled
+            ? Style.disabled(Style.surface)
+            : root.focused || (root.hovered && !input.readOnly)
+                ? Style.surfaceHover
+                : Style.surface
         // The one border in the library, and it means one thing: this field
         // FAILED. Invisible otherwise. It used to double as the focus edge,
         // which drew one state twice -- `StateLayer` owns the focus ring, so a
@@ -186,7 +195,7 @@ T.Control {
         // Pointer focus is the surface lift plus the caret; keyboard focus is
         // the ring.
         border.width: root.failed ? 1 : 0
-        border.color: Style.danger
+        border.color: root.enabled ? Style.danger : Style.disabled(Style.danger)
 
         Behavior on color {
             ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -260,6 +269,10 @@ T.Control {
             visible: input.length === 0
             role: "label"
             muted: true
+            // `muted` already names the grey; the disabled blend is the same
+            // fact one step further, so it is stated here rather than given
+            // Prose a second modifier for it.
+            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
             font.pixelSize: root.fieldTextSize
             verticalAlignment: Text.AlignVCenter
             text: root.placeholder
@@ -274,7 +287,7 @@ T.Control {
             // focusable thing here, so the tab stop lives on it -- it is
             // skipped automatically while disabled.
             activeFocusOnTab: true
-            color: Style.text
+            color: root.enabled ? Style.text : Style.disabled(Style.text)
             selectionColor: Style.accent
             selectedTextColor: Style.background
             verticalAlignment: TextInput.AlignVCenter
@@ -392,7 +405,7 @@ T.Control {
             y: input.y + input.cursorRectangle.y
             width: Style.spaceTight
             height: input.cursorRectangle.height
-            color: Style.accent
+            color: root.enabled ? Style.accent : Style.disabled(Style.accent)
             radius: Style.radiusXs
             visible: input.activeFocus && !input.readOnly
 

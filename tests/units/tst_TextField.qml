@@ -461,4 +461,24 @@ TestCase {
         verify(ring !== null, "the StateLayer has no focus ring to read");
         verify(ring.visible, "a read-only field on the Tab route painted no focus ring");
     }
+
+    // Disabled dims by COLOUR, never by opacity on a composite: `opacity` on
+    // the frame applies to each child separately, so a translucent surface
+    // shows whatever sits behind the field through its own text. Every layer
+    // blends toward the background instead and stays opaque.
+    function test_disabled_dims_by_colour_and_leaves_the_frame_opaque() {
+        const surface = findChild(field, "textFieldSurface");
+        const input = findChild(field, "textFieldInput");
+        verify(surface !== null && input !== null, "a painted part of the field lost its objectName");
+
+        field.enabled = false;
+        compare(field.opacity, 1,
+            "a disabled field dimmed itself with `opacity`, so its surface is translucent "
+            + "and whatever sits behind it reads through the text");
+        tryCompare(surface, "color", Style.disabled(Style.surface), 500,
+            "a disabled surface is not its rest colour blended toward the background");
+        compare(input.color, Style.disabled(Style.text),
+            "disabled text is not its rest colour blended toward the background");
+        compare(surface.color.a, 1, "the dimmed surface is translucent rather than dimmed");
+    }
 }

@@ -501,6 +501,30 @@ TestCase {
             "a disabled slider emitted moved from a route that should be inert");
     }
 
+    // Disabled dims by COLOUR, never by opacity on a composite: `opacity` on
+    // the control applies to each child separately, so a translucent thumb
+    // shows the translucent fill straight through it. Every layer blends
+    // toward the background instead and stays opaque, which is what keeps the
+    // layers layers.
+    function test_disabled_dims_by_colour_and_leaves_the_control_opaque() {
+        compare(sliderDisabled.opacity, 1,
+            "a disabled slider dimmed itself with `opacity`, so its thumb is translucent "
+            + "and the fill shows through it");
+
+        const track = findChild(sliderDisabled, "sliderTrack");
+        const fill = findChild(sliderDisabled, "sliderFill");
+        const thumb = findChild(sliderDisabled, "sliderThumb");
+        verify(track !== null && fill !== null && thumb !== null, "a painted part lost its objectName");
+
+        tryCompare(thumb, "color", Style.disabled(Style.text), 500,
+            "a disabled thumb is not its rest colour blended toward the background");
+        compare(track.color, Style.disabled(Style.surfaceHover),
+            "a disabled track is not its rest colour blended toward the background");
+        compare(fill.color, Style.disabled(Style.accent),
+            "a disabled fill is not its rest colour blended toward the background");
+        compare(thumb.color.a, 1, "the dimmed thumb is translucent rather than dimmed");
+    }
+
     // Qt's own Slider handles the four arrows with `stepSize` as its step, so
     // every arrow branch in the dispatcher accepts the event. If it did not,
     // both routes would run and one press would move SIX units, not five --

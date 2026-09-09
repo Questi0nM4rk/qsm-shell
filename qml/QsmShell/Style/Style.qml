@@ -16,6 +16,8 @@ import qs.QsmShell.Style
 // component instead — that is where 16, 18 and 22 all became "the small icon"
 // in three different files.
 QtObject {
+    id: root
+
     property var backend: null
 
     // ── mode ────────────────────────────────────────────────────────────
@@ -64,6 +66,27 @@ QtObject {
     readonly property real bandRimStrength: backend?.bandRimStrength ?? Tokens.opacityBandRimStrength
     readonly property real bandStrokeStrength: backend?.bandStrokeStrength
         ?? Tokens.opacityBandStrokeStrength
+
+    // THE way a control says "unavailable", as a colour rather than as
+    // `opacity`. Opacity on a control applies to each CHILD separately, so a
+    // dimmed composite is a stack of translucent layers: a thumb at 0.35
+    // shows the 0.35 fill straight through itself and the two stop being two
+    // things. This blends one colour toward the background by the same
+    // `opacityDisabled` fraction and keeps it opaque, so the layers stay
+    // layers and every part still hides what is behind it.
+    //
+    //     color: enabled ? c : Style.disabled(c)
+    //
+    // It is a function rather than a per-role token because the strength is
+    // one fact and the roles it applies to are the caller's business.
+    function disabled(c: color): color {
+        const k = root.opacityDisabled;
+        const bg = root.background;
+        return Qt.rgba(bg.r + (c.r - bg.r) * k,
+                       bg.g + (c.g - bg.g) * k,
+                       bg.b + (c.b - bg.b) * k,
+                       1);
+    }
 
     // ── type ────────────────────────────────────────────────────────────
     readonly property string fontFamily: backend?.fontFamily ?? Tokens.fontFamily
