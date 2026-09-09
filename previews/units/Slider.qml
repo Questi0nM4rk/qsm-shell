@@ -49,7 +49,10 @@ Column {
 
         orientation: root.osd ? Qt.Vertical : Qt.Horizontal
         size: root.osd ? "lg" : "md"
-        raised: root.osd
+        // Flat by default, OSD included: the 2px shadow drop read as a thumb
+        // floating above its bar (owner, live window); `shape: raised` is a
+        // control for hosts that want the lift.
+        raised: false
         value: root.variant.indexOf("high") >= 0 ? .82 : .42
         wheelUnits: Style.sliderKeyboardUnits
         thumbIcon: root.osd ? "volume" : ""

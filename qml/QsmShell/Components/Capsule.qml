@@ -47,7 +47,10 @@ Card {
     readonly property bool _lg: size === "lg"
     readonly property bool _quiet: variant === "ghost" || variant === "destructive"
     readonly property color _accent: variant === "destructive" ? Style.danger : accentColor
-    readonly property color _prose: variant === "destructive" ? Style.danger : Style.text
+    // Selected is identity (AGENTS.md, surface ladder): the accent tint on the
+    // body AND accent content. Tint alone left an ON capsule telling only by
+    // a shade of its surface.
+    readonly property color _prose: variant === "destructive" ? Style.danger : active ? _accent : Style.text
 
     // ONE padding value, used by BOTH the width and the content margins. They
     // used to disagree, and every small capsule came out narrower than its own

@@ -1,5 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+// Namespaced: an unqualified import shadows qs.QsmShell.Components' own
+// TextField and Menu, which several scenarios below use unqualified.
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import qs.QsmShell.Components
 import qs.QsmShell.Style
@@ -12,6 +15,11 @@ Rectangle {
     // PascalCase basename under previews/units/. Empty means not migrated
     // yet -- the inline children below keep working unchanged.
     property string unit: ""
+    // Sibling scenario keys of this scene's group (same `unit`, or the same
+    // `component` for a legacy scene not yet migrated), in scenarios.json
+    // order. Empty means no scene switcher -- CapturePreview never sets this,
+    // so a capture always renders exactly the one scene it was asked for.
+    property var scenes: []
     property int viewportWidth: 1600
     property int viewportHeight: 900
     property var screenContext: ({ id: "preview-1", width: viewportWidth, height: viewportHeight, scale: 1, focused: true, safeInsets: Qt.rect(16, 16, 16, 16) })
@@ -81,61 +89,131 @@ Rectangle {
     }
     // A unit's `controls` reach every property-only state that isn't
     // reachable by hovering, pressing or focusing the live window --
-    // `disabled`, `selected`, `indeterminate`, and the like.
-    ColumnLayout {
-        id: controlStrip
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: Style.space4
-        spacing: Style.space2
-        visible: root.interactive && root.unitControls(unitLoader.item).length > 0
+    // `disabled`, `selected`, `indeterminate`, and the like. One more group,
+    // "scene", switches the whole scenario when `root.scenes` is non-empty;
+    // it sets properties on the PREVIEW HOST, never on the loaded unit.
+    // The whole strip-plus-scene column sits in a Flickable so a pane too
+    // short for both scrolls, strip first.
+    Flickable {
+        id: flick
+        anchors.fill: parent
+        clip: true
+        contentWidth: width
+        contentHeight: contentColumn.implicitHeight
+        // Only claim the vertical drag once there is somewhere to scroll --
+        // unconditionally interactive steals the vertical Slider scenario's
+        // own drag.
+        interactive: contentHeight > height
+        boundsBehavior: Flickable.StopAtBounds
+        Controls.ScrollBar.vertical: Controls.ScrollBar {}
 
-        // group label -> applied option label, so the matching button can
-        // show `active` for whatever was clicked last.
-        property var applied: ({})
+        ColumnLayout {
+            id: contentColumn
+            width: flick.width
+            spacing: Style.space4
 
-        function apply(groupLabel, option, optionLabel) {
-            if (option.call !== undefined) {
-                unitLoader.item[option.call]();
-            } else {
-                for (const key in option.set)
-                    unitLoader.item[key] = option.set[key];
-            }
-            const next = Object.assign({}, controlStrip.applied);
-            next[groupLabel] = optionLabel;
-            controlStrip.applied = next;
-            settleDump.restart();
-        }
-
-        Repeater {
-            model: controlStrip.visible ? root.unitControls(unitLoader.item) : []
-            RowLayout {
-                id: groupRow
-                required property var modelData
+            ColumnLayout {
+                id: controlStrip
                 spacing: Style.space2
-                Prose { role: "metadata"; text: groupRow.modelData.label }
+                // Off the window edge: buttons flush with the pane border
+                // read as part of the compositor chrome, not the scene.
+                Layout.leftMargin: Style.space6 + Style.space4
+                Layout.topMargin: Style.space6 + Style.space4
+                Layout.rightMargin: Style.space6 + Style.space4
+
+                // Bumped on every apply() so `isSelected`'s dynamic
+                // `item[key]` reads pick up a dependency even where the
+                // meta-object system would not otherwise notice a
+                // bracket-notation read.
+                property int revision: 0
+
+                readonly property var groups: {
+                    const list = [];
+                    if (root.scenes.length > 0)
+                        list.push({
+                            label: "scene",
+                            target: "root",
+                            options: root.scenes.map(scene => ({ label: scene.key, set: { component: scene.component, variant: scene.variant } }))
+                        });
+                    for (const group of root.unitControls(unitLoader.item))
+                        list.push({ label: group.label, target: "unit", options: group.options });
+                    return list;
+                }
+                visible: root.interactive && controlStrip.groups.length > 0
+
+                function targetItem(target) {
+                    return target === "root" ? root : unitLoader.item;
+                }
+
+                // Colour value types never compare `===` even when
+                // identical -- each property read returns a fresh wrapper.
+                // Qt.colorEqual compares the underlying colour instead.
+                function sameValue(a, b) {
+                    if (a === b)
+                        return true;
+                    return typeof a === "object" && a !== null && typeof b === "object" && b !== null && Qt.colorEqual(a, b);
+                }
+
+                function isSelected(target, option) {
+                    void controlStrip.revision;
+                    if (option.set === undefined)
+                        return false;
+                    const item = controlStrip.targetItem(target);
+                    if (!item)
+                        return false;
+                    for (const key in option.set) {
+                        if (!controlStrip.sameValue(item[key], option.set[key]))
+                            return false;
+                    }
+                    return true;
+                }
+
+                function apply(target, option) {
+                    const item = controlStrip.targetItem(target);
+                    if (option.call !== undefined)
+                        item[option.call]();
+                    else
+                        for (const key in option.set)
+                            item[key] = option.set[key];
+                    controlStrip.revision++;
+                    settleDump.restart();
+                }
+
                 Repeater {
-                    model: groupRow.modelData.options
-                    Capsule {
-                        id: optionButton
+                    model: controlStrip.groups
+                    RowLayout {
+                        id: groupRow
                         required property var modelData
-                        size: "sm"
-                        label: optionButton.modelData.label
-                        active: controlStrip.applied[groupRow.modelData.label] === optionButton.modelData.label
-                        onClicked: controlStrip.apply(groupRow.modelData.label, optionButton.modelData, optionButton.modelData.label)
+                        spacing: Style.space2
+                        Prose { role: "metadata"; text: groupRow.modelData.label }
+                        Repeater {
+                            model: groupRow.modelData.options
+                            Capsule {
+                                id: optionButton
+                                required property var modelData
+                                size: "sm"
+                                label: optionButton.modelData.label
+                                active: controlStrip.isSelected(groupRow.modelData.target, optionButton.modelData)
+                                onClicked: controlStrip.apply(groupRow.modelData.target, optionButton.modelData)
+                            }
+                        }
                     }
                 }
             }
-        }
-    }
-    ColumnLayout {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        // Centred in what is LEFT once the strip has taken the top, rather
-        // than in the whole host: a short window put the two on top of each
-        // other and the header read through the buttons.
-        anchors.verticalCenterOffset: controlStrip.visible ? controlStrip.height / 2 : 0
-        spacing: Style.space4
+
+            Item {
+                id: sceneArea
+                Layout.fillWidth: true
+                // Centred in whatever is LEFT once the strip has taken the
+                // top of the visible pane -- same rule as before the strip
+                // could grow a "scene" row: a short window put the two on
+                // top of each other and the header read through the buttons.
+                Layout.preferredHeight: Math.max(sceneColumn.implicitHeight, flick.height - (controlStrip.visible ? controlStrip.height + contentColumn.spacing : 0))
+
+                ColumnLayout {
+                    id: sceneColumn
+                    anchors.centerIn: parent
+                    spacing: Style.space4
         Prose { role: "section"; text: `${root.component} / ${root.variant}` }
         Loader {
             id: unitLoader
@@ -321,6 +399,9 @@ Rectangle {
                 Repeater {
                     model: 12
                     ListRow { required property int index; width: 300; size: "sm"; recede: false; icon: "workspace"; primary: `Row ${index + 1}` }
+                }
+            }
+        }
                 }
             }
         }

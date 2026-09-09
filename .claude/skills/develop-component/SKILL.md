@@ -39,10 +39,12 @@ docs is better. Every line of either needs a reason.
    `controls` for states a pointer cannot reach. Point the scenario keys in
    `previews/scenarios.json` at it and delete the inline children from
    `previews/Preview.qml`.
-5. **Look at it.** `npm run preview -- <Type>`, one window for every scene
-   of the type. Announce you are taking the
-   pointer, drive every state, then hand the window to the owner. Anything
-   with a glyph is judged here only; captures do not rasterise icons.
+5. **Look at it.** `npm run preview -- <Type>`: one window, one instance in
+   its default state, every scene and property state reachable through the
+   control strip, which shows what is selected. Announce you are taking the
+   pointer, drive every state through the controls, then hand the window to
+   the owner. Anything with a glyph is judged here only; captures do not
+   rasterise icons.
 6. **Audit.** `ux-audit` for interaction, `ui-audit` for the native visual
    result, both against the record and a tree dump (`--inspect`). Fix the
    findings. What stays open is one line in `docs/BACKLOG.md`.

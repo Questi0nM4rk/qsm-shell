@@ -72,9 +72,13 @@ follow the design sources.
 
 ## Commands
 
-- `npm run preview -- <Type>` opens every scene of one type side by side in
-  ONE real wayland window; `npm run preview -- <key>...` opens the named
-  scenes. A type is judged in one window, never one window per scene.
+- `npm run preview -- <Type>` opens ONE real wayland window with ONE
+  instance of that type in its default state (the first scenario key that
+  maps to it); its scenario keys are the `scene` control group at the top of
+  the strip, every control shows which option is selected, and the window
+  scrolls when it is smaller than its content. `npm run preview -- <key>`
+  opens the unit that key maps to with that key as the initial scene. A type
+  is judged in one window; a window holds one item.
   `npm run capture -- <key>` writes the offscreen PNG. `npm run unit -- <Type>`
   runs one test file; `--window` runs it on the compositor.
   `bash scripts/capture-all <dir>` captures every scenario. `--inspect <file>`
