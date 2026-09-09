@@ -390,60 +390,36 @@ TestCase {
             "the Select all action did not select the whole value");
     }
 
-    // The ring is a KEYBOARD mark. A pointer already says where it is, so a
-    // click focuses the input without painting one; arriving down the Tab
-    // chain is the case that needs telling.
-    function test_focus_ring_follows_keyboard_focus_only() {
+    // Every route into the field focuses the input: the text, the padding and
+    // the Tab chain. The padding reaches it through the frame's own tap
+    // handler, which is the route that broke once.
+    function test_every_route_focuses_the_input() {
         mouseClick(field, 150, 20);
-        compare(field.focused, true, "click did not focus the input");
-        compare(field.keyboardFocused, false, "a click painted the keyboard focus ring");
+        compare(field.focused, true, "click on the text did not focus the input");
 
-        // Clicking the PADDING is the other pointer route -- it reaches the
-        // input through the frame's own tap handler, and must not ring either.
         probe.forceActiveFocus();
         mouseClick(field, 4, 20);
         compare(field.focused, true, "a click on the padding did not focus the input");
-        compare(field.keyboardFocused, false, "a click on the padding painted the ring");
 
         // Setting `focus` on the FRAME cannot take focus off the input inside
         // it, so the probe takes it instead and Tab walks back in.
         probe.forceActiveFocus();
         verify(!field.focused, "the field kept focus before the Tab route");
         keyClick(Qt.Key_Tab);
-        tryCompare(field, "keyboardFocused", true, 500);
-    }
-
-    // The mark that says "focus did not arrive by key" is cleared when focus
-    // LEAVES the input, so a press that never hands focus over must not leave
-    // one behind. A press on the PADDING dragged past the drag threshold is
-    // exactly that gesture: the tap is cancelled, nothing is focused, and a
-    // mark set at press time would swallow the ring on the next Tab in.
-    function test_a_press_that_hands_over_no_focus_leaves_no_stale_mark() {
-        probe.forceActiveFocus();
-        verify(!field.focused, "the field held focus before the drag");
-
-        const drag = Application.styleHints.startDragDistance + 1;
-        mousePress(field, 4, 20);
-        mouseMove(field, 4 + drag, 20 + drag);
-        mouseRelease(field, 4 + drag, 20 + drag);
-        compare(field.focused, false, "a dragged press focused the field");
-
-        probe.forceActiveFocus();
-        keyClick(Qt.Key_Tab);
-        tryCompare(field, "keyboardFocused", true, 500);
+        tryCompare(field, "focused", true, 500);
     }
 
     // A read-only field is still a tab stop: the value it reports can be
     // selected and copied, so the keyboard has to be able to land on it and
     // be told where it is. The layer used to stop answering while read-only
-    // and took the ring with it -- Tab arrived and nothing marked it.
+    // and took the ring with it.
     function test_a_read_only_field_still_rings_on_the_tab_route() {
         field.readOnly = true;
         probe.forceActiveFocus();
         verify(!field.focused, "the field held focus before the Tab route");
 
         keyClick(Qt.Key_Tab);
-        tryCompare(field, "keyboardFocused", true, 500);
+        tryCompare(field, "focused", true, 500);
 
         const layer = findChild(field, "textFieldLayer");
         verify(layer !== null, "the field's StateLayer is not reachable");

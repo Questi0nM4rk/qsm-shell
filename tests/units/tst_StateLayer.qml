@@ -128,14 +128,10 @@ TestCase {
         compare(hostedLayer.interactive, false, "a disabled host still had an answering layer");
         hostButton.enabled = true;
 
-        // visualFocus is keyboard focus only; a click never sets it. The
-        // press/release above already gave hostButton active focus with
-        // MouseFocusReason (StrongFocus includes ClickFocus), and Qt does
-        // not re-fire a focus-in event for an item that already holds
-        // active focus, so the reason would never update without first
-        // moving focus away.
-        probe.forceActiveFocus();
-        hostButton.forceActiveFocus(Qt.TabFocusReason);
+        // The press above gave hostButton active focus (StrongFocus includes
+        // ClickFocus), and the ring follows focus however it arrived.
         tryCompare(hostedLayer, "focused", true, 500);
+        probe.forceActiveFocus();
+        tryCompare(hostedLayer, "focused", false, 500);
     }
 }

@@ -12,9 +12,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   6.07:1, side 4.03:1); slot glyphs 20 and 16 in one row; leading glyph
   ignores `size`; trailing padding survives an emptied slot; caret lands on
   fractional x; disabled dims text, leading and trailing glyph in three
-  different steps; search leading action is a 20x20 target; click then
-  Tab-wrap onto the same item keeps the pointer mark; disable then re-enable
-  restores focus and the ring without a Tab.
+  different steps; search leading action is a 20x20 target.
 - `Slider`: the resting track is `Style.outline`, about 1.9:1 against the
   shell background; a dedicated track token is the owner's call. Hosts set
   `wheelUnits` per surface (a seek bar 0, a level bar the keyboard units).

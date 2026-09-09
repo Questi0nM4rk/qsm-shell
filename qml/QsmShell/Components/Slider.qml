@@ -461,8 +461,7 @@ T.RangeSlider {
     // A `T.Control`, because keyboard focus lives ON a RangeSlider's handle:
     // Qt makes each handle a tab stop and `focusInEvent` on the control hands
     // focus to one (taking the stops away sends that hand-off in a circle
-    // until the stack is gone). A Control carries `visualFocus`, so the ring
-    // below can read whether a person arrived here by keyboard.
+    // until the stack is gone).
     component Thumb: T.Control {
         id: thumb
         required property var node
@@ -571,29 +570,44 @@ T.RangeSlider {
     }
 
     // The five states, owned in one place. Host mode: `hovered`, `pressed`,
-    // `visualFocus` and the enabled cascade all come from the template.
+    // `activeFocus` and the enabled cascade all come from the template.
     //
-    // It covers the TRACK and the thumbs' growth, not the label: a focus ring
-    // drawn around the label's action said the action was focused. `target: null` because a scale is the wrong unit here;
-    // the thumbs grow by pixels off `span` above.
+    // It covers the TRACK and the RESTING thumbs, not the label: a focus ring
+    // drawn around the label's action said the action was focused. `target:
+    // null` because a scale is the wrong unit here; the thumbs grow by pixels
+    // off `span` above.
+    //
+    // The ring is the TRACK's outline at a half-step, not the thumb's: sized
+    // to the thumb it floated off the bar by the thumb's overhang and read as
+    // a mistake, and flush on the track it vanished on a full accent bar
+    // (WCAG 2.4.13 wants 3:1 against the adjacent colour; M3 and Radix keep
+    // the indicator outside the component with a gap for the same reason).
+    // Concentric with the track: `Style.childRadius` is inner = outer minus
+    // inset, so outside it is outer = inner plus gap. The ring is BELOW both
+    // thumbs and above the track, and a thumb, resting or grown, stands on it
+    // and covers its own stretch. Qt juggles the handles between z 0 and 1 on
+    // every press, hence the half step rather than a whole one.
     StateLayer {
         id: layer
         objectName: "sliderLayer"
-        // Level with the thumbs rather than under them, so the ring wins at
-        // the bounds without a second number.
-        z: 1
+        z: -0.5
         host: root
         target: null
+        // Focus lives on a thumb, and a `T.Control` is not a focus scope:
+        // measured, the control's own `activeFocus` stays false while a
+        // descendant holds it, so the thumbs are read by name.
+        focused: root.activeFocus || highThumb.activeFocus || lowThumb.activeFocus
+        readonly property real gap: Style.spaceTight
+        readonly property real cross: root.thickness + gap * 2
         x: root.horizontal
-            ? root.leftPadding - root._hoverGrowth
-            : root.leftPadding + (root.availableWidth - root._thumbSpan) / 2
+            ? root.leftPadding - gap
+            : root.leftPadding + (root.availableWidth - cross) / 2
         y: root.horizontal
-            ? root.topPadding + (root.availableHeight - root._thumbSpan) / 2
-            : root.topPadding - root._hoverGrowth
-        width: root.horizontal ? root.availableWidth + root._hoverGrowth * 2 : root._thumbSpan
-        height: root.horizontal ? root._thumbSpan : root.availableHeight + root._hoverGrowth * 2
-        focusRadius: Math.min(width, height) / 2
-        focused: root.visualFocus || highThumb.visualFocus || lowThumb.visualFocus
+            ? root.topPadding + (root.availableHeight - cross) / 2
+            : root.topPadding - gap
+        width: root.horizontal ? root.availableWidth + gap * 2 : cross
+        height: root.horizontal ? cross : root.availableHeight + gap * 2
+        focusRadius: root.thickness / 2 + gap
     }
 
     // Which thumb a press grabs. Qt picks the node nearest the press BY

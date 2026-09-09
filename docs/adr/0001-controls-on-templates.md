@@ -18,7 +18,7 @@ working under quickshell.
    hand-rolled: `T.Popup` inside a `PanelWindow` paints only inside the
    window rect.
 3. `StateLayer` keeps the five states and the growth-not-tint rule. When its
-   host is a `T.Control` it reads `hovered`, `pressed`, `visualFocus` and
+   host is a `T.Control` it reads `hovered`, `pressed`, `activeFocus` and
    `enabled` from the host instead of owning pointer handlers.
 4. Every meaningful action is a function on the component and is listed in
    `readonly property list<Action> actions`, so a consumer's action menu can

@@ -45,10 +45,14 @@ Item {
     property real hoverScale: 1.08
     property real pressScale: 0.94
 
-    // Keyboard focus. In host mode it is `visualFocus`, which Qt sets only on
-    // keyboard-reason focus, so a click never paints the ring. Otherwise the
-    // host's activeFocus, as before.
-    property bool focused: _hosted ? host.visualFocus : (root.parent?.activeFocus ?? false)
+    // Focus shows whenever it is held, however it arrived. Reading Qt's
+    // `visualFocus` (keyboard reasons only) meant a click never painted the
+    // ring, and a window that lost and regained focus painted one out of
+    // nowhere; one fact, `activeFocus`, has no routes to get wrong. A host
+    // whose focus lives on a DESCENDANT (a text input, a slider thumb) sets
+    // this itself: a `T.Control` is not a focus scope, so its own
+    // `activeFocus` stays false while the descendant holds the focus.
+    property bool focused: _hosted ? host.activeFocus : (root.parent?.activeFocus ?? false)
     // The corner the ring follows. The host states it, because `parent` is a
     // plain Item as far as the type system is concerned and probing it for a
     // radius is a warning plus a guess.

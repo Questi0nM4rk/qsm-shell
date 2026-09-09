@@ -317,24 +317,10 @@ T.Control {
             // renders nothing and the overlay takes over.
             cursorDelegate: Item {}
 
-            // The one place in the frame that sees a press on the TEXT: the
-            // input accepts that press itself, so no ancestor handler hears
-            // it. Focus arrives on the press here and nowhere else, so this is
-            // the only point the pointer route marks. A handler is delivered
-            // before its own item and this one only takes a PASSIVE grab, so
-            // the press still reaches the input and drag-selection survives.
-            TapHandler {
-                onPressedChanged: if (pressed) root._focusOffTheKeyChain = true
-            }
-
             onTextEdited: {
                 root.selectionClaimed();
                 root.edited(text);
             }
-
-            // Losing focus forgets how the last focus arrived, so the next
-            // arrival is judged on its own route.
-            onActiveFocusChanged: if (!input.activeFocus) root._focusOffTheKeyChain = false
 
             // ONE dispatcher, and the reason is measured rather than
             // stylistic: `Keys.onPressed` and the per-key handlers
@@ -444,47 +430,23 @@ T.Control {
         // read-only rule lives in the background binding, where the pointer
         // states are answered.
         interactive: root.enabled
-        focused: root.keyboardFocused
+        // The focus lives on the input, and a `T.Control` is not a focus
+        // scope: measured, the frame's own `activeFocus` stays false while
+        // the input holds it, so the layer's hosted default would never ring.
+        focused: root.focused
         focusRadius: Style.radiusMd
         focusColor: root.failed ? Style.danger : Style.accent
     }
 
-    // The ring is a KEYBOARD mark: a pointer already says where it is, and a
-    // ring under the hand that put it there is noise. Qt will not tell us how
-    // focus arrived -- `Item` has no `focusReason` in QML, and a `T.Control`
-    // records reasons only for its OWN focus events, never for a descendant's
-    // -- so the routes that are not the key chain mark themselves. Each marks
-    // at the point where it HANDS focus over, never merely where a press
-    // landed: a press that ends in a drag or a long press hands over nothing,
-    // and a mark left behind by one would have swallowed the ring on the next
-    // Tab in. What is left unmarked is Tab and Backtab. Programmatic focus --
-    // `forceActiveFocus()` on the frame, `focus: true`, a shortcut that ends
-    // in either -- arrives through `onActiveFocusChanged` below and is marked
-    // as pointer-like: the caller already knows where it sent the caret.
-    //
-    // Not named `visualFocus`: `T.Control` already has one (always false here,
-    // `focusPolicy` is `NoFocus`) and a shadow would be a duplicate property.
-    property bool _focusOffTheKeyChain: false
-    readonly property bool keyboardFocused: input.activeFocus && !_focusOffTheKeyChain
-
     // `forceActiveFocus()` on the frame means "put the caret in this field".
     // A plain T.Control keeps that focus for itself, so the frame hands it on.
-    onActiveFocusChanged: {
-        if (!root.activeFocus)
-            return;
-        root._focusOffTheKeyChain = true;
-        input.forceActiveFocus();
-    }
+    onActiveFocusChanged: if (root.activeFocus) input.forceActiveFocus()
 
     TapHandler {
         // Tapping the padding focuses the input; slot actions sit above and
-        // take their own taps first. A tap on the text never reaches here --
-        // the input accepts that press itself -- which is why a `TapHandler`
-        // inside `input` marks that route instead.
-        onTapped: {
-            root._focusOffTheKeyChain = true;
-            input.forceActiveFocus(Qt.MouseFocusReason);
-        }
+        // take their own taps first. A tap on the text never reaches here:
+        // the input accepts that press itself.
+        onTapped: input.forceActiveFocus(Qt.MouseFocusReason)
     }
 
     // The cursor describes the region under it, not the outer component: a

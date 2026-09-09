@@ -1,6 +1,6 @@
 # Slider
 
-states: rest hover(thumb grows space1 per side; a pill grows along its length only, twice as far) press(growth kept, shadow lift doubles) focus(ring around track and thumbs, never around the label) disabled(every painted role through Style.disabled, still reads)
+states: rest hover(thumb grows space1 per side; a pill grows along its length only, twice as far) press(growth kept, shadow lift doubles) focus(ring around the track at a spaceTight gap, concentric, under the thumbs, never around the label) disabled(every painted role through Style.disabled, still reads)
 range: one type, one or two thumbs; range: true paints the low thumb (lowValue) and the fill runs between the thumbs, which never cross (Qt keeps low <= high); keyboard, wheel and actions step the last thumb a pointer grabbed, the high one until then; the high thumb alone carries thumbIcon/thumbText
 actions: Increase Decrease Minimum Maximum (on the active thumb)
 size: sm hairline (space1 track, iconSm thumb), md everyday (iconLg thumb), lg hardware level (controlHeight thumb); md and lg track = thumb minus space1, so a circle is never flush with its track; presets only, thickness/thumbSize stay the API. Main axis sliderLength / sliderLengthVertical plus the label; cross axis at least controlHeightSm and the thumb plus its growth plus the shadow drop

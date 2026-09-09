@@ -140,6 +140,14 @@ follow the design sources.
   `QT_QPA_PLATFORM=offscreen`. `tests/units/tst_units.qml` reads
   `scenarios.json` over XMLHttpRequest, which needs
   `QML_XHR_ALLOW_FILE_READ=1`; the npm scripts set it.
+- **No test QPA ever deactivates a window.** Under offscreen, xcb and wayland
+  alike, `requestActivate()` on a second window is a no-op and both report
+  `active`. Anything that depends on a window losing and regaining focus is
+  measured in the live window only: focus a window, hop away and back with
+  `hyprctl dispatch 'hl.dsp.focus({ direction = "left" })'`, then F12.
+- **The `--inspect` dump of a multi-scene window records the LAST scene
+  only.** Every `Preview` dumps and the last write wins. To inspect one
+  scene, open that scenario key alone.
 
 ## Component laws
 
@@ -243,6 +251,20 @@ Earned, each from a specific failure. Break one and name which.
   `StateLayer`'s accent ring sat above `TextField`'s danger border, so a failed
   field stopped looking failed exactly while a person focused it to repair
   the value. The host passes the semantic colour through `focusColor`.
+- **Focus shows whenever it is held, however it arrived.** The ring read
+  Qt's `visualFocus` and a hand-kept mark of "this focus came from a click",
+  so a click never rang and a window that lost and regained focus rang out
+  of nowhere: Qt drops `activeFocus` from every item when the window goes
+  inactive and gives it back with no route attached. `activeFocus` is the one
+  fact; guessing the route is a component doing the host's thinking.
+- **The focus ring sits OUTSIDE the painted body at a half-step, concentric,
+  under anything that overhangs.** Gap `Style.spaceTight`, outer radius =
+  the body's radius plus the gap (the reverse of `Style.childRadius`), z
+  below a thumb or glyph that stands on the body. Sized to a slider's grown
+  thumb the ring floated off the bar; flush on the bar it vanished on a full
+  accent track (WCAG 2.4.13 wants 3:1 against the adjacent colour, and M3,
+  Radix and Fluent all keep the indicator outside with a gap for that
+  reason). A ring around the track, not the handle: the handle moves.
 - **The cursor describes the region under it, not the outer component.** The
   editable body stays I-beam, a trailing action is a hand, and a leading
   action states its cursor explicitly.
