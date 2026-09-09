@@ -37,13 +37,34 @@ OPEN, not investigated: the offscreen capture pipeline does not rasterise
 `SvgIcon` glyphs. A blank where an icon belongs is the pipeline, not the
 component, but it means every PNG check is blind to anything icon-shaped.
 
-OPEN: a synthetic `mouseWheel` from QtTest does not reach a `WheelHandler`
-under `--window` (real Qt6 Wayland QPA). Offscreen stays the only valid run
-for wheel behaviour until this is understood.
+RESOLVED 2026-09-09, and it was never a test-harness limitation: under this
+Qt6 Wayland QPA a `WheelHandler` receives no wheel event at all, synthetic or
+REAL. Measured with two rectangles in one live window -- a real notch over a
+`WheelHandler` logs nothing while a `MouseArea.onWheel` beside it reports
+`angleDelta (0, -120)`; offscreen both work. `Slider` takes the wheel with a
+`MouseArea { acceptedButtons: Qt.NoButton }` and hands back what it cannot
+use, so `npm run unit -- Slider --window` now runs the wheel cases green
+(35/35) and `--window` is no longer blind to wheel behaviour.
 
-OPEN, found while rebuilding `Slider`: `MonthCalendar`'s `WheelHandler`
-treats any nonzero `angleDelta.y` as one month, the same non-accumulating
-shape `Slider` just lost. One touchpad flick pages through a year.
+OPEN, found while proving `Slider`'s slot actions 2026-09-09: under
+`--window` a synthetic `mouseMove` onto an `IconButton` in a slider SLOT
+reaches the slider's own `hovered` and stops there -- the button's own
+`StateLayer` never reports hover. Offscreen it does, and `TextField`'s
+identical trailing-action case passes under `--window`, so it is a
+Slider-vs-TextField structural difference in hover delivery, not the new
+wheel `MouseArea`: the same test fails the same way against `4300bbd`, the
+commit before that area existed. Suspect the `StateLayer` filling the
+control at `z: handle.z` above the slots, since a `HoverHandler` sets
+`acceptHoverEvents` on its item even while the handler is disabled. Needs a
+live pass with a real pointer before anything moves --
+`tests/units/tst_Slider.qml` carries the offscreen proof and the note.
+
+OPEN, found while rebuilding `Slider`: `MonthCalendar.qml:68` takes the wheel
+with a `WheelHandler`, so by the entry above it is DEAD in a live window --
+not merely non-accumulating, though it is also that (any nonzero
+`angleDelta.y` is one month, the shape `Slider` just lost, so one touchpad
+flick pages through a year). Both fix at its migration, and its tests will
+pass either way until the handler goes.
 
 OPEN, and one reason `BarPopouts` in the consumer is still NOT a `Rollout`:
 `Rollout` cannot yet be the PARENT of a nested rollout. `BarPopouts` talks to

@@ -26,6 +26,19 @@ TestCase {
     readonly property real keyStep: Style.sliderKeyboardUnits * Style.sliderStep
     readonly property real pageStep: Style.sliderPageUnits * Style.sliderStep
 
+    // A control's own StateLayer, found without giving every component an
+    // objectName for it: it is the child that reports the five states.
+    // Untyped on purpose -- `children` is a list of `Item`, and `hovered` is
+    // not a member of `Item`.
+    function layerOf(item) {
+        for (let i = 0; i < item.children.length; i++) {
+            const child = item.children[i];
+            if (child.hovered !== undefined && child.pressed !== undefined)
+                return child;
+        }
+        return null;
+    }
+
     Slider {
         id: sliderH
         x: 100; y: 20; width: 200; height: 32
@@ -164,6 +177,25 @@ TestCase {
         raised: true
     }
 
+    // A real action in a slot, with the wheel area live over it. The wheel is
+    // taken by a `MouseArea` that fills the whole control, and the one thing
+    // that must survive that is the slot content underneath keeping its own
+    // hover, press and click.
+    Slider {
+        id: sliderAction
+        x: 100; y: 690; width: 200
+        value: 0.5
+        wheelUnits: Style.sliderKeyboardUnits
+
+        after: IconButton {
+            id: slotAction
+            objectName: "sliderSlotAction"
+            icon: "volume"
+            size: Style.iconMd
+        }
+    }
+    SignalSpy { id: slotActionClicked; target: slotAction; signalName: "clicked" }
+
     function test_dragging_the_thumb_follows_the_pointer_and_changes_value() {
         sliderH.value = 0.5;
         movedSpyH.clear();
@@ -293,6 +325,52 @@ TestCase {
         mouseWheel(sliderH, 100, 16, 0, 120);
         wait(50);
         compare(sliderH.value, 0.5, "a slider with wheelUnits 0 still answered the wheel");
+    }
+
+    // The wheel is taken by a `MouseArea` that fills the control, so a wheel
+    // the slider cannot use must be handed BACK rather than swallowed: an
+    // area that keeps an event it did nothing with silently disables the
+    // scrolling of whatever encloses it. The enclosing area below is the
+    // scroller, and it only ever hears what the slider declined.
+    property int scrollerNotches: 0
+    Item {
+        id: scroller
+        x: 20; y: 560; width: 60; height: 120
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            onWheel: probe.scrollerNotches++
+        }
+
+        Slider {
+            id: sliderInScroller
+            anchors.fill: parent
+            orientation: Qt.Vertical
+            value: 0.5
+            wheelUnits: Style.sliderKeyboardUnits
+        }
+    }
+
+    function test_a_wheel_the_slider_cannot_use_reaches_the_enclosing_scroller() {
+        probe.scrollerNotches = 0;
+        sliderInScroller.value = 0.5;
+        mouseMove(sliderInScroller, 10, 60);
+
+        mouseWheel(sliderInScroller, 10, 60, 0, 120);
+        wait(50);
+        fuzzyCompare(sliderInScroller.value, 0.5 + probe.keyStep, 0.0001,
+            "the vertical slider did not take an on-axis notch");
+        compare(probe.scrollerNotches, 0,
+            "the slider used a notch AND passed it on, so the scroller scrolled too");
+
+        mouseWheel(sliderInScroller, 10, 60, 120, 0);
+        wait(50);
+        fuzzyCompare(sliderInScroller.value, 0.5 + probe.keyStep, 0.0001,
+            "a horizontal wheel moved a VERTICAL slider");
+        compare(probe.scrollerNotches, 1,
+            "an off-axis wheel was swallowed -- the slider did nothing with it and the "
+            + "enclosing scroller never saw it either");
     }
 
     // Everything here is read DURING the drag on purpose: a gesture switches
@@ -495,6 +573,52 @@ TestCase {
         sliderFat.raised = false;
     }
 
+    // The wheel is taken by a `MouseArea` that fills the whole control, so
+    // the question this answers is whether a slot action underneath still
+    // gets its own hover, press and click: `hoverEnabled` false and
+    // `acceptedButtons: Qt.NoButton` are supposed to make that area
+    // invisible to everything but the wheel, and that is a claim about
+    // delivery, not about flags. Proved with teeth: giving that area
+    // `hoverEnabled: true` fails the hover line below and nothing else.
+    //
+    // OFFSCREEN ONLY for the hover line. Under `--window` a synthetic
+    // `mouseMove` reaches this slider's own `hovered` and stops there,
+    // without reaching the slot action's `StateLayer` -- and it does the
+    // same against the component as it was BEFORE the wheel area existed
+    // (checked out `4300bbd` and re-run), so the area is not what blocks it.
+    // `tst_TextField`'s identical case passes under `--window`, so this is a
+    // Slider-vs-TextField structural difference in hover delivery and it is
+    // an OPEN item in the backlog, not something this test may assume away.
+    function test_a_slot_action_keeps_its_own_hover_and_click_under_the_wheel_area() {
+        mouseMove(probe, 5, 5);
+        slotActionClicked.clear();
+
+        const button = findChild(sliderAction, "sliderSlotAction");
+        verify(button !== null, "the slot action lost its objectName");
+        const layer = probe.layerOf(button);
+        verify(layer !== null, "the slot action has no StateLayer to read");
+
+        const before = sliderAction.value;
+
+        // Aimed at the BUTTON's own coordinates: the same shape
+        // `tst_TextField` uses, and the one that lands on the glyph rather
+        // than on whatever the slider's implicit height puts at that point.
+        mouseMove(button, button.width / 2, button.height / 2);
+        compare(sliderAction.hovered, true, "the pointer never arrived on the slider at all");
+        tryCompare(layer, "hovered", true, 500,
+            "the slot action never saw the pointer, though the slider itself did -- something "
+            + "above the slot is taking hover from it (offscreen; see the note above for --window)");
+
+        mouseClick(button, button.width / 2, button.height / 2);
+        compare(slotActionClicked.count, 1,
+            "a click on the slot action did not reach it");
+        compare(sliderAction.value, before,
+            "clicking a slot action moved the slider -- the press went through to the track");
+
+        mouseMove(probe, 5, 5);
+        tryCompare(layer, "hovered", false, 500, "the slot action kept hover after the pointer left");
+    }
+
     // The three size presets, one for each shape a call site asks for. They
     // are only the DEFAULT: `thickness` and `thumbSize` stay the primary API,
     // and a host that states one keeps it through a later size change --
@@ -639,7 +763,7 @@ TestCase {
             "a released drag did not leave committedValue on the value it ended at");
     }
 
-    // The pointer route (Qt's own press grab), the WheelHandler, the key
+    // The pointer route (Qt's own press grab), the wheel area, the key
     // dispatcher and hover all go inert together on a disabled slider --
     // confirmed by running this, not assumed.
     function test_disabled_ignores_pointer_wheel_and_keyboard_and_reports_no_hover() {
@@ -692,6 +816,15 @@ TestCase {
         compare(fill.color, Style.disabled(Style.accent),
             "a disabled fill is not its rest colour blended toward the background");
         compare(thumb.color.a, 1, "the dimmed thumb is translucent rather than dimmed");
+
+        // A literal, and the one place one is right: comparing against
+        // `Style.disabled` alone passes even if the blend is wrong, as long
+        // as both sides are wrong the same way. Deep-night's background is
+        // #1c0e27 and `opacityDisabled` is 0.35, so retuning either moves
+        // this number and the message says which.
+        compare(String(Style.disabled(Style.text)), "#685d71",
+            "the disabled blend of Style.text is not the measured deep-night value -- either "
+            + "the arithmetic changed or the theme's background / opacityDisabled did");
     }
 
     // Qt's own Slider handles the four arrows with `stepSize` as its step, so

@@ -538,10 +538,19 @@ T.Slider {
     }
 
     // The cursor describes the region under it. A HoverHandler on the ANCESTOR
-    // of the slots, not a filling MouseArea: a frontmost hoverEnabled item
-    // would eat hover from slot content and its own StateLayer would never
-    // grow. Slot content with a StateLayer of its own states its own cursor
-    // and wins over this default.
+    // of the slots, and NOT an item that accepts hover: a frontmost
+    // hoverEnabled item would eat hover from slot content and its own
+    // StateLayer would never grow.
+    //
+    // The wheel `MouseArea` below fills the control as well and is not that
+    // case: with `hoverEnabled` left false and `acceptedButtons: Qt.NoButton`
+    // it is skipped for both hover and press delivery and receives only the
+    // wheel, so a slot action underneath keeps its own hover, its own press
+    // and its own click. That is proved with a real `IconButton` in a slot in
+    // `tests/units/tst_Slider.qml`, not assumed from the flags.
+    //
+    // Slot content with a StateLayer of its own states its own cursor and
+    // wins over this default.
     HoverHandler {
         cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
     }
@@ -686,8 +695,17 @@ T.Slider {
             const delta = event.angleDelta.y !== 0
                 ? event.angleDelta.y
                 : (root.vertical ? 0 : -event.angleDelta.x);
-            if (delta === 0)
+            // Nothing on this axis to answer, so the event is handed BACK
+            // rather than swallowed: a horizontal wheel over a vertical
+            // slider belongs to whatever encloses it, and an area that keeps
+            // an event it did nothing with is an area that silently disables
+            // its host's scrolling. A `wheelUnits: 0` slider never reaches
+            // this at all -- the area is `enabled: false` and the wheel is
+            // delivered straight past it.
+            if (delta === 0) {
+                event.accepted = false;
                 return;
+            }
             if (Math.sign(delta) !== Math.sign(root._wheelAccumulator))
                 root._wheelAccumulator = 0;
             root._wheelAccumulator += delta;

@@ -109,16 +109,25 @@
   opening the same scene in a live window, where the glyph paints. So a
   capture proves layout and that a scene renders at all; anything with a
   glyph in it can only be judged in the live window.
-- **A `WheelHandler` never sees a wheel event in a live Wayland window.**
-  Measured with a REAL wheel on this Qt6 Wayland QPA: a notch over a
+- **Under the Qt6 Wayland QPA a `WheelHandler` never sees a wheel event.**
+  Measured with a REAL wheel on this machine's QPA: a notch over a
   `WheelHandler` logs nothing, while a `MouseArea.onWheel` sitting beside it
   in the same scene reports `angleDelta (0, -120)`. Offscreen both work, so
   a wheel route built on a handler passes every test it has and is dead
   under a hand. This was recorded here for a day as "synthetic `mouseWheel`
   does not reach a `WheelHandler` under `--window`", which read as a test
-  harness limitation and hid a live defect. Take the wheel with a
-  `MouseArea { acceptedButtons: Qt.NoButton }`; pointer, key and focus
-  events work under both platforms.
+  harness limitation and hid a live defect; the claim is about this
+  platform, not about `WheelHandler` everywhere. Take the wheel with a
+  `MouseArea { acceptedButtons: Qt.NoButton }`, which is skipped for hover
+  and press delivery and receives only the wheel -- and which CONSUMES that
+  wheel unless it hands it back with `accepted = false`, so a path that does
+  nothing with an event must say so or it disables an enclosing scroller.
+  Pointer, key and focus events work under both platforms, with one measured
+  exception: a synthetic `mouseMove` onto an action inside a `Slider` SLOT
+  reaches the slider's own `hovered` and never reaches that action's own
+  `StateLayer` under `--window`, while the same case in `TextField` passes.
+  Offscreen is the valid run for a nested slot action's hover; the backlog
+  carries it as OPEN.
 
 ## Migrating a type
 

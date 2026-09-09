@@ -480,5 +480,14 @@ TestCase {
         compare(input.color, Style.disabled(Style.text),
             "disabled text is not its rest colour blended toward the background");
         compare(surface.color.a, 1, "the dimmed surface is translucent rather than dimmed");
+
+        // A literal, and the one place one is right: comparing against
+        // `Style.disabled` alone passes even if the blend is wrong, as long
+        // as both sides are wrong the same way. Deep-night's background is
+        // #1c0e27 and `opacityDisabled` is 0.35, so retuning either moves
+        // this number and the message says which.
+        compare(String(Style.disabled(Style.surface)), "#1e1028",
+            "the disabled blend of Style.surface is not the measured deep-night value -- either "
+            + "the arithmetic changed or the theme's background / opacityDisabled did");
     }
 }
