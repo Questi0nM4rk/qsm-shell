@@ -71,6 +71,24 @@ TestCase {
             const item = component.createObject(probe);
             verify(item !== null, name + ": " + component.errorString());
 
+            // Actions first, on the unit as it was declared. The controls walk
+            // ends on the LAST option of every group, which is where a
+            // disabled or read-only state usually sits -- run after it, every
+            // action was disabled and `trigger()` proved nothing.
+            const actions = actionsOf(item);
+            try {
+                for (let a = 0; a < actions.length; a++) {
+                    const action = actions[a];
+                    verify(typeof action.text === "string" && action.text.length > 0,
+                           name + ": action " + a + " has no text, an action menu would show a blank row");
+                    verify(typeof action.trigger === "function",
+                           name + ": action '" + action.text + "' is not a T.Action");
+                    action.trigger();
+                }
+            } catch (e) {
+                fail(name + ": actions: " + e);
+            }
+
             const groups = controlsOf(item);
             try {
                 for (let g = 0; g < groups.length; g++) {
@@ -87,20 +105,6 @@ TestCase {
                 }
             } catch (e) {
                 fail(name + ": " + e);
-            }
-
-            const actions = actionsOf(item);
-            try {
-                for (let a = 0; a < actions.length; a++) {
-                    const action = actions[a];
-                    verify(typeof action.text === "string" && action.text.length > 0,
-                           name + ": action " + a + " has no text, an action menu would show a blank row");
-                    verify(typeof action.trigger === "function",
-                           name + ": action '" + action.text + "' is not a T.Action");
-                    action.trigger();
-                }
-            } catch (e) {
-                fail(name + ": actions: " + e);
             }
 
             verify(item !== null, name + ": did not survive its own controls");

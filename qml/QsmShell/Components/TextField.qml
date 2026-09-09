@@ -123,6 +123,11 @@ T.Control {
             checkable: true
             checked: root.passwordVisible
             onTriggered: root.toggleReveal()
+        },
+        T.Action {
+            text: "Select all"
+            enabled: root.enabled && input.length > 0
+            onTriggered: root.selectAll()
         }
     ]
 
@@ -188,11 +193,39 @@ T.Control {
         }
     }
 
+    // Does this slot hold anything? Counting children answered the wrong
+    // question, because a `Loader` never gives its footprint back: measured,
+    // a Loader that unloads still reports implicit 24x24 with `item` null, so
+    // a trailing action that switched itself off went on reserving an
+    // action's width beside an empty value -- and an empty slot takes no
+    // space. A child that loads its content counts once it HAS it; any other
+    // child counts by being there.
+    //
+    // Geometry is deliberately NOT read here. Asking a child for its `width`
+    // or even its `visible` puts a per-child read inside the binding that
+    // sizes their own parent, and Qt then reports a binding loop on the
+    // slot's `implicitWidth` (measured: appears as soon as `visible` is read,
+    // gone when it is not). The Loader's `item` is the one honest signal that
+    // does not go through layout.
+    //
+    // `slot` is untyped on purpose: `children` is a list of `Item`, and
+    // neither `sourceComponent` nor `item` is a member of `Item`.
+    function _slotHasContent(slot): bool {
+        for (let i = 0; i < slot.children.length; i++) {
+            const child = slot.children[i];
+            if (child.sourceComponent === undefined)
+                return true;
+            if (child.item !== null)
+                return true;
+        }
+        return false;
+    }
+
     // The slots live in the padding, outside the clipped content, so a glyph
     // is never scrolled over by the text.
     Item {
         id: leadingSlot
-        readonly property bool hasContent: children.length > 0
+        readonly property bool hasContent: root._slotHasContent(leadingSlot)
         x: Style.space3
         anchors.verticalCenter: parent.verticalCenter
         implicitWidth: hasContent ? childrenRect.width : 0
@@ -203,7 +236,7 @@ T.Control {
 
     Item {
         id: trailingSlot
-        readonly property bool hasContent: children.length > 0
+        readonly property bool hasContent: root._slotHasContent(trailingSlot)
         anchors.right: parent.right
         anchors.rightMargin: Style.space3
         anchors.verticalCenter: parent.verticalCenter
@@ -396,10 +429,17 @@ T.Control {
     // every state. `target: null` because nothing here scales.
     StateLayer {
         id: layer
+        objectName: "textFieldLayer"
         anchors.fill: parent
         target: null
         host: root
-        interactive: root.enabled && !input.readOnly
+        // `enabled` alone. A read-only field is still a tab stop -- its value
+        // can be selected and copied -- and the layer owns the ring, so
+        // gating the layer on editability took the ring off the one route
+        // that has nothing else to say where it is. The no-lift-while-
+        // read-only rule lives in the background binding, where the pointer
+        // states are answered.
+        interactive: root.enabled
         focused: root.keyboardFocused
         focusRadius: Style.radiusMd
         focusColor: root.failed ? Style.danger : Style.accent
@@ -413,7 +453,10 @@ T.Control {
     // at the point where it HANDS focus over, never merely where a press
     // landed: a press that ends in a drag or a long press hands over nothing,
     // and a mark left behind by one would have swallowed the ring on the next
-    // Tab in. What is left unmarked is Tab, Backtab and a shortcut.
+    // Tab in. What is left unmarked is Tab and Backtab. Programmatic focus --
+    // `forceActiveFocus()` on the frame, `focus: true`, a shortcut that ends
+    // in either -- arrives through `onActiveFocusChanged` below and is marked
+    // as pointer-like: the caller already knows where it sent the caret.
     //
     // Not named `visualFocus`: `T.Control` already has one (always false here,
     // `focusPolicy` is `NoFocus`) and a shadow would be a duplicate property.

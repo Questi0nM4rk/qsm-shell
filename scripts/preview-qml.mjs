@@ -55,8 +55,12 @@ child.stderr.on('data', (chunk) => {
   pending = lines.pop()
   for (const line of lines) classify(line)
 })
-child.on('exit', (code) => {
-  // A child that exits without a trailing newline on stderr leaves one line
+// `close`, not `exit`: `exit` fires as soon as the process is gone, while the
+// stderr pipe can still hold unread data -- a crash message written on the way
+// out was lost about as often as it was seen. `close` waits for the stream to
+// end, so the reader above has already fed every line to `classify`.
+child.on('close', (code) => {
+  // A child that dies without a trailing newline on stderr leaves one line
   // sitting in `pending` -- classify it too, or it never reaches the
   // terminal or the inspect file.
   if (pending)

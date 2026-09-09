@@ -204,6 +204,22 @@ TestCase {
         tryCompare(layer, "hovered", true, 500);
     }
 
+    // "An empty slot takes no space." A `Loader` keeps its last item's
+    // implicit size after `active: false` -- measured: implicit 24x24 with
+    // `item` null -- so a field that had a trailing action and then lost its
+    // text went on reserving a whole action's width next to an empty value.
+    function test_an_empty_trailing_slot_takes_no_space() {
+        composedField.text = "Plain text";
+        wait(0);
+        verify(composedField.rightPadding > Style.space3,
+            "a filled field reserved no room for its trailing action");
+
+        composedField.text = "";
+        wait(0);
+        compare(composedField.rightPadding, Style.space3,
+            "an emptied field kept its inactive trailing action's footprint");
+    }
+
     // "Unavailable and not-a-target are different states": a read-only field
     // reports, it is not a target. Its two state owners used to disagree --
     // the layer stopped answering while the background lifted anyway, so a
@@ -334,7 +350,7 @@ TestCase {
         const names = [];
         for (let i = 0; i < field.actions.length; i++)
             names.push(field.actions[i].text);
-        compare(names, ["Accept", "Clear", "Reveal"], "action list changed shape");
+        compare(names, ["Accept", "Clear", "Reveal", "Select all"], "action list changed shape");
 
         field.actions[0].trigger();
         compare(probe.accepts, 1, "Accept action did not go through accept()");
@@ -351,6 +367,18 @@ TestCase {
         compare(field.passwordVisible, true, "Reveal did not toggle passwordVisible");
         field.inputType = "text";
         field.passwordVisible = false;
+        // A checkable action's `trigger()` writes `checked` itself, so the
+        // menu's tick has to keep following the field rather than the last
+        // trigger.
+        compare(field.actions[2].checked, false, "Action.trigger() severed the checked binding");
+
+        // Select all is a menu route onto the same function the keyboard uses.
+        field.text = "42";
+        const input = findChild(field, "textFieldInput");
+        verify(input !== null, "the input is not reachable for the select-all assert");
+        field.actions[3].trigger();
+        compare(input.selectedText, field.text,
+            "the Select all action did not select the whole value");
     }
 
     // The ring is a KEYBOARD mark. A pointer already says where it is, so a
@@ -394,5 +422,28 @@ TestCase {
         probe.forceActiveFocus();
         keyClick(Qt.Key_Tab);
         tryCompare(field, "keyboardFocused", true, 500);
+    }
+
+    // A read-only field is still a tab stop: the value it reports can be
+    // selected and copied, so the keyboard has to be able to land on it and
+    // be told where it is. The layer used to stop answering while read-only
+    // and took the ring with it -- Tab arrived and nothing marked it.
+    function test_a_read_only_field_still_rings_on_the_tab_route() {
+        field.readOnly = true;
+        probe.forceActiveFocus();
+        verify(!field.focused, "the field held focus before the Tab route");
+
+        keyClick(Qt.Key_Tab);
+        tryCompare(field, "keyboardFocused", true, 500);
+
+        const layer = findChild(field, "textFieldLayer");
+        verify(layer !== null, "the field's StateLayer is not reachable");
+        let ring = null;
+        for (let i = 0; i < layer.children.length; i++) {
+            if (layer.children[i].border !== undefined)
+                ring = layer.children[i];
+        }
+        verify(ring !== null, "the StateLayer has no focus ring to read");
+        verify(ring.visible, "a read-only field on the Tab route painted no focus ring");
     }
 }
