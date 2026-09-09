@@ -38,19 +38,28 @@ const child = spawn(
 
 // Dump lines are data for the audit, not noise for the person: they go to
 // the --inspect file (last one wins) and never to the terminal.
+function classify(line) {
+  const at = line.indexOf('QSM_INSPECT ')
+  if (at >= 0) {
+    if (inspectPath)
+      writeFileSync(inspectPath, line.slice(at + 'QSM_INSPECT '.length) + '\n')
+  } else {
+    process.stderr.write(line + '\n')
+  }
+}
+
 let pending = ''
 child.stderr.on('data', (chunk) => {
   pending += chunk
   const lines = pending.split('\n')
   pending = lines.pop()
-  for (const line of lines) {
-    const at = line.indexOf('QSM_INSPECT ')
-    if (at >= 0) {
-      if (inspectPath)
-        writeFileSync(inspectPath, line.slice(at + 'QSM_INSPECT '.length) + '\n')
-    } else {
-      process.stderr.write(line + '\n')
-    }
-  }
+  for (const line of lines) classify(line)
 })
-child.on('exit', (code) => process.exit(code || 0))
+child.on('exit', (code) => {
+  // A child that exits without a trailing newline on stderr leaves one line
+  // sitting in `pending` -- classify it too, or it never reaches the
+  // terminal or the inspect file.
+  if (pending)
+    classify(pending)
+  process.exit(code || 0)
+})

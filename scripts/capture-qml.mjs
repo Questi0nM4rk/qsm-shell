@@ -48,12 +48,16 @@ const result = spawnSync('/usr/lib/qt6/bin/qml', ['-I', resolve(root, 'qml'), te
 
 rmSync(temporary, { force: true })
 
-const dumps = (result.stderr || '').split('\n').filter((l) => l.includes('QSM_INSPECT '))
+const stderrLines = (result.stderr || '').split('\n')
+const dumps = stderrLines.filter((l) => l.includes('QSM_INSPECT '))
+// Dump lines are data for the audit, never for the terminal -- the failure
+// fallback below must see the same scrubbed stream a dump-free run would.
+const scrubbedStderr = stderrLines.filter((l) => !l.includes('QSM_INSPECT ')).join('\n')
 if (inspectPath && dumps.length > 0)
   writeFileSync(inspectPath, `${dumps.at(-1).slice(dumps.at(-1).indexOf('QSM_INSPECT ') + 'QSM_INSPECT '.length)}\n`)
 
 if (result.status !== 0 || !existsSync(output)) {
-  console.error(result.stderr || result.stdout || 'QML capture failed')
+  console.error(scrubbedStderr || result.stdout || 'QML capture failed')
   process.exit(result.status || 1)
 }
 
