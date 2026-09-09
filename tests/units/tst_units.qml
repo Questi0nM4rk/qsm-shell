@@ -23,6 +23,19 @@ TestCase {
         return Array.isArray(item.controls) ? item.controls : [];
     }
 
+    // `actions` is the component's own enumeration of what it can do, the
+    // list a consumer's action menu renders. Untyped access for the same
+    // reason as `controls`: the unit's type is only known at runtime.
+    function actionsOf(item) {
+        const list = item.actions;
+        if (list === undefined || list === null)
+            return [];
+        const out = [];
+        for (let i = 0; i < list.length; i++)
+            out.push(list[i]);
+        return out;
+    }
+
     function unitNames() {
         const request = new XMLHttpRequest();
         request.open("GET", Qt.resolvedUrl("../../previews/scenarios.json"), false);
@@ -74,6 +87,20 @@ TestCase {
                 }
             } catch (e) {
                 fail(name + ": " + e);
+            }
+
+            const actions = actionsOf(item);
+            try {
+                for (let a = 0; a < actions.length; a++) {
+                    const action = actions[a];
+                    verify(typeof action.text === "string" && action.text.length > 0,
+                           name + ": action " + a + " has no text, an action menu would show a blank row");
+                    verify(typeof action.trigger === "function",
+                           name + ": action '" + action.text + "' is not a T.Action");
+                    action.trigger();
+                }
+            } catch (e) {
+                fail(name + ": actions: " + e);
             }
 
             verify(item !== null, name + ": did not survive its own controls");
