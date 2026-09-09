@@ -35,8 +35,7 @@ Column {
     property alias orientation: slider.orientation
     property alias raised: slider.raised
     property alias wheelUnits: slider.wheelUnits
-    property alias thickness: slider.thickness
-    property alias thumbSize: slider.thumbSize
+    property alias size: slider.size
     // The component's own enumeration of what it can do. `tests/units`
     // triggers a unit's actions, and a wrapper that does not hand them up
     // takes the slider's four out of that walk without saying so.
@@ -60,11 +59,6 @@ Column {
         value: root.variant.indexOf("high") >= 0 ? .82 : .42
         wheelUnits: Style.sliderKeyboardUnits
         raised: root.decorated
-        // The OSD's fat track and big thumb, from the control scale rather
-        // than the literals 40 and 32 this file used to type.
-        thickness: root.decorated ? Style.controlHeight : Style.sliderTrackThickness
-        thumbSize: root.decorated ? Style.controlHeightSm : Style.sliderThumbSize
-        trackColor: root.decorated ? Qt.darker(Style.surface, 1.35) : Style.surfaceHover
 
         // Both slots are real and both are Loaders, so the slot the glyph is
         // not in reserves nothing -- a bare slider looks exactly like a bare
@@ -79,8 +73,15 @@ Column {
             sourceComponent: root.decorated ? glyphAction : glyphIcon
         }
 
+        // The readout is sized to the THUMB minus one step of breathing room
+        // per side and fits itself into that box, because the thumb is a
+        // property of the call site: at `sm` the same two digits overflowed a
+        // 12px thumb by 4.7px and `anchors.centerIn` spilled them
+        // symmetrically over the track.
         thumbContent: Loader {
             anchors.centerIn: parent
+            width: parent.width - Style.space1 * 2
+            height: parent.height - Style.space1 * 2
             active: root.showThumbContent
             sourceComponent: Text {
                 text: Math.round(slider.value * 100)
@@ -88,8 +89,33 @@ Column {
                 font.family: Style.fontFamily
                 font.pixelSize: Style.textSm
                 font.weight: Style.weightBold
+                fontSizeMode: Text.Fit
+                minimumPixelSize: Style.textXs
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
             }
         }
+    }
+
+    // The OSD's fat track and big thumb, STATED rather than derived. It is an
+    // override a call site makes, and a `Binding` states one without the
+    // plain rail having to name a preset value it would then have to keep in
+    // sync with the component. Clicking `size` on this variant changes
+    // nothing, which is the point: an override wins over a preset.
+    Binding {
+        target: slider
+        property: "thickness"
+        value: Style.controlHeight
+        when: root.decorated
+        restoreMode: Binding.RestoreBindingOrValue
+    }
+
+    Binding {
+        target: slider
+        property: "thumbSize"
+        value: Style.controlHeight
+        when: root.decorated
+        restoreMode: Binding.RestoreBindingOrValue
     }
 
     // What the host sees. `value` follows the drag frame by frame because it
@@ -106,7 +132,10 @@ Column {
         SvgIcon {
             name: "volume"
             size: Style.iconMd
-            color: Style.textMuted
+            // Slot content is the HOST's, including what it does while the
+            // control is unavailable: the component dims its own layers by
+            // colour and never by opacity, so nothing dims a glyph for us.
+            color: slider.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
         }
     }
 
@@ -132,16 +161,12 @@ Column {
             { label: "horizontal", set: { orientation: Qt.Horizontal } },
             { label: "vertical",   set: { orientation: Qt.Vertical } }
         ]},
-        { label: "thickness", options: [
-            { label: "sm", set: {
-                thickness: Style.sliderTrackThickness, thumbSize: Style.sliderThumbSize
-            }},
-            { label: "md", set: {
-                thickness: Style.controlHeightSm, thumbSize: Style.controlHeightSm
-            }},
-            { label: "lg", set: {
-                thickness: Style.controlHeight, thumbSize: Style.controlHeight
-            }}
+        // One property, three shapes: the component owns which numbers each
+        // size means, so the strip names the size and nothing else.
+        { label: "size", options: [
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } }
         ]},
         { label: "glyph", options: [
             { label: "on",  set: { showGlyph: true } },

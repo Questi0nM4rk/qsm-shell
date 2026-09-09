@@ -32,6 +32,7 @@ Item {
         property real opacityDisabled: 0.23
         property int sliderThumbSize: 19
         property int sliderTrackThickness: 7
+        property int iconLg: 26
         property int controlHeight: 53
         property int controlHeightSm: 29
         property int textDisplay: 37
@@ -65,8 +66,10 @@ Item {
         if (!require(capsule.implicitHeight === backend.controlHeight,
                 "Capsule did not consume backend height"))
             return;
-        if (!require(level.thumbSize === backend.sliderThumbSize,
-                "Slider did not consume backend thumb size"))
+        // The md thumb derives from the icon scale, so that is the token the
+        // consumer's backend has to reach.
+        if (!require(level.thumbSize === backend.iconLg,
+                "Slider did not derive its md thumb from the backend icon scale"))
             return;
         if (!require(disabledButton.opacity === backend.opacityDisabled,
                 "IconButton did not consume backend disabled opacity"))

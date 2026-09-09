@@ -19,7 +19,7 @@ TestCase {
 
     name: "Slider"
     width: 400
-    height: 560
+    height: 760
     visible: true
     when: windowShown
 
@@ -134,6 +134,34 @@ TestCase {
         id: sliderFresh
         x: 100; y: 470; width: 200; height: 32
         value: 0.35
+    }
+
+    // The size presets, and the explicit override that has to outlive a
+    // preset change. No height: the cross axis is whatever the preset asks
+    // for.
+    Slider {
+        id: sliderSize
+        x: 100; y: 510; width: 200
+        value: 0.5
+    }
+
+    // Raised and VERTICAL, with no slots to absorb anything: the case where
+    // the shadow drops along the MAIN axis, which is the one nothing padded.
+    Slider {
+        id: sliderVertRaised
+        x: 310; y: 500; width: 60; height: 200
+        orientation: Qt.Vertical
+        raised: true
+        value: 0.5
+    }
+
+    // Hover and press growth, clear of every other case so no stray pointer
+    // move can leave it hovered.
+    Slider {
+        id: sliderHover
+        x: 100; y: 600; width: 200
+        value: 0.5
+        raised: true
     }
 
     function test_dragging_the_thumb_follows_the_pointer_and_changes_value() {
@@ -393,9 +421,13 @@ TestCase {
             sliderFat.thickness = shape.thickness;
             sliderFat.thumbSize = shape.thumb;
 
-            const expected = Math.max(Style.controlHeightSm, shape.thickness, shape.thumb);
+            // The thumb GROWS by `space1` per side on hover, and a growth the
+            // control does not reserve is a growth that paints outside it.
+            const expected = Math.max(
+                Style.controlHeightSm, shape.thickness, shape.thumb + Style.space1 * 2);
             compare(sliderFat.implicitHeight, expected,
-                "the cross axis is not the largest of controlHeightSm, thickness and thumbSize");
+                "the cross axis is not the largest of controlHeightSm, thickness and the "
+                + "thumb plus the room its hover growth needs");
             compare(sliderFat.height, expected,
                 "the control did not take the cross size it asked for");
 
@@ -410,41 +442,178 @@ TestCase {
 
     // A raised thumb casts a shadow that drops further while pressed, and the
     // control has to be big enough to hold it: a caller sizing a row to a
-    // slider otherwise gets a smudge over whatever sits under it. Pressed
-    // with a real pointer, because the deepest drop is a press state.
+    // slider otherwise gets a smudge over whatever sits under it.
+    //
+    // The shadow drops along `y` in BOTH orientations -- it is gravity, not
+    // the axis -- so on a horizontal slider the slack it needs is cross-axis
+    // and on a vertical one it is MAIN-axis. Measured, the vertical case
+    // spent its slack on the width and painted 2px (4px pressed) below the
+    // control's own bottom edge at the low bound, which is where the thumb is
+    // flush with the end of the track and there is nothing left to give.
     function test_a_raised_thumb_keeps_its_shadow_inside_the_control() {
+        const cases = [
+            { slider: sliderFat, horizontal: true },
+            { slider: sliderVertRaised, horizontal: false }
+        ];
+
         sliderFat.raised = true;
         sliderFat.thickness = Style.controlHeight;
         sliderFat.thumbSize = Style.controlHeight;
 
-        const shadow = findChild(sliderFat, "sliderThumbShadow");
-        verify(shadow !== null, "the thumb shadow lost its objectName");
+        for (let i = 0; i < cases.length; i++) {
+            const slider = cases[i].slider;
+            const label = cases[i].horizontal ? "horizontal" : "vertical";
+            const shadow = findChild(slider, "sliderThumbShadow");
+            verify(shadow !== null, label + ": the thumb shadow lost its objectName");
 
-        sliderFat.value = 0.5;
-        const midway = sliderFat.width / 2;
-        mousePress(sliderFat, midway, sliderFat.height / 2);
-        const bottom = shadow.mapToItem(sliderFat, 0, 0).y + shadow.height;
-        mouseRelease(sliderFat, midway, sliderFat.height / 2);
+            // The low bound, where the thumb has travelled as far as it can
+            // and no padding is left between it and the end of the control.
+            slider.toMinimum();
+            const x = slider.width / 2;
+            const y = cases[i].horizontal ? slider.height / 2 : slider.height - 2;
 
-        verify(bottom <= sliderFat.height + 0.5,
-            "a pressed raised thumb's shadow paints " + (bottom - sliderFat.height)
-            + "px below the control's own bottom edge");
+            mouseMove(slider, x, y);
+            let rect = shadow.mapToItem(slider, 0, 0);
+            verify(rect.y + shadow.height <= slider.height + 0.5,
+                label + ": a hovered raised thumb's shadow paints "
+                + (rect.y + shadow.height - slider.height) + "px below the control's bottom edge");
+            verify(rect.x >= -0.5 && rect.x + shadow.width <= slider.width + 0.5,
+                label + ": the shadow paints outside the control across the axis");
+
+            mousePress(slider, x, y);
+            wait(Motion.press * 3);
+            rect = shadow.mapToItem(slider, 0, 0);
+            const overflow = rect.y + shadow.height - slider.height;
+            mouseRelease(slider, x, y);
+
+            verify(overflow <= 0.5,
+                label + ": a pressed raised thumb's shadow paints " + overflow
+                + "px below the control's own bottom edge");
+            mouseMove(probe, 5, 5);
+        }
 
         sliderFat.raised = false;
     }
 
+    // The three size presets, one for each shape a call site asks for. They
+    // are only the DEFAULT: `thickness` and `thumbSize` stay the primary API,
+    // and a host that states one keeps it through a later size change --
+    // otherwise a preset would silently take back a decision the call site
+    // made on purpose.
+    function test_size_presets_resolve_the_track_and_thumb_scale() {
+        compare(sliderFresh.size, "md", "the default size is not md");
+        compare(sliderFresh.thickness, Style.space2, "the md preset did not reach thickness");
+        compare(sliderFresh.thumbSize, Style.iconLg, "the md preset did not reach thumbSize");
+
+        const shapes = [
+            { size: "sm", thickness: Style.space1, thumb: Style.iconSm },
+            { size: "md", thickness: Style.space2, thumb: Style.iconLg },
+            { size: "lg", thickness: Style.space2, thumb: Style.controlHeightSm }
+        ];
+
+        for (let i = 0; i < shapes.length; i++) {
+            sliderSize.size = shapes[i].size;
+            compare(sliderSize.thickness, shapes[i].thickness,
+                "size " + shapes[i].size + " did not resolve its track thickness");
+            compare(sliderSize.thumbSize, shapes[i].thumb,
+                "size " + shapes[i].size + " did not resolve its thumb size");
+        }
+
+        sliderSize.thumbSize = Style.controlHeight;
+        sliderSize.size = "sm";
+        compare(sliderSize.thumbSize, Style.controlHeight,
+            "a size change took back an explicit thumbSize -- the preset is the default, "
+            + "not an override of the call site");
+        compare(sliderSize.thickness, Style.space1,
+            "the size preset stopped reaching thickness once thumbSize was stated");
+
+        sliderSize.size = "md";
+    }
+
+    // One thumb colour, in every state. A raised thumb at rest used to paint
+    // DARKER than its own fill (measured 1.06:1), so its fill-side half had
+    // no edge at all -- and the property's own rule is that the thumb is the
+    // lightest thing on the surface, which is what makes it read as raised
+    // out of the track rather than as a hole cut into it.
+    function test_the_raised_thumb_at_rest_is_the_same_colour_as_an_active_one() {
+        mouseMove(probe, 5, 5);
+        const thumb = findChild(sliderVertRaised, "sliderThumb");
+        verify(thumb !== null, "the thumb lost its objectName");
+
+        compare(sliderVertRaised.raised, true, "the raised case is not raised");
+        compare(sliderVertRaised.active, false, "the raised case was still active at rest");
+        tryCompare(thumb, "color", Style.text, 500,
+            "a raised thumb at rest is not the library's thumb colour -- it is darker than "
+            + "the fill it sits on and loses its edge");
+
+        mouseMove(sliderVertRaised, sliderVertRaised.width / 2, sliderVertRaised.height / 2);
+        compare(sliderVertRaised.active, true, "the pointer never reached the raised case");
+        tryCompare(thumb, "color", Style.text, 500, "the active thumb changed colour");
+        mouseMove(probe, 5, 5);
+    }
+
+    // Hover and press, at a size a person can see. `StateLayer`'s 1.08/0.94
+    // scale is 0.96px of diameter on a 12px thumb, which is an answer nobody
+    // can see, and the 6% press SHRINK contradicted the shadow saying the
+    // thumb had just risen. So the thumb grows by a fixed `space1` per side,
+    // and the press cue is the lift doubling with the growth kept.
+    function test_hover_grows_the_thumb_and_press_lifts_it_without_shrinking() {
+        mouseMove(probe, 5, 5);
+        const thumb = findChild(sliderHover, "sliderThumb");
+        const shadow = findChild(sliderHover, "sliderThumbShadow");
+        verify(thumb !== null && shadow !== null, "a painted part lost its objectName");
+
+        const rest = sliderHover.thumbSize;
+        const grown = rest + Style.space1 * 2;
+        tryCompare(thumb, "width", rest, 500, "the resting thumb is not its own thumbSize");
+        tryVerify(() => Math.abs((shadow.y - thumb.y) - Style.sliderThumbLift) < 0.5, 500,
+            "the resting shadow does not sit one lift below the thumb");
+
+        const midway = sliderHover.width / 2;
+        const across = sliderHover.height / 2;
+        mouseMove(sliderHover, midway, across);
+        compare(sliderHover.hovered, true, "the pointer never arrived");
+        tryCompare(thumb, "width", grown, 500,
+            "hover did not grow the thumb by space1 per side");
+        tryCompare(thumb, "height", grown, 500, "the grown thumb is not still a circle");
+        tryVerify(() => Math.abs((shadow.y - thumb.y) - Style.sliderThumbLift) < 0.5, 500,
+            "hover changed the lift, which is the press cue");
+
+        mousePress(sliderHover, midway, across);
+        tryVerify(() => Math.abs((shadow.y - thumb.y) - Style.sliderThumbLift * 2) < 0.5, 500,
+            "the press did not double the lift");
+        compare(thumb.width, grown,
+            "the press SHRANK the thumb while its shadow said it had risen -- two press cues "
+            + "that contradict each other");
+
+        // A drag that leaves the control keeps the press, so it has to keep
+        // the growth: a thumb that shrinks mid-gesture is the control letting
+        // go under the finger holding it.
+        mouseMove(sliderHover, midway, across - 200);
+        compare(thumb.width, grown, "the thumb shrank when the pointer left mid-drag");
+        mouseRelease(sliderHover, midway, across - 200);
+
+        mouseMove(probe, 5, 5);
+        tryCompare(thumb, "width", rest, 500, "the thumb never came back down");
+    }
+
     // An empty slot takes no space, so a bare slider looks exactly like a
     // bare slider -- and a slot that UNLOADS gives its space back.
+    //
+    // Read against the OTHER end of the same axis rather than against 0: both
+    // ends reserve the room the thumb's hover growth needs, so what "an empty
+    // slot takes no space" means is that the two ends agree.
     function test_an_empty_slot_reserves_no_padding() {
         probe.slotLoaded = false;
-        compare(sliderSlot.rightPadding, 0, "an empty slot still reserved padding");
+        compare(sliderSlot.rightPadding, sliderSlot.leftPadding,
+            "an empty slot still reserved padding of its own");
 
         probe.slotLoaded = true;
-        compare(sliderSlot.rightPadding, Style.iconMd + sliderSlot.slotGap,
+        compare(sliderSlot.rightPadding - sliderSlot.leftPadding, Style.iconMd + sliderSlot.slotGap,
             "a loaded slot did not reserve its own width plus the slot gap");
 
         probe.slotLoaded = false;
-        compare(sliderSlot.rightPadding, 0,
+        compare(sliderSlot.rightPadding, sliderSlot.leftPadding,
             "a slot that unloaded went on reserving its width -- a Loader keeps reporting "
             + "an implicit size after `item` goes null");
     }

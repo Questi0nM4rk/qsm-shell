@@ -67,18 +67,29 @@ T.Slider {
     // as one channel's identity rather than as a slab of colour.
     property color fillLead: fill
     property color trackColor: Style.surfaceHover
-    // What the thumb is. It defaults to the library's rule -- the lightest
-    // thing on the surface, which is what makes it read as raised out of the
-    // track rather than as a hole cut into it -- and a consumer with a fourth
-    // state (a muted channel) states its own.
-    property color thumbColor: raised && !active ? Qt.darker(Style.text, 1.4) : Style.text
+    // What the thumb is: the lightest thing on the surface, which is what
+    // makes it read as raised out of the track rather than as a hole cut into
+    // it. One colour, in every state -- a raised thumb at rest used to paint
+    // DARKER than its own fill (measured 1.06:1), so its fill-side half had
+    // no edge at all, which is the opposite of what this rule is for. A
+    // consumer with a fourth state (a muted channel) states its own.
+    property color thumbColor: Style.text
     // The gap between the track and whatever sits in the end slots.
     property real slotGap: Style.space2
 
+    // sm | md | lg. The preset is only the DEFAULT shape: `thickness` and
+    // `thumbSize` below stay the primary API, and a call site that states one
+    // keeps it through a later size change.
+    property string size: "md"
+    readonly property bool _sm: size === "sm"
+    readonly property bool _lg: size === "lg"
+
     // The track's short axis, and the thumb that rides it. A call site that
-    // wants a fat track says so; the library keeps one default.
-    property real thickness: Style.sliderTrackThickness
-    property real thumbSize: Style.sliderThumbSize
+    // wants a fat track says so; the library keeps one default per size.
+    property real thickness: root._sm ? Style.space1 : Style.space2
+    property real thumbSize: root._sm
+        ? Style.iconSm
+        : root._lg ? Style.controlHeightSm : Style.iconLg
     // A raised thumb casts a shadow and lifts further while pressed, which is
     // what makes a big thumb read as picked up. A hairline level bar does not
     // want one.
@@ -270,18 +281,30 @@ T.Slider {
     readonly property real _thumbOffset: root._paintedPosition * _travel
     readonly property real _fillEnd: _thumbOffset + root.thumbSize / 2
 
+    // How far the thumb grows PER SIDE under the pointer (see the handle
+    // below). It is reserved at rest as well as while hovered: reserving it
+    // only on hover would move the track under the pointer that is hovering
+    // it.
+    readonly property real _hoverGrowth: Style.space1
+    // How far the shadow drops below the thumb at its deepest, which is while
+    // pressed. It drops along `y` in BOTH orientations -- it is gravity, not
+    // the axis -- so the slack it needs is CROSS-axis on a horizontal slider
+    // and MAIN-axis on a vertical one. Spending it on the cross axis either
+    // way is what left a vertical raised thumb painting its shadow 2px (4px
+    // pressed) below the control at the low bound, where the thumb is flush
+    // with the end of the track and there is nothing left to give.
+    readonly property real _shadowDrop: root.raised ? Style.sliderThumbLift * 2 : 0
+
     // At least a comfortable hit target across the axis, whatever the track's
-    // thickness is: a 4px track with a 12px thumb still has to be aimable.
+    // thickness is: a 4px track with a 16px thumb still has to be aimable.
     // Slot content can ask for more, and does on the OSD.
-    // A raised thumb's shadow drops `sliderThumbLift * 2` below it while
-    // pressed, and the thumb is CENTRED across the control, so containing
-    // that drop costs the same slack on the other side. The size a component
-    // asks for has to include what it paints: without this the shadow hung
-    // outside the control's own bounds, which is a caller sizing a row to a
-    // slider and getting a smudge over whatever sits under it.
-    readonly property real _thumbSpan: root.raised
-        ? root.thumbSize + Style.sliderThumbLift * 4
-        : root.thumbSize
+    //
+    // The size a component asks for has to include what it PAINTS, and the
+    // thumb is centred across this axis: its own size, plus its hover growth
+    // on both sides, plus the shadow's drop on both sides when the drop is
+    // across this axis.
+    readonly property real _thumbSpan: root.thumbSize + root._hoverGrowth * 2
+        + (root.vertical ? 0 : root._shadowDrop * 2)
 
     readonly property real _crossSize: Math.max(
         Style.controlHeightSm, root.thickness, root._thumbSpan,
@@ -299,14 +322,24 @@ T.Slider {
     // Padding is where the slots sit, and the template owns the arithmetic
     // from here: the contentItem gets exactly what is left over. The cross
     // axis takes none, so the track keeps the full thickness it asked for.
-    leftPadding: root.horizontal && beforeSlot.hasContent
-        ? beforeSlot.implicitWidth + root.slotGap : 0
-    rightPadding: root.horizontal && afterSlot.hasContent
-        ? afterSlot.implicitWidth + root.slotGap : 0
-    topPadding: root.vertical && beforeSlot.hasContent
-        ? beforeSlot.implicitHeight + root.slotGap : 0
-    bottomPadding: root.vertical && afterSlot.hasContent
-        ? afterSlot.implicitHeight + root.slotGap : 0
+    //
+    // Both ends of the MAIN axis also keep `_hoverGrowth`, because at either
+    // bound the thumb is flush with the end of the track and its growth has
+    // nowhere else to go; the bottom of a vertical one keeps the shadow's
+    // drop for the same reason. The slots sit INSIDE that reserve, so the gap
+    // between a glyph and the track stays exactly `slotGap`.
+    leftPadding: (root.horizontal && beforeSlot.hasContent
+        ? beforeSlot.implicitWidth + root.slotGap : 0)
+        + (root.horizontal ? root._hoverGrowth : 0)
+    rightPadding: (root.horizontal && afterSlot.hasContent
+        ? afterSlot.implicitWidth + root.slotGap : 0)
+        + (root.horizontal ? root._hoverGrowth : 0)
+    topPadding: (root.vertical && beforeSlot.hasContent
+        ? beforeSlot.implicitHeight + root.slotGap : 0)
+        + (root.vertical ? root._hoverGrowth : 0)
+    bottomPadding: (root.vertical && afterSlot.hasContent
+        ? afterSlot.implicitHeight + root.slotGap : 0)
+        + (root.vertical ? root._hoverGrowth + root._shadowDrop : 0)
 
     // Does this slot hold anything? Counting children answered the wrong
     // question, because a `Loader` never gives its footprint back: a Loader
@@ -336,8 +369,8 @@ T.Slider {
     Item {
         id: beforeSlot
         readonly property bool hasContent: root._slotHasContent(beforeSlot)
-        x: root.vertical ? (root.width - width) / 2 : 0
-        y: root.vertical ? 0 : (root.height - height) / 2
+        x: root.vertical ? (root.width - width) / 2 : root._hoverGrowth
+        y: root.vertical ? root._hoverGrowth : (root.height - height) / 2
         implicitWidth: hasContent ? childrenRect.width : 0
         implicitHeight: hasContent ? childrenRect.height : 0
         width: implicitWidth
@@ -347,8 +380,12 @@ T.Slider {
     Item {
         id: afterSlot
         readonly property bool hasContent: root._slotHasContent(afterSlot)
-        x: root.vertical ? (root.width - width) / 2 : root.width - width
-        y: root.vertical ? root.height - height : (root.height - height) / 2
+        x: root.vertical
+            ? (root.width - width) / 2
+            : root.width - width - root._hoverGrowth
+        y: root.vertical
+            ? root.height - height - root._hoverGrowth
+            : (root.height - height) / 2
         implicitWidth: hasContent ? childrenRect.width : 0
         implicitHeight: hasContent ? childrenRect.height : 0
         width: implicitWidth
@@ -416,24 +453,51 @@ T.Slider {
         width: implicitWidth
         height: implicitHeight
 
-        // Inside the handle so it travels and grows with it.
+        // What the thumb actually paints. It GROWS under the pointer by a
+        // fixed `_hoverGrowth` per side rather than by a percentage: 8% of a
+        // 12px thumb was 0.96px of diameter, which is an answer nobody can
+        // see. The handle's own box stays `thumbSize`, so the travel, the
+        // fill end and the flush-at-the-bound geometry are untouched, and the
+        // control reserves the growth at both ends of both axes instead.
+        //
+        // `pressed` is in the condition as well as `hovered`, because a drag
+        // that leaves the control keeps the press: a thumb that shrank there
+        // would be the control letting go under the finger holding it.
+        property real span: root.thumbSize
+            + (layer.hovered || layer.pressed ? root._hoverGrowth * 2 : 0)
+        // Press is a LIFT, and only a lift. The old press cue also scaled the
+        // thumb DOWN 6% while its shadow said it had just risen, which is two
+        // cues contradicting each other.
+        property real lift: root.pressed
+            ? Style.sliderThumbLift * 2
+            : Style.sliderThumbLift
+
+        Behavior on span {
+            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
+        Behavior on lift {
+            NumberAnimation { duration: Motion.press; easing.type: Motion.standardEasing }
+        }
+
+        // Inside the handle so it travels with it, and the same size as the
+        // thumb so it grows with it too.
         Rectangle {
             objectName: "sliderThumbShadow"
             visible: root.raised && root.enabled
-            width: parent.width
-            height: parent.height
-            y: root.pressed ? Style.sliderThumbLift * 2 : Style.sliderThumbLift
+            width: handle.span
+            height: handle.span
+            x: (handle.width - width) / 2
+            y: (handle.height - height) / 2 + handle.lift
             radius: width / 2
             color: Qt.rgba(0, 0, 0, .45)
-
-            Behavior on y {
-                NumberAnimation { duration: Motion.press; easing.type: Motion.standardEasing }
-            }
         }
 
         Rectangle {
             objectName: "sliderThumb"
-            anchors.fill: parent
+            width: handle.span
+            height: handle.span
+            x: (handle.width - width) / 2
+            y: (handle.height - height) / 2
             radius: width / 2
             color: root._paintedThumb
 
@@ -450,13 +514,16 @@ T.Slider {
 
     // The five states, owned in one place. Host mode: `hovered`, `pressed`,
     // `visualFocus` and the enabled cascade all come from the template, so
-    // there is one source of each. `target: handle` is the growth-not-tint
-    // rule applied where it belongs -- the THUMB grows, because growing the
-    // whole control would move the track under the finger holding it. The old
-    // component withheld growth entirely on the grounds that
-    // `StateLayer.pressed` is a tap rather than a sustained drag; in host mode
-    // `pressed` IS the sustained drag, so that objection is gone.
+    // there is one source of each.
+    //
+    // `target: null` because a SCALE is the wrong unit here. Growth is still
+    // the rule and the THUMB is still what grows -- growing the whole control
+    // would move the track under the finger holding it -- but it grows by
+    // pixels off the handle's `span` above, because a percentage of a thumb
+    // the call site chose is a different number at every size, and at the
+    // sizes a reading rail uses it rounds to nothing.
     StateLayer {
+        id: layer
         objectName: "sliderLayer"
         // Level with the thumb rather than under it: the focus ring follows
         // the control's own edge, which the thumb reaches at either bound,
@@ -466,7 +533,7 @@ T.Slider {
         z: handle.z
         anchors.fill: parent
         host: root
-        target: handle
+        target: null
         focusRadius: (root.vertical ? width : height) / 2
     }
 
