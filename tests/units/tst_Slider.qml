@@ -19,7 +19,7 @@ TestCase {
 
     name: "Slider"
     width: 400
-    height: 400
+    height: 560
     visible: true
     when: windowShown
 
@@ -89,6 +89,42 @@ TestCase {
         LayoutMirroring.enabled: true
         LayoutMirroring.childrenInherit: true
         value: 0.5
+    }
+
+    // No height: the cross axis is whatever the control asks for, so a
+    // thickness written here has to grow the control rather than be clipped
+    // by it.
+    Slider {
+        id: sliderFat
+        x: 100; y: 370; width: 200
+        value: 0.5
+    }
+
+    // A slot that loads and unloads itself. A Loader never gives its
+    // footprint back on its own -- it keeps reporting an implicit size with
+    // `item` null -- so this is the shape that made a trailing icon go on
+    // reserving its width after switching itself off.
+    property bool slotLoaded: false
+    Slider {
+        id: sliderSlot
+        x: 100; y: 420; width: 200; height: 32
+        value: 0.5
+
+        after: Loader {
+            active: probe.slotLoaded
+            sourceComponent: Item {
+                implicitWidth: Style.iconMd
+                implicitHeight: Style.iconMd
+            }
+        }
+    }
+
+    // Never gestured and never written by any case here, which is what makes
+    // it the one instance that can answer what `committedValue` starts as.
+    Slider {
+        id: sliderFresh
+        x: 100; y: 470; width: 200; height: 32
+        value: 0.35
     }
 
     function test_dragging_the_thumb_follows_the_pointer_and_changes_value() {
@@ -222,17 +258,144 @@ TestCase {
         compare(sliderH.value, 0.5, "a slider with wheelUnits 0 still answered the wheel");
     }
 
+    // Everything here is read DURING the drag on purpose: a gesture switches
+    // the painted position's animation off, so the handle is where the value
+    // says it is in the same turn as the move. The bounds are compared
+    // against the contentItem's own rectangle rather than against the padding
+    // arithmetic, so the assertion says "flush with the end of the track"
+    // rather than restating the formula that put it there.
     function test_vertical_orientation_grows_upward_not_downward() {
         sliderVert.value = 0.5;
+        const content = sliderVert.contentItem;
+        const thumb = sliderVert.handle;
 
         mousePress(sliderVert, 16, 180);
         const nearBottom = sliderVert.value;
+        const yNearBottom = thumb.y;
         mouseMove(sliderVert, 16, 20);
         const nearTop = sliderVert.value;
-        mouseRelease(sliderVert, 16, 20);
+        const yNearTop = thumb.y;
 
         verify(nearTop > nearBottom,
             "moving the pointer toward the TOP of a vertical slider did not increase value -- the axis is upside down");
+        verify(yNearTop < yNearBottom,
+            "value rose but the thumb did not travel UP the track -- the handle is following `position` "
+            + "instead of `visualPosition`, which Qt already inverts for a vertical slider");
+
+        mouseMove(sliderVert, 16, 250);
+        verify(sliderVert.value === sliderVert.from, "dragging past the bottom did not clamp to `from`");
+        verify(Math.abs((thumb.y + thumb.height) - (content.y + content.height)) < 0.5,
+            "at `from` the thumb is not flush with the BOTTOM of the track -- it is off by "
+            + ((thumb.y + thumb.height) - (content.y + content.height)) + "px");
+
+        mouseMove(sliderVert, 16, -50);
+        verify(sliderVert.value === sliderVert.to, "dragging past the top did not clamp to `to`");
+        verify(Math.abs(thumb.y - content.y) < 0.5,
+            "at `to` the thumb is not flush with the TOP of the track -- it is off by "
+            + (thumb.y - content.y) + "px");
+
+        mouseRelease(sliderVert, 16, -50);
+    }
+
+    // The fill ends at the thumb's CENTRE and is pinned to the low end, which
+    // on a vertical slider is the bottom. Read mid-drag for the same reason
+    // as above.
+    function test_the_vertical_fill_runs_from_the_bottom_to_the_thumb_centre() {
+        sliderVert.value = 0.5;
+        const content = sliderVert.contentItem;
+        const thumb = sliderVert.handle;
+        const fill = findChild(sliderVert, "sliderFill");
+        verify(fill !== null, "the fill lost its objectName");
+
+        mousePress(sliderVert, 16, 60);
+        const fillTop = fill.mapToItem(sliderVert, 0, 0).y;
+        const thumbCentre = thumb.y + thumb.height / 2;
+
+        verify(Math.abs(fillTop - thumbCentre) < 0.5,
+            "the fill does not start at the thumb's centre -- it is off by " + (fillTop - thumbCentre) + "px");
+        verify(Math.abs((fillTop + fill.height) - (content.y + content.height)) < 0.5,
+            "the fill does not reach the BOTTOM of the track -- a vertical fill that grows downward "
+            + "is the axis upside down");
+
+        mouseRelease(sliderVert, 16, 60);
+    }
+
+    // Paint order, which no tree walk can report: both the track and the fill
+    // are children of the contentItem, and QQuickSlider completes its handle
+    // BEFORE QQuickControl completes the contentItem, so the handle is the
+    // earlier sibling however the two are declared. At equal z the track
+    // painted over the thumb and the accent fill drew a line through it.
+    function test_the_thumb_paints_above_the_track_and_the_fill() {
+        verify(sliderH.handle.z > sliderH.contentItem.z,
+            "the handle does not sit above the contentItem -- the track and the fill paint over the thumb");
+        verify(sliderVert.handle.z > sliderVert.contentItem.z,
+            "the vertical handle does not sit above the contentItem either");
+    }
+
+    // A fat track is a call-site property, not a second type, so writing it
+    // has to grow the control rather than be clipped by it.
+    function test_a_thick_track_grows_the_control_and_keeps_the_thumb_centred() {
+        const shapes = [
+            { thickness: Style.controlHeightSm, thumb: Style.controlHeightSm },
+            { thickness: Style.controlHeight, thumb: Style.controlHeight },
+            { thickness: Style.controlHeight, thumb: Style.controlHeightSm }
+        ];
+
+        for (let i = 0; i < shapes.length; i++) {
+            const shape = shapes[i];
+            sliderFat.thickness = shape.thickness;
+            sliderFat.thumbSize = shape.thumb;
+
+            const expected = Math.max(Style.controlHeightSm, shape.thickness, shape.thumb);
+            compare(sliderFat.implicitHeight, expected,
+                "the cross axis is not the largest of controlHeightSm, thickness and thumbSize");
+            compare(sliderFat.height, expected,
+                "the control did not take the cross size it asked for");
+
+            const content = sliderFat.contentItem;
+            const thumb = sliderFat.handle;
+            verify(Math.abs((thumb.y + thumb.height / 2) - (content.y + content.height / 2)) < 0.5,
+                "the thumb is not centred across a " + shape.thickness + "px track");
+            verify(thumb.y >= -0.5 && thumb.y + thumb.height <= sliderFat.height + 0.5,
+                "the thumb hangs outside the control's own bounds at thickness " + shape.thickness);
+        }
+    }
+
+    // An empty slot takes no space, so a bare slider looks exactly like a
+    // bare slider -- and a slot that UNLOADS gives its space back.
+    function test_an_empty_slot_reserves_no_padding() {
+        probe.slotLoaded = false;
+        compare(sliderSlot.rightPadding, 0, "an empty slot still reserved padding");
+
+        probe.slotLoaded = true;
+        compare(sliderSlot.rightPadding, Style.iconMd + sliderSlot.slotGap,
+            "a loaded slot did not reserve its own width plus the slot gap");
+
+        probe.slotLoaded = false;
+        compare(sliderSlot.rightPadding, 0,
+            "a slot that unloaded went on reserving its width -- a Loader keeps reporting "
+            + "an implicit size after `item` goes null");
+    }
+
+    // `committedValue` is the last value a GESTURE left behind, which is what
+    // a host that only writes on commit needs to compare against. It never
+    // moves mid-drag, and a direct write to `value` is not a gesture.
+    function test_committedValue_holds_the_last_value_a_gesture_left() {
+        compare(sliderFresh.committedValue, sliderFresh.value,
+            "committedValue did not start at the value the slider completed with");
+
+        sliderH.value = 0.5;
+        const preDrag = sliderH.committedValue;
+
+        mousePress(sliderH, 40, 16);
+        mouseMove(sliderH, 190, 16);
+        verify(sliderH.value !== preDrag, "the drag did not change the value, so it proves nothing");
+        compare(sliderH.committedValue, preDrag,
+            "committedValue moved mid-drag -- it is tracking `value` rather than the end of a gesture");
+
+        mouseRelease(sliderH, 190, 16);
+        compare(sliderH.committedValue, sliderH.value,
+            "a released drag did not leave committedValue on the value it ended at");
     }
 
     // The pointer route (Qt's own press grab), the WheelHandler, the key

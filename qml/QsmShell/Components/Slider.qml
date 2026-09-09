@@ -108,6 +108,20 @@ T.Slider {
     // host that only wants the final value waits for this.
     signal committed()
 
+    // The value the last gesture left behind. A host that writes on every
+    // `moved` never needs it; a host that only acts on a finished gesture
+    // compares against it instead of keeping its own copy of the same fact.
+    //
+    // The private backing property is what makes it honestly read-only: a
+    // `readonly property` cannot be assigned from anywhere, and a binding to
+    // `value` would make it follow the drag, which is the one thing it must
+    // not do. It is set at completion rather than bound, for the same reason.
+    readonly property real committedValue: root._committedValue
+    property real _committedValue: 0
+
+    Component.onCompleted: root._committedValue = root.value
+    onCommitted: root._committedValue = root.value
+
     // ── one route per action ────────────────────────────────────────────
     // Every non-pointer route ends up here, and it steps by calling Qt's own
     // `increase()`/`decrease()` rather than assigning `value`. That is not
@@ -347,6 +361,14 @@ T.Slider {
     handle: Item {
         id: handle
         objectName: "sliderHandle"
+        // Declaration order cannot express this: QQuickSlider completes its
+        // handle before QQuickControl completes the contentItem, so the
+        // handle is the earlier sibling however the two are written, and the
+        // track and the fill painted over the thumb -- the accent line ran
+        // straight through it. 1 is a stacking index, not a measurement, so
+        // it is not a value a theme could retune; recorded as a deviation
+        // from the no-numbers law in docs/components/Slider.md.
+        z: 1
         x: root.leftPadding
             + (root.vertical ? (root.availableWidth - width) / 2 : root._thumbOffset)
         y: root.topPadding
@@ -396,6 +418,12 @@ T.Slider {
     // `pressed` IS the sustained drag, so that objection is gone.
     StateLayer {
         objectName: "sliderLayer"
+        // Level with the thumb rather than under it: the focus ring follows
+        // the control's own edge, which the thumb reaches at either bound,
+        // and a thumb painted over the ring is a keyboard user losing the one
+        // mark that says where they are. Equal z, later child, so the ring
+        // wins without a second number.
+        z: handle.z
         anchors.fill: parent
         host: root
         target: handle
