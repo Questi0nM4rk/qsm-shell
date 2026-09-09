@@ -170,6 +170,8 @@ QtObject {
     readonly property int rolloutRadius: backend?.rolloutRadius ?? Tokens.geometryRolloutRadius
     readonly property int frameThickness: backend?.frameThickness ?? Tokens.geometryFrameThickness
     readonly property int notificationWidth: backend?.notificationWidth ?? Tokens.geometryNotificationWidth
+    // The natural width of a text-shaped control. Constant, never content-derived.
+    readonly property int controlWidth: backend?.controlWidth ?? Tokens.geometryControlWidth
     readonly property int notificationCollapsedHeight: backend?.notificationCollapsedHeight
         ?? Tokens.geometryNotificationCollapsedHeight
     // The melt reach every join neck derives from (spec 01-frame), how close

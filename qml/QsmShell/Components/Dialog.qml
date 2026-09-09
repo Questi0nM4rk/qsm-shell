@@ -33,7 +33,7 @@ FocusScope {
     // A dialog whose consequence is severe says so with a mark as well as with
     // words, because the words are what gets skimmed.
     property string tone: "neutral"
-    property real dialogWidth: Style.notificationWidth
+    property real dialogWidth: Style.controlWidth
 
     // The buttons. They live at the bottom-right, trailing edge last, because
     // that is where the eye finishes a dialog it has just read.

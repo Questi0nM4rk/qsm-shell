@@ -15,18 +15,9 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   different steps; search leading action is a 20x20 target; click then
   Tab-wrap onto the same item keeps the pointer mark; disable then re-enable
   restores focus and the ring without a Tab.
-- `Slider`: redesign the look against `design-system-blueprint.pdf` and
-  caelestia `StyledSlider.qml`. Open audit lines: slot padding eats the main
-  axis (`level` track 232 of 260, `osd-slider` 136 of 180); default track
-  `surfaceHover` 1.40:1 against background; `thumbContent` overflows the sm
-  thumb; the `osd-slider` focus ring encloses the `after` action; `fillLead`
-  ramp never differs from `fill`; a press inside the slot padding jumps to
-  the bound; `wheelUnits` is the same for both variants; RTL leaves the slot
-  on the same side; `emphasized` does nothing on a flat slider.
-- Slot action hover under `--window`: a synthetic `mouseMove` onto an
-  `IconButton` in a `Slider` slot reaches the slider's `hovered` only, while
-  `TextField`'s identical case passes. Suspect the `StateLayer` at
-  `z: handle.z` above the slots. Needs a real pointer before anything moves.
+- `Slider`: the resting track is `Style.outline`, about 1.9:1 against the
+  shell background; a dedicated track token is the owner's call. Hosts set
+  `wheelUnits` per surface (a seek bar 0, a level bar the keyboard units).
 - `MonthCalendar` takes the wheel with a `WheelHandler`, so it is dead in a
   live window and pages a month per any nonzero delta. Fix at its migration.
 - `Rollout` cannot be the PARENT of a nested rollout, so the consumer's
@@ -35,8 +26,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   has checked whether flushness fails in some state.
 - Popup family (`Menu`, `Popover`, `Dialog`, `ToolTip`) stays hand-rolled:
   `T.Popup` inside a `PanelWindow` paints only inside the window rect.
-- Remaining types move to `previews/units/` in this order: `RangeSlider`,
-  `Switch`, `Checkbox` plus `Radio`, buttons on `T.AbstractButton`,
+- Remaining types move to `previews/units/` in this order: `Switch`, `Checkbox` plus `Radio`, buttons on `T.AbstractButton`,
   `SpinBox`, `Segmented` on `T.TabBar`, `ScrollArea` on `T.ScrollBar`, then
   the rest. Every type moved so far surfaced a real defect (no keyboard
   route, no Tab stop, hover while disabled, truncated natural width); budget

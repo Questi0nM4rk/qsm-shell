@@ -12,8 +12,8 @@ import qs.QsmShell.Style
 // instead of assigning: `sliderBound` below is that contract, kept.
 //
 // Every case drives a REAL pointer, wheel or key event; qmllint cannot see any
-// of this. `moved()` carries no argument (Qt's signature) and means "a gesture
-// changed it"; `committed()` means "the gesture ended".
+// of this. `moved()` carries no argument and means "a gesture changed a
+// value"; `committed()` means "the gesture ended".
 TestCase {
     id: probe
 
@@ -25,19 +25,6 @@ TestCase {
 
     readonly property real keyStep: Style.sliderKeyboardUnits * Style.sliderStep
     readonly property real pageStep: Style.sliderPageUnits * Style.sliderStep
-
-    // A control's own StateLayer, found without giving every component an
-    // objectName for it: it is the child that reports the five states.
-    // Untyped on purpose -- `children` is a list of `Item`, and `hovered` is
-    // not a member of `Item`.
-    function layerOf(item) {
-        for (let i = 0; i < item.children.length; i++) {
-            const child = item.children[i];
-            if (child.hovered !== undefined && child.pressed !== undefined)
-                return child;
-        }
-        return null;
-    }
 
     Slider {
         id: sliderH
@@ -113,23 +100,14 @@ TestCase {
         value: 0.5
     }
 
-    // A slot that loads and unloads itself. A Loader never gives its
-    // footprint back on its own -- it keeps reporting an implicit size with
-    // `item` null -- so this is the shape that made a trailing icon go on
-    // reserving its width after switching itself off.
-    property bool slotLoaded: false
+    // Two thumbs. `lowValue` is bound, the way a host binds it.
+    property real rangeLow: 0.2
     Slider {
-        id: sliderSlot
+        id: sliderRange
         x: 100; y: 420; width: 200; height: 32
-        value: 0.5
-
-        after: Loader {
-            active: probe.slotLoaded
-            sourceComponent: Item {
-                implicitWidth: Style.iconMd
-                implicitHeight: Style.iconMd
-            }
-        }
+        range: true
+        value: 0.8
+        lowValue: probe.rangeLow
     }
 
     // Built HORIZONTAL and flipped at runtime, which is what every unit in a
@@ -158,8 +136,8 @@ TestCase {
         value: 0.5
     }
 
-    // Raised and VERTICAL, with no slots to absorb anything: the case where
-    // the shadow drops along the MAIN axis, which is the one nothing padded.
+    // Raised and VERTICAL: the case where the shadow drops along the MAIN
+    // axis, which is the one nothing padded.
     Slider {
         id: sliderVertRaised
         x: 310; y: 500; width: 60; height: 200
@@ -176,25 +154,6 @@ TestCase {
         value: 0.5
         raised: true
     }
-
-    // A real action in a slot, with the wheel area live over it. The wheel is
-    // taken by a `MouseArea` that fills the whole control, and the one thing
-    // that must survive that is the slot content underneath keeping its own
-    // hover, press and click.
-    Slider {
-        id: sliderAction
-        x: 100; y: 690; width: 200
-        value: 0.5
-        wheelUnits: Style.sliderKeyboardUnits
-
-        after: IconButton {
-            id: slotAction
-            objectName: "sliderSlotAction"
-            icon: "volume"
-            size: Style.iconMd
-        }
-    }
-    SignalSpy { id: slotActionClicked; target: slotAction; signalName: "clicked" }
 
     function test_dragging_the_thumb_follows_the_pointer_and_changes_value() {
         sliderH.value = 0.5;
@@ -245,8 +204,8 @@ TestCase {
 
         mouseMove(sliderH, 170, 16);
         const expected = sliderH.leftPadding
-            + sliderH.visualPosition * (sliderH.availableWidth - sliderH.handle.width);
-        fuzzyCompare(sliderH.handle.x, expected, 0.5,
+            + sliderH.second.visualPosition * (sliderH.availableWidth - sliderH.second.handle.width);
+        fuzzyCompare(sliderH.second.handle.x, expected, 0.5,
             "the handle is not where visualPosition says it is right after the move -- it is animating there");
 
         mouseRelease(sliderH, 170, 16);
@@ -382,7 +341,7 @@ TestCase {
     function test_vertical_orientation_grows_upward_not_downward() {
         sliderVert.value = 0.5;
         const content = sliderVert.contentItem;
-        const thumb = sliderVert.handle;
+        const thumb = sliderVert.second.handle;
 
         mousePress(sliderVert, 16, 180);
         const nearBottom = sliderVert.value;
@@ -418,7 +377,7 @@ TestCase {
     function test_the_vertical_fill_runs_from_the_bottom_to_the_thumb_centre() {
         sliderVert.value = 0.5;
         const content = sliderVert.contentItem;
-        const thumb = sliderVert.handle;
+        const thumb = sliderVert.second.handle;
         const fill = findChild(sliderVert, "sliderFill");
         verify(fill !== null, "the fill lost its objectName");
 
@@ -450,9 +409,9 @@ TestCase {
         verify(sliderFlip.vertical, "the flip did not reach the control");
 
         const content = sliderFlip.contentItem;
-        const thumb = sliderFlip.handle;
+        const thumb = sliderFlip.second.handle;
         const fill = findChild(sliderFlip, "sliderFill");
-        const builtThumb = sliderVert.handle;
+        const builtThumb = sliderVert.second.handle;
         const builtFill = findChild(sliderVert, "sliderFill");
         verify(fill !== null && builtFill !== null, "a fill lost its objectName");
 
@@ -479,9 +438,9 @@ TestCase {
     // earlier sibling however the two are declared. At equal z the track
     // painted over the thumb and the accent fill drew a line through it.
     function test_the_thumb_paints_above_the_track_and_the_fill() {
-        verify(sliderH.handle.z > sliderH.contentItem.z,
+        verify(sliderH.second.handle.z > sliderH.contentItem.z,
             "the handle does not sit above the contentItem -- the track and the fill paint over the thumb");
-        verify(sliderVert.handle.z > sliderVert.contentItem.z,
+        verify(sliderVert.second.handle.z > sliderVert.contentItem.z,
             "the vertical handle does not sit above the contentItem either");
     }
 
@@ -510,7 +469,7 @@ TestCase {
                 "the control did not take the cross size it asked for");
 
             const content = sliderFat.contentItem;
-            const thumb = sliderFat.handle;
+            const thumb = sliderFat.second.handle;
             verify(Math.abs((thumb.y + thumb.height / 2) - (content.y + content.height / 2)) < 0.5,
                 "the thumb is not centred across a " + shape.thickness + "px track");
             verify(thumb.y >= -0.5 && thumb.y + thumb.height <= sliderFat.height + 0.5,
@@ -571,52 +530,6 @@ TestCase {
         }
 
         sliderFat.raised = false;
-    }
-
-    // The wheel is taken by a `MouseArea` that fills the whole control, so
-    // the question this answers is whether a slot action underneath still
-    // gets its own hover, press and click: `hoverEnabled` false and
-    // `acceptedButtons: Qt.NoButton` are supposed to make that area
-    // invisible to everything but the wheel, and that is a claim about
-    // delivery, not about flags. Proved with teeth: giving that area
-    // `hoverEnabled: true` fails the hover line below and nothing else.
-    //
-    // OFFSCREEN ONLY for the hover line. Under `--window` a synthetic
-    // `mouseMove` reaches this slider's own `hovered` and stops there,
-    // without reaching the slot action's `StateLayer` -- and it does the
-    // same against the component as it was BEFORE the wheel area existed
-    // (checked out `4300bbd` and re-run), so the area is not what blocks it.
-    // `tst_TextField`'s identical case passes under `--window`, so this is a
-    // Slider-vs-TextField structural difference in hover delivery and it is
-    // an OPEN item in the backlog, not something this test may assume away.
-    function test_a_slot_action_keeps_its_own_hover_and_click_under_the_wheel_area() {
-        mouseMove(probe, 5, 5);
-        slotActionClicked.clear();
-
-        const button = findChild(sliderAction, "sliderSlotAction");
-        verify(button !== null, "the slot action lost its objectName");
-        const layer = probe.layerOf(button);
-        verify(layer !== null, "the slot action has no StateLayer to read");
-
-        const before = sliderAction.value;
-
-        // Aimed at the BUTTON's own coordinates: the same shape
-        // `tst_TextField` uses, and the one that lands on the glyph rather
-        // than on whatever the slider's implicit height puts at that point.
-        mouseMove(button, button.width / 2, button.height / 2);
-        compare(sliderAction.hovered, true, "the pointer never arrived on the slider at all");
-        tryCompare(layer, "hovered", true, 500,
-            "the slot action never saw the pointer, though the slider itself did -- something "
-            + "above the slot is taking hover from it (offscreen; see the note above for --window)");
-
-        mouseClick(button, button.width / 2, button.height / 2);
-        compare(slotActionClicked.count, 1,
-            "a click on the slot action did not reach it");
-        compare(sliderAction.value, before,
-            "clicking a slot action moved the slider -- the press went through to the track");
-
-        mouseMove(probe, 5, 5);
-        tryCompare(layer, "hovered", false, 500, "the slot action kept hover after the pointer left");
     }
 
     // The three size presets, one for each shape a call site asks for. They
@@ -719,27 +632,6 @@ TestCase {
 
         mouseMove(probe, 5, 5);
         tryCompare(thumb, "width", rest, 500, "the thumb never came back down");
-    }
-
-    // An empty slot takes no space, so a bare slider looks exactly like a
-    // bare slider -- and a slot that UNLOADS gives its space back.
-    //
-    // Read against the OTHER end of the same axis rather than against 0: both
-    // ends reserve the room the thumb's hover growth needs, so what "an empty
-    // slot takes no space" means is that the two ends agree.
-    function test_an_empty_slot_reserves_no_padding() {
-        probe.slotLoaded = false;
-        compare(sliderSlot.rightPadding, sliderSlot.leftPadding,
-            "an empty slot still reserved padding of its own");
-
-        probe.slotLoaded = true;
-        compare(sliderSlot.rightPadding - sliderSlot.leftPadding, Style.iconMd + sliderSlot.slotGap,
-            "a loaded slot did not reserve its own width plus the slot gap");
-
-        probe.slotLoaded = false;
-        compare(sliderSlot.rightPadding, sliderSlot.leftPadding,
-            "a slot that unloaded went on reserving its width -- a Loader keeps reporting "
-            + "an implicit size after `item` goes null");
     }
 
     // `committedValue` is the last value a GESTURE left behind, which is what
@@ -1073,8 +965,9 @@ TestCase {
 
         compare(sliderKeyboard.activeFocus, true,
             "Tab from sliderVert did not skip the disabled slider and land on the next one");
-        compare(sliderKeyboard.visualFocus, true,
-            "focus arrived by Tab but visualFocus is false -- the ring StateLayer draws would not show");
+        // Focus lives on a RangeSlider's handle, so the ring reads the handle.
+        compare(findChild(sliderKeyboard, "sliderLayer").focused, true,
+            "focus arrived by Tab but the ring's `focused` is false -- the ring would not show");
     }
 
     function test_programmatic_value_write_does_not_emit_moved() {
@@ -1084,5 +977,40 @@ TestCase {
 
         compare(movedSpyProg.count, 0,
             "writing value directly emitted moved -- `moved` means a GESTURE changed it");
+    }
+
+    // One slider, one or two thumbs. With one, the low thumb is parked at
+    // `from` with no size, so no press can find it; with two, the fill runs
+    // between them and Qt keeps them from crossing.
+    function test_range_paints_the_fill_between_two_thumbs_that_never_cross() {
+        compare(sliderH.first.handle.width, 0, "a single-thumb slider still has a low thumb a press can hit");
+
+        probe.rangeLow = 0.2;
+        sliderRange.value = 0.8;
+        const low = sliderRange.first.handle;
+        const high = sliderRange.second.handle;
+        const fill = findChild(sliderRange, "sliderFill");
+        verify(low.visible && low.width > 0, "the range's low thumb is not painted");
+        tryVerify(() => Math.abs(fill.mapToItem(sliderRange, 0, 0).x - (low.x + low.width / 2)) < 0.5, 1000,
+            "the fill does not start at the low thumb's centre");
+        verify(Math.abs(fill.mapToItem(sliderRange, fill.width, 0).x - (high.x + high.width / 2)) < 0.5,
+            "the fill does not end at the high thumb's centre");
+
+        // Drag the low thumb past the high one: it stops AT it.
+        mousePress(sliderRange, low.x + low.width / 2, 16);
+        mouseMove(sliderRange, 199, 16);
+        verify(sliderRange.lowValue <= sliderRange.value, "the low thumb crossed the high one");
+        compare(sliderRange.lowValue, sliderRange.value, "the low thumb did not reach the high one");
+        mouseRelease(sliderRange, 199, 16);
+
+        // The keyboard steps the thumb the pointer grabbed last. Both thumbs
+        // sit at the top now, and a low bound that is already 0.2 does not
+        // re-evaluate its binding, so both are set at once.
+        sliderRange.setValues(0.2, 0.8);
+        const before = sliderRange.lowValue;
+        verify(sliderRange.stepBy(Style.sliderKeyboardUnits), "the step reported no change");
+        fuzzyCompare(sliderRange.lowValue, before + Style.sliderKeyboardUnits * sliderRange.stepSize, 1e-9,
+            "a step after grabbing the low thumb did not move the low thumb");
+        compare(sliderRange.value, 0.8, "a step meant for the low thumb moved the high one");
     }
 }

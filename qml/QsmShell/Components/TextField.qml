@@ -27,9 +27,9 @@ import qs.QsmShell.Style
 // So there is ONE hook. `keyPressed` fires before anything else happens, with
 // the real event; a consumer that sets `event.accepted = true` has taken the
 // key and the field does nothing further with it. Everything the field does
-// NOT hear back about, it handles itself: Return accepts, Escape escapes, Up
-// and Down are reported as `moveUp` / `moveDown` for the list that usually
-// sits under a field like this.
+// NOT hear back about, it handles itself: Return accepts, Escape escapes.
+// Up and Down mean nothing to a field; the surface that owns a list under it
+// takes them in the hook.
 //
 // That is one mechanism instead of four flags, and it covers the fifth key
 // the flags did not anticipate.
@@ -66,8 +66,6 @@ T.Control {
     signal accepted
     signal escaped
     signal edited(string text)
-    signal moveUp
-    signal moveDown
     // A hover-enter is not allowed to claim a selection while someone is
     // typing; the consumer owns that rule and the field only reports that
     // the text changed under the keyboard.
@@ -146,7 +144,7 @@ T.Control {
     // preferred width is a CONSTANT, never its content: the first version fed
     // the input's own implicit width into this sum, so typing stretched the
     // box across the screen instead of scrolling inside itself.
-    property real naturalWidth: Style.notificationWidth
+    property real naturalWidth: Style.controlWidth
 
     implicitWidth: Math.max(naturalWidth, leftPadding + rightPadding)
     implicitHeight: _sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight
@@ -344,7 +342,7 @@ T.Control {
             // attached object, and accepting the event in the generic one
             // does not stop the specific one from running. The first
             // version of this component had both, and a consumer that
-            // claimed Down got its own handler AND `moveDown` — a
+            // claimed Down got its own handler AND the field's -- a
             // launcher list that moved two rows per keystroke.
             // `tests/units/tst_TextField.qml` is that bug, kept.
             //
@@ -356,16 +354,6 @@ T.Control {
                     return;
 
                 switch (event.key) {
-                case Qt.Key_Up:
-                    root.selectionClaimed();
-                    root.moveUp();
-                    event.accepted = true;
-                    break;
-                case Qt.Key_Down:
-                    root.selectionClaimed();
-                    root.moveDown();
-                    event.accepted = true;
-                    break;
                 case Qt.Key_Return:
                 case Qt.Key_Enter:
                     root.selectionClaimed();

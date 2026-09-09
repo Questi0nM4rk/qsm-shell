@@ -80,6 +80,7 @@
     "controlHeight": 40,
     "controlHeightSm": 32,
     "notificationWidth": 380,
+    "controlWidth": 380,
     "notificationCollapsedHeight": 36,
     "controlHeightLg": 52,
     "markThickness": 3,

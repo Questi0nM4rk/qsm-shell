@@ -196,9 +196,18 @@ ColumnLayout {
             placeholder: "Search notifications"
             focus: true
             leading: SvgIcon { name: "search"; size: Style.iconMd; color: Style.textMuted }
-            onKeyPressed: event => root.keyPressed(event)
-            onMoveUp: root.moveSelection(-1)
-            onMoveDown: root.moveSelection(1)
+            // The host's hook first; an unclaimed Up or Down moves the
+            // list under the field, which is this surface's meaning for it.
+            onKeyPressed: event => {
+                root.keyPressed(event);
+                if (event.accepted)
+                    return;
+                if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                    root.selectionClaimed();
+                    root.moveSelection(event.key === Qt.Key_Up ? -1 : 1);
+                    event.accepted = true;
+                }
+            }
             onAccepted: root.activateSelected()
             onEscaped: root.escaped()
             onSelectionClaimed: root.selectionClaimed()

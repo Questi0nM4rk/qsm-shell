@@ -42,7 +42,7 @@ Rectangle {
     // children — which is most of them — and a placeholder with no width is a
     // placeholder that placeholds nothing. A call site that wants a fraction
     // of a known width states it: `Layout.preferredWidth: parent.width * .6`.
-    implicitWidth: Style.notificationWidth * Math.max(0, Math.min(1, fraction))
+    implicitWidth: Style.controlWidth * Math.max(0, Math.min(1, fraction))
     radius: shape === "line" ? height / 2 : Style.radiusSm
     color: Style.surfaceHover
 

@@ -38,6 +38,8 @@ Column {
     readonly property alias actions: slider.actions
 
     property alias labelClickable: slider.labelClickable
+    property alias range: slider.range
+    property alias lowValue: slider.lowValue
 
     spacing: Style.space2
 
@@ -64,7 +66,8 @@ Column {
     Prose {
         anchors.horizontalCenter: parent.horizontalCenter
         role: "metadata"
-        text: `value: ${slider.value.toFixed(2)}  committed: ${slider.committedValue.toFixed(2)}`
+        text: (slider.range ? `low: ${slider.lowValue.toFixed(2)}  ` : "")
+            + `value: ${slider.value.toFixed(2)}  committed: ${slider.committedValue.toFixed(2)}`
     }
 
     // States a pointer or keyboard can already reach (hover, press, focus)
@@ -78,6 +81,10 @@ Column {
             { label: "sm", set: { size: "sm" } },
             { label: "md", set: { size: "md" } },
             { label: "lg", set: { size: "lg" } }
+        ]},
+        { label: "range", options: [
+            { label: "off", set: { range: false, lowValue: 0 } },
+            { label: "on",  set: { range: true, lowValue: .2 } }
         ]},
         { label: "thumb", options: [
             { label: "circle", set: { thumbStyle: "circle" } },

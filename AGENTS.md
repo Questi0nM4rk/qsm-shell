@@ -131,10 +131,6 @@ follow the design sources.
   which CONSUMES the wheel unless it sets `accepted = false`, so a path that
   does nothing with an event must say so or it disables an enclosing
   scroller.
-- A synthetic `mouseMove` onto an action inside a `Slider` SLOT reaches the
-  slider's own `hovered` and never the action's `StateLayer` under
-  `--window`; the same case in `TextField` passes. Offscreen is the valid run
-  for that case (open in the backlog).
 - `ydotool mousemove --absolute` is accepted and silently does nothing, and
   this Hyprland's `hyprctl dispatch movecursor` is a parse error. Drive the
   cursor with damped relative `ydotool mousemove` steps and confirm with

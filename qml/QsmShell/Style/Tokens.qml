@@ -67,6 +67,7 @@ QtObject {
     readonly property int geometryControlHeight: 40
     readonly property int geometryControlHeightSm: 32
     readonly property int geometryNotificationWidth: 380
+    readonly property int geometryControlWidth: 380
     readonly property int geometryNotificationCollapsedHeight: 36
     readonly property int geometryControlHeightLg: 52
     readonly property int geometryMarkThickness: 3

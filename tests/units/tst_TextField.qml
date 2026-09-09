@@ -17,12 +17,11 @@ TestCase {
     visible: true
     when: windowShown
 
-    property int downs: 0
     property int accepts: 0
     property int escapes: 0
     property int claims: 0
     property int composedAccepts: 0
-    property bool claimDown: false
+    property bool claimReturn: false
     property string lastSeenKey: ""
 
     TextField {
@@ -32,10 +31,9 @@ TestCase {
 
         onKeyPressed: event => {
             probe.lastSeenKey = String(event.key);
-            if (probe.claimDown && event.key === Qt.Key_Down)
+            if (probe.claimReturn && event.key === Qt.Key_Return)
                 event.accepted = true;
         }
-        onMoveDown: probe.downs++
         onAccepted: probe.accepts++
         onEscaped: probe.escapes++
         onSelectionClaimed: probe.claims++
@@ -50,12 +48,11 @@ TestCase {
     }
 
     function init() {
-        probe.downs = 0;
         probe.accepts = 0;
         probe.escapes = 0;
         probe.claims = 0;
         probe.composedAccepts = 0;
-        probe.claimDown = false;
+        probe.claimReturn = false;
         probe.lastSeenKey = "";
         field.text = "";
         field.enabled = true;
@@ -68,9 +65,6 @@ TestCase {
     }
 
     function test_unclaimed_keys_fall_through_to_the_field() {
-        keyClick(Qt.Key_Down);
-        compare(probe.downs, 1, "an unclaimed Down did not reach moveDown");
-        probe.claims = 0;
         keyClick(Qt.Key_Return);
         compare(probe.accepts, 1, "Return did not accept");
         compare(probe.claims, 1, "Return did not claim keyboard selection");
@@ -79,12 +73,12 @@ TestCase {
     }
 
     // The half that matters: accepting in the hook must STOP the field, not
-    // merely run beside it. If both fire, a launcher taking Down for its list
-    // would move the list twice.
+    // merely run beside it. If both fire, a surface taking Return for itself
+    // would also submit the field.
     function test_a_claimed_key_never_reaches_the_field() {
-        probe.claimDown = true;
-        keyClick(Qt.Key_Down);
-        compare(probe.downs, 0, "a claimed Down still reached moveDown");
+        probe.claimReturn = true;
+        keyClick(Qt.Key_Return);
+        compare(probe.accepts, 0, "a claimed Return still accepted the field");
         verify(probe.lastSeenKey.length > 0, "the hook never saw the event");
     }
 
