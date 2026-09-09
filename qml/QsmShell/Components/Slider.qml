@@ -149,20 +149,17 @@ T.Slider {
         return root.stepBy(Math.sign(distance) * Math.round(Math.abs(distance) / root.stepSize));
     }
 
-    // One unit PAST the end, deliberately: `increase()`/`decrease()` clamp, so
-    // the extra step costs nothing and a count that is short by one cannot
-    // leave the value a step below the bound.
-    //
-    // Landing exactly ON the bound is Qt's arithmetic, not this count's. Under
-    // `SnapAlways` a step whose multiples are exactly representable reaches it
-    // (measured: `stepSize` 0.01 lands on 0 and 1), and one whose are not
-    // saturates just short and stays there however many units are walked
-    // (measured: `stepSize` 0.1 saturates at 0.9999999999999999, because
-    // Qt snaps AFTER it clamps). A host that needs an exact bound needs a
-    // `stepSize` that can express it.
+    // The whole range in units, which is every step either of these can need
+    // from anywhere in it. There is no extra unit past the end: `setValue`
+    // clamps, so an overshoot cannot help, and it also refuses a write that is
+    // `qFuzzyCompare`-equal to the value it already holds, so once a value has
+    // landed within 1e-12 of a bound no further step reaches the bound itself
+    // (measured: `stepSize` 0.1 saturates at 0.9999999999999999 and stays
+    // there, while 0.01 lands on 0 and 1 exactly). A host that needs an exact
+    // bound needs a `stepSize` whose multiples can express it.
     readonly property int _unitsInRange: Math.ceil((root.to - root.from) / root.stepSize)
-    function toMinimum(): bool { return root.stepBy(-(root._unitsInRange + 1)); }
-    function toMaximum(): bool { return root.stepBy(root._unitsInRange + 1); }
+    function toMinimum(): bool { return root.stepBy(-root._unitsInRange); }
+    function toMaximum(): bool { return root.stepBy(root._unitsInRange); }
 
     function _report(before: real): bool {
         if (root.value === before)
