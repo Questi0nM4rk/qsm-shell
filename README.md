@@ -82,17 +82,15 @@ built `.qsb` are committed, because Quickshell loads the `.qsb` at runtime and
 no consumer should need a Qt shader toolchain to run. `npm test` fails if the
 committed `.qsb` does not match a rebuild of its `.frag`.
 
-Add visible behavior first. Verify it in native QML, then add one focused
-regression check if the behavior can realistically regress.
+Build the feature, look at it in the live window, then add one regression
+check only if the behaviour can realistically regress. No TDD, no plans, no
+dated docs. `AGENTS.md` holds the direction and the component laws; the
+project skill `develop-component` holds the step loop for one type.
 
-## Next Milestones
+## Next
 
-1. ~~Port the existing edge shader unchanged.~~ Done 2026-09-06.
-2. ~~Render one `ShellBorder` with one dynamically anchored rollout, reviewed
-   live before nesting, welding or fullscreen rules.~~ Done 2026-09-07.
-3. Move the remaining types into `previews/units/`, one at a time, each with
-   its own behaviour test. 6 of ~45 done; `tests/interaction/tst_library.qml`
-   dies empty at the end of it.
-4. Teach `Rollout` to be the PARENT of a nested rollout. Until it can, the
-   consumer's rail popout cannot become a `Rollout` and keeps a second copy of
-   the keep-open logic.
+1. `TextField` release.
+2. `Slider` look redesigned against `design-system-blueprint.pdf` and
+   caelestia.
+3. Remaining types move into `previews/units/`, each on its template, each
+   judged live. Open items: `docs/BACKLOG.md`.
