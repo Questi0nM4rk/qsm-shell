@@ -20,7 +20,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   has checked whether flushness fails in some state.
 - Popup family (`Menu`, `Popover`, `Dialog`, `ToolTip`) stays hand-rolled:
   `T.Popup` inside a `PanelWindow` paints only inside the window rect.
-- Remaining types move to `previews/units/` in this order: `Switch`, `Checkbox` plus `Radio`, buttons on `T.AbstractButton`,
+- Remaining types move to `previews/units/` in this order: `Checkbox` plus `Radio`, buttons on `T.AbstractButton`,
   `SpinBox`, `Segmented` on `T.TabBar`, `ScrollArea` on `T.ScrollBar`, then
   the rest. Every type moved so far surfaced a real defect (no keyboard
   route, no Tab stop, hover while disabled, truncated natural width); budget
