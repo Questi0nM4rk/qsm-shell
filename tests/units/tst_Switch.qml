@@ -15,16 +15,16 @@ TestCase {
     Switch {
         id: pointerSwitch
         x: 40; y: 20
-        onToggled: next => pointerSwitch.checked = next
+        onToggleRequested: next => pointerSwitch.checked = next
     }
-    SignalSpy { id: pointerSpy; target: pointerSwitch; signalName: "toggled" }
+    SignalSpy { id: pointerSpy; target: pointerSwitch; signalName: "toggleRequested" }
 
     Switch {
         id: keyboardSwitch
         x: 40; y: 80
-        onToggled: next => keyboardSwitch.checked = next
+        onToggleRequested: next => keyboardSwitch.checked = next
     }
-    SignalSpy { id: keyboardSpy; target: keyboardSwitch; signalName: "toggled" }
+    SignalSpy { id: keyboardSpy; target: keyboardSwitch; signalName: "toggleRequested" }
 
     Switch {
         id: disabledSwitch
@@ -38,7 +38,7 @@ TestCase {
         id: unwiredSwitch
         x: 40; y: 200
     }
-    SignalSpy { id: unwiredSpy; target: unwiredSwitch; signalName: "toggled" }
+    SignalSpy { id: unwiredSpy; target: unwiredSwitch; signalName: "toggleRequested" }
 
     function init() {
         pointerSwitch.checked = false;
@@ -52,14 +52,14 @@ TestCase {
 
     function test_pointer_space_and_return_share_toggled_intent() {
         mouseClick(pointerSwitch);
-        compare(pointerSpy.count, 1, "pointer did not emit toggled");
+        compare(pointerSpy.count, 1, "pointer did not emit toggleRequested");
         compare(pointerSwitch.checked, true, "host did not apply pointer intent");
 
         keyboardSwitch.forceActiveFocus();
         keyClick(Qt.Key_Space);
         keyClick(Qt.Key_Return);
 
-        compare(keyboardSpy.count, 2, "Space and Return did not emit toggled");
+        compare(keyboardSpy.count, 2, "Space and Return did not emit toggleRequested");
         compare(keyboardSwitch.checked, false, "host did not apply both keyboard intents");
     }
 

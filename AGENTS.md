@@ -149,9 +149,11 @@ follow the design sources.
   `active`. Anything that depends on a window losing and regaining focus is
   measured in the live window only: focus a window, hop away and back with
   `hyprctl dispatch 'hl.dsp.focus({ direction = "left" })'`, then F12.
-- **The `--inspect` dump of a multi-scene window records the LAST scene
-  only.** Every `Preview` dumps and the last write wins. To inspect one
-  scene, open that scenario key alone.
+- **`T.Switch` writes `checked` itself on a drag release, even with
+  `checkable: false`.** A click leaves `checked` alone and emits `clicked`;
+  a drag past the middle sets it. A host-owned switch stands on
+  `T.AbstractButton` and gives up drag. Space clicks a template button,
+  Return does not.
 
 ## Surface ladder and borders
 
