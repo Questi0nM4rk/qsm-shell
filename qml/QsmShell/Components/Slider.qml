@@ -98,12 +98,16 @@ T.RangeSlider {
     readonly property real sizeScale: root._s
     property real thumbSize: root._presetSize
     // Below the sm preset's own size: a hairline, one spacing unit, whatever
-    // the preset. At or above it: the track fills nearly the whole preset,
-    // one spacing unit of thumb showing around it. No single ratio produces
-    // both a hairline sm and a near-flush md/lg, so this is a floor rather
-    // than a multiplier.
+    // the preset. Above it: two thirds of the preset, on the rhythm. The
+    // ratio is geometry, not taste. The fill's rounded end sits at the
+    // thumb's centre and its shoulders are 0.707 x thickness from it, so the
+    // thumb hides them only while thickness < 0.7 x thumb; "thumb minus one
+    // unit" gave 0.83 at md (barely visible) and 0.9 at lg (a second pill
+    // peeking out beside the thumb, owner's live finding). Two thirds keeps
+    // every preset under the line and the bigger the control, the calmer
+    // the join reads.
     property real thickness: root._presetSize <= Style.size("Slider", "sm")
-        ? Style.space1 : root._presetSize - Style.space1
+        ? Style.space1 : Style.rhythm(root._presetSize * 2 / 3)
 
     // circle | pill. A circle rides ON the track and can carry a glyph or a
     // reading; a pill is Material's narrow bar standing in a gap cut through

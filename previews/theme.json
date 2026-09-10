@@ -15,6 +15,6 @@
   "sizes": {
     "Switch": { "xl": 40 },
     "Slider": { "xl": 56 },
-    "TextField": { "xl": 56 }
+    "TextField": { "xl": 64 }
   }
 }

@@ -539,13 +539,13 @@ TestCase {
     // made on purpose.
     function test_size_presets_resolve_the_track_and_thumb_scale() {
         compare(sliderFresh.size, "md", "the default size is not md");
-        compare(sliderFresh.thickness, Style.iconLg - Style.space1, "the md preset did not reach thickness");
-        compare(sliderFresh.thumbSize, Style.iconLg, "the md preset did not reach thumbSize");
+        compare(sliderFresh.thickness, Style.rhythm(Style.size("Slider", "md") * 2 / 3), "the md preset did not reach thickness");
+        compare(sliderFresh.thumbSize, Style.size("Slider", "md"), "the md preset did not reach thumbSize");
 
         const shapes = [
-            { size: "sm", thickness: Style.space1, thumb: Style.iconSm },
-            { size: "md", thickness: Style.iconLg - Style.space1, thumb: Style.iconLg },
-            { size: "lg", thickness: Style.controlHeight - Style.space1, thumb: Style.controlHeight }
+            { size: "sm", thickness: Style.space1, thumb: Style.size("Slider", "sm") },
+            { size: "md", thickness: Style.rhythm(Style.size("Slider", "md") * 2 / 3), thumb: Style.size("Slider", "md") },
+            { size: "lg", thickness: Style.rhythm(Style.size("Slider", "lg") * 2 / 3), thumb: Style.size("Slider", "lg") }
         ];
 
         for (let i = 0; i < shapes.length; i++) {

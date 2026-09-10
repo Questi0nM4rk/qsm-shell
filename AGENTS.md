@@ -215,6 +215,14 @@ Earned, each from a specific failure. Break one and name which.
   1px border do not scale (M3 keeps radius per component, not per size).
   Sizes that grew only the area left a huge control with a tiny glyph and a
   tiny label, which read as two components.
+- **The bigger the instance, the calmer it is: overhangs, growth and joins
+  scale SLOWER than the body, and what must stay hidden is hidden by
+  geometry, never by a constant.** A slider track of "thumb minus one unit"
+  was 0.83 of the thumb at md and 0.9 at lg, and the fill's rounded end (its
+  shoulders sit 0.707 x thickness from the thumb's centre) peeked out beside
+  the big thumb as a second pill. Two thirds of the thumb keeps every size
+  under the 0.7 line. Derive such ratios from the geometry that has to hold
+  and write the proof in the comment.
 - **No numbers in a component.** Every measurement comes from `Style`. Where a
   scale had a gap, components filled it by typing a literal, and 16, 18 and 22
   all became "the small icon" in three files. A call site that needs a different
