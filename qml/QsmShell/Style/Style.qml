@@ -237,7 +237,7 @@ QtObject {
             root._warnedSizes[key] = true;
             console.warn(`Style.size: no "${name}" preset for "${type}" -- falling back to "md"`);
         }
-        return root.backend?.sizes?.[type]?.["md"] ?? Tokens.sizes[type].md;
+        return Tokens.sizes[type].md;
     }
 
     // ── control and surface geometry ────────────────────────────────────
