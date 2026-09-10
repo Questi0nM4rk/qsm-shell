@@ -41,8 +41,6 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 ## Left standing by the owner
 
 - `volume` glyph sits 0.68px left of its muted sibling; offset 0 chosen.
-- The preview control strip marks the last option clicked, not the state the
-  unit is in; `call` options have nothing to compare against.
 - `Popover.qml`'s comment says "held", the word rejected on `Rollout`.
 
 ## Later
@@ -91,6 +89,11 @@ Each cost real time once. None is findable by reading the code.
   circle until the stack is gone; keep them and read the handle's focus.
 - **`T.RangeSlider` rewrites handle z on every press** (grabbed 1, other 0),
   so anything meant to paint under both handles sits at -1.
+- **`T.Switch` writes `checked` itself on a drag release, even with
+  `checkable: false`.** A click leaves `checked` alone and emits `clicked`;
+  a drag past the middle sets it. A host-owned switch stands on
+  `T.AbstractButton` and gives up drag. Space clicks a template button,
+  Return does not.
 - **A `HoverHandler` forces `acceptHoverEvents` on its item even while
   disabled**, and `hoverEnterEvent` sets `hovered` from `hoverEnabled`.
 - **`setValue` refuses a write fuzzy-equal to the current value**, so a
