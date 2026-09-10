@@ -267,10 +267,11 @@ Rectangle {
             Repeater {
                 model: ["title", "body", "supporting", "metadata"]
                 ColumnLayout {
+                    id: ladderRow
                     required property string modelData
                     spacing: 0
-                    Prose { role: "section"; text: modelData }
-                    Prose { role: parent.modelData; text: "The rail keeps its width while a popout is open" }
+                    Prose { role: "section"; text: ladderRow.modelData }
+                    Prose { role: ladderRow.modelData; text: "The rail keeps its width while a popout is open" }
                 }
             }
         }

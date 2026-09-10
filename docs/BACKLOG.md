@@ -6,8 +6,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 ## Next
 
 - `TextField`: release. Open audit lines: the 1px failed border and 1px focus ring render unevenly at dpr 1.2 (top
-  6.07:1, side 4.03:1); slot glyphs 20 and 16 in one row; leading glyph
-  ignores `size`; trailing padding survives an emptied slot; caret lands on
+  6.07:1, side 4.03:1); trailing padding survives an emptied slot; caret lands on
   fractional x; disabled dims text, leading and trailing glyph in three
   different steps; search leading action is a 20x20 target.
 - `Slider`: hosts set `wheelUnits` per surface (a seek bar 0, a level bar

@@ -2,7 +2,6 @@ import QtQuick
 import QtTest
 
 import qs.QsmShell.Components
-import qs.QsmShell.Style
 
 // The two surfaces whose contracts are invisible until something drives them.
 //
