@@ -1,0 +1,20 @@
+{
+  "reducedMotion": false,
+  "accent": "#c5a5e9",
+  "surface": "#2d2036",
+  "text": "#f6f1f9",
+  "textMuted": "#b6a8c2",
+  "background": "#1c0e27",
+  "danger": "#ff8b94",
+  "fontFamily": "sans-serif",
+  "technicalFontFamily": "monospace",
+  "surfaceOpacity": 0.9,
+  "opacityDisabled": 0.35,
+  "controlHeight": 40,
+  "controlHeightSm": 32,
+  "sizes": {
+    "Switch": { "xl": 40 },
+    "Slider": { "xl": 56 },
+    "TextField": { "xl": 56 }
+  }
+}

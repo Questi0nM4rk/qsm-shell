@@ -18,6 +18,14 @@ Switch {
             { label: "off", set: { checked: false } },
             { label: "on",  set: { checked: true } }
         ]},
+        { label: "size", options: [
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } },
+            // Not in the default table -- previews/theme.json's consumer
+            // backend adds it, proving a consumer preset name resolves.
+            { label: "xl", set: { size: "xl" } }
+        ]},
         { label: "colour", options: [
             { label: "accent",  set: { accentColor: Style.accent } },
             { label: "danger",  set: { accentColor: Style.danger } },

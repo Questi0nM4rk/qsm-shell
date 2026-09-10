@@ -80,15 +80,25 @@ T.RangeSlider {
     property color thumbContentColor: Style.background
 
     // ── shape ──────────────────────────────────────────────────────────
-    // sm | md | lg. The preset is only the DEFAULT: `thickness` and
-    // `thumbSize` stay the primary API, and a call site that states one keeps
-    // it through a later size change. The thumb is never flush with its
-    // track: md and lg keep one step of track showing around a circle.
+    // A preset NAME, resolved through the theme's size table. The preset is
+    // only the DEFAULT: `thickness` and `thumbSize` stay the primary API, and
+    // a call site that states one keeps it through a later size change. The
+    // thumb is never flush with its track: md and lg keep one step of track
+    // showing around a circle.
     property string size: "md"
-    readonly property bool _sm: size === "sm"
-    readonly property bool _lg: size === "lg"
-    property real thumbSize: root._sm ? Style.iconSm : root._lg ? Style.controlHeight : Style.iconLg
-    property real thickness: root._sm ? Style.space1 : root.thumbSize - Style.space1
+    // The theme's number for the CURRENT preset name, independent of
+    // `thumbSize` once a call site has pinned that separately -- `thickness`
+    // below tracks this, not `thumbSize`, or a pinned thumb would drag its
+    // track's hairline/chunky split along with it.
+    readonly property real _presetSize: Style.size("Slider", root.size)
+    property real thumbSize: root._presetSize
+    // Below the sm preset's own size: a hairline, one spacing unit, whatever
+    // the preset. At or above it: the track fills nearly the whole preset,
+    // one spacing unit of thumb showing around it. No single ratio produces
+    // both a hairline sm and a near-flush md/lg, so this is a floor rather
+    // than a multiplier.
+    property real thickness: root._presetSize <= Style.size("Slider", "sm")
+        ? Style.space1 : root._presetSize - Style.space1
 
     // circle | pill. A circle rides ON the track and can carry a glyph or a
     // reading; a pill is Material's narrow bar standing in a gap cut through

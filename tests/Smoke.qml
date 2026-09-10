@@ -29,11 +29,11 @@ Item {
         property real opacityDisabled: 0.23
         property int sliderThumbSize: 19
         property int sliderTrackThickness: 7
-        property int iconLg: 26
         property int controlHeight: 53
         property int controlHeightSm: 29
         property int textDisplay: 37
         property color warning: "#abcdef"
+        property var sizes: ({ "Slider": { "md": 26 } })
     }
 
     Component.onCompleted: {
@@ -63,10 +63,10 @@ Item {
         if (!require(capsule.implicitHeight === backend.controlHeight,
                 "Capsule did not consume backend height"))
             return;
-        // The md thumb derives from the icon scale, so that is the token the
-        // consumer's backend has to reach.
-        if (!require(level.thumbSize === backend.iconLg,
-                "Slider did not derive its md thumb from the backend icon scale"))
+        // The md thumb derives from the theme's size table, so that is what
+        // the consumer's backend has to reach.
+        if (!require(level.thumbSize === backend.sizes.Slider.md,
+                "Slider did not derive its md thumb from the backend size table"))
             return;
         if (!require(disabledButton.opacity === backend.opacityDisabled,
                 "IconButton did not consume backend disabled opacity"))

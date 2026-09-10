@@ -129,7 +129,10 @@ TextField {
         { label: "size", options: [
             { label: "sm", set: { size: "sm" } },
             { label: "md", set: { size: "md" } },
-            { label: "lg", set: { size: "lg" } }
+            { label: "lg", set: { size: "lg" } },
+            // Not in the default table -- previews/theme.json's consumer
+            // backend adds it, proving a consumer preset name resolves.
+            { label: "xl", set: { size: "xl" } }
         ]},
         { label: "failed", options: [
             { label: "off", set: { failed: false } },

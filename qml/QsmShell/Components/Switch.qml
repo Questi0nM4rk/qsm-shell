@@ -24,6 +24,12 @@ T.AbstractButton {
     id: root
 
     property color accentColor: Style.accent
+    // sm | md | lg -- a preset NAME, resolved through the theme's size table.
+    property string size: "md"
+    // The one absolute number; everything else is a proportion of it. The
+    // preset is only the DEFAULT: a host that wants a switch across a screen
+    // or inside a dense row states its own.
+    property real knobSize: Style.size("Switch", size)
 
     signal toggleRequested(bool checked)
 
@@ -45,9 +51,10 @@ T.AbstractButton {
     Accessible.checkable: true
 
     // The track is a pill two knobs wide; the knob is inset by the same
-    // amount at both ends, so the travel is what is left over. Constant.
-    readonly property real _knob: Style.iconSm
-    readonly property real _inset: Style.spaceTight
+    // amount at both ends, so the travel is what is left over. The inset is
+    // the knob's own eighth, so the proportions survive any `knobSize`.
+    readonly property real _knob: root.knobSize
+    readonly property real _inset: root.knobSize * Style.spaceTight / Style.iconSm
     implicitWidth: _knob * 2 + _inset * 2
     implicitHeight: _knob + _inset * 2
     padding: 0
@@ -105,8 +112,8 @@ T.AbstractButton {
         height: root.height + Style.spaceTight * 2
         host: root
         target: knob
-        hoverScale: (root._knob + Style.space1) / root._knob
-        pressScale: (root._knob + Style.space2) / root._knob
+        hoverScale: (Style.iconSm + Style.space1) / Style.iconSm
+        pressScale: (Style.iconSm + Style.space2) / Style.iconSm
         focusRadius: height / 2
     }
 }

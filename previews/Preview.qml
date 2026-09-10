@@ -35,13 +35,29 @@ Rectangle {
     height: viewportHeight
     color: "#1c0e27"
     // Theme fixtures: one backend object per named theme. A caller-supplied
-    // `backend` always wins over the theme map.
-    StyleBackend { id: deepNightBackend }
-    property var _themeFixtures: ({ "deep-night": deepNightBackend })
+    // `backend` always wins over the theme map. `deep-night`'s object is the
+    // CONSUMER-shaped one, loaded from theme.json rather than declared here,
+    // so the preview windows and unit tests run under the same shape a real
+    // desktop's bootstrap would install (extra `sizes` presets included).
+    property var _deepNightBackend: ({})
+    function _loadTheme(): void {
+        const request = new XMLHttpRequest();
+        request.open("GET", Qt.resolvedUrl("theme.json"), false);
+        request.send();
+        if (request.responseText.length === 0) {
+            console.warn("Preview: could not read previews/theme.json -- run through "
+                + "scripts/preview-qml.mjs or scripts/capture-qml.mjs, which set "
+                + "QML_XHR_ALLOW_FILE_READ");
+            return;
+        }
+        root._deepNightBackend = JSON.parse(request.responseText);
+    }
+    property var _themeFixtures: ({ "deep-night": root._deepNightBackend })
     property var activeBackend: backend !== null && backend !== undefined ? backend : (_themeFixtures[theme] || null)
     // Install the active backend on the Style singleton so every component
     // resolves tokens from the scenario theme.
     Component.onCompleted: {
+        root._loadTheme();
         Style.backend = root.activeBackend;
         if (root.interactive || root.captureDump)
             settleDump.start();

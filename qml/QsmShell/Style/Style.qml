@@ -215,6 +215,31 @@ QtObject {
     readonly property int radius2xl: backend?.radius2xl ?? Tokens.radius2xl
     readonly property int radiusPill: backend?.radiusPill ?? Tokens.radiusPill
 
+    // The table an unknown name already warned about, so a consumer typo
+    // reports once rather than once per binding re-evaluation.
+    readonly property var _warnedSizes: ({})
+
+    // THE size table. A component knows its own PROPORTIONS; this is the one
+    // absolute number a preset NAME resolves to -- `sizes.<Type>.<name>`, the
+    // consumer's backend first, the theme's default second. An unknown name
+    // falls back to "md" (warned once) rather than throwing, because a typo'd
+    // preset should still render something.
+    function size(type: string, name: string): real {
+        const fromBackend = root.backend?.sizes?.[type]?.[name];
+        if (fromBackend !== undefined)
+            return fromBackend;
+        const fromTokens = Tokens.sizes[type]?.[name];
+        if (fromTokens !== undefined)
+            return fromTokens;
+
+        const key = type + "." + name;
+        if (!root._warnedSizes[key]) {
+            root._warnedSizes[key] = true;
+            console.warn(`Style.size: no "${name}" preset for "${type}" -- falling back to "md"`);
+        }
+        return root.backend?.sizes?.[type]?.["md"] ?? Tokens.sizes[type].md;
+    }
+
     // ── control and surface geometry ────────────────────────────────────
     readonly property int controlHeight: backend?.controlHeight ?? Tokens.geometryControlHeight
     readonly property int controlHeightSm: backend?.controlHeightSm ?? Tokens.geometryControlHeightSm

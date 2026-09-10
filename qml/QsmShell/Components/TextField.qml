@@ -38,8 +38,11 @@ T.Control {
 
     property string placeholder: ""
     property alias text: input.text
-    // sm | md | lg
+    // A preset NAME, resolved through the theme's size table. `fieldHeight`
+    // below is the escape hatch: settable directly when one call site needs
+    // one height without a new preset.
     property string size: "md"
+    property real fieldHeight: Style.size("TextField", size)
     // text | password | number. A search box is still `text` with a
     // magnifier in its leading slot -- search is not an input type.
     property string inputType: "text"
@@ -96,6 +99,9 @@ T.Control {
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
     readonly property bool _password: inputType === "password"
+    // Stays on the type scale's own sm/md/lg rather than a proportion of
+    // `fieldHeight`: a taller field does not want proportionally bigger
+    // glyphs, it wants more breathing room around the same reading size.
     readonly property int fieldTextSize: _sm ? Style.textSm : _lg ? Style.textLg : Style.textMd
     readonly property bool focused: input.activeFocus
 
@@ -147,7 +153,7 @@ T.Control {
     property real naturalWidth: Style.controlWidth
 
     implicitWidth: Math.max(naturalWidth, leftPadding + rightPadding)
-    implicitHeight: _sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight
+    implicitHeight: root.fieldHeight
 
     // Padding is where the slots sit, and the template owns the arithmetic
     // from here: the contentItem gets exactly what is left over.

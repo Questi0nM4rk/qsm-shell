@@ -2,6 +2,7 @@ import QtQuick
 import QtTest
 
 import qs.QsmShell.Components
+import qs.QsmShell.Style
 
 TestCase {
     id: probe
@@ -39,6 +40,12 @@ TestCase {
         x: 40; y: 200
     }
     SignalSpy { id: unwiredSpy; target: unwiredSwitch; signalName: "toggleRequested" }
+
+    Switch {
+        id: unknownSizeSwitch
+        x: 40; y: 260
+        size: "not-a-preset"
+    }
 
     function init() {
         pointerSwitch.checked = false;
@@ -87,5 +94,12 @@ TestCase {
         compare(unwiredSwitch.activeFocus, true,
             "Tab did not reach the next enabled switch after the disabled switch");
         compare(disabledSwitch.activeFocus, false, "Tab entered a disabled switch");
+    }
+
+    // A typo'd preset name has to render something rather than throw --
+    // Style.size falls back to the md preset.
+    function test_unknown_size_name_falls_back_to_md_without_throwing() {
+        compare(unknownSizeSwitch.knobSize, Style.size("Switch", "md"),
+            "an unknown size name did not fall back to the md preset");
     }
 }

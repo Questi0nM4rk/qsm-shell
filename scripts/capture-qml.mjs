@@ -43,6 +43,9 @@ const result = spawnSync('/usr/lib/qt6/bin/qml', ['-I', resolve(root, 'qml'), te
     QT_OPENGL: 'desktop',
     QT_QPA_PLATFORM: 'offscreen',
     QSG_RHI_BACKEND: 'opengl',
+    // Preview.qml reads previews/theme.json over XHR; Qt refuses local-file
+    // GET without this.
+    QML_XHR_ALLOW_FILE_READ: '1',
   },
 })
 

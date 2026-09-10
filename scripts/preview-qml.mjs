@@ -69,6 +69,9 @@ for (const [group, initialKey] of requests) {
         QT_OPENGL: 'desktop',
         QT_QPA_PLATFORM: 'wayland',
         QSG_RHI_BACKEND: 'opengl',
+        // Preview.qml reads previews/theme.json over XHR; Qt refuses
+        // local-file GET without this.
+        QML_XHR_ALLOW_FILE_READ: '1',
       },
     },
   )

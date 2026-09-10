@@ -96,4 +96,5 @@ QtObject {
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55
     readonly property real trackingWide: 1.4
+    readonly property var sizes: ({"Switch":{"sm":12,"md":16,"lg":24},"Slider":{"sm":16,"md":24,"lg":40},"TextField":{"sm":32,"md":40,"lg":52}})
 }

@@ -113,5 +113,10 @@
   },
   "tracking": {
     "wide": 1.4
+  },
+  "sizes": {
+    "Switch": { "sm": 12, "md": 16, "lg": 24 },
+    "Slider": { "sm": 16, "md": 24, "lg": 40 },
+    "TextField": { "sm": 32, "md": 40, "lg": 52 }
   }
 }
