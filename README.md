@@ -34,6 +34,15 @@ Capsule {
 
 `Style` resolves every value as *your backend first, the library's generated
 token as the fallback* — so `Tokens` is the DEFAULT theme, never the theme.
+
+Sizes work the same way. A sized type takes a preset NAME, `size: "md"`, and
+resolves it through `Style.size("<Type>", name)` against the theme's size
+table (`sizes.<Type>.<name>`, defaults in `tokens/deep-night.json`). Your
+backend's `sizes` extends or overrides that table, so `sizes: { Switch: { xl: 40 } }`
+makes `Switch { size: "xl" }` valid in your project. The resolved number
+(`knobSize`, `thumbSize`, `fieldHeight`) stays settable directly when one
+call site needs one value. `previews/theme.json` is the consumer-shaped theme
+the preview windows and captures run under, extra presets included.
 `Interaction` is the one place you state a fact components cannot see for
 themselves (whether a hover may claim a selection).
 

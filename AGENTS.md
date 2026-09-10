@@ -194,6 +194,17 @@ Earned, each from a specific failure. Break one and name which.
   slider wearing two names because two surfaces asked for it; they differed in
   three numbers. If a name contains where it is used, it is wrong. A library
   that grows a type per call site stops being a library.
+- **A component knows its PROPORTIONS; the absolute size comes from the
+  theme's size table.** Every sized type has one absolute number
+  (`knobSize`, `thumbSize`, `fieldHeight`) and everything else is a ratio of
+  it. That number is `Style.size("<Type>", size)`: `size` is a preset NAME
+  (`"md"` by default) and the theme owns the table, `sizes.<Type>.<name>` in
+  `tokens/deep-night.json` as the default and `Style.backend.sizes` as the
+  consumer's, who adds `xl: 40` and writes `size: "xl"` (the Chakra, Radix
+  and Ant model). An unknown name falls back to `md` and warns once. The
+  number stays settable directly as the escape hatch. Never an enum with
+  token mapping inside the component: this is a general library, not one
+  desktop's kit.
 - **No numbers in a component.** Every measurement comes from `Style`. Where a
   scale had a gap, components filled it by typing a literal, and 16, 18 and 22
   all became "the small icon" in three files. A call site that needs a different

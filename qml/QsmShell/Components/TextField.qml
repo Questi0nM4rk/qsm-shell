@@ -96,13 +96,11 @@ T.Control {
             ? Qt.ImhHiddenText | Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
             : 0
 
-    readonly property bool _sm: size === "sm"
-    readonly property bool _lg: size === "lg"
     readonly property bool _password: inputType === "password"
-    // Stays on the type scale's own sm/md/lg rather than a proportion of
-    // `fieldHeight`: a taller field does not want proportionally bigger
-    // glyphs, it wants more breathing room around the same reading size.
-    readonly property int fieldTextSize: _sm ? Style.textSm : _lg ? Style.textLg : Style.textMd
+    // The md preset reads at textMd; another height scales the reading with
+    // it and snaps to the type scale, so a consumer's `xl` gets a size the
+    // scale owns rather than a fraction. Never keyed on the preset NAME.
+    readonly property int fieldTextSize: Style.textNear(root.fieldHeight * Style.textMd / Style.size("TextField", "md"))
     readonly property bool focused: input.activeFocus
 
     // ── actions: the one route for pointer, keyboard and menus ──────────

@@ -32,6 +32,10 @@ docs is better. Every line of either needs a reason.
    port. Invent only what no source has.
 3. **Build the real QML.** The component under `qml/QsmShell/Components/`,
    on its `QtQuick.Templates` type. Every number from `Style` or `Motion`.
+   Size: one absolute number resolved as `Style.size("<Type>", size)` from a
+   preset name, the rest proportions of it; add the type's `sm/md/lg` row to
+   `sizes` in `tokens/deep-night.json` and an extra preset to
+   `previews/theme.json` so the window proves a consumer name works.
    Every action a function listed in `actions`; pointer, keyboard and
    callers share it. State the host owns is reported, never written.
 4. **Build the unit.** `previews/units/<Type>.qml` takes `variant`, plays the

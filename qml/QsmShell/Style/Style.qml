@@ -240,6 +240,14 @@ QtObject {
         return Tokens.sizes[type].md;
     }
 
+    // The type-scale step nearest a wanted pixel size. A control scaled by a
+    // size preset wants its reading to scale WITH it, but a glyph at 11.2px is
+    // not on the scale; the nearest step is, and one type scale stays one.
+    function textNear(px: real): int {
+        const steps = [root.textXs, root.textSm, root.textMd, root.textLg, root.textXl];
+        return steps.reduce((best, step) => Math.abs(step - px) < Math.abs(best - px) ? step : best, steps[0]);
+    }
+
     // ── control and surface geometry ────────────────────────────────────
     readonly property int controlHeight: backend?.controlHeight ?? Tokens.geometryControlHeight
     readonly property int controlHeightSm: backend?.controlHeightSm ?? Tokens.geometryControlHeightSm
