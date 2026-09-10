@@ -30,7 +30,7 @@ Item {
     property string icon: ""
     property color iconColor: Style.text
     property color fill: Style.accent
-    property color trackColor: Style.surfaceHover
+    property color trackColor: Style.outline
 
     property int diameter: Style.ringDiameter
     property int strokeWidth: Style.ringStroke

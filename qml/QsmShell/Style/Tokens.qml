@@ -53,6 +53,7 @@ QtObject {
     readonly property int motionPulse: 1400
     readonly property int motionHoverGrace: 180
     readonly property real opacityDisabled: 0.35
+    readonly property real opacitySelected: 0.12
     readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.45
     readonly property int opacityBandRimStrength: 0

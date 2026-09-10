@@ -31,7 +31,7 @@ Rectangle {
     property real low: -1
     property real high: -1
     property color fill: Style.accent
-    property color trackColor: Style.surfaceHover
+    property color trackColor: Style.outline
     property real thickness: Style.trackThickness
     property int orientation: Qt.Horizontal
 

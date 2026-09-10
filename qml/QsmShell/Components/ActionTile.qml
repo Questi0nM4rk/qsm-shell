@@ -43,13 +43,13 @@ Item {
     opacity: enabled ? 1 : Style.opacityDisabled
     readonly property color stateColor: armed ? armedColor : selected ? accent : Style.text
     readonly property string shownLabel: armed && confirmLabel.length > 0 ? confirmLabel : label
-    Rectangle {
+    // Armed is a selection wearing the danger colour: the same identity tint,
+    // a different accent.
+    Surface {
         anchors.fill: parent
         radius: Style.radiusMd
-        color: root.armed ? Qt.rgba(root.armedColor.r, root.armedColor.g, root.armedColor.b, .25)
-            : root.selected ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, .22)
-            : Qt.rgba(Style.surfaceHover.r, Style.surfaceHover.g, Style.surfaceHover.b, .5)
-        Behavior on color { ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+        selected: root.selected || root.armed
+        accent: root.armed ? root.armedColor : root.accent
     }
     Column {
         anchors.centerIn: parent

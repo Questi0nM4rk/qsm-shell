@@ -62,6 +62,7 @@
   },
   "opacity": {
     "disabled": 0.35,
+    "selected": 0.12,
     "surface": 0.9,
     "recede": 0.45,
     "bandRimStrength": 0,

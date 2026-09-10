@@ -160,31 +160,20 @@ T.Control {
     // caret rather than a control that swallowed the keyboard.
     focusPolicy: Qt.NoFocus
 
-    background: Rectangle {
+    background: Surface {
         objectName: "textFieldSurface"
         radius: Style.radiusMd
-        // Hover and press are answered by the SURFACE, not by growth. Every
-        // other control in the library grows, and a text box must not: the
-        // caret and the text have to stay where the eye put them, and a field
-        // that jumps under the pointer is a field you cannot aim a click into.
-        // A read-only field REPORTS; it is not a target, and lifting under the
-        // pointer told a person it was one. They clicked, got no caret, typed,
-        // and the keystrokes vanished. `StateLayer` already stops answering
-        // while read-only, so the surface has to agree with it. Focus still
-        // lifts: a read-only value is selectable and copyable.
-        //
-        // Disabled dims by COLOUR, never by `opacity` on the frame: opacity
-        // would apply to the surface, the text and the caret separately, and a
-        // translucent surface lets whatever sits behind the field read through
-        // its own value. `Style.disabled` blends toward the background and
-        // stays opaque. It is read off the REST colour rather than off the
-        // expression above, because `hoverEnabled` is unconditional here and a
-        // disabled field under the pointer still reports `hovered`.
-        color: !root.enabled
-            ? Style.disabled(Style.surface)
-            : root.focused || (root.hovered && !input.readOnly)
-                ? Style.surfaceHover
-                : Style.surface
+        // Hover is answered by the SURFACE, not by growth: the caret and the
+        // text have to stay where the eye put them, and a field that jumps
+        // under the pointer is a field you cannot aim a click into. A
+        // read-only field REPORTS; it is not a target, and lifting under the
+        // pointer told a person it was one. Focus still lifts: a read-only
+        // value is selectable and copyable.
+        // Gated on `enabled`: `hoverEnabled` is unconditional here, so a
+        // disabled field under the pointer still reports `hovered`, and the
+        // dim must come off the REST colour, not the lifted one.
+        hovered: root.enabled && (root.focused || (root.hovered && !input.readOnly))
+        enabled: root.enabled
         // The one border in the library, and it means one thing: this field
         // FAILED. Invisible otherwise. It used to double as the focus edge,
         // which drew one state twice -- `StateLayer` owns the focus ring, so a
@@ -195,9 +184,6 @@ T.Control {
         border.width: root.failed ? 1 : 0
         border.color: root.enabled ? Style.danger : Style.disabled(Style.danger)
 
-        Behavior on color {
-            ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-        }
         Behavior on border.color {
             ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
         }

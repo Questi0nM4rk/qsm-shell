@@ -168,9 +168,15 @@ follows; hand-tuned tokens drifted until raised sat at the resting value.
 | `outline` | +0.8 | pressed where growth is impossible; dividers, tracks, the empty toggle's rim |
 | `accent` | | selected, focus, primary fill |
 
+- `Style.tone(base, hovered, pressed, selected, enabled, accent)` is THE
+  state matrix and `Surface` is the Rectangle that binds it; a component's
+  body is one `Surface` (or one `tone` call) and never its own ternary. Four
+  components each wrote their own and disagreed on the selected tint.
 - Hover is a lift of one step above the layer the item lies on. An item on
   a raised layer hovers one step above raised. Controls that can grow keep
   growth (`StateLayer`); tint is for what cannot scale.
+- An inactive track (progress, meter, ring, slider) is `outline`, a line,
+  never a body's rung; `surfaceHover` means hover and nothing else.
 - Selected is identity, not a lift: `accent` at 12 % over the layer plus
   accent content (text, glyph). A toggle with its own fill (Switch, Checkbox,
   Radio) is selected as solid accent. Selected plus hover adds the step.

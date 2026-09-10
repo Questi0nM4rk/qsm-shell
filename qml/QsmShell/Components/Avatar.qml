@@ -41,7 +41,7 @@ Item {
     // is no ring and the item is exactly `size`.
     property real progress: -1
     property color progressColor: Style.accent
-    property color progressTrack: Style.surfaceHover
+    property color progressTrack: Style.outline
     property real ringWidth: Math.max(2, Math.round(size * 0.06))
     // Air between the picture and its ring, so the two read as a thing and its
     // frame rather than as one thick border.

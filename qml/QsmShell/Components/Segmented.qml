@@ -97,16 +97,13 @@ RowLayout {
             implicitHeight: root.compact ? Style.controlHeightSm : Style.controlHeightLg
             opacity: segment.available ? 1 : Style.opacityDisabled
 
-            Rectangle {
+            // A segment sits on the bar's own body, so its base is nothing and
+            // selection is the translucent accent over whatever is beneath.
+            Surface {
                 anchors.fill: parent
                 radius: Style.radiusSm
-                color: segment.current
-                    ? Qt.rgba(Style.accent.r, Style.accent.g, Style.accent.b, 0.12)
-                    : "transparent"
-
-                Behavior on color {
-                    ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-                }
+                base: "transparent"
+                selected: segment.current
             }
 
             RowLayout {

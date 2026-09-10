@@ -63,18 +63,12 @@ Card {
     // Unavailable, not invisible: the control still says what it would do.
     opacity: enabled ? 1 : Style.opacityDisabled
 
-    // The state matrix, in one place. Reading down: what the surface is when
-    // the control is ON, when it asks loudly, and when it is merely there.
-    surfaceColor: {
-        const hot = layer.hovered && root.enabled;
-        if (root.active)
-            return Qt.tint(Style.surfaceRaised,
-                Qt.rgba(root._accent.r, root._accent.g, root._accent.b, hot ? 0.2 : 0.14));
-        if (root.variant === "primary")
-            return Qt.tint(Style.surfaceRaised,
-                Qt.rgba(root._accent.r, root._accent.g, root._accent.b, hot ? 0.16 : 0.1));
-        return hot ? Style.surfaceHover : Style.surface;
-    }
+    // The state matrix is the ladder's (`Style.tone`): ON and "asks loudly"
+    // are both the accent's identity over the surface, hover lifts a step.
+    // Disabled is `opacity` below, not the tone's dim, because a Card is a
+    // translucent panel already and the two would double up.
+    surfaceColor: Style.tone(Style.surface, layer.hovered && root.enabled, false,
+        root.active || root.variant === "primary", true, root._accent)
     // A quiet variant at rest paints NOTHING. It is transparent rather than
     // surface-at-90%, which is the difference between a control that sits on
     // the surface and one that is part of it.

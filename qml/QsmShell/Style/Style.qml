@@ -63,6 +63,9 @@ QtObject {
 
     // ── opacity ─────────────────────────────────────────────────────────
     readonly property real opacityDisabled: backend?.opacityDisabled ?? Tokens.opacityDisabled
+    // The accent's strength over a layer when a body is selected (M3 state
+    // layer 12 %, Radix step 5). One number, read by `selected()` alone.
+    readonly property real opacitySelected: backend?.opacitySelected ?? Tokens.opacitySelected
     readonly property real surfaceOpacity: backend?.surfaceOpacity ?? Tokens.opacitySurface
     // "Not the one you are looking at." A list recedes its non-current rows so
     // the current one is the only thing at full strength; it is a different
@@ -94,6 +97,32 @@ QtObject {
                        bg.g + (c.g - bg.g) * k,
                        bg.b + (c.b - bg.b) * k,
                        1);
+    }
+
+    // THE state matrix, once. A body on a layer answers hover, press, selection
+    // and unavailability with ONE colour, and every component used to write
+    // its own version of this ternary (four of them disagreed on the tint).
+    // Order matters and is the ladder's: selection is identity (the accent
+    // over the layer), a lift stacks on top of it, and disabled dims whatever
+    // came out. `Surface` binds this for the common case; a component with
+    // its own Rectangle calls it directly.
+    //
+    //     color: Style.tone(Style.surface, hovered, pressed, selected, enabled)
+    //
+    function tone(base: color, hovered: bool, pressed: bool, selected: bool, enabled: bool, accent: color): color {
+        let c = selected ? root.selected(base, accent) : base;
+        if (pressed)
+            c = root.lift(c, 0.8);
+        else if (hovered)
+            c = root.lift(c, 0.4);
+        return enabled ? c : root.disabled(c);
+    }
+
+    // Selected is identity, not a lift: the accent at `opacitySelected` over
+    // the layer. A transparent base yields a translucent accent, which is
+    // what a segment sitting on its own container wants.
+    function selected(base: color, accent: color): color {
+        return Qt.tint(base, Qt.rgba(accent.r, accent.g, accent.b, root.opacitySelected));
     }
 
     // THE way a layer says "above this one". `lift(c, 0.4)` is `c` blended
