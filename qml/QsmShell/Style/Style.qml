@@ -244,8 +244,27 @@ QtObject {
     // size preset wants its reading to scale WITH it, but a glyph at 11.2px is
     // not on the scale; the nearest step is, and one type scale stays one.
     function textNear(px: real): int {
-        const steps = [root.textXs, root.textSm, root.textMd, root.textLg, root.textXl];
-        return steps.reduce((best, step) => Math.abs(step - px) < Math.abs(best - px) ? step : best, steps[0]);
+        return root._nearest(px, [root.textXs, root.textSm, root.textMd, root.textLg, root.textXl]);
+    }
+
+    // The icon-scale step nearest a wanted pixel size; same reason as
+    // `textNear`, for glyphs.
+    function iconNear(px: real): int {
+        return root._nearest(px, [root.iconXs, root.iconSm, root.iconMd, root.iconLg]);
+    }
+
+    // A spacing snapped to the 4px rhythm, never below the half step. Insets
+    // scaled by a size preset land between the grid lines otherwise.
+    function rhythm(px: real): int {
+        return Math.max(root.spaceTight, Math.round(px / root.space1) * root.space1);
+    }
+
+    function _nearest(px: real, steps: list<int>): int {
+        let best = steps[0];
+        for (const step of steps)
+            if (Math.abs(step - px) < Math.abs(best - px))
+                best = step;
+        return best;
     }
 
     // ── control and surface geometry ────────────────────────────────────

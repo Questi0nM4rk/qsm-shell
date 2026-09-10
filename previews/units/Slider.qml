@@ -58,7 +58,9 @@ Column {
         thumbIcon: root.osd ? "volume" : ""
         thumbText: root.osd ? "" : ""
         labelText: "Volume"
-        labelIcon: root.osd ? "volume" : ""
+        // A glyph in the default scene too, not only OSD, so the label's
+        // own scaling (icon + text together) is visible at rest.
+        labelIcon: "volume"
 
         // The host maps the label's click: here a mute that takes the level
         // to the bottom and back to the top from there, through the

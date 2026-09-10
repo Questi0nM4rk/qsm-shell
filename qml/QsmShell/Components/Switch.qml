@@ -30,6 +30,11 @@ T.AbstractButton {
     // preset is only the DEFAULT: a host that wants a switch across a screen
     // or inside a dense row states its own.
     property real knobSize: Style.size("Switch", size)
+    // One scale per instance: everything the switch draws is a proportion
+    // of `knobSize`, so this ratio against md is the one number a host
+    // composing around it needs to follow.
+    readonly property real _s: root.knobSize / Style.size("Switch", "md")
+    readonly property real sizeScale: root._s
 
     signal toggleRequested(bool checked)
 

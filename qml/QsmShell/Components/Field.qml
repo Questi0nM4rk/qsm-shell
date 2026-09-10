@@ -34,6 +34,10 @@ ColumnLayout {
     property string error: ""
     // Marks the field as needed, in a channel that is not colour.
     property bool required: false
+    // Forwarded to the label: a caller composing a scaled control (a
+    // TextField/Slider/Switch's own `sizeScale`) binds this to it so the
+    // name above stays in step with the control it names.
+    property real sizeScale: 1
 
     readonly property bool failed: error.length > 0
 
@@ -46,6 +50,7 @@ ColumnLayout {
     ControlLabel {
         text: root.label
         required: root.required
+        sizeScale: root.sizeScale
     }
 
     Item {

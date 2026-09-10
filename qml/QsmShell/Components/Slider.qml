@@ -91,6 +91,11 @@ T.RangeSlider {
     // below tracks this, not `thumbSize`, or a pinned thumb would drag its
     // track's hairline/chunky split along with it.
     readonly property real _presetSize: Style.size("Slider", root.size)
+    // One scale per instance: the preset's own ratio against md, not
+    // `thumbSize` -- a call site that pins `thumbSize` separately keeps its
+    // track's hairline/chunky split rather than dragging it along.
+    readonly property real _s: root._presetSize / Style.size("Slider", "md")
+    readonly property real sizeScale: root._s
     property real thumbSize: root._presetSize
     // Below the sm preset's own size: a hairline, one spacing unit, whatever
     // the preset. At or above it: the track fills nearly the whole preset,
@@ -131,10 +136,11 @@ T.RangeSlider {
     property bool labelClickable: false
     signal labelClicked()
     readonly property bool _hasLabel: labelText !== "" || labelIcon !== ""
-    readonly property real _labelAbove: _hasLabel && labelPosition === "above" ? label.implicitHeight + Style.space2 : 0
-    readonly property real _labelBelow: _hasLabel && labelPosition === "below" ? label.implicitHeight + Style.space2 : 0
-    readonly property real _labelLeft: _hasLabel && labelPosition === "left" ? label.implicitWidth + Style.space2 : 0
-    readonly property real _labelRight: _hasLabel && labelPosition === "right" ? label.implicitWidth + Style.space2 : 0
+    readonly property real _labelGap: Style.rhythm(Style.space2 * root._s)
+    readonly property real _labelAbove: _hasLabel && labelPosition === "above" ? label.implicitHeight + _labelGap : 0
+    readonly property real _labelBelow: _hasLabel && labelPosition === "below" ? label.implicitHeight + _labelGap : 0
+    readonly property real _labelLeft: _hasLabel && labelPosition === "left" ? label.implicitWidth + _labelGap : 0
+    readonly property real _labelRight: _hasLabel && labelPosition === "right" ? label.implicitWidth + _labelGap : 0
 
     // ── events ─────────────────────────────────────────────────────────
     // `moved()` says a gesture changed a value, and the host reads `value` or
@@ -334,7 +340,7 @@ T.RangeSlider {
     // well: reserving it only on hover would move the track under the pointer
     // that is hovering it. A pill grows along its length only, and twice as
     // far because that is the only cue it has.
-    readonly property real _hoverGrowth: Style.space1
+    readonly property real _hoverGrowth: Style.rhythm(Style.space1 * root._s)
     readonly property real _crossGrowth: root._hoverGrowth * (root._pill ? 2 : 1)
     // The shadow drops along `y` in BOTH orientations -- it is gravity, not
     // the axis -- so its slack is cross-axis on a horizontal slider and
@@ -375,6 +381,7 @@ T.RangeSlider {
         icon: root.labelIcon
         clickable: root.labelClickable
         enabled: root.enabled
+        sizeScale: root._s
         onClicked: root.labelClicked()
         width: implicitWidth
         height: implicitHeight

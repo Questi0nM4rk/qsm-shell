@@ -203,29 +203,53 @@ TestCase {
     // `item` null -- so a field that had a trailing action and then lost its
     // text went on reserving a whole action's width next to an empty value.
     function test_an_empty_trailing_slot_takes_no_space() {
+        // The bare inset, at this field's own scale -- never the base
+        // Style.space3, which is only the md reading.
+        const restInset = Style.rhythm(Style.space3 * composedField.sizeScale);
+
         composedField.text = "Plain text";
         wait(0);
-        verify(composedField.rightPadding > Style.space3,
+        verify(composedField.rightPadding > restInset,
             "a filled field reserved no room for its trailing action");
 
         composedField.text = "";
         wait(0);
-        compare(composedField.rightPadding, Style.space3,
+        compare(composedField.rightPadding, restInset,
             "an emptied field kept its inactive trailing action's footprint");
     }
 
     // The leading glyph is the host's content, so switching it off must give
     // the padding it reserved back to the text, not leave a hole.
     function test_a_field_without_a_leading_glyph_gives_the_space_back() {
+        const restInset = Style.rhythm(Style.space3 * composedField.sizeScale);
+
         composedField.showLeading = true;
         wait(0);
-        verify(composedField.leftPadding > Style.space3,
+        verify(composedField.leftPadding > restInset,
             "a field with a leading glyph reserved no room for it");
 
         composedField.showLeading = false;
-        tryCompare(composedField, "leftPadding", Style.space3);
+        tryCompare(composedField, "leftPadding", restInset);
 
         composedField.showLeading = true;
+    }
+
+    // One scale per instance: a leading and a trailing glyph at two
+    // different sizes read as two different fields.
+    function test_leading_and_trailing_slot_glyphs_share_one_size() {
+        composedField.purposeOverride = "text";
+        composedField.showLeading = true;
+        composedField.text = "Plain text";
+        wait(0);
+
+        const leading = findChild(composedField, "textFieldPurposeGlyph");
+        const trailing = findChild(composedField, "textFieldTrailingAction");
+        verify(leading !== null, "the filled text field had no leading glyph");
+        verify(trailing !== null, "the filled text field had no trailing action");
+
+        const expected = Style.iconNear(Style.iconMd * composedField.sizeScale);
+        compare(trailing.size, expected, "the trailing slot glyph is not on the size scale");
+        compare(leading.size, expected, "the leading slot glyph does not match the trailing one");
     }
 
     // "Unavailable and not-a-target are different states": a read-only field
@@ -339,11 +363,14 @@ TestCase {
         const caretRight = caret.mapToItem(composedField, caret.width, 0).x;
         const buttonLeft = trailing.mapToItem(composedField, 0, 0).x;
         const gap = buttonLeft - caretRight;
-        // One row-spacing step, and nothing else: flush is too tight, floating
-        // is too far, and the owner's live ruler settled on the spacing step.
-        verify(gap >= Style.space2 - 2,
+        // One row-spacing step at this field's own scale, and nothing else:
+        // flush is too tight, floating is too far, and the owner's live
+        // ruler settled on the spacing step -- never the base Style.space2,
+        // which is only the md reading.
+        const step = Style.rhythm(Style.space2 * composedField.sizeScale);
+        verify(gap >= step - 2,
             "caret right (" + caretRight + ") is more than a step from button left (" + buttonLeft + ")");
-        verify(gap <= Style.space2 + 2,
+        verify(gap <= step + 2,
             "caret right (" + caretRight + ") floats more than a spacing step from the button");
 
         const middle = input.parent;

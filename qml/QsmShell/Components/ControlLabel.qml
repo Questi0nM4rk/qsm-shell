@@ -22,6 +22,10 @@ Item {
     property string icon: ""
     property bool required: false
     property bool clickable: false
+    // One scale per instance, set by the control this names (`Slider` its
+    // own `_s`, `Field` the control it wraps): every measurement below is
+    // its md-role number times this ratio.
+    property real sizeScale: 1
 
     signal clicked()
 
@@ -35,14 +39,14 @@ Item {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: Style.space1
+        spacing: Style.rhythm(Style.space1 * root.sizeScale)
 
         Loader {
             active: root.icon !== ""
             anchors.verticalCenter: parent.verticalCenter
             sourceComponent: SvgIcon {
                 name: root.icon
-                size: Style.iconSm
+                size: Style.iconNear(Style.iconSm * root.sizeScale)
                 color: root._painted
             }
         }
@@ -52,6 +56,7 @@ Item {
             role: "label"
             text: root.text
             color: root._painted
+            font.pixelSize: Style.textNear(Style.textSm * root.sizeScale)
         }
         // Needed, in a channel that is not colour alone.
         Prose {
@@ -60,6 +65,7 @@ Item {
             role: "label"
             color: root.enabled ? Style.danger : Style.disabled(Style.danger)
             text: "*"
+            font.pixelSize: Style.textNear(Style.textSm * root.sizeScale)
         }
     }
 
@@ -67,8 +73,8 @@ Item {
         // The target, not the footprint: at least one large icon each way,
         // centred, so a two-line-tall hit box costs the layout nothing.
         anchors.centerIn: parent
-        width: Math.max(parent.width, root.clickable ? Style.iconLg : 0)
-        height: Math.max(parent.height, root.clickable ? Style.iconLg : 0)
+        width: Math.max(parent.width, root.clickable ? Style.iconLg * root.sizeScale : 0)
+        height: Math.max(parent.height, root.clickable ? Style.iconLg * root.sizeScale : 0)
         target: root
         interactive: root.clickable && root.enabled
         focusRadius: Style.radiusSm

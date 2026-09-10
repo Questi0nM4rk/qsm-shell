@@ -97,10 +97,16 @@ T.Control {
             : 0
 
     readonly property bool _password: inputType === "password"
+    // One scale per instance: every measurement below is md's own number
+    // times this ratio, snapped back onto its own scale. `fieldHeight`, not
+    // the preset NAME, so a call site that pins `fieldHeight` directly still
+    // scales everything connected to it.
+    readonly property real _s: root.fieldHeight / Style.size("TextField", "md")
+    readonly property real sizeScale: root._s
     // The md preset reads at textMd; another height scales the reading with
     // it and snaps to the type scale, so a consumer's `xl` gets a size the
     // scale owns rather than a fraction. Never keyed on the preset NAME.
-    readonly property int fieldTextSize: Style.textNear(root.fieldHeight * Style.textMd / Style.size("TextField", "md"))
+    readonly property int fieldTextSize: Style.textNear(Style.textMd * root._s)
     readonly property bool focused: input.activeFocus
 
     // ── actions: the one route for pointer, keyboard and menus ──────────
@@ -154,9 +160,12 @@ T.Control {
     implicitHeight: root.fieldHeight
 
     // Padding is where the slots sit, and the template owns the arithmetic
-    // from here: the contentItem gets exactly what is left over.
-    leftPadding: Style.space3 + (leadingSlot.hasContent ? leadingSlot.implicitWidth + Style.space2 : 0)
-    rightPadding: Style.space3 + (trailingSlot.hasContent ? trailingSlot.implicitWidth + Style.space2 : 0)
+    // from here: the contentItem gets exactly what is left over. Both insets
+    // scale with the field and snap to the 4px rhythm.
+    readonly property int _inset: Style.rhythm(Style.space3 * root._s)
+    readonly property int _slotGap: Style.rhythm(Style.space2 * root._s)
+    leftPadding: root._inset + (leadingSlot.hasContent ? leadingSlot.implicitWidth + root._slotGap : 0)
+    rightPadding: root._inset + (trailingSlot.hasContent ? trailingSlot.implicitWidth + root._slotGap : 0)
 
     hoverEnabled: true
     // Focus lands on the INPUT, never on the frame: the frame forwards it
@@ -226,7 +235,7 @@ T.Control {
     Item {
         id: leadingSlot
         readonly property bool hasContent: root._slotHasContent(leadingSlot)
-        x: Style.space3
+        x: root._inset
         anchors.verticalCenter: parent.verticalCenter
         implicitWidth: hasContent ? childrenRect.width : 0
         implicitHeight: hasContent ? childrenRect.height : 0
@@ -238,7 +247,7 @@ T.Control {
         id: trailingSlot
         readonly property bool hasContent: root._slotHasContent(trailingSlot)
         anchors.right: parent.right
-        anchors.rightMargin: Style.space3
+        anchors.rightMargin: root._inset
         anchors.verticalCenter: parent.verticalCenter
         implicitWidth: hasContent ? childrenRect.width : 0
         implicitHeight: hasContent ? childrenRect.height : 0

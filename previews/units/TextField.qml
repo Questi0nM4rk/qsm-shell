@@ -27,6 +27,10 @@ TextField {
 
     property bool showLeading: true
 
+    // One size for every slot glyph, scaled with the field -- a leading and
+    // a trailing glyph at two different sizes read as two different fields.
+    readonly property int _slotIconSize: Style.iconNear(Style.iconMd * root.sizeScale)
+
     size: "lg"
     inputType: passwordExample ? "password" : numberExample ? "number" : "text"
     // `failed` is a HOST verdict, never the validator's, so the unit plays the
@@ -59,7 +63,7 @@ TextField {
         IconButton {
             objectName: "textFieldSearchAction"
             icon: "search"
-            size: Style.iconMd
+            size: root._slotIconSize
             padding: 0
             color: Style.textMuted
             onClicked: root.accept()
@@ -69,10 +73,11 @@ TextField {
     Component {
         id: purposeGlyph
         SvgIcon {
+            objectName: "textFieldPurposeGlyph"
             name: root.textExample ? "type"
                 : root.passwordExample ? "key"
                 : "hash"
-            size: Style.iconMd
+            size: root._slotIconSize
             color: Style.textMuted
         }
     }
@@ -92,8 +97,8 @@ TextField {
             icon: root.passwordExample
                 ? root.passwordVisible ? "eye-off" : "eye"
                 : "x"
-            size: Style.iconSm
-            padding: Style.space1
+            size: root._slotIconSize
+            padding: 0
             color: Style.textMuted
             onClicked: {
                 if (root.passwordExample)

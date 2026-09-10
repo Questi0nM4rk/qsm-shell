@@ -205,6 +205,16 @@ Earned, each from a specific failure. Break one and name which.
   number stays settable directly as the escape hatch. Never an enum with
   token mapping inside the component: this is a general library, not one
   desktop's kit.
+- **One scale per instance, and everything connected to the component
+  scales with it.** `s = Style.size(Type, size) / Style.size(Type, "md")`.
+  A component is designed in `md`; every other measurement is its md value
+  times `s`, snapped to its own scale so no value lands off the system:
+  text through `Style.textNear`, glyphs through `Style.iconNear`, spacing
+  and insets through `Style.rhythm`. The label, the glyph in a thumb, a
+  slot action, the gap to the label: all of it. Radius, the focus gap and a
+  1px border do not scale (M3 keeps radius per component, not per size).
+  Sizes that grew only the area left a huge control with a tiny glyph and a
+  tiny label, which read as two components.
 - **No numbers in a component.** Every measurement comes from `Style`. Where a
   scale had a gap, components filled it by typing a literal, and 16, 18 and 22
   all became "the small icon" in three files. A call site that needs a different
