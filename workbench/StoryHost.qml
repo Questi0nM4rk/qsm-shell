@@ -392,7 +392,43 @@ Rectangle {
             text: "Wrapping body copy stays readable without expanding the surface."
         }
     }
-    component ActionTileStory: ActionTile { icon: "power"; label: "Power off" }
+    component ActionTileStory: ActionTile {
+        id: tile
+        property var eventRecorder: null
+        icon: "power"
+        label: "Power off"
+        confirmLabel: "Confirm?"
+        onActivated: if (eventRecorder) eventRecorder("intent", "activated", { selected: tile.selected, armed: tile.armed })
+        readonly property var controls: [
+            { label: "selection", options: [
+                { label: "selected", set: { selected: true } },
+                { label: "rest", set: { selected: false } }
+            ] },
+            { label: "armed", options: [
+                { label: "on", set: { armed: true } },
+                { label: "off", set: { armed: false } }
+            ] },
+            { label: "state", options: [
+                { label: "enabled", set: { enabled: true } },
+                { label: "disabled", set: { enabled: false } }
+            ] }
+        ]
+        readonly property var integration: ({
+            events: ["activated"],
+            actions: ["activate"],
+            observables: {
+                selected: () => tile.selected,
+                armed: () => tile.armed,
+                enabled: () => tile.enabled
+            },
+            runAction: name => {
+                if (name !== "activate" || !tile.enabled)
+                    return false;
+                tile.activate();
+                return true;
+            }
+        })
+    }
     component StatStory: Stat { value: "72"; unit: "%"; label: "CPU"; trend: "up"; good: "down" }
     component StatRingStory: StatRing { value: .7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
     component SparklineStory: Sparkline { values: [1, 4, 2, 8, 5]; Layout.preferredWidth: 220; Layout.preferredHeight: 80 }

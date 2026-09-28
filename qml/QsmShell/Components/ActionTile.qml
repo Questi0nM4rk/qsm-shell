@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -40,13 +41,32 @@ Item {
 
     implicitWidth: buttonWidth
     implicitHeight: buttonHeight
-    opacity: enabled ? 1 : Style.opacityDisabled
-    readonly property color stateColor: armed ? armedColor : selected ? accent : Style.text
+    activeFocusOnTab: true
+
+    Accessible.role: Accessible.Button
+    Accessible.name: root.shownLabel
+
+    readonly property color _baseColor: armed ? armedColor : selected ? accent : Style.text
+    // Disabled dims each painted role through the colour, never through a
+    // composite opacity: opacity would dim every child separately and let a
+    // translucent glyph show the translucent body through itself.
+    readonly property color stateColor: root.enabled ? _baseColor : Style.disabled(_baseColor)
     readonly property string shownLabel: armed && confirmLabel.length > 0 ? confirmLabel : label
+
+    function activate(): void {
+        if (root.enabled)
+            root.activated()
+    }
+
+    readonly property list<T.Action> actions: [
+        T.Action { text: root.shownLabel; enabled: root.enabled; onTriggered: root.activate() }
+    ]
+
     // Armed is a selection wearing the danger colour: the same identity tint,
     // a different accent.
     Surface {
         anchors.fill: parent
+        enabled: root.enabled
         radius: Style.radiusMd
         selected: root.selected || root.armed
         accent: root.armed ? root.armedColor : root.accent
@@ -58,7 +78,7 @@ Item {
         Prose {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "metadata"
-            color: root.armed || root.selected ? root.stateColor : Style.textMuted
+            color: root.armed || root.selected ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
             text: root.shownLabel
         }
     }
@@ -69,13 +89,18 @@ Item {
         focusRadius: Style.radiusMd
         hoverScale: 1.06
         pressScale: .94
-        onClicked: root.activated()
+        onClicked: {
+            root.forceActiveFocus()
+            root.activate()
+        }
         onHoveredChanged: { if (hovered) root.entered(); else root.exited(); }
     }
 
     // A tile is a button, and a button answers a key. Without these the only
     // way to fire one was the pointer, on a surface a person reaches by
-    // keybind.
-    Keys.onSpacePressed: if (root.enabled) root.activated()
-    Keys.onReturnPressed: if (root.enabled) root.activated()
+    // keybind. Every route shares `activate()`, so the disabled guard lives
+    // in exactly one place.
+    Keys.onSpacePressed: event => { event.accepted = true; root.activate() }
+    Keys.onReturnPressed: event => { event.accepted = true; root.activate() }
+    Keys.onEnterPressed: event => { event.accepted = true; root.activate() }
 }
