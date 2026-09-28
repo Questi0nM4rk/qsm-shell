@@ -20,7 +20,7 @@ import qs.QsmShell.Style
 // Three states, each the SAME three marks changing together — fill, glyph,
 // label — so the tile never has to be read twice. Armed outranks selected:
 // what happens next matters more than what is picked.
-Item {
+T.Control {
     id: root
     required property string icon
     required property string label
@@ -41,7 +41,8 @@ Item {
 
     implicitWidth: buttonWidth
     implicitHeight: buttonHeight
-    activeFocusOnTab: true
+    focusPolicy: Qt.StrongFocus
+    hoverEnabled: true
 
     Accessible.role: Accessible.Button
     Accessible.name: root.shownLabel
@@ -64,22 +65,23 @@ Item {
 
     // Armed is a selection wearing the danger colour: the same identity tint,
     // a different accent.
-    Surface {
-        anchors.fill: parent
+    background: Surface {
         enabled: root.enabled
         radius: Style.radiusMd
         selected: root.selected || root.armed
         accent: root.armed ? root.armedColor : root.accent
     }
-    Column {
-        anchors.centerIn: parent
-        spacing: Style.space1
-        SvgIcon { anchors.horizontalCenter: parent.horizontalCenter; name: root.icon; size: Style.iconLg; color: root.stateColor }
-        Prose {
-            anchors.horizontalCenter: parent.horizontalCenter
-            role: "metadata"
-            color: root.armed || root.selected ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
-            text: root.shownLabel
+    contentItem: Item {
+        Column {
+            anchors.centerIn: parent
+            spacing: Style.space1
+            SvgIcon { anchors.horizontalCenter: parent.horizontalCenter; name: root.icon; size: Style.iconLg; color: root.stateColor }
+            Prose {
+                anchors.horizontalCenter: parent.horizontalCenter
+                role: "metadata"
+                color: root.armed || root.selected ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+                text: root.shownLabel
+            }
         }
     }
     StateLayer {
@@ -87,8 +89,6 @@ Item {
         interactive: root.enabled
         focused: root.focused
         focusRadius: Style.radiusMd
-        hoverScale: 1.06
-        pressScale: .94
         onClicked: {
             root.forceActiveFocus()
             root.activate()
