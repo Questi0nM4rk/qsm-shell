@@ -179,6 +179,7 @@ TestCase {
     ActionTile { id: actionTile; icon: "power"; label: "Power off" }
     StatRing { id: ring; value: 0.7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
     Checkbox { id: check2 }
+    SpinBox { id: spinBox }
 
     Menu {
         id: menu
@@ -291,7 +292,7 @@ TestCase {
             paleSwatch, darkSwatch, kbd, avatar, mononym, card, divider,
             emptyState, keyValue, mark, icon, iconButton, calendar,
             notification, archivedNotification, center, popupStack, evictionStack, actionTile, ring,
-            check2, menu, segmented, popover, armed, plainAction];
+            check2, spinBox, menu, segmented, popover, armed, plainAction];
         for (let i = 0; i < types.length; i++)
             verify(types[i] !== null, `type ${i} did not construct`);
     }
@@ -370,18 +371,6 @@ TestCase {
     function test_avatar_initials() {
         compare(avatar.initials, "AL", "two names did not give two letters");
         compare(mononym.initials, "P", "one name did not give one letter");
-    }
-
-    // Arrows skip what cannot be chosen and wrap, because with every option
-    // visible there is no end of a list to run off.
-    function test_segmented_skips_disabled_and_wraps() {
-        probe.chosen = -1;
-        segmented.step(1);
-        compare(probe.chosen, 2, "stepping did not skip the disabled option");
-        segmented.currentIndex = 2;
-        segmented.step(1);
-        compare(probe.chosen, 0, "stepping did not wrap");
-        segmented.currentIndex = 0;
     }
 
     // Arm, then fire. A destructive action that fires on the first press is

@@ -4,8 +4,8 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 node "$root/scripts/generate-tokens.mjs"
-# `previews/units` and `tests/units` fill up one type at a time, so lint what
-# is there rather than what will be.
+# Provider runtime and tests grow one file at a time, so lint what is there
+# rather than what will be.
 lint_dir() {
   local dir="$1"
   compgen -G "$dir"/*.qml >/dev/null || return 0
@@ -13,8 +13,7 @@ lint_dir() {
 }
 
 /usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/qml/QsmShell/Style/*.qml "$root"/qml/QsmShell/Components/*.qml
-lint_dir "$root/previews"
-lint_dir "$root/previews/units"
+lint_dir "$root/workbench"
 lint_dir "$root/tests"
 lint_dir "$root/tests/interaction"
 lint_dir "$root/tests/units"

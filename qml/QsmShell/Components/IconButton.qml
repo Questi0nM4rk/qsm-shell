@@ -1,43 +1,60 @@
 import QtQuick
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
-Item {
+T.Control {
     id: root
 
     required property string icon
     property int size: Style.iconMd
     property color color: Style.text
-    property int padding: Style.space3
-    // Keyboard focus. Defaults to this item's own, so a control that takes
-    // focus rings without wiring; a list that owns focus for its rows binds it.
-    property bool focused: root.activeFocus
+    property string accessibleName: icon
+    readonly property color paintedColor: root.enabled ? root.color : Style.disabled(root.color)
     signal clicked
 
-    implicitWidth: size + padding * 2
-    implicitHeight: size + padding * 2
-    opacity: enabled ? 1 : Style.opacityDisabled
+    focusPolicy: Qt.StrongFocus
 
-    Behavior on opacity {
-        NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+    implicitWidth: size + leftPadding + rightPadding
+    implicitHeight: size + topPadding + bottomPadding
+    padding: Style.space3
+
+    Accessible.role: Accessible.Button
+    Accessible.name: root.accessibleName
+
+    function activate(): void {
+        if (root.enabled)
+            root.clicked()
     }
 
-    SvgIcon {
-        id: glyph
-        anchors.centerIn: parent
-        name: root.icon
-        size: root.size
-        color: root.color
+    readonly property list<T.Action> actions: [
+        T.Action { text: root.accessibleName; enabled: root.enabled; onTriggered: root.activate() }
+    ]
+
+    contentItem: Item {
+        implicitWidth: root.size
+        implicitHeight: root.size
+
+        SvgIcon {
+            id: glyph
+            anchors.centerIn: parent
+            name: root.icon
+            size: root.size
+            color: root.paintedColor
+        }
     }
 
     StateLayer {
         anchors.fill: parent
         target: glyph
-        interactive: root.enabled
-        focused: root.focused
         focusRadius: height / 2
-        hoverScale: 1.15
-        pressScale: 0.86
-        onClicked: root.clicked()
+        onClicked: {
+            root.forceActiveFocus()
+            root.activate()
+        }
     }
+
+    Keys.onReturnPressed: event => { event.accepted = true; root.activate() }
+    Keys.onEnterPressed: event => { event.accepted = true; root.activate() }
+    Keys.onSpacePressed: event => { event.accepted = true; root.activate() }
 }

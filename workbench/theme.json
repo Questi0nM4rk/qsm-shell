@@ -14,7 +14,11 @@
   "controlHeightSm": 32,
   "sizes": {
     "Switch": { "xl": 40 },
+    "Checkbox": { "xl": 40 },
+    "Radio": { "xl": 40 },
+    "SpinBox": { "xl": 64 },
     "Slider": { "xl": 56 },
-    "TextField": { "xl": 64 }
+    "TextField": { "xl": 64 },
+    "Segmented": { "xl": 64 }
   }
 }

@@ -111,7 +111,7 @@ Item {
     // `hoverAreas` itself is empty.
     readonly property bool hovered: root.visible && !!root.host && !!root.host.pointer
         && [...root.triggerAreas, ...(root.hoverAreas.length > 0 ? root.hoverAreas
-            : [Qt.rect(root.x, root.y, root.width, root.height)])]
+            : [root.rectInHost(0, 0, root.width, root.height)])]
             .some(area => root.host.pointer.contains(area))
 
     // The keep-open verdict a consumer reads: `hovered`, extended by
@@ -191,6 +191,17 @@ Item {
         : ((attached("right") ? edgeInsetH : 0) - (attached("left") ? edgeInsetH : 0)) / 2
     readonly property real contentCenterOffsetY: !_joined ? 0
         : ((attached("bottom") ? edgeInsetV : 0) - (attached("top") ? edgeInsetV : 0)) / 2
+
+    // Consumers describe trigger/hover areas in host coordinates. Keep the
+    // fallback silhouette and registry rects in that same space when a
+    // rollout is nested below another item.
+    function rectInHost(localX: real, localY: real, width: real, height: real): rect {
+        if (root.host && typeof root.host.mapFromItem === "function") {
+            const point = root.host.mapFromItem(root, localX, localY);
+            return Qt.rect(point.x, point.y, width, height);
+        }
+        return Qt.rect(root.x + localX, root.y + localY, width, height);
+    }
 
     // The reveal animates along ONE axis only — the FIRST declared edge's
     // axis (owner: a corner rollout scaling both axes reads as a popup
@@ -370,6 +381,7 @@ Item {
     function syncRegistries() {
         if (!host)
             return;
+        const sceneRect = root.rectInHost(0, 0, root.width, root.height);
         if (visible) {
             // CPU-precomputed inverse 2x2 (row-major) + min eigenvalue.
             const det = dm00 * dm11 - dm01 * dm01;
@@ -387,7 +399,7 @@ Item {
             // emergence are one number. They are separate arguments because a
             // nested host sets blend to 0 for an exact union while being fully
             // out (BarPopouts.flushToParent).
-            host.registerBulge(rolloutId, Qt.rect(x, y, width, height), cornerRadii,
+            host.registerBulge(rolloutId, sceneRect, cornerRadii,
                 meltBlend, inverse, mean - dev, edgeBits, 0, false, meltBlend);
             if (fullscreenDetached && host.fullscreen && fullscreenCapsule)
                 host.registerFullscreenCapsule(rolloutId,
@@ -399,7 +411,7 @@ Item {
             host.unregisterFullscreenCapsule(rolloutId);
         }
         if (hitActive)
-            host.registerRolloutRegion(rolloutId, Qt.rect(x, y, width, height));
+            host.registerRolloutRegion(rolloutId, sceneRect);
         else
             host.unregisterRolloutRegion(rolloutId);
     }

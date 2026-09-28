@@ -21,6 +21,8 @@ Item {
     property int size: Style.iconMd
     property color color: Style.text
 
+    width: size
+    height: size
     implicitWidth: size
     implicitHeight: size
 

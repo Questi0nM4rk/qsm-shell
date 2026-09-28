@@ -11,6 +11,8 @@ Field 1.0 Field.qml
 TextField 1.0 TextField.qml
 Switch 1.0 Switch.qml
 Checkbox 1.0 Checkbox.qml
+Radio 1.0 Radio.qml
+SpinBox 1.0 SpinBox.qml
 Segmented 1.0 Segmented.qml
 Meter 1.0 Meter.qml
 ScrollCue 1.0 ScrollCue.qml

@@ -3,7 +3,7 @@
 states: rest(surface at 1.2:1 against the background, no border) hover(surfaceHover, 0.4 above rest) press(caret lands) focus(ring, however focus arrived) disabled(surface, text, placeholder, caret and danger border each through Style.disabled) readOnly failed
 actions: Accept Clear Reveal(password only) Select all
 purposes: text search password number; one type, the purpose switches input semantics, leading glyph, trailing action and sample value together
-size: `size` is a preset name resolved by Style.size("TextField", name) into `fieldHeight` (escape hatch); s = fieldHeight / md; text textNear(textMd·s), both slot glyphs iconNear(iconMd·s), insets rhythm(space3·s), slot gap rhythm(space2·s); caret, radius and border constant; width naturalWidth = controlWidth, constant, text scrolls inside
+size: `size` is a preset name resolved by Style.size("TextField", name) into `fieldHeight` (escape hatch); s = fieldHeight / md; text textNear(textMd·s), both slot glyphs iconNear(iconMd·s), insets rhythm(space3·s), slot gap rhythm(space2·s); a leading action owns the full-height strip from the field edge while its glyph keeps the inset; caret, radius and border constant; width naturalWidth = controlWidth, constant, text scrolls inside
 tokens: space3 (box inset) space2 (slot gap) spaceTight (caret width, scroll-end inset) radiusMd surface surfaceHover accent danger Style.disabled textSm|Md|Lg
 motion: micro (surface, border) press (caret travel); blink = platform cursorFlashTime/2, off under reducedMotion
 events: accepted(only when acceptableInput) edited(text) escaped keyPressed(event, the one hook for every key a surface wants, Up/Down included) selectionClaimed

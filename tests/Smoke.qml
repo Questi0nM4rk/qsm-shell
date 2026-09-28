@@ -68,8 +68,9 @@ Item {
         if (!require(level.thumbSize === backend.sizes.Slider.md,
                 "Slider did not derive its md thumb from the backend size table"))
             return;
-        if (!require(disabledButton.opacity === backend.opacityDisabled,
-                "IconButton did not consume backend disabled opacity"))
+        if (!require(disabledButton.opacity === 1
+                && disabledButton.paintedColor === Style.disabled(backend.text),
+                "IconButton did not consume the backend disabled colour blend"))
             return;
         if (!require(Style.technicalFontFamily === backend.technicalFontFamily,
                 "Style did not consume backend technical font"))

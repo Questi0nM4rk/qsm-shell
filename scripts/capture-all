@@ -7,9 +7,10 @@ mkdir -p "$outdir"
 
 mapfile -t keys < <(node -e '
 const { readFileSync } = require("node:fs")
-const scenarios = JSON.parse(readFileSync(process.argv[1], "utf8"))
+const doc = JSON.parse(readFileSync(process.argv[1], "utf8"))
+const scenarios = doc.stories ?? doc
 for (const key of Object.keys(scenarios)) console.log(key)
-' "$root/previews/scenarios.json")
+' "$root/workbench/stories.json")
 
 for key in "${keys[@]}"; do
   if ! (cd "$root" && npm run --silent capture -- "$key" "$outdir/$key.png" >/dev/null); then

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "id": "qsm-shell",
+  "title": "QSM Shell",
+  "description": "Reusable Qt 6 shell components.",
+  "capabilities": [
+    "stories",
+    "compositions",
+    "flows",
+    "tasks"
+  ]
+}

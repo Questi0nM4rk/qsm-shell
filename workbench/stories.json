@@ -1,0 +1,880 @@
+{
+  "version": 1,
+  "stories": {
+    "badge": {
+      "component": "badge",
+      "variant": "warning",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Badge / Warning",
+      "description": "Compact warning status indicator.",
+      "tags": [
+        "status",
+        "feedback"
+      ],
+      "source": "qml/QsmShell/Components/Badge.qml",
+      "tests": [
+        {
+          "label": "unit smoke",
+          "path": "tests/units/tst_units.qml"
+        }
+      ]
+    },
+    "spinner": {
+      "component": "spinner",
+      "variant": "running",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Spinner / Running",
+      "description": "Animated progress affordance in its running state.",
+      "tags": [
+        "loading",
+        "feedback"
+      ],
+      "source": "qml/QsmShell/Components/Spinner.qml"
+    },
+    "progress": {
+      "component": "progress",
+      "variant": "unknown",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ProgressBar / Unknown",
+      "description": "Progress indicator with unknown completion.",
+      "tags": [
+        "loading",
+        "meter"
+      ],
+      "source": "qml/QsmShell/Components/ProgressBar.qml"
+    },
+    "meter": {
+      "component": "meter",
+      "variant": "low",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Meter / Low",
+      "description": "Meter at a low threshold reading.",
+      "tags": [
+        "data",
+        "status"
+      ],
+      "source": "qml/QsmShell/Components/Meter.qml"
+    },
+    "skeleton": {
+      "component": "skeleton",
+      "variant": "loading",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Skeleton / Loading",
+      "description": "Placeholder content while data loads.",
+      "tags": [
+        "loading",
+        "placeholder"
+      ],
+      "source": "qml/QsmShell/Components/Skeleton.qml"
+    },
+    "callout": {
+      "component": "callout",
+      "variant": "danger",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Callout / Danger",
+      "description": "High-emphasis message with recovery action.",
+      "tags": [
+        "feedback",
+        "message"
+      ],
+      "source": "qml/QsmShell/Components/Callout.qml"
+    },
+    "switch": {
+      "component": "switch",
+      "variant": "on",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Switch / On",
+      "description": "Binary control in the enabled on state.",
+      "tags": [
+        "input",
+        "control"
+      ],
+      "source": "qml/QsmShell/Components/Switch.qml",
+      "docs": "docs/components/Switch.md",
+      "tests": [
+        {
+          "label": "switch unit",
+          "path": "tests/units/tst_Switch.qml"
+        }
+      ]
+    },
+    "checkbox": {
+      "component": "checkbox",
+      "variant": "some",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Checkbox / Mixed",
+      "description": "Tri-state checkbox in the indeterminate state.",
+      "tags": [
+        "input",
+        "control"
+      ],
+      "source": "qml/QsmShell/Components/Checkbox.qml",
+      "docs": "docs/components/Checkbox.md",
+      "tests": [
+        {
+          "label": "checkbox unit",
+          "path": "tests/units/tst_Checkbox.qml"
+        }
+      ]
+    },
+    "radio": {
+      "component": "radio",
+      "variant": "off",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Radio / Off",
+      "description": "Radio control in an unselected state.",
+      "tags": [
+        "input",
+        "control"
+      ],
+      "source": "qml/QsmShell/Components/Radio.qml",
+      "docs": "docs/components/Radio.md",
+      "tests": [
+        {
+          "label": "radio unit",
+          "path": "tests/units/tst_Radio.qml"
+        }
+      ]
+    },
+    "spin-box": {
+      "component": "spin-box",
+      "variant": "decimal",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "SpinBox / Decimal",
+      "description": "Numeric input with decimal stepping.",
+      "tags": [
+        "input",
+        "numeric"
+      ],
+      "source": "qml/QsmShell/Components/SpinBox.qml",
+      "docs": "docs/components/SpinBox.md",
+      "tests": [
+        {
+          "label": "spin box unit",
+          "path": "tests/units/tst_SpinBox.qml"
+        }
+      ]
+    },
+    "stat": {
+      "component": "stat",
+      "variant": "cpu",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Stat / CPU",
+      "description": "Single value metric with trend semantics.",
+      "tags": [
+        "data",
+        "metric"
+      ],
+      "source": "qml/QsmShell/Components/Stat.qml"
+    },
+    "sparkline": {
+      "component": "sparkline",
+      "variant": "area",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Sparkline / Area",
+      "description": "Small trend chart with area fill.",
+      "tags": [
+        "data",
+        "chart"
+      ],
+      "source": "qml/QsmShell/Components/Sparkline.qml"
+    },
+    "swatch": {
+      "component": "swatch",
+      "variant": "pale",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ColorSwatch / Pale",
+      "description": "Color sample with readable value text.",
+      "tags": [
+        "color",
+        "data"
+      ],
+      "source": "qml/QsmShell/Components/ColorSwatch.qml"
+    },
+    "kbd": {
+      "component": "kbd",
+      "variant": "combo",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Kbd / Combo",
+      "description": "Keyboard shortcut token group.",
+      "tags": [
+        "metadata",
+        "keyboard"
+      ],
+      "source": "qml/QsmShell/Components/Kbd.qml"
+    },
+    "avatar": {
+      "component": "avatar",
+      "variant": "online",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Avatar / Online",
+      "description": "User avatar with presence status.",
+      "tags": [
+        "identity",
+        "status"
+      ],
+      "source": "qml/QsmShell/Components/Avatar.qml"
+    },
+    "marquee": {
+      "component": "marquee",
+      "variant": "always",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Marquee / Always",
+      "description": "Overflowing text in continuous marquee mode.",
+      "tags": [
+        "text",
+        "motion"
+      ],
+      "source": "qml/QsmShell/Components/Marquee.qml"
+    },
+    "section": {
+      "component": "section",
+      "variant": "devices",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Section / Devices",
+      "description": "Section container with list content and an action.",
+      "tags": [
+        "layout",
+        "list"
+      ],
+      "source": "qml/QsmShell/Components/Section.qml"
+    },
+    "disclosure": {
+      "component": "disclosure",
+      "variant": "expanded",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Disclosure / Expanded",
+      "description": "Expandable details region shown open.",
+      "tags": [
+        "layout",
+        "control"
+      ],
+      "source": "qml/QsmShell/Components/Disclosure.qml"
+    },
+    "scroll": {
+      "component": "scroll",
+      "variant": "overflowing",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ScrollArea / Overflowing",
+      "description": "Scrollable content with overflow affordance.",
+      "tags": [
+        "layout",
+        "scroll"
+      ],
+      "source": "qml/QsmShell/Components/ScrollArea.qml"
+    },
+    "field": {
+      "component": "field",
+      "variant": "error",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Field / Error",
+      "description": "Labeled field with validation error copy.",
+      "tags": [
+        "input",
+        "validation"
+      ],
+      "source": "qml/QsmShell/Components/Field.qml"
+    },
+    "segmented": {
+      "component": "segmented",
+      "variant": "second",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Segmented / Second",
+      "description": "Segmented selector with the second option active.",
+      "tags": [
+        "input",
+        "control"
+      ],
+      "source": "qml/QsmShell/Components/Segmented.qml",
+      "docs": "docs/components/Segmented.md",
+      "tests": [
+        {
+          "label": "segmented unit",
+          "path": "tests/units/tst_Segmented.qml"
+        }
+      ]
+    },
+    "calendar": {
+      "component": "calendar",
+      "variant": "august-2026",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "MonthCalendar / August 2026",
+      "description": "Calendar month fixture with a fixed today marker.",
+      "tags": [
+        "date",
+        "data"
+      ],
+      "source": "qml/QsmShell/Components/MonthCalendar.qml",
+      "docs": "docs/components/MonthCalendar.md",
+      "tests": [
+        {
+          "label": "month calendar unit",
+          "path": "tests/units/tst_MonthCalendar.qml"
+        }
+      ]
+    },
+    "capsule": {
+      "component": "capsule",
+      "variant": "active",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Capsule / Active",
+      "description": "Pill control in active state with detail text.",
+      "tags": [
+        "navigation",
+        "status"
+      ],
+      "source": "qml/QsmShell/Components/Capsule.qml"
+    },
+    "card": {
+      "component": "card",
+      "variant": "resting",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Card / Resting",
+      "description": "Surface card in its resting elevation.",
+      "tags": [
+        "surface",
+        "layout"
+      ],
+      "source": "qml/QsmShell/Components/Card.qml"
+    },
+    "divider": {
+      "component": "divider",
+      "variant": "default",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Divider / Default",
+      "description": "Divider unit used to separate groups.",
+      "tags": [
+        "layout",
+        "surface"
+      ],
+      "source": "qml/QsmShell/Components/Divider.qml"
+    },
+    "scene-pointer": {
+      "component": "scene-pointer",
+      "variant": "default",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ScenePointer / Default",
+      "description": "Pointer affordance for scene-level interactions.",
+      "tags": [
+        "scene",
+        "input"
+      ],
+      "source": "qml/QsmShell/Components/ScenePointer.qml",
+      "tests": [
+        {
+          "label": "scene pointer unit",
+          "path": "tests/units/tst_ScenePointer.qml"
+        }
+      ]
+    },
+    "rollout-hover": {
+      "component": "rollout-hover",
+      "variant": "default",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Rollout / Hover",
+      "description": "Rollout interaction fixture for hover behavior.",
+      "tags": [
+        "overlay",
+        "interaction"
+      ],
+      "source": "qml/QsmShell/Components/Rollout.qml",
+      "tests": [
+        {
+          "label": "rollout unit",
+          "path": "tests/units/tst_Rollout.qml"
+        }
+      ]
+    },
+    "empty-state": {
+      "component": "empty-state",
+      "variant": "default",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "EmptyState / Default",
+      "description": "Empty content message with icon and detail.",
+      "tags": [
+        "feedback",
+        "empty"
+      ],
+      "source": "qml/QsmShell/Components/EmptyState.qml"
+    },
+    "icon-button": {
+      "component": "icon-button",
+      "variant": "resting",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "IconButton / Resting",
+      "description": "Icon-only button in resting state.",
+      "tags": [
+        "input",
+        "icon"
+      ],
+      "source": "qml/QsmShell/Components/IconButton.qml"
+    },
+    "key-value": {
+      "component": "key-value",
+      "variant": "battery",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "KeyValueRow / Battery",
+      "description": "Compact key-value row for device readings.",
+      "tags": [
+        "data",
+        "list"
+      ],
+      "source": "qml/QsmShell/Components/KeyValueRow.qml"
+    },
+    "level": {
+      "component": "level",
+      "variant": "horizontal-high",
+      "viewport": [
+        800,
+        720
+      ],
+      "title": "Slider / Horizontal High",
+      "description": "Horizontal slider with a high value.",
+      "tags": [
+        "input",
+        "numeric"
+      ],
+      "source": "qml/QsmShell/Components/Slider.qml",
+      "docs": "docs/components/Slider.md",
+      "tests": [
+        {
+          "label": "slider unit",
+          "path": "tests/units/tst_Slider.qml"
+        }
+      ]
+    },
+    "menu": {
+      "component": "menu",
+      "variant": "selected",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Menu / Selected",
+      "description": "Menu list with selected and dangerous entries.",
+      "tags": [
+        "navigation",
+        "list"
+      ],
+      "source": "qml/QsmShell/Components/Menu.qml"
+    },
+    "list-row": {
+      "component": "list-row",
+      "variant": "selected",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ListRow / Selected",
+      "description": "Selected list row unit fixture.",
+      "tags": [
+        "list",
+        "selection"
+      ],
+      "source": "qml/QsmShell/Components/ListRow.qml",
+      "tests": [
+        {
+          "label": "list row unit",
+          "path": "tests/units/tst_ListRow.qml"
+        }
+      ]
+    },
+    "notification": {
+      "component": "notification",
+      "variant": "expanded",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "NotificationCard / Expanded",
+      "description": "Expanded notification card fixture.",
+      "tags": [
+        "notification",
+        "message"
+      ],
+      "source": "qml/QsmShell/Components/NotificationCard.qml"
+    },
+    "notification-stack": {
+      "component": "notification-stack",
+      "variant": "resting",
+      "viewport": [
+        800,
+        600
+      ],
+      "title": "NotificationStack / Resting",
+      "description": "Stacked notifications in a deterministic order.",
+      "tags": [
+        "notification",
+        "list"
+      ],
+      "source": "qml/QsmShell/Components/NotificationStack.qml"
+    },
+    "osd-slider": {
+      "component": "osd-slider",
+      "variant": "vertical-high",
+      "viewport": [
+        800,
+        720
+      ],
+      "title": "Slider / Vertical High",
+      "description": "Vertical slider used as an OSD-like control.",
+      "tags": [
+        "input",
+        "numeric"
+      ],
+      "source": "qml/QsmShell/Components/Slider.qml",
+      "docs": "docs/components/Slider.md",
+      "tests": [
+        {
+          "label": "slider unit",
+          "path": "tests/units/tst_Slider.qml"
+        }
+      ]
+    },
+    "device-row": {
+      "component": "device-row",
+      "variant": "reading-selected",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ListRow / Device Reading",
+      "description": "Selected device row with a reading.",
+      "tags": [
+        "list",
+        "device"
+      ],
+      "source": "qml/QsmShell/Components/ListRow.qml",
+      "tests": [
+        {
+          "label": "list row unit",
+          "path": "tests/units/tst_ListRow.qml"
+        }
+      ]
+    },
+    "result-row": {
+      "component": "result-row",
+      "variant": "lg-selected",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ListRow / Result",
+      "description": "Large selected result row fixture.",
+      "tags": [
+        "list",
+        "search"
+      ],
+      "source": "qml/QsmShell/Components/ListRow.qml",
+      "tests": [
+        {
+          "label": "list row unit",
+          "path": "tests/units/tst_ListRow.qml"
+        }
+      ]
+    },
+    "text-input": {
+      "component": "text-input",
+      "variant": "text-filled",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "TextField / Filled",
+      "description": "Editable field with a realistic text value.",
+      "tags": [
+        "input",
+        "text"
+      ],
+      "source": "qml/QsmShell/Components/TextField.qml",
+      "docs": "docs/components/TextField.md",
+      "tests": [
+        {
+          "label": "text field unit",
+          "path": "tests/units/tst_TextField.qml"
+        }
+      ]
+    },
+    "search": {
+      "component": "search",
+      "variant": "search-filled",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "TextField / Search",
+      "description": "Search field with filled query text.",
+      "tags": [
+        "input",
+        "search"
+      ],
+      "source": "qml/QsmShell/Components/TextField.qml",
+      "docs": "docs/components/TextField.md",
+      "tests": [
+        {
+          "label": "text field unit",
+          "path": "tests/units/tst_TextField.qml"
+        }
+      ]
+    },
+    "password-input": {
+      "component": "password-input",
+      "variant": "password-filled",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "TextField / Password",
+      "description": "Password field with filled obscured value.",
+      "tags": [
+        "input",
+        "secure"
+      ],
+      "source": "qml/QsmShell/Components/TextField.qml",
+      "docs": "docs/components/TextField.md",
+      "tests": [
+        {
+          "label": "text field unit",
+          "path": "tests/units/tst_TextField.qml"
+        }
+      ]
+    },
+    "number-input": {
+      "component": "number-input",
+      "variant": "number-filled",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "TextField / Number",
+      "description": "Numeric text field with a filled value.",
+      "tags": [
+        "input",
+        "numeric"
+      ],
+      "source": "qml/QsmShell/Components/TextField.qml",
+      "docs": "docs/components/TextField.md",
+      "tests": [
+        {
+          "label": "text field unit",
+          "path": "tests/units/tst_TextField.qml"
+        }
+      ]
+    },
+    "prose": {
+      "component": "prose",
+      "variant": "heading",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Prose / Heading",
+      "description": "Typography role fixture for heading prose.",
+      "tags": [
+        "text",
+        "typography"
+      ],
+      "source": "qml/QsmShell/Components/Prose.qml"
+    },
+    "action-tile": {
+      "component": "action-tile",
+      "variant": "armed",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ActionTile / Armed",
+      "description": "Action tile in armed confirmation state.",
+      "tags": [
+        "action",
+        "control"
+      ],
+      "source": "qml/QsmShell/Components/ActionTile.qml"
+    },
+    "state-layer": {
+      "component": "state-layer",
+      "variant": "hover",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "StateLayer / Hover",
+      "description": "State layer visualizing hover feedback.",
+      "tags": [
+        "surface",
+        "interaction"
+      ],
+      "source": "qml/QsmShell/Components/StateLayer.qml",
+      "tests": [
+        {
+          "label": "state layer unit",
+          "path": "tests/units/tst_StateLayer.qml"
+        }
+      ]
+    },
+    "stat-ring": {
+      "component": "stat-ring",
+      "variant": "open",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "StatRing / Open",
+      "description": "Open arc stat ring with CPU reading.",
+      "tags": [
+        "data",
+        "metric"
+      ],
+      "source": "qml/QsmShell/Components/StatRing.qml"
+    },
+    "svg-icon": {
+      "component": "svg-icon",
+      "variant": "selected",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "SvgIcon / Selected",
+      "description": "SVG icon in selected color treatment.",
+      "tags": [
+        "icon",
+        "status"
+      ],
+      "source": "qml/QsmShell/Components/SvgIcon.qml"
+    },
+    "tabs": {
+      "component": "tabs",
+      "variant": "second",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Tabs / Second",
+      "description": "Tab selection fixture with the second tab active.",
+      "tags": [
+        "navigation",
+        "selection"
+      ]
+    },
+    "prose-ladder": {
+      "component": "prose-ladder",
+      "variant": "default",
+      "viewport": [
+        560,
+        320
+      ],
+      "title": "Prose / Ladder",
+      "description": "Typography comparison ladder across roles.",
+      "tags": [
+        "text",
+        "typography"
+      ],
+      "source": "qml/QsmShell/Components/Prose.qml"
+    },
+    "shell-border": {
+      "component": "shell-border",
+      "variant": "shown",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ShellBorder / Shown",
+      "description": "Full-viewport shell border with a shown rollout.",
+      "tags": [
+        "shell",
+        "overlay"
+      ],
+      "source": "qml/QsmShell/Components/ShellBorder.qml"
+    }
+  }
+}

@@ -49,6 +49,7 @@ QtObject {
     readonly property int motionRevealSmall: 250
     readonly property int motionMorphGlide: 250
     readonly property real motionMicroPopScale: 0.97
+    readonly property real motionCapsuleHoverScale: 1.04
     readonly property int motionSpin: 900
     readonly property int motionPulse: 1400
     readonly property int motionHoverGrace: 180
@@ -68,6 +69,7 @@ QtObject {
     readonly property int geometryControlWidth: 380
     readonly property int geometryNotificationCollapsedHeight: 36
     readonly property int geometryControlHeightLg: 52
+    readonly property int geometrySpinBoxWidth: 140
     readonly property int geometryMarkThickness: 3
     readonly property int geometryMarkHeight: 18
     readonly property int geometrySliderTrackThickness: 4
@@ -96,5 +98,5 @@ QtObject {
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55
     readonly property real trackingWide: 1.4
-    readonly property var sizes: ({"Switch":{"sm":12,"md":16,"lg":24},"Slider":{"sm":16,"md":24,"lg":40},"TextField":{"sm":32,"md":40,"lg":52}})
+    readonly property var sizes: ({"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"SpinBox":{"sm":32,"md":40,"lg":52},"Slider":{"sm":16,"md":24,"lg":40},"TextField":{"sm":32,"md":40,"lg":52},"Segmented":{"sm":32,"md":40,"lg":52}})
 }

@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "tokens": ["none", "xs", "sm", "md", "lg"],
+  "types": {
+    "column": {
+      "label": "Column",
+      "category": "layout",
+      "children": "many",
+      "props": {
+        "spacing": { "type": "spacing", "default": "sm" },
+        "padding": { "type": "spacing", "default": "none" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": [],
+      "actions": []
+    },
+    "row": {
+      "label": "Row",
+      "category": "layout",
+      "children": "many",
+      "props": {
+        "spacing": { "type": "spacing", "default": "sm" },
+        "padding": { "type": "spacing", "default": "none" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": [],
+      "actions": []
+    },
+    "stack": {
+      "label": "Stack",
+      "category": "layout",
+      "children": "many",
+      "props": {
+        "spacing": { "type": "spacing", "default": "sm" },
+        "padding": { "type": "spacing", "default": "none" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": [],
+      "actions": []
+    },
+    "text-field": {
+      "label": "Text field",
+      "category": "leaf",
+      "children": "none",
+      "props": {
+        "size": { "type": "enum", "values": ["sm", "md", "lg"], "default": "md" },
+        "state": { "type": "enum", "values": ["default", "filled", "error", "disabled"], "default": "default" },
+        "label": { "type": "string", "maxLength": 80, "default": "" },
+        "text": { "type": "string", "maxLength": 200, "default": "" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["accepted", "changed"],
+      "actions": ["clear", "focus"]
+    },
+    "checkbox": {
+      "label": "Checkbox",
+      "category": "leaf",
+      "children": "none",
+      "props": {
+        "checked": { "type": "boolean", "default": false },
+        "label": { "type": "string", "maxLength": 80, "default": "" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["toggled"],
+      "actions": ["toggle", "check", "uncheck"]
+    },
+    "switch": {
+      "label": "Switch",
+      "category": "leaf",
+      "children": "none",
+      "props": {
+        "checked": { "type": "boolean", "default": false },
+        "label": { "type": "string", "maxLength": 80, "default": "" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["toggled"],
+      "actions": ["toggle"]
+    },
+    "radio": {
+      "label": "Radio",
+      "category": "leaf",
+      "children": "none",
+      "props": {
+        "checked": { "type": "boolean", "default": false },
+        "label": { "type": "string", "maxLength": 80, "default": "" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["selected"],
+      "actions": ["select"]
+    },
+    "slider": {
+      "label": "Slider",
+      "category": "leaf",
+      "children": "none",
+      "props": {
+        "value": { "type": "number", "min": 0, "max": 100, "default": 50 },
+        "orientation": { "type": "enum", "values": ["horizontal", "vertical"], "default": "horizontal" },
+        "label": { "type": "string", "maxLength": 80, "default": "" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["changed"],
+      "actions": ["reset"]
+    },
+    "segmented": {
+      "label": "Segmented",
+      "category": "leaf",
+      "children": "none",
+      "props": {
+        "selected": { "type": "number", "integer": true, "min": 0, "max": 7, "default": 0 },
+        "label": { "type": "string", "maxLength": 80, "default": "" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["changed"],
+      "actions": ["reset"]
+    },
+    "spin-box": {
+      "label": "Spin box",
+      "category": "leaf",
+      "children": "none",
+      "props": {
+        "value": { "type": "number", "min": -1000, "max": 1000, "default": 0 },
+        "label": { "type": "string", "maxLength": 80, "default": "" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["changed"],
+      "actions": ["increment", "decrement", "reset"]
+    },
+    "menu": {
+      "label": "Menu",
+      "category": "container",
+      "children": "many",
+      "props": {
+        "title": { "type": "string", "maxLength": 80, "default": "" },
+        "open": { "type": "boolean", "default": false },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["opened", "closed", "selected"],
+      "actions": ["open", "close", "toggle"]
+    },
+    "shell-border-rollout": {
+      "label": "Shell border rollout",
+      "category": "container",
+      "children": "many",
+      "props": {
+        "side": { "type": "enum", "values": ["left", "right", "top", "bottom"], "default": "right" },
+        "open": { "type": "boolean", "default": false },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["opened", "closed"],
+      "actions": ["open", "close", "toggle"]
+    }
+  }
+}

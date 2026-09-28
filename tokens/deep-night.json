@@ -56,6 +56,7 @@
     "revealSmall": 250,
     "morphGlide": 250,
     "microPopScale": 0.97,
+    "capsuleHoverScale": 1.04,
     "spin": 900,
     "pulse": 1400,
     "hoverGrace": 180
@@ -81,6 +82,7 @@
     "controlWidth": 380,
     "notificationCollapsedHeight": 36,
     "controlHeightLg": 52,
+    "spinBoxWidth": 140,
     "markThickness": 3,
     "markHeight": 18,
     "sliderTrackThickness": 4,
@@ -116,7 +118,11 @@
   },
   "sizes": {
     "Switch": { "sm": 12, "md": 16, "lg": 24 },
+    "Checkbox": { "sm": 12, "md": 16, "lg": 24 },
+    "Radio": { "sm": 12, "md": 16, "lg": 24 },
+    "SpinBox": { "sm": 32, "md": 40, "lg": 52 },
     "Slider": { "sm": 16, "md": 24, "lg": 40 },
-    "TextField": { "sm": 32, "md": 40, "lg": 52 }
+    "TextField": { "sm": 32, "md": 40, "lg": 52 },
+    "Segmented": { "sm": 32, "md": 40, "lg": 52 }
   }
 }

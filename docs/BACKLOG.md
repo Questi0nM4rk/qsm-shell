@@ -5,29 +5,16 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 
 ## Next
 
-- `TextField`: release. Open audit lines: the 1px failed border and 1px focus ring render unevenly at dpr 1.2 (top
-  6.07:1, side 4.03:1); trailing padding survives an emptied slot; caret lands on
-  fractional x; disabled dims text, leading and trailing glyph in three
-  different steps; search leading action is a 20x20 target.
 - `Slider`: hosts set `wheelUnits` per surface (a seek bar 0, a level bar
   the keyboard units).
-- `MonthCalendar` takes the wheel with a `WheelHandler`, so it is dead in a
-  live window and pages a month per any nonzero delta. Fix at its migration.
 - `Rollout` cannot be the PARENT of a nested rollout, so the consumer's
   `BarPopouts` keeps its own keep-open predicate. The travel triangle is a
   geometric no-op while the popout is flush with a full-height band; nobody
   has checked whether flushness fails in some state.
 - Popup family (`Menu`, `Popover`, `Dialog`, `ToolTip`) stays hand-rolled:
   `T.Popup` inside a `PanelWindow` paints only inside the window rect.
-- Remaining types move to `previews/units/` in this order: `Checkbox` plus `Radio`, buttons on `T.AbstractButton`,
-  `SpinBox`, `Segmented` on `T.TabBar`, `ScrollArea` on `T.ScrollBar`, then
-  the rest. Every type moved so far surfaced a real defect (no keyboard
-  route, no Tab stop, hover while disabled, truncated natural width); budget
-  for fixing what the move surfaces.
-- `ListRow`: a report-only row (`interactive: false`) dims exactly like a
-  disabled one, against the law it carries (changes the desktop look, owner
-  judges); an empty trailing slot takes space (`RowLayout` spacing with no
-  gate on children).
+- Provider stories still need live owner review after adapter changes; keep
+  behavioural regressions in component tests, not provider shape tests.
 - From the consumer: `NotificationCenter` needs a deterministic tie-break
   between app groups (alphabetical vs recency, owner chooses); `Segmented`
   may want one gliding indicator instead of a fill per cell (`ui-design` and

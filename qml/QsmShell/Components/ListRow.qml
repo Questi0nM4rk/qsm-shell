@@ -81,13 +81,26 @@ Item {
     readonly property bool hovered: layer.hovered
     // The leading box every visual sits in.
     readonly property int leadingSize: _sm ? Style.iconMd : Style.iconLg
-    readonly property color proseColor: !selectable ? Style.textMuted : danger ? Style.danger : Style.text
+    // Report-only rows (interactive: false) are not targets but render at full
+    // strength; disabled rows dim; recede only applies to interactive rows.
+    readonly property color proseColor: root.disabled ? Style.textMuted
+        : root.danger ? Style.danger
+        : Style.text
 
     signal activated
     // A hover-enter the POINTER caused. A list binds its cursor to this rather
     // than to `hovered`, so a cursor that never moved cannot take the selection
     // from the keyboard while results reshuffle underneath it.
     signal hoveredEntered
+
+    Accessible.role: root.selectable ? Accessible.Button : Accessible.StaticText
+    Accessible.name: root.primary
+    Accessible.description: root.supporting
+
+    function activate(): void {
+        if (root.selectable)
+            root.activated()
+    }
 
     // Punch the mark. A list calls this when the selection MOVES, which the
     // mark itself has no way to know about — without it, stepping between two
@@ -159,7 +172,7 @@ Item {
         focusRadius: Style.radiusSm
         hoverScale: 1.12
         pressScale: 0.92
-        onClicked: root.activated()
+        onClicked: root.activate()
         onHoveredEntered: root.hoveredEntered()
     }
 
@@ -191,6 +204,7 @@ Item {
     // ── the row itself ──────────────────────────────────────────────────
     RowLayout {
         id: body
+        objectName: "body"
 
         visible: root._normal
         anchors.fill: parent
@@ -201,7 +215,8 @@ Item {
         // the mark stays lit. A second fade inside would compound to
         // near-invisible.
         opacity: root.disabled ? Style.opacityDisabled
-            : (root.recede && !root.selected) ? Style.opacityRecede
+            : (!root.interactive || root.selected) ? 1
+            : root.recede ? Style.opacityRecede
             : 1
 
         Behavior on opacity {
@@ -261,8 +276,10 @@ Item {
 
         RowLayout {
             id: trailingSlot
+            objectName: "trailingSlot"
             Layout.alignment: Qt.AlignVCenter
             spacing: Style.space2
+            visible: children.length > 0
         }
     }
 }

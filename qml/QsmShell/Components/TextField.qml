@@ -61,6 +61,9 @@ T.Control {
     // own cursor and wins over this default.
     property int leadingCursorShape: Qt.IBeamCursor
     property int trailingCursorShape: Qt.PointingHandCursor
+    // An actionable leading slot can own the field's left inset while keeping
+    // its glyph padded inside. With no content the text still gets `_inset`.
+    property real leadingSlotInset: root._inset
 
     // ── the one key hook ────────────────────────────────────────────────
     // Fires first, with the live event. Accept it to take the key.
@@ -164,7 +167,9 @@ T.Control {
     // scale with the field and snap to the 4px rhythm.
     readonly property int _inset: Style.rhythm(Style.space3 * root._s)
     readonly property int _slotGap: Style.rhythm(Style.space2 * root._s)
-    leftPadding: root._inset + (leadingSlot.hasContent ? leadingSlot.implicitWidth + root._slotGap : 0)
+    leftPadding: leadingSlot.hasContent
+        ? root.leadingSlotInset + leadingSlot.implicitWidth + root._slotGap
+        : root._inset
     rightPadding: root._inset + (trailingSlot.hasContent ? trailingSlot.implicitWidth + root._slotGap : 0)
 
     hoverEnabled: true
@@ -235,7 +240,7 @@ T.Control {
     Item {
         id: leadingSlot
         readonly property bool hasContent: root._slotHasContent(leadingSlot)
-        x: root._inset
+        x: root.leadingSlotInset
         anchors.verticalCenter: parent.verticalCenter
         implicitWidth: hasContent ? childrenRect.width : 0
         implicitHeight: hasContent ? childrenRect.height : 0
@@ -374,7 +379,7 @@ T.Control {
             objectName: "textFieldCaret"
             property bool holdSolid: false
             readonly property int halfPeriod: Application.styleHints.cursorFlashTime / 2
-            x: input.x + input.cursorRectangle.x
+            x: Math.round(input.x + input.cursorRectangle.x)
             y: input.y + input.cursorRectangle.y
             width: Style.spaceTight
             height: input.cursorRectangle.height

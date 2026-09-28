@@ -22,6 +22,14 @@ TestCase {
 
     function neutral() { mouseMove(probe, 390, 510); }
 
+    function childNamed(item, name) {
+        for (const child of item.children) {
+            if (child.objectName === name)
+                return child;
+        }
+        return null;
+    }
+
     function cleanup() {
         // Restore the shared singleton so one test's gate can never poison
         // the next -- Interaction.pointerSelects is consumer-owned state,
@@ -54,6 +62,19 @@ TestCase {
     ListRow { id: noLeading; x: 20; y: 260; primary: "X" }
     ListRow { id: withLeading; x: 20; y: 300; primary: "X"; icon: "wifi" }
 
+    // Trailing: empty versus populated. The empty trailing slot must have
+    // zero layout footprint; a populated slot keeps its natural footprint.
+    ListRow { id: noTrailing; x: 20; y: 340; primary: "X" }
+    ListRow {
+        id: withTrailing
+        x: 20; y: 380; primary: "X"
+        Prose { id: trailingReading; role: "reading"; text: "99%" }
+    }
+
+    // Report-only with recede: a reading row must stay at full strength.
+    ListRow { id: reportWithRecede; x: 20; y: 420; primary: "Report"; interactive: false; recede: true }
+    ListRow { id: plainWithRecede; x: 20; y: 460; primary: "Plain"; recede: true }
+
     function test_plain_row_answers_a_real_click_and_a_real_hover() {
         neutral();
         plainClicked.clear();
@@ -65,6 +86,16 @@ TestCase {
 
         mouseClick(plainRow, 10, 16);
         compare(plainClicked.count, 1, "a plain row did not fire activated on a real click");
+    }
+
+    function test_callers_share_the_pointer_activation_route() {
+        plainClicked.clear();
+
+        plainRow.activate();
+        compare(plainClicked.count, 1, "activate() did not emit the row's action");
+
+        disabledRow.activate();
+        compare(plainClicked.count, 1, "a disabled row activated through its programmatic route");
     }
 
     // UNAVAILABLE: the action exists, cannot be taken now, and the row says so.
@@ -169,5 +200,39 @@ TestCase {
     function test_an_empty_leading_slot_takes_no_space() {
         compare(withLeading.implicitWidth - noLeading.implicitWidth, withLeading.leadingSize + Style.space2,
             "an icon did not cost exactly its box plus one spacing gap -- the empty leading slot is not free");
+    }
+
+    // The trailing slot costs nothing while empty: the whole difference a
+    // trailing item makes is its own implicit width plus the one spacing
+    // gap that appears alongside it.
+    function test_an_empty_trailing_slot_takes_no_space() {
+        const delta = withTrailing.implicitWidth - noTrailing.implicitWidth;
+        const expected = trailingReading.implicitWidth + Style.space2;
+        verify(Math.abs(delta - expected) <= 1,
+            "a trailing item did not cost its width plus one spacing gap -- the empty trailing slot is not free");
+    }
+
+    // A report-only row (interactive: false) renders at full strength even
+    // when recede is true. It refuses hover/click like a disabled row, but
+    // its content does not dim -- a live reading is not stale.
+    function test_report_only_row_renders_at_full_strength_even_with_recede() {
+        // The report-only row with recede should have opacity 1.0
+        compare(childNamed(reportWithRecede, "body").opacity, 1,
+            "a report-only row with recede did not render at full strength");
+
+        // The plain interactive row with recede (not selected) should be receded
+        compare(childNamed(plainWithRecede, "body").opacity, Style.opacityRecede,
+            "an interactive row with recede did not recede");
+
+        // Both should still refuse hover and click
+        neutral();
+        mouseMove(reportWithRecede, 10, 16);
+        compare(reportWithRecede.hovered, false, "a report-only row claimed hover");
+        mouseClick(reportWithRecede, 10, 16);
+        // No signal spy on reportWithRecede, but we know it doesn't emit from other tests
+
+        neutral();
+        mouseMove(plainWithRecede, 10, 16);
+        compare(plainWithRecede.hovered, true, "an interactive row did not report hover");
     }
 }

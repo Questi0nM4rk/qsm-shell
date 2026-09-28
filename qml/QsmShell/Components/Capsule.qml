@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -20,13 +21,16 @@ import qs.QsmShell.Style
 // shell's resting law — and it still answers the pointer, the press, the
 // keyboard and its own unavailability, because "no box at rest" was never a
 // reason to leave those undefined.
-Card {
+T.Control {
     id: root
 
     property alias icon: icon.name
     property alias label: label.text
     property string detail: ""
     property color accentColor: Style.accent
+    property color surfaceColor
+    property real surfaceOpacity
+    property real radius: Style.radiusPill
 
     // ── the two axes ────────────────────────────────────────────────────
     // ghost | secondary | primary | destructive
@@ -37,11 +41,14 @@ Card {
     // ── consumer-owned state ────────────────────────────────────────────
     // The control is ON: a toggle engaged, a filter applied.
     property bool active: false
-    // Keyboard focus. Defaults to this item's own, so a Capsule that takes
-    // focus rings without wiring; a list that owns focus for its rows binds it.
-    property bool focused: root.activeFocus
+    readonly property bool focused: root.activeFocus
 
     signal clicked
+
+    focusPolicy: Qt.StrongFocus
+
+    Accessible.role: Accessible.Button
+    Accessible.name: root.label
 
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
@@ -50,25 +57,34 @@ Card {
     // Selected is identity (AGENTS.md, surface ladder): the accent tint on the
     // body AND accent content. Tint alone left an ON capsule telling only by
     // a shade of its surface.
-    readonly property color _prose: variant === "destructive" ? Style.danger : active ? _accent : Style.text
+    readonly property color _proseBase: variant === "destructive" ? Style.danger : active ? _accent : Style.text
+    readonly property color _prose: root.enabled ? _proseBase : Style.disabled(_proseBase)
 
     // ONE padding value, used by BOTH the width and the content margins. They
     // used to disagree, and every small capsule came out narrower than its own
     // contents asked for.
-    readonly property real padding: _sm ? Style.space3 : _lg ? Style.space5 : Style.space4
+    readonly property real contentInset: _sm ? Style.space3 : _lg ? Style.space5 : Style.space4
 
     implicitHeight: _sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight
-    implicitWidth: content.implicitWidth + padding * 2
-    radius: Style.radiusPill
-    // Unavailable, not invisible: the control still says what it would do.
-    opacity: enabled ? 1 : Style.opacityDisabled
+    implicitWidth: content.implicitWidth + leftPadding + rightPadding
+    leftPadding: contentInset
+    rightPadding: contentInset
+
+    function activate(): void {
+        if (root.enabled)
+            root.clicked()
+    }
+
+    readonly property list<T.Action> actions: [
+        T.Action { text: root.label; enabled: root.enabled; onTriggered: root.activate() }
+    ]
 
     // The state matrix is the ladder's (`Style.tone`): ON and "asks loudly"
     // are both the accent's identity over the surface, hover lifts a step.
-    // Disabled is `opacity` below, not the tone's dim, because a Card is a
-    // translucent panel already and the two would double up.
-    surfaceColor: Style.tone(Style.surface, layer.hovered && root.enabled, false,
-        root.active || root.variant === "primary", true, root._accent)
+    // Disabled dims each role through the state matrix; opacity would make the
+    // card, glyph and text show through one another as a composite.
+    surfaceColor: Style.tone(Style.surface, layer.hovered, false,
+        root.active || root.variant === "primary", root.enabled, root._accent)
     // A quiet variant at rest paints NOTHING. It is transparent rather than
     // surface-at-90%, which is the difference between a control that sits on
     // the surface and one that is part of it.
@@ -76,18 +92,21 @@ Card {
         ? 0
         : Style.surfaceOpacity
 
-    Behavior on color {
+    Behavior on surfaceColor {
         ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
     }
-    Behavior on opacity {
+    Behavior on surfaceOpacity {
         NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
     }
 
-    RowLayout {
+    background: Card {
+        radius: root.radius
+        surfaceColor: root.surfaceColor
+        surfaceOpacity: root.surfaceOpacity
+    }
+
+    contentItem: RowLayout {
         id: content
-        anchors.fill: parent
-        anchors.leftMargin: root.padding
-        anchors.rightMargin: root.padding
         spacing: Style.space2
 
         // Every child spans the row and centres its own content in it.
@@ -126,7 +145,7 @@ Card {
             visible: root.detail.length > 0
             role: "reading"
             font.pixelSize: Style.textXs
-            color: root._accent
+            color: root.enabled ? root._accent : Style.disabled(root._accent)
             text: root.detail
         }
     }
@@ -139,8 +158,15 @@ Card {
         interactive: root.enabled
         focused: root.focused
         focusRadius: root.radius
-        hoverScale: 1.04
-        pressScale: 0.97
-        onClicked: root.clicked()
+        hoverScale: Motion.capsuleHoverScale
+        pressScale: Motion.microPopScale
+        onClicked: {
+            root.forceActiveFocus()
+            root.activate()
+        }
     }
+
+    Keys.onReturnPressed: event => { event.accepted = true; root.activate() }
+    Keys.onEnterPressed: event => { event.accepted = true; root.activate() }
+    Keys.onSpacePressed: event => { event.accepted = true; root.activate() }
 }

@@ -41,8 +41,8 @@ table (`sizes.<Type>.<name>`, defaults in `tokens/deep-night.json`). Your
 backend's `sizes` extends or overrides that table, so `sizes: { Switch: { xl: 40 } }`
 makes `Switch { size: "xl" }` valid in your project. The resolved number
 (`knobSize`, `thumbSize`, `fieldHeight`) stays settable directly when one
-call site needs one value. `previews/theme.json` is the consumer-shaped theme
-the preview windows and captures run under, extra presets included.
+call site needs one value. `workbench/theme.json` is the consumer-shaped theme
+the provider stories and captures run under, extra presets included.
 `Interaction` is the one place you state a fact components cannot see for
 themselves (whether a hover may claim a selection).
 
@@ -72,16 +72,15 @@ npm test
 bash scripts/build-shaders        # only after editing a .frag; commit .frag + .qsb together
 ```
 
-- `preview` opens one native QML scenario in a real wayland window; scenario
-  names come from `previews/scenarios.json`, and every public type has one.
-- `capture` renders the same scenario offscreen to a PNG. It proves a scene
-  rendered, never that it looks right.
+- `preview` delegates to the sibling generic workbench with this repo as the
+  provider; story names come from `workbench/stories.json`.
+- `capture` delegates to the same provider workbench entry point.
 - `unit` runs one type's test file under `tests/units/` (falling back to
   `tests/interaction/` for types not yet migrated).
 - `test` regenerates tokens, lints QML, and runs the native smoke check plus
   every test directory.
-- `bash scripts/capture-all <dir>` captures every scenario, to prove none
-  stopped rendering.
+- Provider runtime QML lives under `workbench/`; production components remain
+  under `qml/QsmShell/Components/`.
 
 A component is judged in a live native QML window and nowhere else. See
 `AGENTS.md` for a unit's shape and the step-by-step loop for migrating one.

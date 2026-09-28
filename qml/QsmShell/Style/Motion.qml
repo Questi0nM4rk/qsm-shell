@@ -38,6 +38,9 @@ QtObject {
     // appearing). Unlike the duration it does not shorten under reduced
     // motion; reduced motion asks for less TIME, not a smaller shape.
     readonly property real microPopScale: Tokens.motionMicroPopScale
+    // Capsules span a label and optional reading, so their hover response is
+    // quieter than an icon target's default growth.
+    readonly property real capsuleHoverScale: Tokens.motionCapsuleHoverScale
     // fast — a control changing shape, a row disclosing. The ceiling for
     // anything the pointer or the keyboard is waiting on.
     readonly property int fast: Style.reducedMotion ? 80 : Tokens.motionFast

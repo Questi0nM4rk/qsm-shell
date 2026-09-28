@@ -3,7 +3,6 @@ import QtTest
 
 import qs.QsmShell.Components
 import qs.QsmShell.Style
-import "../../previews/units" as PreviewUnits
 
 // `keyPressed` fires first with the live event, and a consumer that accepts it
 // has TAKEN the key -- the field does nothing further with it. Everything not
@@ -24,6 +23,24 @@ TestCase {
     property bool claimReturn: false
     property string lastSeenKey: ""
 
+    component PreviewTextField: TextField {
+        id: previewField
+        property string purposeOverride: "text"
+        property bool showLeading: true
+        readonly property bool passwordExample: purposeOverride === "password"
+        readonly property bool numberExample: purposeOverride === "number"
+        readonly property int _slotIconSize: Style.iconNear(Style.iconMd * previewField.sizeScale)
+        inputType: passwordExample ? "password" : numberExample ? "number" : "text"
+        failed: numberExample && text.length > 0 && !acceptableInput
+        leadingSlotInset: purposeOverride === "search" ? 0 : previewField._inset
+        leadingCursorShape: purposeOverride === "search" ? Qt.PointingHandCursor : Qt.IBeamCursor
+        trailingCursorShape: readOnly && !passwordExample ? Qt.ArrowCursor : Qt.PointingHandCursor
+        leading: Loader { active: previewField.showLeading; sourceComponent: previewField.purposeOverride === "search" ? searchAction : purposeGlyph }
+        trailing: Loader { active: previewField.text.length > 0; sourceComponent: IconButton { objectName: "textFieldTrailingAction"; enabled: previewField.passwordExample || !previewField.readOnly; icon: previewField.passwordExample ? previewField.passwordVisible ? "eye-off" : "eye" : "x"; size: previewField._slotIconSize; padding: 0; color: Style.textMuted; onClicked: previewField.passwordExample ? previewField.toggleReveal() : previewField.clear() } }
+        Component { id: searchAction; IconButton { objectName: "textFieldSearchAction"; icon: "search"; size: previewField._slotIconSize; padding: 0; leftPadding: previewField._inset; height: previewField.fieldHeight; color: Style.textMuted; onClicked: previewField.accept() } }
+        Component { id: purposeGlyph; SvgIcon { objectName: "textFieldPurposeGlyph"; name: previewField.passwordExample ? "key" : previewField.numberExample ? "hash" : "type"; size: previewField._slotIconSize; color: previewField.enabled ? Style.textMuted : Style.disabled(Style.textMuted) } }
+    }
+
     TextField {
         id: field
         width: 300
@@ -39,11 +56,10 @@ TestCase {
         onSelectionClaimed: probe.claims++
     }
 
-    PreviewUnits.TextField {
+    PreviewTextField {
         id: composedField
         y: 60
         width: 300
-        variant: "text-filled"
         onAccepted: probe.composedAccepts++
     }
 
@@ -59,7 +75,6 @@ TestCase {
         field.readOnly = false;
         field.inputType = "text";
         field.forceActiveFocus();
-        composedField.purposeOverride = "text";
         composedField.readOnly = false;
         composedField.text = "Plain text";
     }
@@ -166,14 +181,21 @@ TestCase {
         compare(composedField.text, "", "the editable clear action did not clear the text");
     }
 
-    function test_search_action_keeps_the_glyph_sized_pointer_target() {
+    function test_search_action_owns_the_leading_inset() {
         composedField.purposeOverride = "search";
+        composedField.size = "md";
         wait(0);
         const searchAction = findChild(composedField, "textFieldSearchAction");
         verify(searchAction !== null, "the search field had no submit action");
+        const actionOrigin = searchAction.mapToItem(composedField, 0, 0);
+        compare(actionOrigin.x, 0, "the search action did not begin at the field's left edge");
+        compare(searchAction.height, composedField.height,
+            "the search action did not own the field's full leading edge");
+        verify(searchAction.width >= Style.iconLg,
+            "the search action remained smaller than the pointer target floor");
         mouseClick(searchAction, 1, searchAction.height / 2);
         compare(probe.composedAccepts, 1,
-            "the search action lost the edge of its glyph-sized pointer target");
+            "the search action did not answer at the field's left edge");
     }
 
     // A slot action is a control in its own right, and it has to answer the
