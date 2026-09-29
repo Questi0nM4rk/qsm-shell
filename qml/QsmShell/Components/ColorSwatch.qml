@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -17,7 +18,19 @@ import qs.QsmShell.Style
 // The checkerboard under a translucent colour is not decoration either: a
 // 20%-alpha swatch over the shell's own surface looks like a different opaque
 // colour, which is exactly the confusion a colour tool must not create.
-Rectangle {
+//
+// The painted FACE stays compact (`size`, what the callers chose) and is
+// centred in a TARGET that never drops below the Blueprint's floor, so a
+// 24px sample in a palette row still answers on a full target without its
+// hit zone overlapping a sibling's. Selection and focus belong to the face;
+// the target itself paints nothing.
+// NOT clipped. `clip` here shaved the StateLayer's hover growth back to
+// the swatch's own bounds, so the swatch answered a pointer by not moving
+// — measured by the consumer's ui-guard at 1.3px off a 32px swatch. The
+// sample carries the corner itself instead, which is what the clip was
+// doing for it, and item clipping never rounded the check's corners
+// anyway (it is rectangular).
+Item {
     id: root
 
     required property color sample
@@ -30,6 +43,8 @@ Rectangle {
     property bool empty: false
     // Shown on the swatch. Empty draws the sample alone.
     property string reading: ""
+    // The painted face's square side. The layout footprint is the face
+    // widened to the target floor, never the other way round.
     property real size: Style.controlHeight
     property bool selected: false
     property bool focused: root.activeFocus
@@ -39,6 +54,9 @@ Rectangle {
     // states law counts a state the component cannot express as a state it
     // does not have, and this one was written down and unreachable.
     activeFocusOnTab: enabled
+
+    Accessible.role: Accessible.Button
+    Accessible.name: root.reading
 
     signal clicked
 
@@ -97,24 +115,40 @@ Rectangle {
         ? Style.text
         : Style.background
 
-    implicitWidth: size
-    implicitHeight: size
-    opacity: enabled ? 1 : Style.opacityDisabled
-    radius: Style.radiusSm
-    // Transparent, because the sample is painted INSIDE, over the alpha check.
-    // A Rectangle fills behind all of its children, so a check drawn as a
-    // child of the sample would cover the very thing it is there to reveal.
-    color: "transparent"
-    // NOT clipped. `clip` here shaved the StateLayer's hover growth back to
-    // the swatch's own bounds, so the swatch answered a pointer by not moving
-    // — measured by the consumer's ui-guard at 1.3px off a 32px swatch. The
-    // sample carries the corner itself instead, which is what the clip was
-    // doing for it, and item clipping never rounded the check's corners
-    // anyway (it is rectangular).
+    // One route in: pointer, Space, Return and callers share it, guarded here
+    // so no route fires while unavailable. The host still owns `selected`
+    // and what the click means.
+    function activate(): void {
+        if (root.enabled)
+            root.clicked();
+    }
 
+    readonly property list<T.Action> actions: [
+        T.Action { text: root.reading; enabled: root.enabled; onTriggered: root.activate() }
+    ]
+
+    // Disabled dims each painted role by COLOUR, never by composite opacity:
+    // opacity on the stack applies to every child separately, so a dimmed
+    // translucent sample would show its own fill through itself and stop
+    // being two layers. The sample keeps its alpha, so a translucent sample
+    // still reveals the check beneath it instead of turning into an opaque
+    // fake.
+    function _paint(c: color): color {
+        if (root.enabled)
+            return c;
+        const d = Style.disabled(c);
+        return Qt.rgba(d.r, d.g, d.b, c.a);
+    }
+
+    // The TARGET: the layout footprint, never below the floor, so palette
+    // siblings never receive overlapping hit zones. The face stays `size`
+    // and sits centred inside it.
+    implicitWidth: Math.max(size, Style.swatchTarget)
+    implicitHeight: Math.max(size, Style.swatchTarget)
 
     // The FACE: the alpha check with the sample composited over it, masked to
-    // the swatch's own corner.
+    // the swatch's own corner, plus the ring and the reading. Hover and press
+    // animate this item's scale, which never moves the layout footprint.
     //
     // The check comes first, because without it a 20%-alpha colour reads as a
     // different opaque colour, which is the one confusion a colour tool must
@@ -123,114 +157,139 @@ Rectangle {
     // curve. `MultiEffect.maskSource` is the mechanism that actually cuts
     // them, and it is applied to the pair so they cannot disagree.
     //
-    // The mask stops here. Everything that RESPONDS to a pointer — the ring,
-    // the reading, the state layer — is outside it, because a mask the size of
-    // the swatch would clip the hover growth back to nothing.
+    // The mask stops at the pair. Everything that RESPONDS to a pointer — the
+    // rings, the reading, the state layer — is outside it, because a mask the
+    // size of the face would clip the hover growth back to nothing.
     Item {
         id: face
-        anchors.fill: parent
-        visible: false
-        layer.enabled: true
+        objectName: "swatchFace"
+        width: root.size
+        height: root.size
+        anchors.centerIn: parent
 
         Item {
+            id: facePair
             anchors.fill: parent
-            visible: root.sample.a < 1
+            visible: false
+            layer.enabled: true
 
-            Repeater {
-                model: 16
+            Item {
+                anchors.fill: parent
+                visible: root.sample.a < 1
 
-                delegate: Rectangle {
-                    required property int index
-                    width: face.width / 4
-                    height: face.height / 4
-                    x: (index % 4) * width
-                    y: Math.floor(index / 4) * height
-                    color: (index + Math.floor(index / 4)) % 2 === 0 ? "#ffffff" : "#c0c0c0"
+                Repeater {
+                    model: 16
+
+                    delegate: Rectangle {
+                        required property int index
+                        width: face.width / 4
+                        height: face.height / 4
+                        x: (index % 4) * width
+                        y: Math.floor(index / 4) * height
+                        color: root._paint((index + Math.floor(index / 4)) % 2 === 0 ? "#ffffff" : "#c0c0c0")
+                    }
                 }
+            }
+
+            Rectangle {
+                objectName: "swatchSample"
+                anchors.fill: parent
+                color: root._paint(root.sample)
             }
         }
 
         Rectangle {
+            id: faceMask
             anchors.fill: parent
-            color: root.sample
+            radius: Style.radiusSm
+            color: "black"
+            visible: false
+            layer.enabled: true
+        }
+
+        MultiEffect {
+            anchors.fill: parent
+            visible: !root.empty
+            source: facePair
+            maskEnabled: true
+            maskSource: faceMask
+        }
+
+        // The empty slot: an outline and nothing else. Not a dashed border and not
+        // a plus glyph — both announce an action, and the slot is a place, with
+        // the action stated by whatever put it there.
+        Rectangle {
+            anchors.fill: parent
+            visible: root.empty
+            color: "transparent"
+            radius: Style.radiusSm
+            border.width: 1
+            border.color: root._paint(Style.outline)
+        }
+
+        // Focus belongs to the face, not the target: an accent ring outside
+        // the body at the half step, concentric, under the reading.
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -Style.spaceTight
+            visible: root.focused && root.enabled
+            color: "transparent"
+            radius: Style.radiusSm + Style.spaceTight
+            border.width: 1
+            border.color: Style.accent
+        }
+
+        // The selection ring is drawn LAST, over the sample.
+        //
+        // It used to be the root's own `border`, which a Rectangle paints behind
+        // its children — so the opaque sample filling the root covered it, and
+        // `clip: true` finished the job. The advertised ring was never once
+        // visible. It is still a ring rather than a mark ON the swatch, because a
+        // mark drawn on top changes the thing being sampled.
+        Rectangle {
+            objectName: "swatchRing"
+            anchors.fill: parent
+            color: "transparent"
+            radius: Style.radiusSm
+            border.width: root.selected ? Style.markThickness - 1 : 0
+            // The ring is drawn in the ink this swatch already measured, not in
+            // the accent: an accent ring on an accent-coloured swatch is
+            // invisible, and a colour tool shows arbitrary colours by definition.
+            // Same law as the reading — contrast against the SAMPLE, never a
+            // fixed colour that happens to work on most of them.
+            border.color: root._paint(root.empty ? Style.accent : root.ink)
+
+            Behavior on border.width {
+                NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+            }
+        }
+
+        Prose {
+            anchors.centerIn: parent
+            visible: !root.empty && root.reading.length > 0
+            role: "reading"
+            font.pixelSize: Style.textXs
+            color: root._paint(root.ink)
+            text: root.reading
         }
     }
 
-    Rectangle {
-        id: faceMask
-        anchors.fill: parent
-        radius: root.radius
-        color: "black"
-        visible: false
-        layer.enabled: true
-    }
-
-    MultiEffect {
-        anchors.fill: parent
-        visible: !root.empty
-        source: face
-        maskEnabled: true
-        maskSource: faceMask
-    }
-
-    // The empty slot: an outline and nothing else. Not a dashed border and not
-    // a plus glyph — both announce an action, and the slot is a place, with
-    // the action stated by whatever put it there.
-    Rectangle {
-        anchors.fill: parent
-        visible: root.empty
-        color: "transparent"
-        radius: root.radius
-        border.width: 1
-        border.color: Style.outline
-    }
-
-    // The selection ring is drawn LAST, over the sample.
-    //
-    // It used to be the root's own `border`, which a Rectangle paints behind
-    // its children — so the opaque sample filling the root covered it, and
-    // `clip: true` finished the job. The advertised ring was never once
-    // visible. It is still a ring rather than a mark ON the swatch, because a
-    // mark drawn on top changes the thing being sampled.
-    Rectangle {
-        anchors.fill: parent
-        color: "transparent"
-        radius: root.radius
-        border.width: root.selected ? Style.markThickness - 1 : 0
-        // The ring is drawn in the ink this swatch already measured, not in
-        // the accent: an accent ring on an accent-coloured swatch is
-        // invisible, and a colour tool shows arbitrary colours by definition.
-        // Same law as the reading — contrast against the SAMPLE, never a
-        // fixed colour that happens to work on most of them.
-        border.color: root.empty ? Style.accent : root.ink
-
-        Behavior on border.width {
-            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-        }
-    }
-
-    Prose {
-        anchors.centerIn: parent
-        visible: !root.empty && root.reading.length > 0
-        role: "reading"
-        font.pixelSize: Style.textXs
-        color: root.ink
-        text: root.reading
-    }
-
+    // The layer covers the whole TARGET for the pointer, but grows only the
+    // face and paints no ring of its own: indication belongs to the face.
     StateLayer {
         anchors.fill: parent
+        target: face
         interactive: root.enabled
-        focused: root.focused
-        focusRadius: root.radius
+        focused: false
+        focusRadius: Style.radiusSm
         hoverScale: 1.08
         pressScale: 0.94
         onClicked: {
             root.forceActiveFocus();
-            root.clicked();
+            root.activate();
         }
     }
 
-    Keys.onSpacePressed: if (root.enabled) root.clicked()
-    Keys.onReturnPressed: if (root.enabled) root.clicked()
+    Keys.onSpacePressed: root.activate()
+    Keys.onReturnPressed: root.activate()
 }

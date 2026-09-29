@@ -476,7 +476,28 @@ Rectangle {
         ]
     }
     component SparklineStory: Sparkline { values: [1, 4, 2, 8, 5]; Layout.preferredWidth: 220; Layout.preferredHeight: 80 }
-    component SwatchStory: ColorSwatch { sample: "#f6f1f9"; reading: "#F6F1F9" }
+    component SwatchStory: ColorSwatch {
+        property var eventRecorder: null
+        sample: "#f6f1f9"
+        reading: "#F6F1F9"
+        onClicked: if (eventRecorder) eventRecorder("intent", "clicked", {})
+        readonly property var controls: [
+            { label: "sample", options: [
+                { label: "pale", set: { sample: "#f6f1f9", reading: "#F6F1F9", empty: false } },
+                { label: "dark", set: { sample: "#1c0e27", reading: "#1C0E27", empty: false } },
+                { label: "translucent", set: { sample: "#80c5a5e9", reading: "#C5A5E9", empty: false } },
+                { label: "empty", set: { sample: "transparent", reading: "", empty: true } }
+            ] },
+            { label: "selection", options: [
+                { label: "rest", set: { selected: false } },
+                { label: "selected", set: { selected: true } }
+            ] },
+            { label: "state", options: [
+                { label: "enabled", set: { enabled: true } },
+                { label: "disabled", set: { enabled: false } }
+            ] }
+        ]
+    }
     component KbdStory: Kbd { combo: "SUPER + SHIFT + Q" }
     component AvatarStory: Avatar { name: "Ada Lovelace" }
     component MarqueeStory: Marquee { width: 180; text: "A title far too long for this story" }

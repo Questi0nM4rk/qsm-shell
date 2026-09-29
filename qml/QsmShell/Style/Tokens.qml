@@ -69,6 +69,7 @@ QtObject {
     readonly property int geometryControlWidth: 380
     readonly property int geometryNotificationCollapsedHeight: 36
     readonly property int geometryControlHeightLg: 52
+    readonly property int geometrySwatchTarget: 44
     readonly property int geometrySpinBoxWidth: 140
     readonly property int geometryMarkThickness: 3
     readonly property int geometryMarkHeight: 18

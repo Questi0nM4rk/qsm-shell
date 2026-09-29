@@ -82,6 +82,7 @@
     "controlWidth": 380,
     "notificationCollapsedHeight": 36,
     "controlHeightLg": 52,
+    "swatchTarget": 44,
     "spinBoxWidth": 140,
     "markThickness": 3,
     "markHeight": 18,

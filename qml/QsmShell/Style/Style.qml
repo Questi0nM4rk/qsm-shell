@@ -271,6 +271,9 @@ QtObject {
     readonly property int controlHeight: backend?.controlHeight ?? Tokens.geometryControlHeight
     readonly property int controlHeightSm: backend?.controlHeightSm ?? Tokens.geometryControlHeightSm
     readonly property int controlHeightLg: backend?.controlHeightLg ?? Tokens.geometryControlHeightLg
+    // The Blueprint's pointer-target floor. A swatch paints a compact face
+    // but answers on this square, so palette siblings never share a hit zone.
+    readonly property int swatchTarget: backend?.swatchTarget ?? Tokens.geometrySwatchTarget
     // The slider, in one thickness and one thumb. A control that needs a
     // fatter track states it at the call site; the library keeps one default.
     readonly property int sliderTrackThickness: backend?.sliderTrackThickness
