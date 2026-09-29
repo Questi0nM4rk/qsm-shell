@@ -41,6 +41,9 @@ Item {
     readonly property bool _hosted: host !== null && host !== undefined
 
     property bool interactive: _hosted ? host.enabled : true
+    // A hover-only trigger still answers pointer arrival, but must not offer a
+    // press or emit a click for an action it deliberately does not own.
+    property bool clickable: true
     property Item target: parent
     property real hoverScale: 1.08
     property real pressScale: 0.94
@@ -113,12 +116,12 @@ Item {
     HoverHandler {
         id: hover
         enabled: !root._hosted
-        cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
+        cursorShape: root.interactive && root.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
     }
 
     TapHandler {
         id: tap
-        enabled: root.interactive && !root._hosted
+        enabled: root.interactive && root.clickable && !root._hosted
         onTapped: root.clicked()
     }
 }

@@ -49,6 +49,19 @@ TestCase {
     }
     SignalSpy { id: inactiveClicked; target: inactiveLayer; signalName: "clicked" }
 
+    Item {
+        id: hoverOnlyHost
+        x: 160; y: 200; width: 120; height: 32
+
+        StateLayer {
+            id: hoverOnlyLayer
+            anchors.fill: parent
+            target: hoverOnlyHost
+            clickable: false
+        }
+    }
+    SignalSpy { id: hoverOnlyClicked; target: hoverOnlyLayer; signalName: "clicked" }
+
     function test_active_layer_reports_real_hover_press_and_click() {
         mouseMove(probe, 340, 220);
         activeClicked.clear();
@@ -92,6 +105,18 @@ TestCase {
         mouseMove(activeHost, 80, 32);
         compare(activeLayer.hovered, true, "pointer selection gate hid the raw hover fact");
         compare(activeHovered.count, 0, "pointer selection gate did not suppress hover claim");
+    }
+
+    function test_hover_only_layer_reports_hover_without_a_tap_action() {
+        mouseMove(probe, 340, 220);
+        hoverOnlyClicked.clear();
+
+        mouseMove(hoverOnlyHost, 60, 16);
+        compare(hoverOnlyLayer.hovered, true, "hover-only layer did not report hover");
+        mousePress(hoverOnlyHost, 60, 16);
+        compare(hoverOnlyLayer.pressed, false, "hover-only layer reported a press");
+        mouseRelease(hoverOnlyHost, 60, 16);
+        compare(hoverOnlyClicked.count, 0, "hover-only layer emitted clicked");
     }
 
     function test_host_focus_is_exposed_as_focused() {
