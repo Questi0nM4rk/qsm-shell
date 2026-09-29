@@ -833,7 +833,8 @@
           "label": "state layer unit",
           "path": "tests/units/tst_StateLayer.qml"
         }
-      ]
+      ],
+      "unit": "workbench/units/StateLayer.qml"
     },
     "stat-ring": {
       "component": "stat-ring",
