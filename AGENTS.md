@@ -7,6 +7,21 @@ follow the design sources.
 
 ## Direction
 
+- qsm-shell is Quiet Luminous: a calm dark shell that stays subordinate to the
+  application beneath it while its information remains immediately legible.
+  The default deep-night theme uses quiet raised surfaces, luminous text and a
+  restrained lilac accent; it is rethemeable through `Style`.
+- Build auxiliary and transient shell primitives, not a web dashboard: bar and
+  rail status, panel popouts, launcher, OSD, notifications, session actions,
+  colour tools and compact performance readouts. The bar is glanceable; a
+  popup or modal is obvious and needs no learned route.
+- Visual hierarchy comes from whitespace, the semantic type scale and the
+  surface ladder before boxes or colour. The accent belongs to focus,
+  selection and primary action, never passive metrics. One 4px rhythm, one
+  type scale, one icon scale and purposeful motion make the parts one system.
+- Do not build marketing cards, generic web widgets or permanent dashboard
+  chrome. A component serves one shell task, remains compact, and reports
+  intent while the owning surface decides policy and consequences.
 - Ship a fully working, feature-full MVP. Features first, as fast as
   possible. Fewer docs, more features.
 - The least code that works. The least documentation that keeps the next

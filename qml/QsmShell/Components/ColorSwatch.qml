@@ -265,12 +265,15 @@ Item {
         }
 
         Prose {
-            anchors.centerIn: parent
+            anchors.fill: parent
+            anchors.margins: Style.spaceTight
             visible: !root.empty && root.reading.length > 0
             role: "reading"
             font.pixelSize: Style.textXs
             color: root._paint(root.ink)
             text: root.reading
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
         }
     }
 
