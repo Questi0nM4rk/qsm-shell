@@ -13,12 +13,15 @@ docs is better. Every line of either needs a reason.
 
 ## The loop, in order
 
-1. **Ask the production question.** Before reading our code, answer in
-   writing: what does a fully working, production-ready X look like? List
-   its settings, its behaviour under pointer, keyboard, wheel, focus and a
-   screen reader, its sizes, what grows and what stays constant, its states,
-   its events, and which of that is globally accepted across component
-   libraries rather than our taste. Sources, in this order:
+1. **Ask the production question, and check what already answers it.** Before
+   reading our code, answer in writing: what does a fully working,
+   production-ready X look like? List its settings, its behaviour under
+   pointer, keyboard, wheel, focus and a screen reader, its sizes, what grows
+   and what stays constant, its states, its events, and which of that is
+   globally accepted across component libraries rather than our taste. Then
+   grep the library for the nearest existing type and say, in the record, why
+   it is not the answer. A second type is only justified when the concept
+   differs, never because the call site differs. Sources, in this order:
    - caelestia: `~/Clonned/caelestia/repo/components/controls/Styled*.qml`
    - other component libraries (Material 3, Radix, shadcn, Fluent): the
      union of their props and states is the definition of "feature-full"
@@ -27,28 +30,38 @@ docs is better. Every line of either needs a reason.
    - the `ui-design` skill for the design record
    The answer becomes `docs/components/<Type>.md`: states, actions, size,
    tokens, motion, events, not designed. Ten lines, not a plan.
-2. **Copy first, write second.** Take the template wiring and geometry from
-   caelestia. `Tokens.*` becomes `Style.*`; M3 roles and C++ types do not
-   port. Invent only what no source has.
+2. **Copy first, write second — and name what you read.** Take the template
+   wiring and geometry from caelestia. `Tokens.*` becomes `Style.*`; M3 roles
+   and C++ types do not port. Open the named file and write one line in the
+   record saying what you took and what you rejected and why. Invent only what
+   no source has. A divergence without that line has not been compared, it has
+   only been written.
 3. **Build the real QML.** The component under `qml/QsmShell/Components/`,
    on its `QtQuick.Templates` type. Every number from `Style` or `Motion`.
    Size: one absolute number resolved as `Style.size("<Type>", size)` from a
    preset name, the rest proportions of it; add the type's `sm/md/lg` row to
    `sizes` in `tokens/deep-night.json` and an extra preset to
-   `previews/theme.json` so the window proves a consumer name works.
+   `workbench/theme.json` so the window proves a consumer name works.
    Every action a function listed in `actions`; pointer, keyboard and
-   callers share it. State the host owns is reported, never written.
-4. **Build the unit.** `previews/units/<Type>.qml` takes `variant`, plays the
-   host (answers every upward signal), exercises every slot and label, declares
-   `controls` for states a pointer cannot reach. Point the scenario keys in
-   `previews/scenarios.json` at it and delete the inline children from
-   `previews/Preview.qml`.
-5. **Look at it.** `npm run preview -- <Type>`: one window, one instance in
-   its default state, every scene and property state reachable through the
-   control strip, which shows what is selected. Announce you are taking the
-   pointer, drive every state through the controls, then hand the window to
-   the owner. Anything with a glyph is judged here only; captures do not
-   rasterise icons.
+   callers share it. State the host owns is reported, never written. Anything
+   a host would otherwise have to re-derive to work around what this type does
+   not report is a gap in THIS type — close it here.
+4. **Build the unit.** `workbench/units/<Type>.qml` takes `variant`, plays
+   the host (answers every upward signal), exercises every slot and label,
+   declares `controls` for states a pointer cannot reach, and declares an
+   `integration` object (`events`, `actions`, `controls`, `observables`,
+   `keys`, `textDriver`, `checkpoints`) so the harness can drive it through
+   the same API the live window uses. Repoint that type's keys in
+   `workbench/stories.json` at the file and delete its inline story from
+   `workbench/StoryHost.qml`. ONE TYPE AT A TIME: a half-migrated catalog in
+   two places is worse than both halves finished. The unit is a HOST: it
+   answers and it drives. The moment it decides a behaviour — when to close,
+   what a delay means — it has replaced the component, and its green test
+   then proves only that the replacement works.
+5. **Look at it.** `npm run preview`: the catalog, then the story window you
+   are working on, one exact item. Announce you are taking the pointer, drive
+   every state through the controls, then hand the window to the owner.
+   Anything with a glyph is judged here only; captures do not rasterise icons.
 6. **Audit.** `ux-audit` for interaction, `ui-audit` for the native visual
    result, both against the record and a tree dump (`--inspect`). Fix the
    findings. What stays open is one line in `docs/BACKLOG.md`.
@@ -63,5 +76,8 @@ docs is better. Every line of either needs a reason.
 - No TDD, no expected-red tests, no test growth for coverage.
 - No plans, no dated documents, no CLOSED/LANDED history, no counters.
 - No working around a component defect inside its unit.
+- No re-implementing a rule a sibling type already owns. A step a harness
+  cannot execute FAILS and names itself; nothing returns success without
+  having done the work.
 - No consumer (`qsm-desktop`) work; it catches up after the controls land.
 - No claim of completion from mocks, lint or a capture.

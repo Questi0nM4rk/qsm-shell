@@ -5,8 +5,27 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 
 ## Next
 
-- `Slider`: hosts set `wheelUnits` per surface (a seek bar 0, a level bar
-  the keyboard units).
+- ADR 0002: move `EdgeScene`'s keep-open region test into one provider-owned
+  type that takes a pointer, so the rail and the Workbench mock stop carrying
+  two copies of the union, the `Motion.hoverGrace` timers and the
+  `keyboardGrab` guard. Delete the copy in `qsm-desktop/workbench/Adapter.qml`.
+- `StateLayer` gains `manualHoverOverride` / `manualPressOverride` from
+  caelestia, so "this entry is open, therefore lit" is two booleans.
+- `ScenePointer` gains a way to be overridden by a pointer-shaped object, so
+  a flow and a live run drive the same host instead of two code paths.
+- `Rollout` stops sizing from `inner.childrenRect`; an unsized rollout is a
+  compile error the way caelestia's `ButtonBase` makes `implicitWidth`
+  required. `hoverAreas` gains a named corridor type for the travel triangle.
+- Adopt caelestia's `TransformWatcher` for the three `mapToItem`-in-a-binding
+  call sites (`Rollout`, `PopoutController`, `EdgeScene`) and delete the three
+  long comments defending the same hazard.
+- The flow state machine belongs to the harness. `qsm-desktop`'s reduced
+  `FlowHost` implements 6 of 13 step types and is indistinguishable from a
+  complete one to every check; the shell host is welded to its own 60-case
+  `storyComponent()` switch, so resolve stories through the catalog first.
+- Our `Menu` is a flow host and caelestia's is a positioned popup: the same
+  name, two concepts, so the "copy the answer first" comparison was never
+  done for menus. Compare before either is extended.
 - `Rollout` cannot be the PARENT of a nested rollout, so the consumer's
   `BarPopouts` keeps its own keep-open predicate. The travel triangle is a
   geometric no-op while the popout is flush with a full-height band; nobody
@@ -18,9 +37,8 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - From the consumer: `NotificationCenter` needs a deterministic tie-break
   between app groups (alphabetical vs recency, owner chooses); `Segmented`
   may want one gliding indicator instead of a fill per cell (`ui-design` and
-  live judgement first); `ColorSwatch` needs its painted sample separated
-  from its pointer target to meet the 44px floor; a compact CPU/memory
-  readout is composed from `Stat`, `Meter` and `Prose`, never a new type.
+  live judgement first); a compact CPU/memory readout is composed from
+  `Stat`, `Meter` and `Prose`, never a new type.
 - Types with no consumer yet: `Dialog`, `Scrim`, `Skeleton`, and `Popover`
   used as a tooltip or menu. Wait for a surface that needs them.
 

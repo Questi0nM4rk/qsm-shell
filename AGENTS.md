@@ -74,28 +74,27 @@ follow the design sources.
    indeterminate) where they exist.
 3. Every action is a function listed in `actions`; pointer, keyboard and
    callers share it.
-4. Natural size is a constant. Long content scrolls or elides, never grows
+4. Reports every fact a host would otherwise have to derive: hover, keep-open,
+   dismissal intent. A host that has to re-compute one of these to work
+   around what the component does not report is a signal the component is
+   unfinished, not that the host is clever.
+5. Natural size is a constant. Long content scrolls or elides, never grows
    the control.
-5. Every number comes from `Style` or `Motion`.
-6. `previews/units/<Type>.qml` with `controls` for states a pointer cannot
+6. Every number comes from `Style` or `Motion`.
+7. `workbench/units/<Type>.qml` with `controls` for states a pointer cannot
    reach; `tests/units/tst_<Type>.qml` with real events, written after the
    behaviour works; `tst_units` walks `actions` and triggers each.
 7. `ui-audit` and `ux-audit` against the live window with a tree dump;
    findings fixed or carried as one line in `docs/BACKLOG.md`.
 8. The owner judges it in the live window. Not delegable; no capture
    substitutes for it.
-
 ## Commands
 
-- `npm run preview -- <Type>` opens ONE real wayland window with ONE
-  instance of that type in its default state (the first scenario key that
-  maps to it); its scenario keys are the `scene` control group at the top of
-  the strip, every control shows which option is selected, and the window
-  scrolls when it is smaller than its content. `npm run preview -- <key>`
-  opens the unit that key maps to with that key as the initial scene. A type
-  is judged in one window; a window holds one item.
-  `npm run capture -- <key>` writes the offscreen PNG. `npm run unit -- <Type>`
-  runs one test file; `--window` runs it on the compositor.
+- `npm run preview` opens the storybook catalog in one real wayland window.
+  Every story is reachable, the catalog is a browser, and a story window holds
+  one exact item. `npm run capture -- <key>` writes the offscreen PNG.
+  `npm run unit -- <Type>` runs one test file; `--window` runs it on the
+  compositor.
   `bash scripts/capture-all <dir>` captures every scenario. `--inspect <file>`
   on `preview` and `capture` writes the item-tree dump; F12 re-dumps live.
 - `npm run tokens` regenerates outputs from `tokens/deep-night.json`.
@@ -108,26 +107,37 @@ follow the design sources.
 ## Preview units
 
 - A component lives once, under `qml/QsmShell/Components/`.
-  `previews/units/<Type>.qml` is its one proof harness, one file per TYPE,
-  PascalCase, mapped 1:1. A unit takes one property from the host,
-  `variant`, owns its own implicit size, reads `Style` and never `Tokens`,
-  never installs `Style.backend`, exercises the type's SLOTS, and plays the
-  host: it answers every signal the type hands upward or the control is dead
-  in the window.
+  `workbench/units/<Type>.qml` is its one proof harness, one file per TYPE,
+  PascalCase, mapped 1:1, and `workbench/stories.json` names the scenario
+  keys. A unit takes one property from the host, `variant`, owns its own
+  implicit size, reads `Style` and never `Tokens`, never installs
+  `Style.backend`, exercises the type's SLOTS, and plays the host: it answers
+  every signal the type hands upward or the control is dead in the window.
+- A unit is a FRONTEND for the event API the harness drives, and that is the
+  whole of its contract with workbench: its `controls` declaration, its
+  `integration` object (`events`, `actions`, `controls`, `observables`,
+  `keys`, `textDriver`, `checkpoints`) and the signals it reports upward.
+  Everything else about the unit is its own business and the harness must not
+  know it. A harness that needs a switch statement to find a unit has welded
+  itself to the catalog, and the catalog then cannot grow.
 - Several scenario KEYS map to one unit and keep their names (`level` and
   `osd-slider` are both `Slider`; `list-row`, `device-row`, `result-row` are
   all `ListRow`). A unit is never named after a surface.
-- `previews/Preview.qml` is a hybrid host: a `Loader` for types already in
-  `previews/units/`, inline children for the rest, until every type has
-  moved. `tests/interaction/tst_library.qml` drains the same way and dies
-  empty. `tests/units/tst_units.qml` constructs every unit named in
-  `previews/scenarios.json` and walks every option every declared `controls`
-  group names.
 - A unit may declare `controls`: groups of buttons the live host renders
   above the scene, so property-only states (`disabled`, `selected`,
   `indeterminate`) are reachable. Shape:
   `[{ label, options: [{ label, set: {prop: value} } | { label, call: "method" }] }]`.
   States a pointer can reach (hover, press, focus) are never control options.
+  Names are DERIVED from this declaration, never written a second time.
+- **The storybook holds every story. A storybook of one story is a failure,
+  and there is no entry point that opens a single one.** `npm run preview`
+  with no argument opens the catalog; a story window is one exact item and
+  still is what a type is judged in. The catalog is a browser, not a judging
+  surface — nothing is judged with 50 items in the window.
+- **Units migrate one at a time, and the catalog is the checklist.** A type
+  moves to `workbench/units/` and its story keys are repointed at the file
+  before the next type starts. Half a catalog in two places is worse than
+  both of them finished.
 - When an agent opens a preview, it announces it is taking the pointer,
   drives the whole planned state trace, then says the window is ready and
   stops injecting input so the owner can judge. If the owner is away, the
@@ -156,9 +166,8 @@ follow the design sources.
   `hyprctl cursorpos` before believing any reading.
 - `/usr/bin/qmltestrunner` is Qt 5. The Qt 6 one is
   `/usr/lib/qt6/bin/qmltestrunner`, with real `mouseClick` / `keyClick` under
-  `QT_QPA_PLATFORM=offscreen`. `tests/units/tst_units.qml` reads
-  `scenarios.json` over XMLHttpRequest, which needs
-  `QML_XHR_ALLOW_FILE_READ=1`; the npm scripts set it.
+  `QT_QPA_PLATFORM=offscreen`. A test that reads a catalog over XMLHttpRequest
+  needs `QML_XHR_ALLOW_FILE_READ=1`; the npm scripts set it.
 - **No test QPA ever deactivates a window.** Under offscreen, xcb and wayland
   alike, `requestActivate()` on a second window is a no-op and both report
   `active`. Anything that depends on a window losing and regaining focus is
@@ -294,6 +303,39 @@ Earned, each from a specific failure. Break one and name which.
   one that looks canonical and cannot say what it is for. Found three
   implementations of one fuzzy scorer; the library held the one with its
   explanation deleted.
+- **A host answers the component; it never stands in for it.** A unit, a
+  story adapter and a flow host exist to ANSWER what a component reports and
+  to drive its actions. The moment one of them decides a behaviour — when to
+  close, what a grace period means, which state a toggle lands in — the story
+  has stopped testing the component and started replacing it, and a green
+  flow then proves only that the replacement works. The Workbench adapter
+  re-derived the rollout's keep-open region test, so a passing dismissal flow
+  tested the re-derivation, not `EdgeScene` and not `Rollout`. Ask what the
+  component already reports and drive THAT; when it does not report what the
+  host needs, the component is what is incomplete.
+- **A test of a re-implementation is not a test.** The worst kind is one that
+  passes, because it converts a missing feature into a green check. A step
+  type a host cannot execute must FAIL and name itself; a fixture that
+  returns success without doing anything is a lie that hides every real gap
+  behind it. The generic fixture faked four step types for exactly this
+  reason, which is how a provider shipped a six-step host where the language
+  has thirteen and nothing noticed.
+- **The library's vocabulary is binding on a host, pointer facts included.**
+  `ScenePointer` exists so nobody re-derives `inside && contains(position)`.
+  A host that needs a pointer a test cannot fake asks for an injection point
+  (an argument shaped like the pointer), never for a second implementation of
+  the geometry. A rule with one owner has ONE implementation; the copy must
+  be able to say what it is for or it does not ship.
+- **A component that cannot be told it is hovered can only be told it is
+  hovered by a host that re-implements something.** caelestia's `StateLayer`
+  has `manualHoverOverride`: an external owner may assert a state INTO the
+  layer, so "this row is open, therefore lit" costs two booleans. Ours can
+  only read a host's `hovered` or run its own handlers, so the rail answered
+  "I am open" with 130 lines of geometry. A type that reports intent but
+  offers no way to receive it forces its consumer to invent the missing half.
+- **One action is one function, listed in `actions`, whether the caller is a
+  pointer, a key, or a test.** If a host needs a second door to the same
+  action, the first door was not exposed as an action.
 - **Reduced motion shortens a DURATION and lengthens a PERIOD.** A one-shot
   transition calms by getting shorter; a loop calms by getting slower.
   Shortening a spinner's period makes it whirr.
