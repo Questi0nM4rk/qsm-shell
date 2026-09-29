@@ -312,7 +312,28 @@ Rectangle {
     component SpinBoxStory: SpinBox { property string variant: ""; value: variant === "decimal" ? 42.5 : 7 }
     component SegmentedStory: Segmented { property string variant: ""; currentIndex: variant === "second" ? 1 : 0; options: ["One", "Two", "Three"] }
     component ProgressStory: ProgressBar { property string variant: ""; indeterminate: variant === "unknown"; value: .64; Layout.preferredWidth: 300 }
-    component MeterStory: Meter { property string variant: ""; value: variant === "low" ? .1 : .7; low: .2; Layout.preferredWidth: 300 }
+    component MeterStory: Meter {
+        property string variant: ""
+        value: variant === "low" ? .1 : .7
+        low: .2
+        Layout.preferredWidth: orientation === Qt.Vertical ? implicitWidth : 300
+        Layout.preferredHeight: orientation === Qt.Vertical ? 300 : implicitHeight
+        readonly property var controls: [
+            { label: "orientation", options: [
+                { label: "horizontal", set: { orientation: Qt.Horizontal } },
+                { label: "vertical", set: { orientation: Qt.Vertical } }
+            ] },
+            { label: "threshold", options: [
+                { label: "none", set: { low: -1, high: -1 } },
+                { label: "low", set: { low: 0.2, high: -1 } },
+                { label: "high", set: { low: -1, high: 0.8 } }
+            ] },
+            { label: "state", options: [
+                { label: "enabled", set: { enabled: true } },
+                { label: "disabled", set: { enabled: false } }
+            ] }
+        ]
+    }
     component SkeletonStory: Skeleton { property string variant: ""; shape: "line"; role: "title"; Layout.preferredWidth: 280 }
     component CalloutStory: Callout { property string variant: ""; Layout.preferredWidth: 360; tone: variant === "danger" ? "danger" : "info"; title: "Callout"; body: "Workbench story" }
     component BadgeStory: Badge { property string variant: ""; text: variant === "warning" ? "Warning" : "Badge"; tone: variant }

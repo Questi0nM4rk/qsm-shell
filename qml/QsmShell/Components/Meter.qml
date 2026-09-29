@@ -42,12 +42,16 @@ Rectangle {
     // exactly what it should, it is the reading that is unwelcome. Danger is
     // reserved for something that went wrong.
     readonly property color _fill: _breached ? Style.warning : fill
+    // Disabled dims every role BY COLOUR, never by opacity on the composite:
+    // a translucent fill would show through a translucent track and the two
+    // would stop being two layers.
+    readonly property color _paintedTrack: root.enabled ? root.trackColor : Style.disabled(root.trackColor)
+    readonly property color _paintedFill: root.enabled ? root._fill : Style.disabled(root._fill)
 
     implicitWidth: vertical ? thickness : 0
     implicitHeight: vertical ? 0 : thickness
     radius: (vertical ? width : height) / 2
-    color: trackColor
-    opacity: enabled ? 1 : Style.opacityDisabled
+    color: root._paintedTrack
 
     Rectangle {
         // Vertical fills from the bottom: "more" belongs upward, the same
@@ -59,7 +63,7 @@ Rectangle {
         width: root.vertical ? undefined : parent.width * root._fraction
         height: root.vertical ? parent.height * root._fraction : parent.height
         radius: parent.radius
-        color: root._fill
+        color: root._paintedFill
 
         // A level that snaps between readings reads as jitter. Both ends of
         // the move already exist, so it eases at both.
