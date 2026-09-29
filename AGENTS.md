@@ -129,15 +129,12 @@ follow the design sources.
   `[{ label, options: [{ label, set: {prop: value} } | { label, call: "method" }] }]`.
   States a pointer can reach (hover, press, focus) are never control options.
   Names are DERIVED from this declaration, never written a second time.
-- **The storybook holds every story. A storybook of one story is a failure,
-  and there is no entry point that opens a single one.** `npm run preview`
-  with no argument opens the catalog; a story window is one exact item and
-  still is what a type is judged in. The catalog is a browser, not a judging
-  surface — nothing is judged with 50 items in the window.
-- **Units migrate one at a time, and the catalog is the checklist.** A type
-  moves to `workbench/units/` and its story keys are repointed at the file
-  before the next type starts. Half a catalog in two places is worse than
-  both of them finished.
+- **The storybook holds every story, there is no entry point that opens one,
+  and units migrate one at a time with the catalog as the checklist.** A type
+  moves to `workbench/units/` and its keys are repointed before the next type
+  starts; half a catalog in two places is worse than both halves finished.
+  `npm run preview` with no argument opens the catalog, a story window holds
+  one exact item, and the catalog is a browser rather than a judging surface.
 - When an agent opens a preview, it announces it is taking the pointer,
   drives the whole planned state trace, then says the window is ready and
   stops injecting input so the owner can judge. If the owner is away, the
@@ -303,39 +300,27 @@ Earned, each from a specific failure. Break one and name which.
   one that looks canonical and cannot say what it is for. Found three
   implementations of one fuzzy scorer; the library held the one with its
   explanation deleted.
-- **A host answers the component; it never stands in for it.** A unit, a
-  story adapter and a flow host exist to ANSWER what a component reports and
-  to drive its actions. The moment one of them decides a behaviour — when to
-  close, what a grace period means, which state a toggle lands in — the story
-  has stopped testing the component and started replacing it, and a green
-  flow then proves only that the replacement works. The Workbench adapter
-  re-derived the rollout's keep-open region test, so a passing dismissal flow
-  tested the re-derivation, not `EdgeScene` and not `Rollout`. Ask what the
-  component already reports and drive THAT; when it does not report what the
-  host needs, the component is what is incomplete.
-- **A test of a re-implementation is not a test.** The worst kind is one that
-  passes, because it converts a missing feature into a green check. A step
-  type a host cannot execute must FAIL and name itself; a fixture that
-  returns success without doing anything is a lie that hides every real gap
-  behind it. The generic fixture faked four step types for exactly this
-  reason, which is how a provider shipped a six-step host where the language
-  has thirteen and nothing noticed.
+- **A host answers the component; it never stands in for it.** A unit, a story
+  adapter and a flow host exist to ANSWER what a component reports and to drive
+  its actions. The moment one decides a behaviour — when to close, what a grace
+  period means — it has replaced the component, and a green flow then proves
+  only that the replacement works: the Workbench adapter re-derived the
+  rollout's keep-open test, so a passing dismissal flow tested the
+  re-derivation and neither `EdgeScene` nor `Rollout`. Drive what the component
+  reports; when it does not report what the host needs, the component is what
+  is incomplete. A step a host cannot execute must FAIL and name itself — a
+  fixture that reports success without doing the work hides every real gap
+  behind it, and that is how a provider shipped a six-step host for a
+  thirteen-step language with nothing noticing.
 - **The library's vocabulary is binding on a host, pointer facts included.**
   `ScenePointer` exists so nobody re-derives `inside && contains(position)`.
   A host that needs a pointer a test cannot fake asks for an injection point
-  (an argument shaped like the pointer), never for a second implementation of
-  the geometry. A rule with one owner has ONE implementation; the copy must
-  be able to say what it is for or it does not ship.
-- **A component that cannot be told it is hovered can only be told it is
-  hovered by a host that re-implements something.** caelestia's `StateLayer`
-  has `manualHoverOverride`: an external owner may assert a state INTO the
-  layer, so "this row is open, therefore lit" costs two booleans. Ours can
-  only read a host's `hovered` or run its own handlers, so the rail answered
-  "I am open" with 130 lines of geometry. A type that reports intent but
-  offers no way to receive it forces its consumer to invent the missing half.
-- **One action is one function, listed in `actions`, whether the caller is a
-  pointer, a key, or a test.** If a host needs a second door to the same
-  action, the first door was not exposed as an action.
+  shaped like the pointer, never for a second implementation of the geometry.
+- **A type that reports intent but offers no way to receive it forces its
+  consumer to invent the missing half.** Ours can only read a host's `hovered`
+  or run its own handlers, so the rail answered "this entry is open, therefore
+  lit" with 130 lines of geometry; caelestia lets an external owner assert a
+  state into `StateLayer` with one boolean. See `docs/BACKLOG.md`.
 - **Reduced motion shortens a DURATION and lengthens a PERIOD.** A one-shot
   transition calms by getting shorter; a loop calms by getting slower.
   Shortening a spinner's period makes it whirr.

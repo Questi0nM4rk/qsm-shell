@@ -2,14 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import qs.QsmShell.Style
 
-// The provider's whole contribution to the storybook: it hosts ONE unit, the
-// one its catalog names, and forwards that unit's contract to the harness.
-//
-// There is no window here and no view. The harness owns the catalog, the
-// control strip, the scene switch and the tree dump; this file exists only so
-// a unit can be loaded and addressed. Everything the unit does not declare, the
-// harness must not assume — which is why `controls`, `actions` and the
-// integration record are read from the unit rather than from a list kept here.
+// The provider's whole contribution to the storybook: host ONE unit, the one
+// its catalog names, and forward that unit's contract. No window, no view.
 Item {
     id: root
 
@@ -25,7 +19,7 @@ Item {
     property bool interactive: false
 
     // Read from the unit. A story with no harness, or a harness that has not
-    // reported its states, says so here instead of pretending to be ready.
+    // reported its states, says so here rather than pretending to be ready.
     readonly property bool _loaded: unitLoader.status === Loader.Ready && !!unitLoader.item
     readonly property var _unit: _loaded ? unitLoader.item : null
 
@@ -43,9 +37,8 @@ Item {
     readonly property real contentExtentHeight: _loaded && _unit.contentExtentHeight !== undefined
         ? Number(_unit.contentExtentHeight) : height
 
-    // The unit's own event API, or nothing. `integration` is the contract a
-    // flow drives; a unit that declares none is a story you can look at and
-    // not test, and the harness reports exactly that rather than assuming.
+    // `integration` is the contract a flow drives. A unit declaring none is a
+    // story you can look at and not test, and the harness reports exactly that.
     readonly property var integration: _loaded ? (_unit.integration ?? null) : null
     readonly property var events: asArray(integration?.events)
     readonly property var observables: integration?.observables ?? null
@@ -57,8 +50,7 @@ Item {
     width: viewportWidth > 0 ? viewportWidth : 1
     height: viewportHeight > 0 ? viewportHeight : 1
 
-    // The catalog's `unit` arrives as an absolute URL from the launcher, so
-    // this file does not care where the provider lives on disk.
+    // The catalog's `unit` arrives as an absolute URL from the launcher.
     readonly property url _unitSource: story && typeof story.unit === "string" && story.unit.length > 0
         ? String(story.unit)
         : ""
@@ -81,9 +73,8 @@ Item {
         return "empty"
     }
 
-    // A control is applied to the UNIT, never to a list this file holds: the
-    // option's `set` or `call` goes straight to the loaded item, so a state
-    // the pointer cannot reach is reachable the same way for every type.
+    // A control applies to the UNIT, never to a list this file holds, so a
+    // state the pointer cannot reach is reached the same way for every type.
     function applyControl(groupIndex: int, optionIndex: int): bool {
         if (!_loaded)
             return false
@@ -128,8 +119,8 @@ Item {
         return true
     }
 
-    // The tree dump is the unit's item tree plus the facts the harness cannot
-    // see: which states it declared, and whether it can be driven at all.
+    // The dump is the unit's item tree plus what the harness cannot see: the
+    // states it declared and whether it can be driven at all.
     function dumpTree(): void {
         inspectionReady({
             story: storyKey,
@@ -152,8 +143,8 @@ Item {
     Loader {
         id: unitLoader
         // `undefined` rather than an empty URL: an assigned source puts the
-        // Loader in URL mode even when it is blank, and then `storyStatus`
-        // never reaches "ready".
+        // Loader in URL mode even when blank, and then status never reaches
+        // "ready".
         source: root.mode === "story" ? root._unitSource : undefined
         anchors.fill: parent
         visible: root._loaded
@@ -170,8 +161,7 @@ Item {
         }
     }
 
-    // Reset is a reconstruction, not a message: a unit that cached a value is
-    // as reset as a freshly loaded one, and nothing has to implement it.
+    // Reset is a reconstruction, not a message nothing has to implement.
     onResetGenerationChanged: {
         if (_unitSource === "")
             return
