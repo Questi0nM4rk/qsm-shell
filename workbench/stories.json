@@ -15,6 +15,7 @@
         "feedback"
       ],
       "source": "qml/QsmShell/Components/Badge.qml",
+      "docs": "docs/components/Badge.md",
       "tests": [
         {
           "label": "unit smoke",
@@ -35,7 +36,8 @@
         "loading",
         "feedback"
       ],
-      "source": "qml/QsmShell/Components/Spinner.qml"
+      "source": "qml/QsmShell/Components/Spinner.qml",
+      "docs": "docs/components/Spinner.md"
     },
     "progress": {
       "component": "progress",
@@ -50,7 +52,8 @@
         "loading",
         "meter"
       ],
-      "source": "qml/QsmShell/Components/ProgressBar.qml"
+      "source": "qml/QsmShell/Components/ProgressBar.qml",
+      "docs": "docs/components/ProgressBar.md"
     },
     "meter": {
       "component": "meter",
@@ -65,7 +68,8 @@
         "data",
         "status"
       ],
-      "source": "qml/QsmShell/Components/Meter.qml"
+      "source": "qml/QsmShell/Components/Meter.qml",
+      "docs": "docs/components/Meter.md"
     },
     "skeleton": {
       "component": "skeleton",
@@ -80,7 +84,8 @@
         "loading",
         "placeholder"
       ],
-      "source": "qml/QsmShell/Components/Skeleton.qml"
+      "source": "qml/QsmShell/Components/Skeleton.qml",
+      "docs": "docs/components/Skeleton.md"
     },
     "callout": {
       "component": "callout",
@@ -95,7 +100,8 @@
         "feedback",
         "message"
       ],
-      "source": "qml/QsmShell/Components/Callout.qml"
+      "source": "qml/QsmShell/Components/Callout.qml",
+      "docs": "docs/components/Callout.md"
     },
     "switch": {
       "component": "switch",
@@ -198,7 +204,8 @@
         "data",
         "metric"
       ],
-      "source": "qml/QsmShell/Components/Stat.qml"
+      "source": "qml/QsmShell/Components/Stat.qml",
+      "docs": "docs/components/Stat.md"
     },
     "sparkline": {
       "component": "sparkline",
@@ -213,7 +220,8 @@
         "data",
         "chart"
       ],
-      "source": "qml/QsmShell/Components/Sparkline.qml"
+      "source": "qml/QsmShell/Components/Sparkline.qml",
+      "docs": "docs/components/Sparkline.md"
     },
     "swatch": {
       "component": "swatch",
@@ -228,7 +236,8 @@
         "color",
         "data"
       ],
-      "source": "qml/QsmShell/Components/ColorSwatch.qml"
+      "source": "qml/QsmShell/Components/ColorSwatch.qml",
+      "docs": "docs/components/ColorSwatch.md"
     },
     "kbd": {
       "component": "kbd",
@@ -243,7 +252,8 @@
         "metadata",
         "keyboard"
       ],
-      "source": "qml/QsmShell/Components/Kbd.qml"
+      "source": "qml/QsmShell/Components/Kbd.qml",
+      "docs": "docs/components/Kbd.md"
     },
     "avatar": {
       "component": "avatar",
@@ -258,7 +268,8 @@
         "identity",
         "status"
       ],
-      "source": "qml/QsmShell/Components/Avatar.qml"
+      "source": "qml/QsmShell/Components/Avatar.qml",
+      "docs": "docs/components/Avatar.md"
     },
     "marquee": {
       "component": "marquee",
@@ -273,7 +284,8 @@
         "text",
         "motion"
       ],
-      "source": "qml/QsmShell/Components/Marquee.qml"
+      "source": "qml/QsmShell/Components/Marquee.qml",
+      "docs": "docs/components/Marquee.md"
     },
     "section": {
       "component": "section",
@@ -288,7 +300,8 @@
         "layout",
         "list"
       ],
-      "source": "qml/QsmShell/Components/Section.qml"
+      "source": "qml/QsmShell/Components/Section.qml",
+      "docs": "docs/components/Section.md"
     },
     "disclosure": {
       "component": "disclosure",
@@ -303,7 +316,8 @@
         "layout",
         "control"
       ],
-      "source": "qml/QsmShell/Components/Disclosure.qml"
+      "source": "qml/QsmShell/Components/Disclosure.qml",
+      "docs": "docs/components/Disclosure.md"
     },
     "scroll": {
       "component": "scroll",
@@ -318,7 +332,8 @@
         "layout",
         "scroll"
       ],
-      "source": "qml/QsmShell/Components/ScrollArea.qml"
+      "source": "qml/QsmShell/Components/ScrollArea.qml",
+      "docs": "docs/components/ScrollArea.md"
     },
     "field": {
       "component": "field",
@@ -333,7 +348,8 @@
         "input",
         "validation"
       ],
-      "source": "qml/QsmShell/Components/Field.qml"
+      "source": "qml/QsmShell/Components/Field.qml",
+      "docs": "docs/components/Field.md"
     },
     "segmented": {
       "component": "segmented",
@@ -392,7 +408,8 @@
         "navigation",
         "status"
       ],
-      "source": "qml/QsmShell/Components/Capsule.qml"
+      "source": "qml/QsmShell/Components/Capsule.qml",
+      "docs": "docs/components/Capsule.md"
     },
     "card": {
       "component": "card",
@@ -407,7 +424,8 @@
         "surface",
         "layout"
       ],
-      "source": "qml/QsmShell/Components/Card.qml"
+      "source": "qml/QsmShell/Components/Card.qml",
+      "docs": "docs/components/Card.md"
     },
     "divider": {
       "component": "divider",
@@ -422,7 +440,8 @@
         "layout",
         "surface"
       ],
-      "source": "qml/QsmShell/Components/Divider.qml"
+      "source": "qml/QsmShell/Components/Divider.qml",
+      "docs": "docs/components/Divider.md"
     },
     "scene-pointer": {
       "component": "scene-pointer",
@@ -438,6 +457,7 @@
         "input"
       ],
       "source": "qml/QsmShell/Components/ScenePointer.qml",
+      "docs": "docs/components/ScenePointer.md",
       "tests": [
         {
           "label": "scene pointer unit",
@@ -459,6 +479,7 @@
         "interaction"
       ],
       "source": "qml/QsmShell/Components/Rollout.qml",
+      "docs": "docs/components/Rollout.md",
       "tests": [
         {
           "label": "rollout unit",
@@ -479,7 +500,8 @@
         "feedback",
         "empty"
       ],
-      "source": "qml/QsmShell/Components/EmptyState.qml"
+      "source": "qml/QsmShell/Components/EmptyState.qml",
+      "docs": "docs/components/EmptyState.md"
     },
     "icon-button": {
       "component": "icon-button",
@@ -494,7 +516,8 @@
         "input",
         "icon"
       ],
-      "source": "qml/QsmShell/Components/IconButton.qml"
+      "source": "qml/QsmShell/Components/IconButton.qml",
+      "docs": "docs/components/IconButton.md"
     },
     "key-value": {
       "component": "key-value",
@@ -509,7 +532,8 @@
         "data",
         "list"
       ],
-      "source": "qml/QsmShell/Components/KeyValueRow.qml"
+      "source": "qml/QsmShell/Components/KeyValueRow.qml",
+      "docs": "docs/components/KeyValueRow.md"
     },
     "level": {
       "component": "level",
@@ -546,7 +570,8 @@
         "navigation",
         "list"
       ],
-      "source": "qml/QsmShell/Components/Menu.qml"
+      "source": "qml/QsmShell/Components/Menu.qml",
+      "docs": "docs/components/Menu.md"
     },
     "list-row": {
       "component": "list-row",
@@ -562,6 +587,7 @@
         "selection"
       ],
       "source": "qml/QsmShell/Components/ListRow.qml",
+      "docs": "docs/components/ListRow.md",
       "tests": [
         {
           "label": "list row unit",
@@ -582,7 +608,8 @@
         "notification",
         "message"
       ],
-      "source": "qml/QsmShell/Components/NotificationCard.qml"
+      "source": "qml/QsmShell/Components/NotificationCard.qml",
+      "docs": "docs/components/NotificationCard.md"
     },
     "notification-stack": {
       "component": "notification-stack",
@@ -597,7 +624,8 @@
         "notification",
         "list"
       ],
-      "source": "qml/QsmShell/Components/NotificationStack.qml"
+      "source": "qml/QsmShell/Components/NotificationStack.qml",
+      "docs": "docs/components/NotificationStack.md"
     },
     "osd-slider": {
       "component": "osd-slider",
@@ -635,6 +663,7 @@
         "device"
       ],
       "source": "qml/QsmShell/Components/ListRow.qml",
+      "docs": "docs/components/ListRow.md",
       "tests": [
         {
           "label": "list row unit",
@@ -656,6 +685,7 @@
         "search"
       ],
       "source": "qml/QsmShell/Components/ListRow.qml",
+      "docs": "docs/components/ListRow.md",
       "tests": [
         {
           "label": "list row unit",
@@ -764,7 +794,8 @@
         "text",
         "typography"
       ],
-      "source": "qml/QsmShell/Components/Prose.qml"
+      "source": "qml/QsmShell/Components/Prose.qml",
+      "docs": "docs/components/Prose.md"
     },
     "action-tile": {
       "component": "action-tile",
@@ -779,7 +810,8 @@
         "action",
         "control"
       ],
-      "source": "qml/QsmShell/Components/ActionTile.qml"
+      "source": "qml/QsmShell/Components/ActionTile.qml",
+      "docs": "docs/components/ActionTile.md"
     },
     "state-layer": {
       "component": "state-layer",
@@ -795,6 +827,7 @@
         "interaction"
       ],
       "source": "qml/QsmShell/Components/StateLayer.qml",
+      "docs": "docs/components/StateLayer.md",
       "tests": [
         {
           "label": "state layer unit",
@@ -815,7 +848,8 @@
         "data",
         "metric"
       ],
-      "source": "qml/QsmShell/Components/StatRing.qml"
+      "source": "qml/QsmShell/Components/StatRing.qml",
+      "docs": "docs/components/StatRing.md"
     },
     "svg-icon": {
       "component": "svg-icon",
@@ -830,7 +864,8 @@
         "icon",
         "status"
       ],
-      "source": "qml/QsmShell/Components/SvgIcon.qml"
+      "source": "qml/QsmShell/Components/SvgIcon.qml",
+      "docs": "docs/components/SvgIcon.md"
     },
     "tabs": {
       "component": "tabs",
@@ -844,7 +879,8 @@
       "tags": [
         "navigation",
         "selection"
-      ]
+      ],
+      "docs": "docs/components/Segmented.md"
     },
     "prose-ladder": {
       "component": "prose-ladder",
@@ -859,7 +895,8 @@
         "text",
         "typography"
       ],
-      "source": "qml/QsmShell/Components/Prose.qml"
+      "source": "qml/QsmShell/Components/Prose.qml",
+      "docs": "docs/components/Prose.md"
     },
     "shell-border": {
       "component": "shell-border",
@@ -874,7 +911,8 @@
         "shell",
         "overlay"
       ],
-      "source": "qml/QsmShell/Components/ShellBorder.qml"
+      "source": "qml/QsmShell/Components/ShellBorder.qml",
+      "docs": "docs/components/ShellBorder.md"
     }
   }
 }
