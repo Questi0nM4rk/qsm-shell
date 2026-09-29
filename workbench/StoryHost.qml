@@ -430,7 +430,30 @@ Rectangle {
         })
     }
     component StatStory: Stat { value: "72"; unit: "%"; label: "CPU"; trend: "up"; good: "down" }
-    component StatRingStory: StatRing { value: .7; icon: "cpu"; label: "CPU"; reading: "70%"; startAngle: -225; sweepAngle: 270 }
+    component StatRingStory: StatRing {
+        property string variant: ""
+        // Shape follows the story variant until a control says otherwise, so
+        // the binding to the host variant survives control input.
+        property string shapeOverride: ""
+        readonly property bool _open: shapeOverride.length > 0 ? shapeOverride === "open" : variant !== "closed"
+        value: .7
+        icon: "cpu"
+        label: "CPU"
+        reading: "70%"
+        startAngle: _open ? -225 : -90
+        sweepAngle: _open ? 270 : 360
+        readonly property var controls: [
+            { label: "shape", options: [
+                { label: "open", set: { shapeOverride: "open" } },
+                { label: "closed", set: { shapeOverride: "closed" } }
+            ] },
+            { label: "content", options: [
+                { label: "full", set: { icon: "cpu", reading: "70%", label: "CPU" } },
+                { label: "no icon", set: { icon: "", reading: "70%", label: "CPU" } },
+                { label: "number", set: { icon: "", reading: "70%", label: "" } }
+            ] }
+        ]
+    }
     component SparklineStory: Sparkline { values: [1, 4, 2, 8, 5]; Layout.preferredWidth: 220; Layout.preferredHeight: 80 }
     component SwatchStory: ColorSwatch { sample: "#f6f1f9"; reading: "#F6F1F9" }
     component KbdStory: Kbd { combo: "SUPER + SHIFT + Q" }

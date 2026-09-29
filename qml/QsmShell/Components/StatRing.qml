@@ -45,6 +45,17 @@ Item {
     implicitWidth: diameter
     implicitHeight: diameter
 
+    // A passive output: no pointer, wheel, keyboard, focus or selection.
+    Accessible.role: Accessible.StaticText
+    Accessible.name: (root.label.length > 0 && root.reading.length > 0)
+        ? root.label + ", " + root.reading
+        : root.label + root.reading
+
+    // The column the centred content may take: the diameter less the stroke
+    // on both sides and one rhythm step, so long text elides inside the
+    // circle's own box instead of enlarging or overflowing the component.
+    readonly property int _contentWidth: Math.max(0, diameter - strokeWidth * 2 - Style.space2)
+
     Canvas {
         id: canvas
         anchors.fill: parent
@@ -85,20 +96,27 @@ Item {
     onStrokeWidthChanged: canvas.requestPaint()
     onStartAngleChanged: canvas.requestPaint()
     onSweepAngleChanged: canvas.requestPaint()
+    // The arc is drawn from the live geometry, so a resize repaints too.
+    onWidthChanged: canvas.requestPaint()
+    onHeightChanged: canvas.requestPaint()
 
     Column {
         anchors.centerIn: parent
+        width: root._contentWidth
+        clip: true
         spacing: Style.spaceTight
 
         SvgIcon {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: root.icon.length > 0
             name: root.icon
-            size: root.readingSize
+            size: Math.min(root.readingSize, root._contentWidth)
             color: root.iconColor
         }
         Prose {
             anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
             visible: root.reading.length > 0
             role: "reading"
             font.pixelSize: root.readingSize
@@ -106,6 +124,8 @@ Item {
         }
         Prose {
             anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
             visible: root.label.length > 0
             role: "metadata"
             text: root.label
