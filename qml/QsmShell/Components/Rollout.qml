@@ -30,6 +30,20 @@ Item {
     // Window side(s) this rollout is flush with: one edge, or two ADJACENT
     // edges for a corner rollout. Anchor the item to the same sides.
     property var edges: ["top"]
+    // An item on the attached band that determines the rollout's free-axis
+    // centre. The declared edge remains the weld edge; an anchor never turns a
+    // left-band rollout into a right-band rollout.
+    property Item anchorItem: null
+    // The host-space area an anchored rollout may occupy. Nudge only corrects
+    // the free axis: moving across the weld edge would detach the silhouette
+    // from the band it emerged from.
+    property rect placementBounds: Qt.rect(0, 0, host ? host.width : 0, host ? host.height : 0)
+    property bool nudgeToBounds: true
+    // A nested rollout welds its declared edge to the free edge of its parent.
+    // The parent names the child too, because only it can square the corners
+    // that disappear under a full-span child.
+    property var parentRollout: null
+    property var childRollout: null
     // Reveal intent. The one input consumers drive.
     property bool shouldBeActive: false
     // Fullscreen (09-input DEFAULT): surfaces hide INSTANTLY, no retract.
@@ -148,17 +162,92 @@ Item {
         return edges.includes(side);
     }
 
+    readonly property bool _anchored: anchorItem !== null || parentRollout !== null
+    readonly property rect _parentRect: parentRollout
+        ? parentRollout.rectInHost(0, 0, parentRollout.width, parentRollout.height)
+        : Qt.rect(0, 0, 0, 0)
+    readonly property rect _placementArea: parentRollout ? _parentRect : placementBounds
+    readonly property rect _anchorRect: anchorItem && host && typeof host.mapFromItem === "function"
+        ? (() => {
+            const point = host.mapFromItem(anchorItem, 0, 0);
+            return Qt.rect(point.x, point.y, anchorItem.width, anchorItem.height);
+        })()
+        : _parentRect
+    // The anchor in host coordinates is the one rect a host needs to keep a
+    // capsule trigger live alongside the revealed body.
+    readonly property rect anchorRect: _anchorRect
+    readonly property real _anchorCenterX: _anchorRect.x + _anchorRect.width / 2
+    readonly property real _anchorCenterY: _anchorRect.y + _anchorRect.height / 2
+
+    function _clampCross(value: real, span: real, start: real, length: real): real {
+        return Math.max(start, Math.min(start + Math.max(0, length - span), value));
+    }
+
+    // The unnudged rect is observable so a host can decide whether a displaced
+    // item deserves a different treatment. The nudge itself is never guessed
+    // from pixels: it is the exact difference between ideal and placed origin.
+    readonly property real _rawPlacementX: revealHorizontal
+        ? (parentRollout
+            ? (attached("left") ? _parentRect.x + _parentRect.width : _parentRect.x - width)
+            : (attached("left") ? edgeInsetH : placementBounds.x + placementBounds.width - edgeInsetH - width))
+        : _anchorCenterX - width / 2
+    readonly property real _rawPlacementY: revealHorizontal
+        ? _anchorCenterY - height / 2
+        : (parentRollout
+            ? (attached("top") ? _parentRect.y + _parentRect.height : _parentRect.y - height)
+            : (attached("top") ? edgeInsetV : placementBounds.y + placementBounds.height - edgeInsetV - height))
+    readonly property real _placementX: revealHorizontal || !nudgeToBounds
+        ? _rawPlacementX
+        : _clampCross(_rawPlacementX, width, _placementArea.x, _placementArea.width)
+    readonly property real _placementY: !revealHorizontal || !nudgeToBounds
+        ? _rawPlacementY
+        : _clampCross(_rawPlacementY, height, _placementArea.y, _placementArea.height)
+    readonly property point nudge: Qt.point(_placementX - _rawPlacementX, _placementY - _rawPlacementY)
+
+    Binding {
+        target: root
+        property: "x"
+        value: root._placementX
+        when: root._anchored
+    }
+    Binding {
+        target: root
+        property: "y"
+        value: root._placementY
+        when: root._anchored
+    }
+
     // Per-corner radius for the silhouette (CSS border-radius order: tl, tr,
     // br, bl): rolloutRadius on free corners, 0 ONLY on the DECLARED
     // attached edge(s), CLAMPED to half the current size so a budding
     // window grows organically (caelestia clamps the same way).
     readonly property real clampedRadius: Math.max(0, Math.min(Style.rolloutRadius,
         width / 2, height / 2))
+    readonly property bool _childSpansCross: childRollout?.visible === true
+        && childRollout.parentRollout === root
+        && (revealHorizontal
+            ? childRollout.height >= height - Style.space1
+            : childRollout.width >= width - Style.space1)
+    function _coveredByChild(side: string): bool {
+        return _childSpansCross
+            && ((side === "left" && childRollout.attached("right"))
+                || (side === "right" && childRollout.attached("left"))
+                || (side === "top" && childRollout.attached("bottom"))
+                || (side === "bottom" && childRollout.attached("top")));
+    }
+    readonly property bool flushToParent: parentRollout !== null
+        && (revealHorizontal
+            ? height >= _parentRect.height - Style.space1
+            : width >= _parentRect.width - Style.space1)
+    readonly property int _childRimBits: _coveredByChild("left") ? 1
+        : _coveredByChild("right") ? 2
+        : _coveredByChild("top") ? 4
+        : _coveredByChild("bottom") ? 8 : 0
     readonly property vector4d cornerRadii: Qt.vector4d(
-        (attached("top") || attached("left")) ? 0 : clampedRadius,
-        (attached("top") || attached("right")) ? 0 : clampedRadius,
-        (attached("bottom") || attached("right")) ? 0 : clampedRadius,
-        (attached("bottom") || attached("left")) ? 0 : clampedRadius)
+        (attached("top") || attached("left") || _coveredByChild("top") || _coveredByChild("left")) ? 0 : clampedRadius,
+        (attached("top") || attached("right") || _coveredByChild("top") || _coveredByChild("right")) ? 0 : clampedRadius,
+        (attached("bottom") || attached("right") || _coveredByChild("bottom") || _coveredByChild("right")) ? 0 : clampedRadius,
+        (attached("bottom") || attached("left") || _coveredByChild("bottom") || _coveredByChild("left")) ? 0 : clampedRadius)
 
     // ── centring against the WHOLE shape ────────────────────────────────
     // A rollout is not a panel sitting next to the band; it is the band
@@ -400,7 +489,8 @@ Item {
             // nested host sets blend to 0 for an exact union while being fully
             // out (BarPopouts.flushToParent).
             host.registerBulge(rolloutId, sceneRect, cornerRadii,
-                meltBlend, inverse, mean - dev, edgeBits, 0, false, meltBlend);
+                flushToParent ? 0 : meltBlend, inverse, mean - dev, edgeBits, _childRimBits,
+                false, meltBlend);
             if (fullscreenDetached && host.fullscreen && fullscreenCapsule)
                 host.registerFullscreenCapsule(rolloutId,
                     Qt.rect(x, y, width, height), fullscreenRadius);
@@ -424,6 +514,15 @@ Item {
     onHitActiveChanged: syncRegistries()
     onFullscreenDetachedChanged: syncRegistries()
     onFullscreenCapsuleChanged: syncRegistries()
+    onChildRolloutChanged: syncRegistries()
+
+    Connections {
+        target: root.childRollout
+        function onVisibleChanged() { root.syncRegistries(); }
+        function onWidthChanged() { root.syncRegistries(); }
+        function onHeightChanged() { root.syncRegistries(); }
+        function onParentRolloutChanged() { root.syncRegistries(); }
+    }
 
     Connections {
         target: root.host

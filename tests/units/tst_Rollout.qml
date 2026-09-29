@@ -256,6 +256,85 @@ TestCase {
         }
     }
 
+    // ── row F: anchored and nested placement ─────────────────────────────
+    Item {
+        id: sceneF
+        x: 200; y: 400; width: 200; height: 200
+
+        ScenePointer { id: pointerF }
+
+        QtObject {
+            id: hostF
+            property bool fullscreen: false
+            property var pointer: pointerF
+            function mapFromItem(item, x, y) { return item.mapToItem(sceneF, x, y); }
+            function registerBulge() {}
+            function unregisterBulge() {}
+            function registerRolloutRegion() {}
+            function unregisterRolloutRegion() {}
+            function registerFullscreenCapsule() {}
+            function unregisterFullscreenCapsule() {}
+        }
+
+        Item {
+            id: anchorF
+            x: 10; y: 0; width: 20; height: 20
+        }
+
+        Rollout {
+            id: nudgedRollout
+            host: hostF
+            rolloutId: "row-f-nudged"
+            edges: ["left"]
+            anchorItem: anchorF
+            placementBounds: Qt.rect(0, 0, sceneF.width, sceneF.height)
+            tier: "small"
+            shouldBeActive: true
+            bodyWidth: 80
+            bodyHeight: 100
+        }
+
+        Rollout {
+            id: rawRollout
+            host: hostF
+            rolloutId: "row-f-raw"
+            edges: ["left"]
+            anchorItem: anchorF
+            placementBounds: Qt.rect(0, 0, sceneF.width, sceneF.height)
+            nudgeToBounds: false
+            tier: "small"
+            shouldBeActive: true
+            bodyWidth: 80
+            bodyHeight: 100
+        }
+
+        Rollout {
+            id: parentRollout
+            host: hostF
+            rolloutId: "row-f-parent"
+            edges: ["left"]
+            x: 0; y: 40
+            tier: "small"
+            shouldBeActive: true
+            bodyWidth: 80
+            bodyHeight: 120
+        }
+
+        Rollout {
+            id: childRollout
+            host: hostF
+            rolloutId: "row-f-child"
+            edges: ["left"]
+            parentRollout: parentRollout
+            tier: "small"
+            shouldBeActive: true
+            bodyWidth: 60
+            bodyHeight: 120
+        }
+
+        Component.onCompleted: parentRollout.childRollout = childRollout
+    }
+
     function test_pointer_in_trigger_area_reports_triggered_and_wantsOpen() {
         // rolloutE starts closed: the trigger must fire before the body
         // ever shows.
@@ -337,5 +416,39 @@ TestCase {
         compare(rolloutE.keepOpen, true, "keepOpen was false over triggerAreas once open");
 
         rolloutE.shouldBeActive = false;
+    }
+
+    // A band rollout keeps its declared weld edge; only the free axis moves to
+    // keep an item-centred body inside the available scene. A host can disable
+    // that nudge when an intentional overflow is part of its surface policy.
+    function test_an_item_anchor_nudges_only_the_free_axis_when_requested() {
+        tryVerify(() => nudgedRollout.offsetScale <= 0.001 && rawRollout.offsetScale <= 0.001,
+            1000, "anchored rollouts never settled open");
+
+        compare(nudgedRollout.x, nudgedRollout.edgeInsetH,
+            "an anchor moved a left-edge rollout across its weld edge");
+        compare(nudgedRollout.y, 0, "the nudged rollout did not clamp to the top of its bounds");
+        compare(nudgedRollout.nudge.y, 40, "the reported nudge is not the cross-axis correction");
+        compare(rawRollout.y, -40, "nudgeToBounds false still corrected the rollout position");
+        compare(rawRollout.nudge.y, 0, "a rollout with no nudge reported one");
+    }
+
+    // A full-span child is one silhouette with its parent: it begins at the
+    // parent's free edge, removes the seam blend, and squares only the parent
+    // corners the child physically covers.
+    function test_a_full_span_child_rollout_forms_an_exact_nested_seam() {
+        tryVerify(() => parentRollout.offsetScale <= 0.001 && childRollout.offsetScale <= 0.001,
+            1000, "nested rollouts never settled open");
+
+        compare(childRollout.x, parentRollout.x + parentRollout.width,
+            "the child did not begin at its parent's free edge");
+        compare(childRollout.y, parentRollout.y,
+            "the child was nudged away from its parent's cross-axis span");
+        compare(childRollout.flushToParent, true,
+            "a full-span child did not request an exact parent seam");
+        compare(parentRollout.cornerRadii.y, 0,
+            "the parent kept a rounded top-right corner under its flush child");
+        compare(parentRollout.cornerRadii.z, 0,
+            "the parent kept a rounded bottom-right corner under its flush child");
     }
 }
