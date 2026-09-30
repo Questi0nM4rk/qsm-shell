@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "key": "action-tile-arm",
+  "target": { "story": "action-tile" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "armed", "equals": true },
+    { "type": "expect", "observable": "shown-label", "equals": "Confirm?" },
+    { "type": "control", "group": "armed", "option": "off" },
+    { "type": "expect", "observable": "shown-label", "equals": "Power off" },
+    { "type": "control", "group": "selection", "option": "selected" },
+    { "type": "expect", "observable": "selected", "equals": true },
+    { "type": "control", "group": "armed", "option": "on" },
+    { "type": "expect", "observable": "shown-label", "equals": "Confirm?" },
+    { "type": "action", "name": "activate" },
+    { "type": "expectEvent", "event": "activated", "origin": "component" },
+    { "type": "expect", "observable": "armed", "equals": true },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "selected", "equals": true }
+  ]
+}

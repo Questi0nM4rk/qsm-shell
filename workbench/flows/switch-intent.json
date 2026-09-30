@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "key": "switch-intent",
+  "target": { "story": "switch" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "checked", "equals": true },
+    { "type": "action", "name": "toggle" },
+    { "type": "expect", "observable": "checked", "equals": false },
+    { "type": "expectEvent", "event": "toggle-requested", "origin": "component" },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "action", "name": "toggle" },
+    { "type": "expect", "observable": "checked", "equals": false },
+    { "type": "key", "key": "Space" },
+    { "type": "expect", "observable": "checked", "equals": false },
+    { "type": "control", "group": "state", "option": "enabled" },
+    { "type": "key", "key": "Enter" },
+    { "type": "expect", "observable": "checked", "equals": true }
+  ]
+}

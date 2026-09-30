@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "key": "segmented-skip-disabled",
+  "target": { "story": "segmented" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "current-index", "equals": 1 },
+    { "type": "control", "group": "middle-option", "option": "disabled" },
+    { "type": "action", "name": "next" },
+    { "type": "expect", "observable": "current-index", "equals": 2 },
+    { "type": "expectEvent", "event": "selected", "origin": "component" },
+    { "type": "action", "name": "previous" },
+    { "type": "expect", "observable": "current-index", "equals": 0 },
+    { "type": "action", "name": "last" },
+    { "type": "expect", "observable": "current-index", "equals": 2 },
+    { "type": "action", "name": "first" },
+    { "type": "expect", "observable": "current-index", "equals": 0 }
+  ]
+}
