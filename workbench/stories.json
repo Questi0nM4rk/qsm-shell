@@ -123,7 +123,8 @@
           "label": "switch unit",
           "path": "tests/units/tst_Switch.qml"
         }
-      ]
+      ],
+      "unit": "workbench/units/Switch.qml"
     },
     "checkbox": {
       "component": "checkbox",
@@ -145,7 +146,8 @@
           "label": "checkbox unit",
           "path": "tests/units/tst_Checkbox.qml"
         }
-      ]
+      ],
+      "unit": "workbench/units/Checkbox.qml"
     },
     "radio": {
       "component": "radio",
@@ -167,7 +169,8 @@
           "label": "radio unit",
           "path": "tests/units/tst_Radio.qml"
         }
-      ]
+      ],
+      "unit": "workbench/units/Radio.qml"
     },
     "spin-box": {
       "component": "spin-box",
@@ -189,7 +192,8 @@
           "label": "spin box unit",
           "path": "tests/units/tst_SpinBox.qml"
         }
-      ]
+      ],
+      "unit": "workbench/units/SpinBox.qml"
     },
     "stat": {
       "component": "stat",
@@ -371,7 +375,8 @@
           "label": "segmented unit",
           "path": "tests/units/tst_Segmented.qml"
         }
-      ]
+      ],
+      "unit": "workbench/units/Segmented.qml"
     },
     "calendar": {
       "component": "calendar",
@@ -409,7 +414,8 @@
         "status"
       ],
       "source": "qml/QsmShell/Components/Capsule.qml",
-      "docs": "docs/components/Capsule.md"
+      "docs": "docs/components/Capsule.md",
+      "unit": "workbench/units/Capsule.qml"
     },
     "card": {
       "component": "card",
@@ -517,7 +523,8 @@
         "icon"
       ],
       "source": "qml/QsmShell/Components/IconButton.qml",
-      "docs": "docs/components/IconButton.md"
+      "docs": "docs/components/IconButton.md",
+      "unit": "workbench/units/IconButton.qml"
     },
     "key-value": {
       "component": "key-value",
@@ -811,7 +818,8 @@
         "control"
       ],
       "source": "qml/QsmShell/Components/ActionTile.qml",
-      "docs": "docs/components/ActionTile.md"
+      "docs": "docs/components/ActionTile.md",
+      "unit": "workbench/units/ActionTile.qml"
     },
     "state-layer": {
       "component": "state-layer",
@@ -881,7 +889,8 @@
         "navigation",
         "selection"
       ],
-      "docs": "docs/components/Segmented.md"
+      "docs": "docs/components/Segmented.md",
+      "unit": "workbench/units/Segmented.qml"
     },
     "prose-ladder": {
       "component": "prose-ladder",
