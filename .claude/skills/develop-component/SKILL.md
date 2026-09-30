@@ -49,10 +49,12 @@ docs is better. Every line of either needs a reason.
 4. **Build the unit.** `workbench/units/<Type>.qml` takes `variant`, plays the
    host (answers every upward signal), exercises every slot and label, declares
    `controls` for states a pointer cannot reach, and declares an `integration`
-   object (`events`, `actions`, `controls`, `observables`, `keys`,
+   object (`events`, `actions`, `observables`, `runAction`, `keys`,
    `textDriver`, `checkpoints`) so the harness drives it through the same API
    the live window uses. Repoint that type's keys in `workbench/stories.json`
-   at the file. ONE TYPE AT A TIME. The unit is a HOST: the moment it decides a
+   at the file, and write a flow in `workbench/flows/` that reaches the states
+   a pointer cannot — a passing flow is what proves the unit is drivable at
+   all. ONE TYPE AT A TIME. The unit is a HOST: the moment it decides a
    behaviour it has replaced the component.
 5. **Look at it.** `npm run preview`: the catalog, then the story window you
    are working on, one exact item. Announce you are taking the pointer, drive

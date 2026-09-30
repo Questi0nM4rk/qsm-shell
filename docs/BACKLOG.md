@@ -5,15 +5,31 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 
 ## Next
 
+- Unit migration is at 19 of 51 types; 23 remain. `node scripts/workbench.mjs
+  --check --provider .` prints the count and names nothing missing, so the
+  catalog is the checklist. Each one is a `workbench/units/<Type>.qml`, its
+  story keys repointed, and a flow that drives it.
+- The adapter puts a unit's `eventRecorder` kind into the harness's `origin`,
+  but a flow may only assert `component|injected|route`, so a unit that records
+  `"intent"` can never be asserted and 19 units record `"component"` to route
+  around it. Fix the mapping and the units together; the deleted host kept kind
+  and origin apart.
+- `scripts/validate-library` lints `workbench/*.qml` and never
+  `workbench/units/*.qml`, so a unit with a broken import passes the gate.
+- `KeyValueRow` does not re-lay out when `icon` is filled in after construction:
+  the label stays at x=0 under a visible 16px glyph. Built with the icon it sits
+  at x=24, so the component is right and only the late change is stale.
+- `SpinBox` host value goes stale after a native step: after `increase()` the
+  component reads 43 while the host still reads 42.5 until the next write.
 - ADR 0002's four decisions, in the order they unblock each other: one
   provider-owned keep-open type taking a pointer (deletes the rail's copy and
   the workbench mock's), `StateLayer` assertable state, `ScenePointer`
   overridable by a pointer-shaped object, `Rollout` sized by its owner. Then
   caelestia's `TransformWatcher` for the three `mapToItem`-in-a-binding call
   sites, and the comments defending that hazard can go with it.
-- The flow state machine belongs to the harness, and so do its tests. The shell
-  host is welded to its own 60-case `storyComponent()` switch, so resolve
-  stories through the catalog first.
+- The shell's own flow host is gone; the harness owns the state machine. A
+  composition flow still cannot pass, because the composition interpreter is a
+  provider contribution and no provider here has one.
 - `Rollout` cannot be the PARENT of a nested rollout, so the consumer's
   `BarPopouts` keeps its own keep-open predicate. The travel triangle is a
   geometric no-op while the popout is flush with a full-height band; nobody

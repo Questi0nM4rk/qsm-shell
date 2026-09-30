@@ -115,11 +115,12 @@ follow the design sources.
   every signal the type hands upward or the control is dead in the window.
 - A unit is a FRONTEND for the event API the harness drives, and that is the
   whole of its contract with workbench: its `controls` declaration, its
-  `integration` object (`events`, `actions`, `controls`, `observables`,
+  `integration` object (`events`, `actions`, `observables`, `runAction`,
   `keys`, `textDriver`, `checkpoints`) and the signals it reports upward.
-  Everything else about the unit is its own business and the harness must not
-  know it. A harness that needs a switch statement to find a unit has welded
-  itself to the catalog, and the catalog then cannot grow.
+  Every name in it is kebab-case and matched exactly. Everything else about the
+  unit is its own business and the harness must not know it. A harness that
+  needs a switch statement to find a unit has welded itself to the catalog,
+  and the catalog then cannot grow.
 - Several scenario KEYS map to one unit and keep their names (`level` and
   `osd-slider` are both `Slider`; `list-row`, `device-row`, `result-row` are
   all `ListRow`). A unit is never named after a surface.
