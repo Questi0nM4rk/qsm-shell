@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "key": "spinbox-bounds",
+  "target": { "story": "spin-box" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "value", "equals": 42.5 },
+    { "type": "expect", "observable": "acceptable-input", "equals": true },
+    { "type": "action", "name": "increase" },
+    { "type": "expect", "observable": "value", "equals": 43 },
+    { "type": "expectEvent", "event": "value-modified", "origin": "component" },
+    { "type": "action", "name": "maximum" },
+    { "type": "expect", "observable": "value", "equals": 100 },
+    { "type": "action", "name": "decrease" },
+    { "type": "expect", "observable": "value", "equals": 99.5 },
+    { "type": "action", "name": "minimum" },
+    { "type": "expect", "observable": "value", "equals": 0 },
+    { "type": "control", "group": "wrap", "option": "on" },
+    { "type": "action", "name": "maximum" },
+    { "type": "action", "name": "increase" },
+    { "type": "expect", "observable": "value", "equals": 0 }
+  ]
+}

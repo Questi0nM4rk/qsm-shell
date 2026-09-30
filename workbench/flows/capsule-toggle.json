@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "key": "capsule-toggle",
+  "target": { "story": "capsule" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "active", "equals": true },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "active", "equals": false },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
+    { "type": "key", "key": "Space" },
+    { "type": "expect", "observable": "active", "equals": true },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "key", "key": "Enter" },
+    { "type": "expect", "observable": "active", "equals": true }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "key": "icon-button-activate",
+  "target": { "story": "icon-button" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "enabled", "equals": true },
+    { "type": "action", "name": "activate" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
+    { "type": "key", "key": "Enter" },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "expect", "observable": "enabled", "equals": false },
+    { "type": "action", "name": "activate" },
+    { "type": "key", "key": "Space" },
+    { "type": "expect", "observable": "enabled", "equals": false }
+  ]
+}

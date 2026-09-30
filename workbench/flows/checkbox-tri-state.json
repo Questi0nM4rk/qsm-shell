@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "key": "checkbox-tri-state",
+  "target": { "story": "checkbox" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "indeterminate", "equals": true },
+    { "type": "expect", "observable": "checked", "equals": false },
+    { "type": "action", "name": "toggle" },
+    { "type": "expect", "observable": "checked", "equals": true },
+    { "type": "expect", "observable": "indeterminate", "equals": true },
+    { "type": "control", "group": "checked", "option": "off" },
+    { "type": "expect", "observable": "indeterminate", "equals": false },
+    { "type": "key", "key": "Space" },
+    { "type": "expect", "observable": "checked", "equals": true },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "key", "key": "Enter" },
+    { "type": "expect", "observable": "checked", "equals": true }
+  ]
+}
