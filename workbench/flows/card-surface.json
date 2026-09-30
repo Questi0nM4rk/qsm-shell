@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "key": "card-surface",
+  "target": { "story": "card" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "radius", "equals": 16 },
+    { "type": "expect", "observable": "surface-opacity", "equals": 0.9 },
+    { "type": "control", "group": "surface", "option": "raised" },
+    { "type": "expect", "observable": "radius", "equals": 16 },
+    { "type": "control", "group": "surface", "option": "opaque" },
+    { "type": "expect", "observable": "surface-opacity", "equals": 1 },
+    { "type": "expect", "observable": "radius", "equals": 16 }
+  ]
+}

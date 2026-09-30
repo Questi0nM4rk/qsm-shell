@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "key": "kbd-caps",
+  "target": { "story": "kbd" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "min-cap-width", "equals": 24 },
+    { "type": "expect", "observable": "cap-height", "equals": 20 }
+  ]
+}

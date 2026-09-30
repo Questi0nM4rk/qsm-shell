@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "key": "svg-icon-scale",
+  "target": { "story": "svg-icon" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "width", "equals": 20 },
+    { "type": "expect", "observable": "height", "equals": 20 },
+    { "type": "control", "group": "foreground", "option": "danger" },
+    { "type": "expect", "observable": "width", "equals": 20 },
+    { "type": "control", "group": "scale", "option": "lg" },
+    { "type": "expect", "observable": "width", "equals": 24 },
+    { "type": "expect", "observable": "height", "equals": 24 }
+  ]
+}

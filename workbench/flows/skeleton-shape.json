@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "key": "skeleton-shape",
+  "target": { "story": "skeleton" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "lead-height", "equals": 40 },
+    { "type": "expect", "observable": "lead-width", "equals": 380 },
+    { "type": "control", "group": "shape", "option": "line" },
+    { "type": "expect", "observable": "lead-height", "equals": 12 },
+    { "type": "control", "group": "role", "option": "hero" },
+    { "type": "expect", "observable": "lead-height", "equals": 44 },
+    { "type": "control", "group": "role", "option": "metadata" },
+    { "type": "expect", "observable": "lead-height", "equals": 10 },
+    { "type": "control", "group": "width", "option": "short" },
+    { "type": "expect", "observable": "lead-width", "equals": 228 }
+  ]
+}

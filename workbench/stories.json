@@ -4,6 +4,7 @@
     "badge": {
       "component": "badge",
       "variant": "warning",
+      "unit": "workbench/units/Badge.qml",
       "viewport": [
         800,
         500
@@ -26,6 +27,7 @@
     "spinner": {
       "component": "spinner",
       "variant": "running",
+      "unit": "workbench/units/Spinner.qml",
       "viewport": [
         800,
         500
@@ -74,6 +76,7 @@
     "skeleton": {
       "component": "skeleton",
       "variant": "loading",
+      "unit": "workbench/units/Skeleton.qml",
       "viewport": [
         800,
         500
@@ -242,6 +245,7 @@
     "kbd": {
       "component": "kbd",
       "variant": "combo",
+      "unit": "workbench/units/Kbd.qml",
       "viewport": [
         800,
         500
@@ -274,6 +278,7 @@
     "marquee": {
       "component": "marquee",
       "variant": "always",
+      "unit": "workbench/units/Marquee.qml",
       "viewport": [
         800,
         500
@@ -290,6 +295,7 @@
     "section": {
       "component": "section",
       "variant": "devices",
+      "unit": "workbench/units/Section.qml",
       "viewport": [
         800,
         500
@@ -414,6 +420,7 @@
     "card": {
       "component": "card",
       "variant": "resting",
+      "unit": "workbench/units/Card.qml",
       "viewport": [
         800,
         500
@@ -430,6 +437,7 @@
     "divider": {
       "component": "divider",
       "variant": "default",
+      "unit": "workbench/units/Divider.qml",
       "viewport": [
         800,
         500
@@ -522,6 +530,7 @@
     "key-value": {
       "component": "key-value",
       "variant": "battery",
+      "unit": "workbench/units/KeyValueRow.qml",
       "viewport": [
         800,
         500
@@ -855,6 +864,7 @@
     "svg-icon": {
       "component": "svg-icon",
       "variant": "selected",
+      "unit": "workbench/units/SvgIcon.qml",
       "viewport": [
         800,
         500

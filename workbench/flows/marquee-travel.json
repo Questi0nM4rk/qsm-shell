@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "key": "marquee-travel",
+  "target": { "story": "marquee" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "mode", "equals": "always" },
+    { "type": "expect", "observable": "overflows", "equals": true },
+    { "type": "write", "text": "Battery 87" },
+    { "type": "expect", "observable": "overflows", "equals": false },
+    { "type": "control", "group": "mode", "option": "never" },
+    { "type": "expect", "observable": "mode", "equals": "never" },
+    { "type": "write", "text": "Battery 87 percent, charging, three hours remaining at the present rate" },
+    { "type": "expect", "observable": "overflows", "equals": true }
+  ]
+}

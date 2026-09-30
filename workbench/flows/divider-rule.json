@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "key": "divider-rule",
+  "target": { "story": "divider" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "rule-height", "equals": 1 },
+    { "type": "expect", "observable": "line-inset", "equals": 12 },
+    { "type": "expect", "observable": "line-span", "equals": 356 }
+  ]
+}

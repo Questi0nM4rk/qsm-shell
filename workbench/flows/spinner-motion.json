@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "key": "spinner-motion",
+  "target": { "story": "spinner" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "running", "equals": true },
+    { "type": "expect", "observable": "width", "equals": 24 },
+    { "type": "expect", "observable": "height", "equals": 24 },
+    { "type": "control", "group": "motion", "option": "stopped" },
+    { "type": "expect", "observable": "running", "equals": false },
+    { "type": "control", "group": "motion", "option": "running" },
+    { "type": "expect", "observable": "running", "equals": true }
+  ]
+}
