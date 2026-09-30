@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "key": "statelayer-states",
+  "target": { "story": "state-layer" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "interactive", "equals": true },
+    { "type": "expect", "observable": "clickable", "equals": true },
+    { "type": "control", "group": "purpose", "option": "disabled" },
+    { "type": "expect", "observable": "interactive", "equals": false },
+    { "type": "control", "group": "purpose", "option": "trigger" },
+    { "type": "expect", "observable": "interactive", "equals": true },
+    { "type": "expect", "observable": "clickable", "equals": false },
+    { "type": "action", "name": "click" },
+    { "type": "expect", "observable": "interactive", "equals": true },
+    { "type": "expect", "observable": "clickable", "equals": false }
+  ]
+}

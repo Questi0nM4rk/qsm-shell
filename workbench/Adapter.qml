@@ -1,6 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
-import qs.QsmShell.Style
 
 // The provider's whole contribution to the storybook: host ONE unit, the one
 // its catalog names, and forward that unit's contract. No window, no view.
@@ -31,7 +29,10 @@ Item {
         ? "could not load the unit for story '" + storyKey + "'"
         : mode === "composition" ? "compositions are not hosted by this provider" : ""
     readonly property var controls: _loaded ? asArray(_unit.controls) : []
-    readonly property var actions: _loaded ? asArray(_unit.actions) : []
+    // The unit's own action names, unchanged: the flow addresses an action by
+    // the name the unit gave it, and a second label list here would be a second
+    // rule for what an action is called.
+    readonly property var actions: _loaded ? asArray(integration?.actions) : []
     readonly property real contentExtentWidth: _loaded && _unit.contentExtentWidth !== undefined
         ? Number(_unit.contentExtentWidth) : width
     readonly property real contentExtentHeight: _loaded && _unit.contentExtentHeight !== undefined
@@ -100,22 +101,21 @@ Item {
         return true
     }
 
-    // An action is a function the unit lists in `actions`. Pointer, keyboard
-    // and the harness all reach it the same way, so there is one door.
+    // An action is a name the unit listed in `integration.actions`, reached
+    // through the unit's own `runAction`. Pointer, keyboard and the harness all
+    // arrive at that one door.
     function triggerAction(index: int): bool {
-        if (!_loaded)
+        if (!_loaded || typeof integration?.runAction !== "function")
             return false
         const list = actions
         if (index < 0 || index >= list.length)
             return false
-        const action = list[index]
-        if (!action)
+        const name = String(list[index] ?? "")
+        if (name === "")
             return false
-        const name = action.trigger !== undefined ? String(action.trigger)
-            : action.text !== undefined ? String(action.text) : ""
-        if (name === "" || typeof _unit[name] !== "function")
+        if (integration.runAction(name) !== true)
             return false
-        _unit[name]()
+        eventRecorded({ "origin": "action", "name": name })
         return true
     }
 
@@ -137,7 +137,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Style.background
+        color: "transparent"
     }
 
     Loader {
