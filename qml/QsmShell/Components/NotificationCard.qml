@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -56,11 +57,48 @@ Item {
     readonly property bool hovered: layer.hovered
     readonly property bool expanded: root.alwaysExpanded || root.hovered || root.dragExpanded
         || (root.entry.paused ?? false)
-    readonly property bool archived: root.entry.archivedAt !== undefined
+    readonly property bool archived: root.entry.archivedAt !== undefined && root.entry.archivedAt !== null
     readonly property bool hasSwatch: root.swatch !== undefined && root.swatch !== null
 
     signal dismissed
     signal actionTriggered(string actionId)
+    readonly property list<T.Action> actions: [dismissAction, firstAction, secondAction, thirdAction]
+        .filter(action => action.text.length > 0)
+
+    T.Action {
+        id: dismissAction
+        text: "Dismiss"
+        enabled: root.enabled && root.visible
+        onTriggered: root.dismiss()
+    }
+
+    component EntryAction: T.Action {
+        required property int index
+        readonly property var entryAction: root.entry.actions?.[index] ?? null
+        text: entryAction ? String(entryAction.label ?? entryAction.id ?? "") : ""
+        enabled: !!entryAction && root.enabled && root.visible && root.expanded
+            && root.showActions && !root.archived && !(entryAction.disabled ?? false)
+        onTriggered: root.activateAction(String(entryAction.id))
+    }
+
+    EntryAction { id: firstAction; index: 0 }
+    EntryAction { id: secondAction; index: 1 }
+    EntryAction { id: thirdAction; index: 2 }
+
+    function dismiss(): void {
+        if (root.enabled && root.visible)
+            root.dismissed()
+    }
+
+    function activateAction(actionId: string): void {
+        const actions = root.entry.actions ?? [];
+        if (!root.enabled || !root.visible || !root.expanded || !root.showActions || root.archived || !actionId)
+            return;
+        const action = actions.slice(0, 3).find(item => String(item.id) === actionId);
+        if (!action || action.disabled)
+            return;
+        root.actionTriggered(actionId);
+    }
 
     readonly property string iconSource: root.entry.imagePath ?? ""
     readonly property string iconName: root.entry.urgency === "critical" ? "alert-triangle"
@@ -199,7 +237,7 @@ Item {
         }
 
         RowLayout {
-            visible: root.showActions && (root.entry.actions?.length ?? 0) > 0
+            visible: root.showActions && !root.archived && (root.entry.actions?.length ?? 0) > 0
             spacing: Style.space3
 
             Repeater {
@@ -208,11 +246,17 @@ Item {
                 Text {
                     required property var modelData
                     required property int index
+                    readonly property bool available: root.enabled && !(modelData.disabled ?? false)
+                    enabled: available
                     // Addressable by a consumer or a test without exposing a
                     // repeater handle from the card's own public interface.
                     objectName: "notificationAction" + index
                     text: modelData.label ?? String(modelData)
-                    color: root.actionFocusIndex === index ? Style.text : Style.accent
+                    color: available ? (root.actionFocusIndex === index ? Style.text : Style.accent)
+                        : Style.disabled(root.actionFocusIndex === index ? Style.text : Style.accent)
+                    Accessible.role: Accessible.Button
+                    Accessible.name: text
+                    Accessible.onPressAction: root.activateAction(String(modelData.id))
                     font.family: Style.fontFamily
                     font.pixelSize: Style.textSm
                     font.weight: root.actionFocusIndex === index ? Style.weightBold : Style.weightMedium
@@ -222,8 +266,9 @@ Item {
                         anchors.fill: parent
                         // Lifts a 14px label to a 24px-tall hit target.
                         anchors.margins: -Style.notificationActionHitMargin
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.actionTriggered(parent.modelData.id)
+                        cursorShape: parent.available ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        enabled: parent.available
+                        onClicked: root.activateAction(String(parent.modelData.id))
                     }
                 }
             }
@@ -254,14 +299,15 @@ Item {
     StateLayer {
         id: layer
         anchors.fill: parent
-        interactive: false
+        interactive: root.enabled
+        clickable: false
         target: null
     }
 
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.MiddleButton
-        onClicked: root.dismissed()
+        onClicked: root.dismiss()
     }
 
     // Swipe-dismiss: horizontal, both directions, spring-back under the
@@ -287,7 +333,7 @@ Item {
                 if (Math.abs(translation.y) > Style.notificationExpandDragPx)
                     root.dragExpanded = translation.y > 0;
             } else if (Math.abs(translation.x) > root.width * Style.notificationDismissFraction) {
-                root.dismissed();
+                root.dismiss();
             }
         }
     }

@@ -128,27 +128,34 @@ ColumnLayout {
     // Dismiss the highlighted entry — reported, never performed: the
     // consumer decides what dismissing an entry does.
     function removeSelected(): void {
-        const entry = root.selectedEntry();
-        if (entry)
-            root.dismissRequested(entry);
+        historyList.currentItem?.dismiss();
         root.expandedKey = "";
         root.clearActionFocus();
     }
 
     function moveAction(delta: int): void {
-        const entry = root.selectedEntry();
-        if (!entry || root.expandedKey !== root.entryKey(entry) || (entry.actions?.length ?? 0) === 0)
+        const card = historyList.currentItem;
+        if (!card || root.expandedKey !== root.entryKey(card.entry))
             return;
-        const count = Math.min(3, entry.actions.length);
-        root.actionFocusIndex = (root.actionFocusIndex + delta + count) % count;
+        const available = card.actions.filter(action => action.index !== undefined && action.enabled);
+        if (available.length === 0) {
+            root.clearActionFocus();
+            return;
+        }
+        const at = available.findIndex(action => action.index === root.actionFocusIndex);
+        const next = at < 0 ? (delta < 0 ? available.length - 1 : 0)
+            : (at + delta + available.length) % available.length;
+        root.actionFocusIndex = available[next].index;
     }
 
     function activateSelected(): void {
-        const entry = root.selectedEntry();
-        if (!entry)
+        const card = historyList.currentItem;
+        if (!card)
             return;
         if (root.actionFocusIndex >= 0) {
-            root.actionTriggered(entry, entry.actions[root.actionFocusIndex].id);
+            const action = card.actions.find(action => action.index === root.actionFocusIndex);
+            if (action)
+                card.activateAction(String(action.entryAction.id));
             root.clearActionFocus();
         } else {
             root.toggleSelected();
