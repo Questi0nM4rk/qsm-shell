@@ -31,6 +31,12 @@ follow the design sources.
   intent while the owning surface decides policy and consequences.
 - Ship a fully working, feature-full MVP. Features first, as fast as
   possible. Fewer docs, more features.
+- **Work lands on main.** One agent, one local tree: the next item is
+  implemented directly on the main branch of this repository and committed
+  there. A worktree is for genuinely parallel or throwaway work only; whatever
+  comes out of one is reviewed by the agent and merged into main before the
+  owner ever sees it. Never hand over work that exists only in a scratch
+  directory, and never leave it there for the owner to find.
 - The least code that works. The least documentation that keeps the next
   session honest. A line of either needs a reason.
 - The owner tests and judges ONE item at a time. Prepare it, explain its task
