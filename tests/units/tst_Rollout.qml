@@ -372,17 +372,10 @@ TestCase {
 
         ScenePointer { id: pointerF }
 
-        QtObject {
+        ShellBorder {
             id: hostF
-            property bool fullscreen: false
-            property var pointer: pointerF
-            function mapFromItem(item, x, y) { return item.mapToItem(sceneF, x, y); }
-            function registerBulge() {}
-            function unregisterBulge() {}
-            function registerRolloutRegion() {}
-            function unregisterRolloutRegion() {}
-            function registerFullscreenCapsule() {}
-            function unregisterFullscreenCapsule() {}
+            anchors.fill: parent
+            pointer: pointerF
         }
 
         Item {

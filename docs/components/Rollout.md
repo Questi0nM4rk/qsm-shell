@@ -59,6 +59,9 @@ separate from the desktop surfaces the owner reviewed.
   square corners, not add another axis. Paint receives the aperture, free radii
   follow its current half extents, and content/shader deformation is identity.
   Nested origins use settled full-body source extents in host coordinates.
+  Anchored placement uses a visual `ShellBorder` host: Qt's `mapFromItem` takes
+  an `Item`, not a `QtObject` with a lookalike mapping function. Keep the host,
+  anchor and QML parent coordinate spaces distinct in fixtures as in consumers.
 - **Input/lifetime:** expose `viewportRect`, `silhouetteRect`, `hitActive` and
   `animating`; normal hit registration uses only the near-settled aperture and
    withdraws on close/suppression. The content slot disables on close/suppression;

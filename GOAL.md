@@ -61,16 +61,16 @@ components. Re-derive the table when desktop use changes.
 
 ## Next, in this order
 
-0. **The suite must be green.** It is 310 checks with 2 failures, both in
-   `Rollout`'s anchored placement binding; `docs/BACKLOG.md` has the measurement
-   and what still has to be settled.
+0. **Keep the technical gates green.** `npm test` passes native interaction and
+   unit checks, smoke and shader freshness. Lint warnings remain; desktop's
+   isolated checks and production-only checks are separate evidence, not acceptance.
 1. **Owner review of the action menu and the panel tab group** in the live window.
    Nothing below starts before that: keyboard reach, attached editors, repeated
    operations, NEIO/slash, the tab group.
 2. **Pointer parity** — clicks and drags on every route the flows only drive with
    the keyboard, judged in a real window. The offscreen driver has not delivered a
-   pointer event to a launcher row yet; that is a harness question, not a
-   component one, and the live window settles it.
+   pointer event to a launcher row yet; whether the harness or surface is at
+   fault remains unverified, and the live window settles it.
 3. **Real backends** — the same flows against the actual nmcli, Bluetooth and
    audio services. The isolated fixtures are proven; the hardware is not.
 4. **Release readiness** — the owner's remaining backlog items, one at a time, in

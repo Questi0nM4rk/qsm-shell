@@ -8,6 +8,10 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - Shell readiness first: close concrete component defects and keyboard/public-action
   parity through desktop hosts and the existing action menu; defer desktop-only
   improvements and Workbench polish unless they block the selected item (`GOAL.md`).
+- Release verification: `npm test` passes smoke, both native test directories and
+  shader freshness; lint emits warnings, so this is not a warning-free claim.
+  Generic Rollout variants, action-menu/panel pointer routes and real-backend
+  operation still need the owner's named review; passing checks are not acceptance.
 
 - ListRow's additive headingHeight/expansionHeight contract is source-prepared for desktop inline audio; live consumer sizing awaits the current desktop item review. The owner approved shell Compositions / menu-items for that adoption.
 
@@ -165,45 +169,3 @@ until the current cleanup commits land.
 - **SH-C8 Neutral base control grouping correction** — declaration-only
   regrouping so independent choices are separate from commands; the migrated
   53-step flow passes, live review open.
-
-## Two Rollout placement checks fail: the anchored Binding never lands
-
-`npm run unit -- Rollout` is 14 passed, 2 failed. Both are in placement, not
-animation, and both predate the retention fix (verified by restoring `Rollout.qml`
-from HEAD and re-running). The full suite is otherwise green: 51 interaction
-checks, 259 unit checks, smoke, lint and shader drift all pass.
-
-- `test_an_item_anchor_nudges_only_the_free_axis_when_requested` expects the
-  rollout's `x` to sit on the weld edge (`edgeInsetH`, 16) and reads 0.
-- `test_a_full_span_child_rollout_forms_an_exact_nested_seam` expects the child
-  to begin at the parent's free edge (80) and reads 0.
-
-**The placement arithmetic is right.** Measured at the failing moment:
-`_rawPlacementX` 16, `_placementX` 16, `_rawPlacementY` -40, `_placementY` 0,
-`nudge.y` 40, `parentRollout.settledBodyRect` (0, 40, 80, 120) — every value the
-tests ask for. What is missing is the item's own `x`/`y`, still at 0. So the
-`Binding` on `x`/`y` (`when: _anchored`) either never applies or is overwritten
-before the assertion reads it, and `tryVerify` is waiting on `offsetScale`, which
-says nothing about placement.
-
-Two things have to be settled before this is a fix rather than a guess:
-whether the binding loses a race with `mapFromItem` across the host/parent
-coordinate spaces, and whether the check should wait for placement at all. This
-wants a live-window measurement, not another offscreen run.
-
-## Menu selectability used to read the scene's visibility (fixed)
-
-`Menu._isSelectable` asked each row whether it was `visible`, and visibility is
-inherited from the surrounding scene. A menu in a scene that was not on screen —
-the smoke run, a rollout before it opens — had no selectable row at all, so
-stepping and activation silently did nothing. It now reads the row's own
-`selectable`. Found by `tests/Smoke.qml`, which is why the smoke gate matters
-more than the unit counts.
-
-## The pivot test asserted a detached rule on a joined fixture (fixed)
-
-`test_registry_keeps_undeformed_pivot_under_compression_and_shear` demanded a
-deformed matrix reach the shader, but its fixture was a JOINED rollout, where
-`Rollout` documents that attached content never travels or shears
-(`_joined ? 1 : ...`). The fixture is now a detached silhouette, which is the one
-case that has a pivot to keep.
