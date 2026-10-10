@@ -29,7 +29,8 @@ Item {
     readonly property bool overflows: label.implicitWidth > width
     readonly property real _travel: Math.max(0, label.implicitWidth - width)
     readonly property bool _wanted: root.overflows && root.mode !== "never"
-        && (root.mode === "always" || (root.mode === "hover" && hover.hovered) || run.pending)
+        && (root.mode === "always" || (!Style.reducedMotion
+            && ((root.mode === "hover" && hover.hovered) || run.pending)))
 
     implicitWidth: label.implicitWidth
     implicitHeight: label.implicitHeight
@@ -41,7 +42,11 @@ Item {
         property bool pending: false
     }
 
-    onTextChanged: if (root.mode === "once") run.pending = true
+    onTextChanged: {
+        label.x = 0
+        if (root.mode === "once") run.pending = true
+    }
+    onModeChanged: label.x = 0
 
     Prose {
         id: label
@@ -60,6 +65,7 @@ Item {
         running: root._wanted && root._travel > 0
         loops: root.mode === "always" ? Animation.Infinite : 1
         onFinished: run.pending = false
+        onRunningChanged: if (!running) label.x = 0
 
         PauseAnimation { duration: root.dwell }
         NumberAnimation {

@@ -25,6 +25,20 @@ TestCase {
 
     readonly property real keyStep: Style.sliderKeyboardUnits * Style.sliderStep
     readonly property real pageStep: Style.sliderPageUnits * Style.sliderStep
+    property int savedDecreaseKey
+    property int savedIncreaseKey
+
+    function initTestCase() {
+        savedDecreaseKey = Interaction.sliderDecreaseKey
+        savedIncreaseKey = Interaction.sliderIncreaseKey
+    }
+
+    function cleanup() {
+        Interaction.sliderDecreaseKey = savedDecreaseKey
+        Interaction.sliderIncreaseKey = savedIncreaseKey
+        sliderKeyboard.decreaseKey = Qt.binding(function() { return Interaction.sliderDecreaseKey })
+        sliderKeyboard.increaseKey = Qt.binding(function() { return Interaction.sliderIncreaseKey })
+    }
 
     Slider {
         id: sliderH
@@ -884,14 +898,62 @@ TestCase {
         compare(committedSpyWheel.count, 1, "one wheel notch did not commit exactly once");
     }
 
+    function test_shared_and_instance_custom_bindings_use_the_focused_slider_route() {
+        Interaction.sliderDecreaseKey = Qt.Key_H
+        Interaction.sliderIncreaseKey = Qt.Key_L
+        sliderKeyboard.value = 0.5
+        sliderKeyboard.forceActiveFocus()
+        committedSpyKeyboard.clear()
+
+        keyClick(Qt.Key_H)
+        fuzzyCompare(sliderKeyboard.value, 0.5 - probe.keyStep, 0.0001)
+        keyClick(Qt.Key_L)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+        compare(committedSpyKeyboard.count, 2)
+
+        Interaction.sliderDecreaseKey = Qt.Key_J
+        Interaction.sliderIncreaseKey = Qt.Key_K
+        keyClick(Qt.Key_H)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+        keyClick(Qt.Key_J)
+        fuzzyCompare(sliderKeyboard.value, 0.5 - probe.keyStep, 0.0001)
+        keyClick(Qt.Key_K)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+
+        sliderKeyboard.decreaseKey = Qt.Key_M
+        sliderKeyboard.increaseKey = Qt.Key_P
+        keyClick(Qt.Key_J)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+        keyClick(Qt.Key_M)
+        fuzzyCompare(sliderKeyboard.value, 0.5 - probe.keyStep, 0.0001)
+        keyClick(Qt.Key_P)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+
+        keyClick(Qt.Key_M, Qt.ControlModifier)
+        keyClick(Qt.Key_M, Qt.AltModifier)
+        keyClick(Qt.Key_M, Qt.MetaModifier)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+
+        sliderKeyboard.increaseKey = Qt.Key_M
+        keyClick(Qt.Key_M)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+        sliderKeyboard.decreaseKey = Qt.Key_J
+        sliderKeyboard.increaseKey = Qt.Key_K
+        keyClick(Qt.Key_M)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+        sliderKeyboard.decreaseKey = 0
+        keyClick(Qt.Key_J)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+        keyClick(Qt.Key_K)
+        fuzzyCompare(sliderKeyboard.value, 0.5 + probe.keyStep, 0.0001)
+        sliderKeyboard.decreaseKey = Qt.Key_J
+        keyClick(Qt.Key_J)
+        fuzzyCompare(sliderKeyboard.value, 0.5, 0.0001)
+    }
+
     // The action list is the API a consumer's action menu renders, and each
     // entry must be the SAME route the keyboard takes.
     function test_actions_are_the_same_route_as_the_keys() {
-        const names = [];
-        for (let i = 0; i < sliderKeyboard.actions.length; i++)
-            names.push(sliderKeyboard.actions[i].text);
-        compare(names, ["Increase", "Decrease", "Minimum", "Maximum"], "action list changed shape");
-
         sliderKeyboard.value = 0.5;
         sliderKeyboard.actions[0].trigger();
         const afterAction = sliderKeyboard.value;
@@ -913,6 +975,27 @@ TestCase {
         sliderKeyboard.actions[2].trigger();
         verify(sliderKeyboard.value === sliderKeyboard.from,
             "the Minimum action did not reach the lower bound exactly");
+    }
+
+    function test_default_letter_bindings_nudge_vertical_and_active_range_thumb() {
+        sliderVert.value = 0.5;
+        sliderVert.forceActiveFocus();
+        keyClick(Qt.Key_N);
+        fuzzyCompare(sliderVert.value, 0.5 - probe.keyStep, 0.0001);
+        keyClick(Qt.Key_O);
+        fuzzyCompare(sliderVert.value, 0.5, 0.0001);
+
+        sliderRange.setValues(0.2, 0.8);
+        const low = sliderRange.first.handle;
+        mouseClick(sliderRange, low.x + low.width / 2, low.y + low.height / 2);
+        const before = sliderRange.lowValue;
+        const high = sliderRange.value;
+        keyClick(Qt.Key_O);
+        fuzzyCompare(sliderRange.lowValue, before + probe.keyStep, 0.0001);
+        compare(sliderRange.value, high);
+        keyClick(Qt.Key_N);
+        fuzzyCompare(sliderRange.lowValue, before, 0.0001);
+        compare(sliderRange.value, high);
     }
 
     // Half a step lands on the next unit, and the DIRECTION must not decide

@@ -71,6 +71,9 @@ T.RangeSlider {
     // something you nudge. Counted in `stepSize` units like every other
     // non-pointer route, so one number means one thing everywhere.
     property int wheelUnits: 0
+    signal keyPressed(var event)
+    property int decreaseKey: Interaction.sliderDecreaseKey
+    property int increaseKey: Interaction.sliderIncreaseKey
 
     // ── colours, all the host's ────────────────────────────────────────
     property color fill: Style.accent
@@ -133,13 +136,21 @@ T.RangeSlider {
     // the track never moves to make room for it.
     property string labelText: ""
     property string labelIcon: ""
+    property string labelAccessibleName: labelText
     property string labelPosition: "below"
     // The label is the slider's one action surface. Off, it is a caption and
     // takes no pointer; on, it is a button and the host decides what a click
     // means (mute, reset, open the mixer) in `onLabelClicked`.
     property bool labelClickable: false
+    readonly property Item labelItem: label
     signal labelClicked()
     readonly property bool _hasLabel: labelText !== "" || labelIcon !== ""
+    function activateLabel(): bool {
+        if (!root.enabled || !root.labelClickable || !root._hasLabel)
+            return false
+        root.labelClicked()
+        return true
+    }
     readonly property real _labelGap: Style.rhythm(Style.space2 * root._s)
     readonly property real _labelAbove: _hasLabel && labelPosition === "above" ? label.implicitHeight + _labelGap : 0
     readonly property real _labelBelow: _hasLabel && labelPosition === "below" ? label.implicitHeight + _labelGap : 0
@@ -237,24 +248,34 @@ T.RangeSlider {
     readonly property bool _canLower: root.enabled && root._active.value > root.from
     readonly property list<T.Action> actions: [
         T.Action {
+            objectName: "increase"
             text: "Increase"
             enabled: root._canRaise
             onTriggered: root.stepBy(Style.sliderKeyboardUnits)
         },
         T.Action {
+            objectName: "decrease"
             text: "Decrease"
             enabled: root._canLower
             onTriggered: root.stepBy(-Style.sliderKeyboardUnits)
         },
         T.Action {
+            objectName: "minimum"
             text: "Minimum"
             enabled: root._canLower
             onTriggered: root.toMinimum()
         },
         T.Action {
+            objectName: "maximum"
             text: "Maximum"
             enabled: root._canRaise
             onTriggered: root.toMaximum()
+        },
+        T.Action {
+            objectName: "activate-label"
+            text: root.labelAccessibleName
+            enabled: root.enabled && root.labelClickable && root._hasLabel
+            onTriggered: root.activateLabel()
         }
     ]
 
@@ -383,10 +404,11 @@ T.RangeSlider {
         objectName: "sliderLabel"
         text: root.labelText
         icon: root.labelIcon
+        accessibleName: root.labelAccessibleName
         clickable: root.labelClickable
         enabled: root.enabled
         sizeScale: root._s
-        onClicked: root.labelClicked()
+        onClicked: root.activateLabel()
         width: implicitWidth
         height: implicitHeight
         x: root.labelPosition === "left" ? 0
@@ -489,6 +511,8 @@ T.RangeSlider {
         required property real offset
         property bool carriesContent: false
         property string thumbName: "sliderThumb"
+        // Tab is handled by this focused control before it can bubble to the slider.
+        Keys.onPressed: event => root.keyPressed(event)
         // Qt owns the handles' z from the first press on (the grabbed one
         // rises above the other); the track sits at -1 so neither ever drops
         // under it.
@@ -650,9 +674,13 @@ T.RangeSlider {
             // the jump below is already part of it.
             root._pressValue = root.second.value;
             root._preJumped = true;
+            root._hostDriven = false;
             const along = (root.horizontal ? mouse.x : mouse.y) - root._hoverGrowth - root._thumbMain / 2;
             const visual = Math.max(0, Math.min(1, root._travel > 0 ? along / root._travel : 0));
             root.setValues(root.first.value, root.valueAt(root._valueAtStart ? visual : 1 - visual));
+            // This setter precedes Qt's press; Qt then sees no delta to report to the host.
+            if (root.second.value !== root._pressValue)
+                root.moved();
             mouse.accepted = false;
         }
     }
@@ -670,6 +698,23 @@ T.RangeSlider {
     property real _pressValue: 0
     property bool _preJumped: false
     property bool _keyMoved: false
+    property var _customKeyGestures: ({})
+
+    function _customKeyAllowed(event): bool {
+        return event.key !== 0
+            && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+            && label.activeFocus !== true
+    }
+
+    function _customBinding(key: int): int {
+        if (root.decreaseKey === root.increaseKey)
+            return 0
+        if (key !== 0 && key === root.decreaseKey)
+            return -1
+        if (key !== 0 && key === root.increaseKey)
+            return 1
+        return 0
+    }
 
     function _pressChanged(node, low: bool): void {
         if (node.pressed) {
@@ -695,6 +740,10 @@ T.RangeSlider {
     Keys.onPressed: event => {
         if (!root.enabled)
             return;
+        if (root.activeFocus || label.activeFocus)
+            root.keyPressed(event);
+        if (event.accepted)
+            return;
 
         const onAxis = root.vertical
             ? (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
@@ -709,6 +758,22 @@ T.RangeSlider {
                 : -Style.sliderKeyboardUnits;
             if (root.stepBy(units))
                 root._keyMoved = true;
+            event.accepted = true;
+            return;
+        }
+
+        const standardKey = event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown
+            || event.key === Qt.Key_Home || event.key === Qt.Key_End;
+        const custom = !standardKey && root._customKeyAllowed(event)
+            ? root._customBinding(event.key) : 0;
+        if (custom !== 0) {
+            let gesture = root._customKeyGestures[event.key];
+            if (!gesture) {
+                gesture = { moved: false };
+                root._customKeyGestures[event.key] = gesture;
+            }
+            if (root.stepBy(custom * Style.sliderKeyboardUnits))
+                gesture.moved = true;
             event.accepted = true;
             return;
         }
@@ -742,6 +807,16 @@ T.RangeSlider {
     // press dispatcher took; the release of any other key still reaches the
     // template and the surface.
     Keys.onReleased: event => {
+        const customGesture = root._customKeyGestures[event.key];
+        if (customGesture) {
+            event.accepted = true;
+            if (event.isAutoRepeat)
+                return;
+            delete root._customKeyGestures[event.key];
+            if (customGesture.moved)
+                root.committed();
+            return;
+        }
         const ours = root.vertical
             ? (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
             : (event.key === Qt.Key_Left || event.key === Qt.Key_Right);
@@ -751,10 +826,32 @@ T.RangeSlider {
             return;
 
         event.accepted = true;
-        if (!root._keyMoved)
+        if (event.isAutoRepeat || !root._keyMoved)
             return;
         root._keyMoved = false;
         root.committed();
+    }
+
+    function _clearKeyGestures(): void {
+        root._customKeyGestures = ({})
+        root._keyMoved = false
+    }
+
+    function _clearKeyGesturesWhenBlurred(): void {
+        if (!root.activeFocus && !highThumb.activeFocus && !lowThumb.activeFocus)
+            root._clearKeyGestures()
+    }
+
+    onActiveFocusChanged: if (!root.activeFocus) root._clearKeyGestures()
+    onEnabledChanged: if (!root.enabled) root._clearKeyGestures()
+    onVisibleChanged: if (!root.visible) root._clearKeyGestures()
+    Connections {
+        target: highThumb
+        function onActiveFocusChanged(): void { root._clearKeyGesturesWhenBlurred() }
+    }
+    Connections {
+        target: lowThumb
+        function onActiveFocusChanged(): void { root._clearKeyGesturesWhenBlurred() }
     }
 
     // 120 is the platform's own unit, not a design number: Qt reports wheel

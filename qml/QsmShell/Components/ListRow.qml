@@ -37,6 +37,8 @@ Item {
     property string icon: ""
     property string primary: ""
     property string supporting: ""
+    property bool expanded: false
+    property alias expandedContent: expandedHost.data
     // Trailing content: a reading, a badge, a secondary action.
     default property alias trailing: trailingSlot.data
 
@@ -79,8 +81,19 @@ Item {
     readonly property bool _normal: !header && !separator
     readonly property bool selectable: _normal && !disabled && interactive
     readonly property bool hovered: layer.hovered
+    readonly property real _nativeHeadingHeight: root.separator ? Style.space3
+        : root.header ? Style.space4 + Style.space2
+        : (_sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight) + Style.space1
+    property real headingHeight: root._nativeHeadingHeight
+    readonly property real expansionHeight: expandedViewport.height
+    readonly property real _headingHeight: root._hasExpandedContent
+        ? root.headingHeight : root.height > 0 ? root.height : root.headingHeight
+    readonly property bool _hasExpandedContent: root._normal && expandedHost.implicitHeight > 0
+    readonly property real _expandedHeight: root.expanded && root._hasExpandedContent ? expandedViewport.implicitHeight : 0
     // The leading box every visual sits in.
     readonly property int leadingSize: _sm ? Style.iconMd : Style.iconLg
+    readonly property real contentInset: root._inset
+        + (leadingBox.visible ? root.leadingSize + Style.space2 : 0)
     // Report-only rows (interactive: false) are not targets but render at full
     // strength; disabled rows dim; recede only applies to interactive rows.
     readonly property color proseColor: root.disabled ? Style.textMuted
@@ -95,7 +108,11 @@ Item {
 
     Accessible.role: root.selectable ? Accessible.Button : Accessible.StaticText
     Accessible.name: root.primary
-    Accessible.description: root.supporting
+    Accessible.description: root._hasExpandedContent
+        ? root.supporting + (root.supporting.length ? ", " : "") + (root.expanded ? "Expanded" : "Collapsed")
+        : root.supporting
+
+    Accessible.onPressAction: root.activate()
 
     function activate(): void {
         if (root.selectable)
@@ -120,13 +137,7 @@ Item {
     // two insets of its content -- invisible for as long as every call site
     // imposed a width, and truncated text the moment one did not.
     implicitWidth: body.implicitWidth + root._inset * 2
-    implicitHeight: {
-        if (root.separator)
-            return Style.space3;
-        if (root.header)
-            return Style.space4 + Style.space2;
-        return (_sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight) + Style.space1;
-    }
+    implicitHeight: root.headingHeight + root.expansionHeight
 
     property real _pulse: 0
 
@@ -145,7 +156,7 @@ Item {
     // ── the mark ────────────────────────────────────────────────────────
     SelectionMark {
         anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
+        y: (root._headingHeight - height) / 2
         shown: root._normal && root.selected
         markColor: root.markColor
 
@@ -162,7 +173,10 @@ Item {
     // action's click must not be swallowed by the row's own tap.
     StateLayer {
         id: layer
-        anchors.fill: parent
+        x: 0
+        y: 0
+        width: parent.width
+        height: root._headingHeight
         visible: root.selectable
         // The LEADING BOX grows, never the row. A 570px row scaled inside a
         // clipped list just has its ends shaved off.
@@ -181,7 +195,10 @@ Item {
     // you can land on.
     RowLayout {
         visible: root.header
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        y: 0
+        height: root._headingHeight
         anchors.leftMargin: root._inset
         anchors.rightMargin: root._inset
         spacing: Style.space2
@@ -196,7 +213,7 @@ Item {
         visible: root.separator
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        y: (root._headingHeight - height) / 2
         inset: Style.space3
         strength: 0.5
     }
@@ -207,7 +224,10 @@ Item {
         objectName: "body"
 
         visible: root._normal
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        y: 0
+        height: root._headingHeight
         anchors.leftMargin: root._inset
         anchors.rightMargin: root._inset
         spacing: Style.space2
@@ -280,6 +300,33 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             spacing: Style.space2
             visible: children.length > 0
+        }
+    }
+
+    Item {
+        id: expandedViewport
+        objectName: "expandedViewport"
+        x: root.contentInset - Style.spaceTight
+        y: root._headingHeight
+        width: Math.max(0, root.width - x - root._inset)
+        height: root._expandedHeight
+        implicitHeight: root._hasExpandedContent ? expandedHost.implicitHeight + Style.spaceTight + Style.space2 : 0
+        clip: true
+        enabled: root.expanded && root._hasExpandedContent && root.selectable
+        visible: height > 0 || (root.expanded && root._hasExpandedContent)
+
+        Behavior on height {
+            enabled: !Style.reducedMotion
+            NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
+        }
+
+        ColumnLayout {
+            id: expandedHost
+            x: Style.spaceTight
+            y: Style.spaceTight
+            width: Math.max(0, expandedViewport.width - Style.spaceTight * 2)
+            spacing: Style.space2
+            enabled: expandedViewport.enabled
         }
     }
 }

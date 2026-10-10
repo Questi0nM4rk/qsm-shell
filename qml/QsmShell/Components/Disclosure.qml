@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -26,18 +27,36 @@ ColumnLayout {
     // A count or a state on the closed heading, so the group says something
     // about its contents without being opened.
     property string badge: ""
-    property bool focused: root.activeFocus
+    property bool focused: heading.activeFocus
 
     default property alias content: bodyHost.data
 
     signal toggled(bool expanded)
+    readonly property list<T.Action> actions: [T.Action { text: "Toggle"; enabled: root.enabled; onTriggered: root.toggle() }]
+
+    function toggle(): void {
+        if (root.enabled)
+            root.toggled(!root.expanded)
+    }
 
     spacing: Style.space1
 
-    Item {
+    T.AbstractButton {
         id: heading
+        objectName: "disclosureHeading"
         Layout.fillWidth: true
         implicitHeight: Style.controlHeightSm
+        focusPolicy: Qt.StrongFocus
+        hoverEnabled: root.enabled
+        onClicked: root.toggle()
+        Accessible.role: Accessible.Button
+        Accessible.name: root.title
+        Accessible.checkable: true
+        Accessible.checked: root.expanded
+        Accessible.description: root.expanded ? "Expanded" : "Collapsed"
+        Accessible.onPressAction: root.toggle()
+        Keys.onReturnPressed: event => { event.accepted = true; root.toggle() }
+        Keys.onEnterPressed: event => { event.accepted = true; root.toggle() }
 
         RowLayout {
             anchors.fill: parent
@@ -76,11 +95,11 @@ ColumnLayout {
             // The CHEVRON answers: it is the part that means "there is more",
             // and growing the whole heading shoves the rows below it.
             target: chevron
+            host: heading
             focused: root.focused
             focusRadius: Style.radiusSm
             hoverScale: 1.15
             pressScale: 0.88
-            onClicked: root.toggled(!root.expanded)
         }
     }
 
@@ -95,6 +114,4 @@ ColumnLayout {
         spacing: Style.space1
     }
 
-    Keys.onSpacePressed: root.toggled(!root.expanded)
-    Keys.onReturnPressed: root.toggled(!root.expanded)
 }

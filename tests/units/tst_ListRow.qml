@@ -16,7 +16,7 @@ TestCase {
 
     name: "ListRow"
     width: 400
-    height: 520
+    height: 600
     visible: true
     when: windowShown
 
@@ -74,6 +74,19 @@ TestCase {
     // Report-only with recede: a reading row must stay at full strength.
     ListRow { id: reportWithRecede; x: 20; y: 420; primary: "Report"; interactive: false; recede: true }
     ListRow { id: plainWithRecede; x: 20; y: 460; primary: "Plain"; recede: true }
+    ListRow {
+        id: trailingActionRow
+        x: 20; y: 488; width: 300; height: 32; primary: "Action"
+        ControlLabel { id: trailingAction; text: "Details"; clickable: true }
+    }
+    SignalSpy { id: trailingActionClicked; target: trailingAction; signalName: "clicked" }
+    SignalSpy { id: trailingActionRowClicked; target: trailingActionRow; signalName: "activated" }
+    ListRow {
+        id: trailingReadingRow
+        x: 20; y: 528; width: 300; height: 32; primary: "Reading"
+        ControlLabel { id: trailingReadingAction; text: "99%" }
+    }
+    SignalSpy { id: trailingReadingRowClicked; target: trailingReadingRow; signalName: "activated" }
 
     function test_plain_row_answers_a_real_click_and_a_real_hover() {
         neutral();
@@ -86,6 +99,23 @@ TestCase {
 
         mouseClick(plainRow, 10, 16);
         compare(plainClicked.count, 1, "a plain row did not fire activated on a real click");
+    }
+
+    function test_trailing_control_label_owns_its_click_and_passive_content_does_not() {
+        neutral();
+        trailingActionClicked.clear();
+        trailingActionRowClicked.clear();
+        mouseClick(trailingAction, trailingAction.width / 2, trailingAction.height / 2);
+        compare(trailingActionClicked.count, 1, "the trailing ControlLabel did not receive its physical click");
+        compare(trailingActionRowClicked.count, 0, "the child click also activated the row");
+
+        trailingActionRowClicked.clear();
+        mouseClick(trailingActionRow, 10, 16);
+        compare(trailingActionRowClicked.count, 1, "a body click did not activate the row");
+
+        trailingReadingRowClicked.clear();
+        mouseClick(trailingReadingAction, trailingReadingAction.width / 2, trailingReadingAction.height / 2);
+        compare(trailingReadingRowClicked.count, 1, "a passive trailing reading did not activate the row");
     }
 
     function test_callers_share_the_pointer_activation_route() {

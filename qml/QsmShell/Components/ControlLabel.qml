@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -15,26 +16,81 @@ import qs.QsmShell.Style
 // it grew the footprint, a slider's track moved the moment its label became
 // clickable. What the click means is the host's: a slider's mute, a field's
 // focus. Off, it is a caption and takes no pointer.
-Item {
+T.Control {
     id: root
 
     property string text: ""
     property string icon: ""
     property bool required: false
     property bool clickable: false
+    property string accessibleName: text
     // One scale per instance, set by the control this names (`Slider` its
     // own `_s`, `Field` the control it wraps): every measurement below is
     // its md-role number times this ratio.
     property real sizeScale: 1
 
     signal clicked()
+    property bool _keyActivationHeld: false
+    readonly property bool _available: root.enabled && root.clickable && root.hasContent
+    readonly property list<T.Action> actions: [T.Action { objectName: "activate"; text: root.accessibleName; enabled: root._available; onTriggered: root.activate() }]
+
+    function activate(): bool {
+        if (!root._available)
+            return false
+        root.clicked()
+        return true
+    }
+
+    function cancelKeyActivation(): void {
+        root._keyActivationHeld = false
+    }
+
+    function updateAvailability(): void {
+        if (root._available)
+            return
+        root.cancelKeyActivation()
+        if (root.activeFocus)
+            root.focus = false
+    }
 
     readonly property bool hasContent: text !== "" || icon !== ""
     readonly property color _painted: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
 
     visible: hasContent
+    // Qt cannot remove its current Tab item; surrender focus before dropping eligibility.
+    focusPolicy: _available || activeFocus ? Qt.StrongFocus : Qt.NoFocus
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
+
+    Accessible.role: clickable && hasContent ? Accessible.Button : Accessible.StaticText
+    Accessible.name: root.accessibleName
+    Accessible.onPressAction: root.activate()
+
+    onActiveFocusChanged: if (!activeFocus) cancelKeyActivation()
+    onEnabledChanged: updateAvailability()
+    onClickableChanged: updateAvailability()
+    onHasContentChanged: updateAvailability()
+
+    Keys.onPressed: event => {
+        if (!root._available || (event.key !== Qt.Key_Enter && event.key !== Qt.Key_Return && event.key !== Qt.Key_Space))
+            return
+        event.accepted = true
+        if (event.isAutoRepeat || root._keyActivationHeld)
+            return
+        root._keyActivationHeld = true
+    }
+
+    Keys.onReleased: event => {
+        if (event.key !== Qt.Key_Enter && event.key !== Qt.Key_Return && event.key !== Qt.Key_Space)
+            return
+        event.accepted = true
+        if (event.isAutoRepeat)
+            return
+        const activate = root._keyActivationHeld && root.activeFocus && root._available
+        root.cancelKeyActivation()
+        if (activate)
+            root.activate()
+    }
 
     Row {
         id: row
@@ -76,8 +132,14 @@ Item {
         width: Math.max(parent.width, root.clickable ? Style.iconLg * root.sizeScale : 0)
         height: Math.max(parent.height, root.clickable ? Style.iconLg * root.sizeScale : 0)
         target: root
-        interactive: root.clickable && root.enabled
+        interactive: root._available
+        manualPressOverride: root._keyActivationHeld
+        // The exclusive grab keeps a surrounding passive row tap from firing.
+        gesturePolicy: TapHandler.ReleaseWithinBounds
         focusRadius: Style.radiusSm
-        onClicked: root.clicked()
+        onClicked: {
+            root.forceActiveFocus(Qt.MouseFocusReason)
+            root.activate()
+        }
     }
 }

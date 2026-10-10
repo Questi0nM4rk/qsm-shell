@@ -4,124 +4,335 @@ import QtQuick
 
 import qs.QsmShell.Style
 
-// The popup stack's own choreography (04-notifications): a capped WINDOW
-// onto the live stream, newest entries appended at the bottom. When a newer
-// arrival pushes an older one past the cap, the older one slides UP and out
-// of the window instead of just vanishing — a real departure (dismissed or
-// expired) just reflows the column via its own move transition, which is why
-// telling the two apart matters.
-//
-// Owns no bus, no service, no screen. `stack` is the already-capped,
-// already-ordered (newest first) window the consumer computed (DND
-// filtering, the cap itself — service policy, both). `isAlive` answers, AT
-// THE MOMENT ASKED, whether an id is still alive ANYWHERE, unbounded — the
-// one fact this stack cannot see for itself but needs, to tell "pushed out
-// of the window, still alive elsewhere" (eviction) from "gone" (ordinary
-// reflow). A function, not a snapshot array handed in alongside `stack`:
-// both would be sibling bindings off the same source change, and which
-// settles first is not something a binding graph promises — a query asks
-// the live source directly, at the instant this stack actually needs it.
-//
-// Snapshots, never live references, past the moment an entry arrives: the
-// consumer's entries can be destroyed out from under this stack at any time
-// (NotificationEntry's own law), and a card bound to a destroyed object
-// crashes the shell.
+// A presentation of the host's capped, newest-first notification window.
+// Rows are reconciled by identity so changing a value never replaces the
+// delegate which owns hover, expansion and gesture state.
 Item {
     id: root
 
     property var stack: []
     property var isAlive: null
-    // A rule the library cannot see (an application name, say) deciding an
-    // entry's icon box carries a colour instead of a glyph — same escape
-    // hatch NotificationCenter takes.
     property var swatchFor: null
+    // The host binds this to the lifetime of its visible rollout.
+    property bool retainWhenEmpty: false
+    // Bind to the host's open intent, not its eventual visibility endpoint.
+    property bool inputEnabled: true
 
     signal dismissRequested(var entry)
-    // The card only REPORTS hover; whether that pauses anything is the
-    // consumer's call (same law the card itself follows).
     signal hoverChanged(var entry, bool hovered)
-    // A rendered row's bounds may have changed — a hover expanding it, its
-    // own entrance settle, the eviction slide, or the ordinary reflow move.
-    // The consumer decides what a rect means (a fullscreen capsule, say);
-    // this stack only reports that one might be stale.
+    signal primaryActionRequested(var entry)
     signal geometryChanged()
 
+    ListModel {
+        id: rows
+        dynamicRoles: true
+    }
+
+    function idKey(id: var): string {
+        return typeof id + ":" + String(id);
+    }
+
+    function copyValue(value: var): var {
+        if (value === null || value === undefined || typeof value !== "object")
+            return value;
+        if (value instanceof Date)
+            return value.getTime();
+        if (Array.isArray(value))
+            return value.map(item => root.copyValue(item));
+        const copy = ({});
+        for (const key of Object.keys(value)) {
+            const item = value[key];
+            if (typeof item !== "function")
+                copy[key] = root.copyValue(item);
+        }
+        return copy;
+    }
+
     function snapshotOf(entry: var): var {
-        return {
+        if (!entry || (typeof entry.notificationId !== "string" && typeof entry.notificationId !== "number")
+                || String(entry.notificationId).length === 0
+                || typeof entry.appName !== "string" || typeof entry.summary !== "string")
+            return null;
+        const snapshot = {
             notificationId: entry.notificationId,
             appName: entry.appName,
             summary: entry.summary,
-            body: entry.body,
-            urgency: entry.urgency,
-            imagePath: entry.imagePath,
-            actions: entry.actions,
-            createdAt: entry.createdAt,
             paused: false
         };
-    }
-
-    // Every rendered row's bounds, in THIS item's own coordinate space. A
-    // consumer that needs to register one against a screen (a fullscreen
-    // capsule, say) maps it from there — this stack does not know a screen
-    // exists.
-    function cardGeometry(): var {
-        const out = [];
-        for (let index = 0; index < cardRepeater.count; index++) {
-            const item = cardRepeater.itemAt(index);
-            const entry = cardRepeater.model[index];
-            if (!item || !entry)
-                continue;
-            const p = item.mapToItem(root, 0, 0);
-            out.push({ notificationId: entry.notificationId, rect: Qt.rect(p.x, p.y, item.width, item.height) });
+        // These are the complete NotificationCard data fields; optional values
+        // stay absent rather than becoming undefined-valued render properties.
+        for (const key of ["body", "urgency", "imagePath", "actions", "createdAt",
+                           "archivedAt", "isTransient", "swatch", "paused"]) {
+            if (entry[key] !== undefined)
+                snapshot[key] = key === "swatch" ? String(entry[key]) : root.copyValue(entry[key]);
         }
-        return out;
+        return snapshot;
     }
 
-    // Content rides the retract fully drawn: when the last popup expires the
-    // model empties INSTANTLY, which left a blank bar sliding into the band —
-    // keep showing the final stack until the rollout has fully retracted.
+    function indexFor(id: var): int {
+        const key = root.idKey(id);
+        for (let i = 0; i < rows.count; i++) {
+            if (rows.get(i).key === key)
+                return i;
+        }
+        return -1;
+    }
+
+    // The desktop wrapper exposes this target to native Workbench input and
+    // fullscreen-mask inspection without reaching into the Repeater.
+    function targetForNotification(id: var): var {
+        const index = root.indexFor(id);
+        return index >= 0 ? cardRepeater.itemAt(index) : null;
+    }
+
     property var displayStack: []
-    // Overflow-evicted entries, still sliding out (snapshots, oldest first).
     property var evicting: []
+    function refreshViews(): void {
+        const visible = [];
+        const departed = [];
+        for (let i = 0; i < rows.count; i++) {
+            const row = rows.get(i);
+            if (row.phase === "active" || row.phase === "retained")
+                visible.push(row.payload);
+            if (row.phase === "evicting")
+                departed.push(row.payload);
+        }
+        root.displayStack = visible;
+        root.evicting = departed;
+    }
     property real evictShift: 0
-    // The eviction slide moves the WHOLE column via a transform rather than
-    // any one row's own x/y, so a row's `onYChanged` alone never sees it.
-    onEvictShiftChanged: root.geometryChanged()
-    // Snapshots render collapsed, so an evicted row's height is deterministic.
-    readonly property real evictHeight: evicting.length * Style.notificationCollapsedHeight
-    // What was visible last change, for eviction detection (plain ids+data).
+    readonly property real evictHeight: {
+        let height = 0;
+        for (let i = 0; i < cardRepeater.count; i++) {
+            const card = cardRepeater.itemAt(i);
+            if (card && card.phase === "evicting")
+                height += card.height;
+        }
+        return height;
+    }
+    property bool finishingEviction: false
+    // A departure stopped mid-slide because the window emptied and the host
+    // is retaining the last body. The shift is held at its current offset
+    // rather than animating, so the retained extent does not keep shrinking.
+    property bool retainingEviction: false
+    property bool layoutReady: false
+    readonly property bool rowHeightsAnimating: {
+        for (let i = 0; i < cardRepeater.count; i++) {
+            const card = cardRepeater.itemAt(i);
+            // A frozen row holds its painted height and its stopped entrance,
+            // so its stalled progress is deliberate, not a live height pulse.
+            if (card && !card.expansionFrozen
+                    && (card.expansionAnimating || card.entranceProgress < 1))
+                return true;
+        }
+        return false;
+    }
     property var previousVisible: []
 
-    onStackChanged: {
-        const snapshots = root.stack.map(entry => root.snapshotOf(entry));
-        if (root.stack.length > 0)
-            root.displayStack = snapshots;
+    function syncLayout(): void {
+        if (root.layoutReady)
+            column.forceLayout();
+        root.geometryChanged();
+    }
 
-        // Overflow eviction: an entry that left the WINDOW while `isAlive`
-        // still says yes was pushed out by a newer arrival — that one slides
-        // into the band. An entry `isAlive` no longer answers for (expired,
-        // dismissed) just reflows via the column's own move transition.
-        const windowIds = new Set(root.stack.map(entry => entry.notificationId));
-        const pushedOut = root.previousVisible.filter(item =>
-            !windowIds.has(item.notificationId) && (root.isAlive?.(item.notificationId) ?? false));
-        root.previousVisible = snapshots;
-        if (pushedOut.length === 0)
-            return;
-
-        // A second overflow mid-slide: finish the running slide instantly
-        // (prune + reset by hand — complete()'s finished-signal timing is not
-        // worth depending on), then start the new one from clean state.
-        if (evictAnim.running) {
-            evictAnim.stop();
-            root.evicting = [];
-            root.evictShift = 0;
+    function reconcile(): void {
+        const previousEvicting = root.evicting.map(item => root.idKey(item.notificationId));
+        const snapshots = [];
+        for (const source of root.stack) {
+            const snapshot = root.snapshotOf(source);
+            if (snapshot)
+                snapshots.push(snapshot);
         }
-        root.evicting = pushedOut;
+
+        if (snapshots.length === 0) {
+            if (root.retainWhenEmpty && root.displayStack.length > 0) {
+                for (let i = 0; i < rows.count; i++) {
+                    const row = rows.get(i);
+                    if (row.phase === "active") {
+                        const card = cardRepeater.itemAt(i);
+                        if (card)
+                            card.freezePresentation();
+                        rows.setProperty(i, "phase", "retained");
+                        rows.setProperty(i, "inputEligible", false);
+                    }
+                }
+                root.refreshViews();
+                root.holdEviction();
+            } else {
+                root.clearPresentation();
+            }
+            root.previousVisible = [];
+            root.geometryChanged();
+            return;
+        }
+
+        // A host arrival during retract revives the exact delegates before any
+        // obsolete cleanup can run. Same-ID rows only receive a new value.
+        root.releaseEvictionHold();
+        const activeKeys = new Set();
+        for (const payload of snapshots) {
+            const key = root.idKey(payload.notificationId);
+            activeKeys.add(key);
+            let index = root.indexFor(payload.notificationId);
+            if (index < 0) {
+                rows.append({ key, idValue: payload.notificationId, payload,
+                    phase: "active", inputEligible: true, animate: true });
+            } else {
+                rows.setProperty(index, "payload", payload);
+                rows.setProperty(index, "phase", "active");
+                rows.setProperty(index, "inputEligible", true);
+                rows.setProperty(index, "animate", false);
+                const card = cardRepeater.itemAt(index);
+                if (card) {
+                    if (root.inputEnabled)
+                        card.releasePresentation();
+                    else
+                        card.freezePresentation();
+                }
+            }
+        }
+
+        const windowKeys = new Set(snapshots.map(item => root.idKey(item.notificationId)));
+        const previouslyVisible = root.previousVisible;
+        const pushedOut = previouslyVisible.filter(item => {
+            const key = root.idKey(item.notificationId);
+            return !windowKeys.has(key) && (root.isAlive?.(item.notificationId) ?? false);
+        });
+
+        // Drop rows that are no longer in either the window or its legitimate
+        // overflow departure. A source object is never held past this copy.
+        for (let i = rows.count - 1; i >= 0; i--) {
+            const row = rows.get(i);
+            if (activeKeys.has(row.key))
+                continue;
+            if (row.phase === "evicting")
+                continue;
+            if (row.phase === "active" || row.phase === "retained") {
+                const shouldEvict = pushedOut.some(item => root.idKey(item.notificationId) === row.key);
+                if (shouldEvict) {
+                    const card = cardRepeater.itemAt(i);
+                    if (card)
+                        card.freezePresentation();
+                    rows.setProperty(i, "phase", "evicting");
+                    rows.setProperty(i, "inputEligible", false);
+                } else {
+                    const card = cardRepeater.itemAt(i);
+                    if (card)
+                        card.releaseHover();
+                    rows.remove(i);
+                }
+            }
+        }
+
+        // Match the host's window exactly: oldest first, with overflow rows
+        // preceding it. ListModel moves preserve the row's delegate identity.
+        const desired = [];
+        for (let i = 0; i < rows.count; i++)
+            if (rows.get(i).phase === "evicting") desired.push(rows.get(i).key);
+        for (let i = snapshots.length - 1; i >= 0; i--)
+            desired.push(root.idKey(snapshots[i].notificationId));
+        for (let target = 0; target < desired.length; target++) {
+            let source = -1;
+            for (let i = target; i < rows.count; i++) {
+                if (rows.get(i).key === desired[target]) {
+                    source = i;
+                    break;
+                }
+            }
+            if (source >= 0 && source !== target)
+                rows.move(source, target, 1);
+        }
+
+        root.refreshViews();
+        root.previousVisible = snapshots;
+        const nextEvicting = root.evicting.map(item => root.idKey(item.notificationId));
+        const evictionChanged = previousEvicting.length !== nextEvicting.length
+            || previousEvicting.some(key => !nextEvicting.includes(key));
+        if (evictionChanged || pushedOut.length > 0)
+            root.retargetEviction();
+        root.geometryChanged();
+    }
+
+    function retargetEviction(): void {
+        if (root.evicting.length === 0 && !evictAnim.running && root.evictShift === 0)
+            return;
+        const current = root.evictShift;
+        evictAnim.stop();
+        evictAnim.from = current;
         evictAnim.to = -root.evictHeight;
         evictAnim.start();
     }
 
-    // 04 DEFAULT numbers: 250ms, main curve, no overshoot, no fade.
+    // Retention owns the last body until the host reports genuinely hidden, so a
+    // departure caught mid-slide stops where it is instead of animating the
+    // retained extent smaller. The evicting rows stay in the column at their
+    // frozen heights, which is the paint the owner last saw.
+    function holdEviction(): void {
+        if (root.evicting.length === 0)
+            return;
+        evictAnim.stop();
+        root.retainingEviction = true;
+    }
+
+    // An arrival during retract releases the hold and resumes any departure
+    // still owed, so a retained viewport cannot outlive a live window and no
+    // stale completion can remove a freshly arrived row.
+    function releaseEvictionHold(): void {
+        if (!root.retainingEviction)
+            return;
+        root.retainingEviction = false;
+        root.retargetEviction();
+    }
+
+    function finishEviction(): void {
+        root.finishingEviction = true;
+        for (let i = rows.count - 1; i >= 0; i--)
+            if (rows.get(i).phase === "evicting")
+                rows.remove(i);
+        // Their new y coordinates replace the completed column translation.
+        root.syncLayout();
+        root.refreshViews();
+        root.evictShift = 0;
+        root.finishingEviction = false;
+        root.geometryChanged();
+    }
+
+    function clearPresentation(): void {
+        for (let i = 0; i < cardRepeater.count; i++) {
+            const card = cardRepeater.itemAt(i);
+            if (card)
+                card.releaseHover();
+        }
+        evictAnim.stop();
+        rows.clear();
+        root.displayStack = [];
+        root.evicting = [];
+        root.evictShift = 0;
+        root.retainingEviction = false;
+    }
+
+    onStackChanged: root.reconcile()
+    onRetainWhenEmptyChanged: if (!retainWhenEmpty && stack.length === 0) root.clearPresentation()
+    onInputEnabledChanged: {
+        for (let i = 0; i < cardRepeater.count; i++) {
+            const card = cardRepeater.itemAt(i);
+            if (!card || card.phase !== "active")
+                continue;
+            if (inputEnabled)
+                card.releasePresentation();
+            else
+                card.freezePresentation();
+        }
+        root.geometryChanged();
+    }
+    onEvictShiftChanged: root.geometryChanged()
+    onWidthChanged: root.geometryChanged()
+    onHeightChanged: root.geometryChanged()
+    Component.onCompleted: {
+        root.layoutReady = true;
+        root.syncLayout();
+    }
+
     NumberAnimation {
         id: evictAnim
         target: root
@@ -129,20 +340,33 @@ Item {
         duration: Motion.revealSmall
         easing.type: Easing.BezierSpline
         easing.bezierCurve: Motion.revealCurve
-        onFinished: {
-            // Prune and reset in one pass — the rows above the clip edge
-            // disappear together with the shift that hid them: no visible
-            // change.
-            root.evicting = [];
-            root.evictShift = 0;
-        }
+        onFinished: root.finishEviction()
     }
 
-    // The window: clipped to the CURRENT stack's height, so an evicted row
-    // above it is absorbed by the top edge and a newcomer below it enters
-    // through the bottom edge as the column shifts up.
-    implicitWidth: column.implicitWidth
-    implicitHeight: column.implicitHeight - root.evictHeight
+    function cardGeometry(): var {
+        const out = [];
+        for (let index = 0; index < cardRepeater.count; index++) {
+            const item = cardRepeater.itemAt(index);
+            const row = rows.get(index);
+            if (!item || !row)
+                continue;
+            const p1 = item.mapToItem(root, 0, 0);
+            const p2 = item.mapToItem(root, item.width, item.height);
+            const left = Math.max(0, Math.min(p1.x, p2.x));
+            const top = Math.max(0, Math.min(p1.y, p2.y));
+            const right = Math.min(root.width, Math.max(p1.x, p2.x));
+            const bottom = Math.min(root.height, Math.max(p1.y, p2.y));
+            const rect = Qt.rect(left, top, Math.max(0, right - left), Math.max(0, bottom - top));
+            const eligible = root.inputEnabled && row.inputEligible
+                && rect.width > 0 && rect.height > 0;
+            out.push({ notificationId: row.idValue, rect,
+                phase: row.phase, eligible });
+        }
+        return out;
+    }
+
+    implicitWidth: Style.notificationWidth
+    implicitHeight: Math.max(0, column.implicitHeight + root.evictShift)
     clip: true
 
     Column {
@@ -150,9 +374,9 @@ Item {
         spacing: 0
         transform: Translate { y: root.evictShift }
 
-        // Expiry/dismissal mid-stack: the survivors glide up instead of
-        // snapping (same 250ms vocabulary as the eviction slide).
         move: Transition {
+            enabled: root.evicting.length === 0 && !root.finishingEviction
+                && !root.rowHeightsAnimating
             NumberAnimation {
                 property: "y"
                 duration: Motion.revealSmall
@@ -163,42 +387,70 @@ Item {
 
         Repeater {
             id: cardRepeater
-            // Oldest at the top (the window is newest-first; the stream
-            // appends downward — 04: entries enter from the bottom edge),
-            // with evicting snapshots above the window.
-            model: {
-                const visible = root.stack.length > 0 ? root.stack : root.displayStack;
-                return [...root.evicting, ...[...visible].reverse()];
-            }
+            model: rows
+            onItemAdded: root.syncLayout()
+            onItemRemoved: root.syncLayout()
 
             NotificationCard {
                 id: delegateCard
-                required property var modelData
+                required property string key
                 required property int index
-                entry: modelData
-                // 04 RATIFIED: popups are feedback and dismissal only —
-                // named actions are invoked exclusively from the
-                // notification-centre panel.
+                required property var idValue
+                required property var payload
+                required property string phase
+                required property bool inputEligible
+                required property bool animate
+                entry: payload
+                inputEnabled: root.inputEnabled && inputEligible && phase === "active"
                 showActions: false
-                draggable: true
-                verticalDragEnabled: true
-                // A Repeater inside a positioner remains a child of that
-                // positioner itself alongside its delegates, so the last
-                // delegate is at `count - 1`, not at `children.length - 1`.
+                primaryActionEnabled: root.inputEnabled && inputEligible && phase === "active"
+                    && (payload.actions ?? []).some(action => String(action.id) === "default"
+                        && !(action.disabled ?? false))
+                draggable: inputEnabled
+                verticalDragEnabled: inputEnabled
                 showDivider: index < cardRepeater.count - 1
-                swatch: root.swatchFor ? root.swatchFor(modelData) : modelData.swatch
-                onDismissed: root.dismissRequested(modelData)
-                onHoveredChanged: root.hoverChanged(modelData, delegateCard.hovered)
-                // A row's own bounds change continuously while it settles in,
-                // expands on hover, or slides through eviction/reflow — each
-                // one is a candidate rect update for whatever the consumer is
-                // tracking against a rendered row (a fullscreen capsule, say).
+                swatch: root.swatchFor ? root.swatchFor(payload) : payload.swatch
+                animateEntrance: animate
+                height: expansionFrozen ? frozenHeight : implicitHeight * entranceProgress
+                objectName: "notification-row-" + key
+
+                property bool hoverWasReported: false
+                function releaseHover(): void {
+                    if (hoverWasReported) {
+                        hoverWasReported = false;
+                        root.hoverChanged(entry, false);
+                    }
+                }
+                onHoveredChanged: {
+                    if (hovered && inputEnabled) {
+                        if (!hoverWasReported) {
+                            hoverWasReported = true;
+                            root.hoverChanged(entry, true);
+                        }
+                    } else {
+                        releaseHover();
+                    }
+                }
+                onDismissed: if (inputEnabled) root.dismissRequested(entry)
+                onPrimaryTriggered: requestedEntry => {
+                    const current = root.stack.find(item => item.notificationId === requestedEntry.notificationId);
+                    if (inputEnabled && current && (current.actions ?? []).some(
+                            action => String(action.id) === "default" && !(action.disabled ?? false)))
+                        root.primaryActionRequested(current);
+                }
                 onXChanged: root.geometryChanged()
                 onYChanged: root.geometryChanged()
                 onWidthChanged: root.geometryChanged()
-                onHeightChanged: root.geometryChanged()
+                onHeightChanged: root.syncLayout()
+                onInputEnabledChanged: {
+                    releaseHover();
+                    root.geometryChanged();
+                }
                 Component.onCompleted: root.geometryChanged()
-                Component.onDestruction: root.geometryChanged()
+                Component.onDestruction: {
+                    releaseHover();
+                    root.geometryChanged();
+                }
             }
         }
     }

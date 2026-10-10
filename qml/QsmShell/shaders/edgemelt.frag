@@ -1,10 +1,7 @@
 #version 440
 
-// The silhouette shader (spec/12-mechanism.md — NORMATIVE). One full-screen
-// pass per monitor computes the whole silhouette — band + every rollout —
-// per pixel and fills it. Fill-only: no strokes anywhere (01-frame edge
-// law); the edge is the shape itself, derivative-AA'd so weight is uniform
-// on every axis and monitor scale.
+// docs/12-mechanism.md is normative. One pass fills the merged silhouette
+// and paints its inner glass edge, derivative-AA'd in logical coordinates.
 //
 // Uniform shape is NAMED per-slot (rect0..7 / radii0..7 / deform0..7 /
 // param0..7), not a GLSL array: QML array properties bind to GLSL array
@@ -38,6 +35,7 @@ layout(std140, binding = 0) uniform buf {
     // CPU-precomputed inverse 2x2 of the goo deform matrix, row-major
     // (identity = 1,0,0,1). param.x = minEig of the deform (identity = 1);
 // param.y = blend factor [0,1] scaling smoothFactor for this slot's melt;
+// param.z = rim side mask + 16 * origin side mask.
 // param.w = outness [0,1], how far this body has emerged (a flush nested
 // host is fully OUT at blend 0, so the glass edge reads this, not blend).
     vec4 rect0; vec4 rect1; vec4 rect2; vec4 rect3;
@@ -188,6 +186,9 @@ void main() {
             break;
         vec4 rect, radii, invDm, param;
         slotAt(i, rect, radii, invDm, param);
+        float outness = clamp(param.w, 0.0, 1.0);
+        if (outness <= 0.0)
+            continue;
         vec2 center = rect.xy;
         vec2 halfSize = rect.zw;
         if (halfSize.x <= 0.0 || halfSize.y <= 0.0)
@@ -196,6 +197,8 @@ void main() {
         vec2 tp = center + invDeform * (pixel - center);
         float d = sdRoundedBox4(tp, center, halfSize, radii);
         d *= max(param.x, 0.01);
+        float incomingSdf = mergedSdf;
+        float incomingRimSdf = rimSdf;
         // Blend 0 means an EXACT union, and that has to be a real min().
         //
         // The k floor was believed to deliver one ("k = max(.., 0.01) turns
@@ -214,9 +217,9 @@ void main() {
         // one across exactly the overlap span, which the owner read as "a dent
         // in the glass edge, from the inside only, not going outwards".
         float blendAmount = clamp(param.y, 0.0, 1.0);
-        mergedSdf = blendAmount > 0.0
-            ? smin(mergedSdf, d, smoothFactor * blendAmount)
-            : min(mergedSdf, d);
+        float slotSdf = blendAmount > 0.0
+            ? smin(incomingSdf, d, smoothFactor * blendAmount)
+            : min(incomingSdf, d);
 
         // WATER LAW (owner 2026-09-06): a body that has not come out yet has
         // no edge of its own. A barely-out rollout drives its melt radius
@@ -231,25 +234,43 @@ void main() {
         // flush nested host, which sets blend 0 to ask for an exact union
         // while being fully out. Gating on blend blanked that host's edge
         // entirely (owner-caught within the hour).
-        float outness = clamp(param.w, 0.0, 1.0);
         float nearThis = 1.0 - smoothstep(0.0, seamReach, abs(d));
-        strokeGate = min(strokeGate, mix(1.0, outness, nearThis));
+        // The existing union's edge must never blink while a body is absorbed.
+        float newBoundary = nearThis * smoothstep(0.0, seamReach, incomingSdf);
+        strokeGate = min(strokeGate, mix(1.0, outness, newBoundary));
 
-        // The RIM copy of the rect extends THROUGH its attached band(s)
-        // (param.z bits: 1 left, 2 right, 4 top, 8 bottom) — otherwise the
-        // union field keeps a boundary at the seam where the rollout meets
-        // its border and the rim draws a separation line there.
-        float bits = param.z;
-        float ext = 80.0;
+        // Only origin sides extend fill. A parent's child-facing continuation
+        // is rim paint, otherwise it would outrun a child still emerging.
+        float originBits = floor(param.z / 16.0);
+        float ext = max(leftEdge, edge) + smoothFactor;
+        vec2 weldCenter = center;
+        vec2 weldHalf = halfSize;
+        if (mod(originBits, 2.0) >= 1.0) { weldCenter.x -= ext * 0.5; weldHalf.x += ext * 0.5; }
+        if (mod(originBits, 4.0) >= 2.0) { weldCenter.x += ext * 0.5; weldHalf.x += ext * 0.5; }
+        if (mod(originBits, 8.0) >= 4.0) { weldCenter.y -= ext * 0.5; weldHalf.y += ext * 0.5; }
+        if (originBits >= 8.0) { weldCenter.y += ext * 0.5; weldHalf.y += ext * 0.5; }
+        float dWeld = sdRoundedBox4(tp, weldCenter, weldHalf, radii) * max(param.x, 0.01);
+        // A flush child keeps an exact parent seam, but still melts into the
+        // original frame. Smoothing against the accumulated union would bulge
+        // the parent/child seam again.
+        float frameJoin = min(smoothFactor, minThickness * 0.5) * outness;
+        float attachedBody = blendAmount == 0.0
+            ? (frameJoin > 0.0 ? smin(dFrame, dWeld, frameJoin) : min(dFrame, dWeld))
+            : dWeld;
+        slotSdf = min(slotSdf, attachedBody);
+        // Restore the whole incoming field, including stroke depth and normals,
+        // before removal; matching only its zero contour leaves a lighting snap.
+        mergedSdf = mix(incomingSdf, slotSdf, outness);
+
+        float bits = mod(param.z, 16.0);
         vec2 rimCenter = center;
         vec2 rimHalf = halfSize;
         if (mod(bits, 2.0) >= 1.0) { rimCenter.x -= ext * 0.5; rimHalf.x += ext * 0.5; }
         if (mod(bits, 4.0) >= 2.0) { rimCenter.x += ext * 0.5; rimHalf.x += ext * 0.5; }
         if (mod(bits, 8.0) >= 4.0) { rimCenter.y -= ext * 0.5; rimHalf.y += ext * 0.5; }
         if (bits >= 8.0) { rimCenter.y += ext * 0.5; rimHalf.y += ext * 0.5; }
-        vec2 rtp = rimCenter + invDeform * (pixel - rimCenter);
-        float dRim = sdRoundedBox4(rtp, rimCenter, rimHalf, radii) * max(param.x, 0.01);
-        rimSdf = min(rimSdf, dRim);
+        float dRim = sdRoundedBox4(tp, rimCenter, rimHalf, radii) * max(param.x, 0.01);
+        rimSdf = mix(incomingRimSdf, min(incomingRimSdf, dRim), outness);
     }
 
     // Handle circles (dedicated uniforms, not slots). They belong only to the

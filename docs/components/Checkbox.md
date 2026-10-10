@@ -3,6 +3,7 @@
 A boolean that is a STATEMENT, not an action: something else acts on it later; if throwing it takes effect immediately, it is a Switch.
 states: rest hover(box grows 1.15) press(box shrinks 0.88) focus(ring a half step outside the box, radiusXs, box only) disabled(every role through Style.disabled, never opacity) off/on/indeterminate(some but not all, outranks checked)
 actions: Toggle (pointer click, Space, Return and `flip()` share it); the host owns `checked` and `indeterminate` and answers `toggleRequested(checked)`
+screen reader: indeterminate reports the mixed state, not checked; press and toggle actions share `flip()` and respect disabled without writing host state.
 size: `size` is a preset name resolved by Style.size("Checkbox", name) into `boxSize` (sm 12 / md 16 / lg 24, escape hatch); the mark scales WITH the box (check at 3:4, dash at half), the row gap through rhythm(box/2); radiusXs, the 1px border and the ring gap constant; `sizeScale` = box / md for a host composing around it
 content: the default slot is an adjacent label (or anything); the component never renders its own label; the host colours it for disabled
 tokens: boxSize outline accent background radiusXs spaceTight

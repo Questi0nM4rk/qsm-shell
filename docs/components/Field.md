@@ -5,7 +5,7 @@ states: hint and failed; `failed` is true while `error` is set and error wins ov
 actions: none of its own; the wrapped control keeps its actions and routes.
 pointer: none on the wrapper itself; content and message rows claim nothing beyond their children.
 keyboard: none on the wrapper itself; the wrapped control keeps its tab stop and keys.
-screen reader: ControlLabel names the content from outside and the required mark is a non-colour channel; hint and error share one line so one is announced.
+screen reader: the host binds the wrapped control to `accessibleName` and `accessibleDescription`; these expose the label and active hint/error plus required status, without replacing a caller's accessibility bindings.
 size: `sizeScale` from the owning surface scales the label with the control; tight vertical spacing binds label, content and message; width follows the content.
 tokens: space1, spaceTight, iconXs, danger, textMuted, ControlLabel and Prose; no local colours or measurements.
 motion: none; state changes settle in the wrapped control.

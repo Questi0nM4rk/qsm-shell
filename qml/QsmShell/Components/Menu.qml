@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -31,15 +32,27 @@ Item {
 
     readonly property bool _horizontal: orientation === Qt.Horizontal
     readonly property bool _vertical: !_horizontal
+    readonly property int rowCount: _rows.length
+    implicitWidth: _rows.reduce((span, row) => Math.max(span, row.implicitWidth), 0)
+    implicitHeight: body.implicitHeight
+
+    readonly property list<T.Action> actions: [
+        T.Action { objectName: "step-previous"; text: "Previous item"; enabled: root.enabled; onTriggered: root.step(-1) },
+        T.Action { objectName: "step-next"; text: "Next item"; enabled: root.enabled; onTriggered: root.step(1) },
+        T.Action { objectName: "activate-current"; text: "Activate item"; enabled: root.enabled && root._isSelectable(root.currentIndex); onTriggered: root.activateCurrent() }
+    ]
 
     focus: true
     clip: true
 
     // Layout host. Direction follows `orientation`; never applies product policy.
-    Flow {
+    Grid {
         id: body
-        anchors.fill: parent
-        flow: root._horizontal ? Flow.LeftToRight : Flow.TopToBottom
+        // Constrain only the cross axis: a disclosure must not wrap into a second column.
+        width: root._vertical ? root.width : implicitWidth
+        height: root._horizontal ? root.height : implicitHeight
+        columns: root._vertical ? 1 : Math.max(1, root.rowCount)
+        rows: root._horizontal ? 1 : 0
         spacing: root.spacing
 
         Repeater {
@@ -75,16 +88,16 @@ Item {
             const row = _rows[i], h = _handlers[i]
             if (row && h) { try { row.activated.disconnect(h) } catch (e) { /* not connected */ } }
         }
-        _rows = []
-        _handlers = []
         const collected = _collectRows()
+        const handlers = []
         for (let i = 0; i < collected.length; i++) {
             const idx = i
             const h = function () { root.currentIndex = idx; root.activated(idx) }
             collected[i].activated.connect(h)
-            _rows.push(collected[i])
-            _handlers.push(h)
+            handlers.push(h)
         }
+        _rows = collected
+        _handlers = handlers
         _applySelection()
         _sizeRows()
     }
@@ -106,34 +119,41 @@ Item {
 
     function _isSelectable(i) {
         const r = _rows[i]
-        return !!r && r.selectable === true
+        return root.enabled && !!r && r.visible && r.selectable === true
+    }
+
+    function rowAt(index: int): Item {
+        return index >= 0 && index < root.rowCount ? root._rows[index] : null
     }
 
     // Deterministic keyboard stepping: move `delta` rows, skipping every
     // nonselectable (header/separator/disabled) row, wrapping around.
     function step(delta) {
+        if (!root.enabled || delta === 0) return
         const n = _rows.length
         if (n === 0) return
         let i = currentIndex >= 0 ? currentIndex : (delta > 0 ? -1 : 0)
         for (let k = 0; k < n; k++) {
             i = (i + delta + n) % n
-            const r = _rows[i]
             // Skip rows that are not selectable (header/separator/disabled).
-            if (r && r.selectable === true) { currentIndex = i; return }
+            if (root._isSelectable(i)) { currentIndex = i; return }
         }
     }
 
     // Emit the generic activation hook for the current row when it is selectable.
     function activateCurrent() {
-        if (_isSelectable(currentIndex)) activated(currentIndex)
+        if (!_isSelectable(currentIndex)) return false
+        const row = root.rowAt(currentIndex)
+        row.activate()
+        return true
     }
 
     Keys.onUpPressed: root._vertical ? root.step(-1) : undefined
     Keys.onDownPressed: root._vertical ? root.step(1) : undefined
     Keys.onLeftPressed: root._horizontal ? root.step(-1) : undefined
     Keys.onRightPressed: root._horizontal ? root.step(1) : undefined
-    Keys.onReturnPressed: root.activateCurrent()
-    Keys.onEnterPressed: root.activateCurrent()
+    Keys.onReturnPressed: event => { if (!event.isAutoRepeat) root.activateCurrent() }
+    Keys.onEnterPressed: event => { if (!event.isAutoRepeat) root.activateCurrent() }
 
     onModelChanged: _resync()
     onDelegateChanged: _resync()

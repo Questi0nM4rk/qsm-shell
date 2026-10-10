@@ -77,15 +77,31 @@ Item {
 
     // Native fullscreen paint is a separate silhouette set. It deliberately
     // has no frame operand: only detached allowlisted capsules reach this set.
+    //
+    // A REGISTRATION IS NOT A PAINT ORDER, and one consumer needs the two to
+    // differ. A surface that paints a REAL body of its own over a fullscreen
+    // client — a DataCapsule — still needs its inner rects as INPUT holes so
+    // the rows under it stay clickable, but handing those same rects to the
+    // melt shader paints a stack of separate capsule bodies around content
+    // that already has one. `paint: false` on the registration is that
+    // separation, and it is the ONLY separation:
+    // `fullscreenCapsuleEntries` stays every registered hole (input), while
+    // `fullscreenPaintEntries` is the subset the shader may draw.
     property var fullscreenCapsules: ({})
     readonly property var fullscreenCapsuleEntries: Object.keys(fullscreenCapsules)
         .filter(id => !root.entryFilter || root.entryFilter(id))
         .map(id => fullscreenCapsules[id])
+    readonly property var fullscreenPaintEntries: Object.keys(fullscreenCapsules)
+        .filter(id => (!root.entryFilter || root.entryFilter(id))
+            && fullscreenCapsules[id].paint !== false)
+        .map(id => fullscreenCapsules[id])
     readonly property int maxFullscreenCapsuleSlots: 8
 
-    function registerFullscreenCapsule(id, rect, radius) {
+    // `paint` defaults to true, so every existing caller (a Rollout's own
+    // detached capsule) is byte-for-byte the pre-flag behaviour.
+    function registerFullscreenCapsule(id, rect, radius, paint = true) {
         const next = Object.assign({}, fullscreenCapsules);
-        next[id] = { rect: rect, radius: radius };
+        next[id] = { rect: rect, radius: radius, paint: paint !== false };
         fullscreenCapsules = next;
     }
 
@@ -97,14 +113,18 @@ Item {
         fullscreenCapsules = next;
     }
 
+    // The shader's slot accessors read the PAINTED view, not every hole: an
+    // entry registered with `paint: false` exists for input only and must
+    // consume no capsule slot. `fullscreenCapsuleEntries` stays the complete
+    // input set for the consumer's mask.
     function fullscreenRectAt(index) {
-        return index < root.fullscreenCapsuleEntries.length
-            ? root.fullscreenCapsuleEntries[index].rect : Qt.rect(0, 0, 0, 0);
+        return index < root.fullscreenPaintEntries.length
+            ? root.fullscreenPaintEntries[index].rect : Qt.rect(0, 0, 0, 0);
     }
 
     function fullscreenRadiusAt(index) {
-        return index < root.fullscreenCapsuleEntries.length
-            ? root.fullscreenCapsuleEntries[index].radius : 0;
+        return index < root.fullscreenPaintEntries.length
+            ? root.fullscreenPaintEntries[index].radius : 0;
     }
 
     // radius: per-corner, in CSS border-radius order — (top-left, top-right,
@@ -152,18 +172,20 @@ Item {
         // band and the melt bridged the sliver it left. Zero is the most
         // likely gap of all, not an edge case: it is where the clamp parks
         // anything too tall for the space.
-        if (x - root.leftEdge <= reach) {
+        // Origin fill continues in the shader. Snapping that side to the screen
+        // would truncate the full moving body and displace its deformation pivot.
+        if (!(edgeBits & 1) && x - root.leftEdge <= reach) {
             w += x; x = 0; bits |= 1; tl = 0; bl = 0;
         }
         const rightGap = (width - root.edge) - (x + w);
-        if (rightGap <= reach) {
+        if (!(edgeBits & 2) && rightGap <= reach) {
             w = width - x; bits |= 2; tr = 0; br = 0;
         }
-        if (y - root.edge <= reach) {
+        if (!(edgeBits & 4) && y - root.edge <= reach) {
             h += y; y = 0; bits |= 4; tl = 0; tr = 0;
         }
         const bottomGap = (height - root.edge) - (y + h);
-        if (bottomGap <= reach) {
+        if (!(edgeBits & 8) && bottomGap <= reach) {
             h = height - y; bits |= 8; bl = 0; br = 0;
         }
 
@@ -273,6 +295,7 @@ Item {
             deform: deform ?? Qt.vector4d(1, 0, 0, 1),
             minEig: minEig === undefined ? 1 : minEig,
             outness: outness === undefined ? 1 : Math.max(0, Math.min(1, outness)),
+            originBits: edgeBits ?? 0,
             edgeBits: snapped.edgeBits | (rimBits ?? 0)
         };
         bulgeRegions = next;
@@ -295,11 +318,13 @@ Item {
         return index < root.bulgeEntries.length ? root.bulgeEntries[index].radius : Qt.vector4d(0, 0, 0, 0);
     }
 
-    // param slot: (minEig, meltBlend, attachedEdgeBits, outness).
+    // Low side bits continue rim paint; high side bits extend the origin's
+    // fill. A parent's child-facing rim must not outrun the child's body.
     function bulgeParamAt(index) {
         return index < root.bulgeEntries.length
             ? Qt.vector4d(root.bulgeEntries[index].minEig ?? 1, root.bulgeEntries[index].blend,
-                root.bulgeEntries[index].edgeBits ?? 0,
+                (root.bulgeEntries[index].edgeBits ?? 0)
+                    + (root.bulgeEntries[index].originBits ?? 0) * 16,
                 root.bulgeEntries[index].outness ?? 1)
             : Qt.vector4d(1, 1, 0, 1);
     }
@@ -389,7 +414,7 @@ Item {
             root.bandStroke.b, root.bandStrokeStrength)
         property real strokeWidth: root.strokeWidth
         property int fullscreenMode: root.fullscreen ? 1 : 0
-        property int capsuleOccupied: Math.min(root.fullscreenCapsuleEntries.length,
+        property int capsuleOccupied: Math.min(root.fullscreenPaintEntries.length,
             root.maxFullscreenCapsuleSlots)
         property vector4d handle0: root.handle0
         property vector4d dotsHandle: root.dotsHandle

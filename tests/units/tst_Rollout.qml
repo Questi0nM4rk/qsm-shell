@@ -28,6 +28,100 @@ TestCase {
 
     Component.onCompleted: Style.backend = fastBackend
 
+    Component {
+        id: geometryFixture
+        Item {
+            width: 640
+            height: 480
+            property alias rollout: body
+            property alias border: frame
+            ShellBorder { id: frame; anchors.fill: parent }
+            Item {
+                x: 70
+                y: 80
+                Rollout {
+                    id: body
+                    x: 30
+                    y: 20
+                    host: frame
+                    rolloutId: "geometry"
+                    edges: ["left"]
+                    bodyWidth: 120
+                    bodyHeight: 80
+                    shouldBeActive: true
+                    deformScale: 0
+                }
+            }
+        }
+    }
+
+    Component {
+        id: nestedHoverFixture
+        Item {
+            width: 180
+            height: 120
+            property alias pointer: pointerSource
+            property alias first: firstLevel
+            property alias second: secondLevel
+            property alias third: thirdLevel
+            QtObject {
+                id: pointerSource
+                property bool inside: true
+                property point position: Qt.point(10, 110)
+            }
+            QtObject {
+                id: hoverHost
+                property bool fullscreen: false
+                property var pointer: injectedPointer
+                function registerBulge() {}
+                function unregisterBulge() {}
+                function registerRolloutRegion() {}
+                function unregisterRolloutRegion() {}
+                function registerFullscreenCapsule() {}
+                function unregisterFullscreenCapsule() {}
+            }
+            ScenePointer { id: injectedPointer; source: pointerSource }
+            Rollout {
+                id: firstLevel
+                host: hoverHost; rolloutId: "nested-first"; shouldBeActive: true
+                closeDelay: 80; hoverAreas: [Qt.rect(20, 20, 30, 30)]
+                childRollout: secondLevel
+                bodyWidth: 30; bodyHeight: 30
+            }
+            Rollout {
+                id: secondLevel
+                host: hoverHost; rolloutId: "nested-second"; shouldBeActive: true
+                parentRollout: firstLevel; childRollout: thirdLevel
+                closeDelay: 80; hoverAreas: [Qt.rect(70, 50, 30, 30)]
+                bodyWidth: 30; bodyHeight: 30
+            }
+            Rollout {
+                id: thirdLevel
+                host: hoverHost; rolloutId: "nested-third"; shouldBeActive: true
+                parentRollout: secondLevel
+                closeDelay: 80; hoverAreas: [Qt.rect(130, 70, 30, 30)]
+                bodyWidth: 30; bodyHeight: 30
+            }
+        }
+    }
+
+    function test_registry_keeps_undeformed_pivot_under_compression_and_shear() {
+        const fixture = createTemporaryObject(geometryFixture, probe)
+        verify(fixture !== null)
+        const rollout = fixture.rollout
+        tryVerify(() => rollout.offsetScale <= 0, 1000)
+        rollout.syncRegistries()
+        const before = fixture.border.bulgeRegions.geometry.rect
+        rollout.dm00 = 0.8
+        rollout.dm01 = 0.15
+        rollout.dm11 = 1.2
+        rollout.syncRegistries()
+        const after = fixture.border.bulgeRegions.geometry.rect
+        compare(after, before, "the shader must receive the original pivot, not a pre-deformed origin")
+        const entry = fixture.border.bulgeRegions.geometry
+        verify(entry.deform.x !== 1 || entry.deform.y !== 0)
+    }
+
     // ── row A: one hover area — the close-delay half of the rule ────────
     Item {
         id: sceneA
@@ -56,6 +150,8 @@ TestCase {
             shouldBeActive: true
             closeDelay: 60
             hoverAreas: [Qt.rect(20, 20, 60, 60)]
+            bodyWidth: 100
+            bodyHeight: 60
 
             Rectangle { width: 100; height: 60 }
         }
@@ -89,6 +185,8 @@ TestCase {
             shouldBeActive: true
             closeDelay: 60
             hoverAreas: [Qt.rect(10, 10, 40, 40), Qt.rect(150, 10, 40, 40)]
+            bodyWidth: 60
+            bodyHeight: 60
 
             Rectangle { width: 60; height: 60 }
         }
@@ -123,6 +221,8 @@ TestCase {
             tier: "small"
             shouldBeActive: true
             closeDelay: 60
+            bodyWidth: 100
+            bodyHeight: 60
 
             Rectangle { width: 100; height: 60 }
         }
@@ -155,6 +255,8 @@ TestCase {
             tier: "small"
             shouldBeActive: true
             closeDelay: 60
+            bodyWidth: 100
+            bodyHeight: 60
             // hoverAreas left at its [] default deliberately.
 
             Rectangle { width: 100; height: 60 }
@@ -251,6 +353,8 @@ TestCase {
             closeDelay: 60
             triggerAreas: [Qt.rect(10, 10, 30, 30)]
             hoverAreas: [Qt.rect(150, 150, 40, 40)]
+            bodyWidth: 100
+            bodyHeight: 60
 
             Rectangle { width: 100; height: 60 }
         }
@@ -450,5 +554,38 @@ TestCase {
             "the parent kept a rounded top-right corner under its flush child");
         compare(parentRollout.cornerRadii.z, 0,
             "the parent kept a rounded bottom-right corner under its flush child");
+    }
+
+    function test_three_nested_rollouts_share_descendant_hover_and_grace() {
+        const fixture = createTemporaryObject(nestedHoverFixture, probe)
+        verify(fixture !== null)
+        const first = fixture.first
+        const second = fixture.second
+        const third = fixture.third
+        tryVerify(() => first.visible && second.visible && third.visible, 1000)
+        tryVerify(() => first.keepOpen && second.keepOpen && third.keepOpen, 500)
+        fixture.pointer.position = Qt.point(140, 80)
+        compare(third.hovered, true)
+        compare(second.hovered, true)
+        compare(first.hovered, true)
+        fixture.pointer.position = Qt.point(10, 110)
+        compare(first.hovered, false)
+        compare(second.hovered, false)
+        compare(third.hovered, false)
+        compare(first.keepOpen, true)
+        compare(second.keepOpen, true)
+        compare(third.keepOpen, true)
+        fixture.pointer.position = Qt.point(140, 80)
+        compare(first.hovered, true)
+        compare(first.keepOpen, true)
+        fixture.pointer.position = Qt.point(10, 110)
+        tryVerify(() => !first.keepOpen && !second.keepOpen && !third.keepOpen, 1000)
+        fixture.pointer.position = Qt.point(140, 80)
+        fixture.pointer.position = Qt.point(10, 110)
+        tryVerify(() => first.keepOpen && second.keepOpen && third.keepOpen, 500)
+        first.suppressed = true
+        second.suppressed = true
+        third.suppressed = true
+        tryVerify(() => !first.keepOpen && !second.keepOpen && !third.keepOpen, 500)
     }
 }

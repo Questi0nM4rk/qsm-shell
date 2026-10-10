@@ -14,6 +14,12 @@ T.TabBar {
 
     required property var options
     property string size: "md"
+    // Opt-in Tab/Shift+Tab selection for a host that owns one tab GROUP
+    // (owner panel contract). The default stays the conventional single tab
+    // stop; arrows, Home/End and the actions are unchanged either way.
+    property bool tabNavigation: false
+    // Ends are visible landmarks: a group that must stop there sets false.
+    property bool wrapNavigation: true
     property real barHeight: Style.size("Segmented", root.size)
     readonly property real _s: root.barHeight / Style.size("Segmented", "md")
     readonly property real sizeScale: root._s
@@ -22,7 +28,7 @@ T.TabBar {
     readonly property int _inset: Style.rhythm(Style.space2 * root._s)
     readonly property int _gap: Style.rhythm(Style.space1 * root._s)
     readonly property int _radius: Style.radiusSm
-    readonly property bool focused: root.activeFocus
+    readonly property bool focused: root.activeFocus || root.currentItem?.activeFocus === true
 
     signal selected(int index)
 
@@ -79,7 +85,10 @@ T.TabBar {
             return false;
         let index = root.currentIndex;
         for (let tried = 0; tried < count; tried++) {
-            index = (index + delta + count) % count;
+            const next = index + delta;
+            if (root.wrapNavigation) index = (next + count) % count;
+            else if (next < 0 || next >= count) return false;
+            else index = next;
             if (root._enabled(index))
                 return root.select(index);
         }
@@ -89,8 +98,19 @@ T.TabBar {
     function first(): bool { return root.select(root._firstEnabled()); }
     function last(): bool { return root.select(root._lastEnabled()); }
 
-    Keys.onPressed: event => {
+    // One handler for the bar and its buttons, so a key means the same thing
+// wherever focus landed inside the group.
+    function handleKey(event): void {
         if (!root.enabled)
+            return;
+        if (root.tabNavigation && (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
+                && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.ShiftModifier)) {
+            root.step(event.key === Qt.Key_Backtab || event.modifiers === Qt.ShiftModifier ? -1 : 1);
+            root.forceActiveFocus();
+            event.accepted = true;
+            return;
+        }
+        if (event.modifiers !== Qt.NoModifier)
             return;
         const forward = root.mirrored ? Qt.Key_Left : Qt.Key_Right;
         if (event.key === forward || event.key === (forward === Qt.Key_Right ? Qt.Key_Left : Qt.Key_Right)) {
@@ -104,6 +124,9 @@ T.TabBar {
             event.accepted = true;
         }
     }
+
+    Keys.priority: Keys.BeforeItem
+    Keys.onPressed: event => root.handleKey(event)
 
     readonly property list<T.Action> actions: [
         T.Action { text: "Previous"; enabled: root.enabled; onTriggered: root.step(-1) },
@@ -156,6 +179,8 @@ T.TabBar {
         Accessible.name: root._labelOf(tab.modelData)
         Accessible.selected: tab.selectedSegment
         onClicked: root.select(tab.index)
+        Keys.priority: Keys.BeforeItem
+        Keys.onPressed: event => root.handleKey(event)
 
         background: Rectangle {
             anchors.fill: parent

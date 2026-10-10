@@ -42,6 +42,7 @@ Divider 1.0 Divider.qml
 EmptyState 1.0 EmptyState.qml
 KeyValueRow 1.0 KeyValueRow.qml
 Capsule 1.0 Capsule.qml
+DataCapsule 1.0 DataCapsule.qml
 SvgIcon 1.0 SvgIcon.qml
 IconButton 1.0 IconButton.qml
 SelectionMark 1.0 SelectionMark.qml

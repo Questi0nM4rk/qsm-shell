@@ -65,6 +65,8 @@ TestCase {
         rolloutId: "probe-rollout"
         edges: ["top"]
         shouldBeActive: false
+        bodyWidth: 200
+        bodyHeight: 80
 
         Rectangle { width: 200; height: 80 }
     }
@@ -140,6 +142,8 @@ TestCase {
             rolloutId: "destroy-probe"
             edges: ["top"]
             shouldBeActive: true
+            bodyWidth: 100
+            bodyHeight: 60
 
             Rectangle { width: 100; height: 60 }
         }

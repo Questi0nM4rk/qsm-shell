@@ -40,6 +40,8 @@ ColumnLayout {
     property real sizeScale: 1
 
     readonly property bool failed: error.length > 0
+    readonly property string accessibleName: label
+    readonly property string accessibleDescription: [failed ? error : hint, required ? "Required" : ""].filter(value => value.length > 0).join(" ")
 
     // The control this frames.
     default property alias content: contentHost.data

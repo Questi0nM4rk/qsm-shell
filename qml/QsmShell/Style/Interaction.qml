@@ -6,6 +6,9 @@ import QtQuick
 // pointer. Not styling: this is the one place a consumer states something the
 // components cannot see for themselves.
 QtObject {
+    property int sliderDecreaseKey: Qt.Key_N
+    property int sliderIncreaseKey: Qt.Key_O
+
     // Is a hover-enter allowed to CLAIM the selection?
     //
     // In a searchable list the pointer and the keyboard drive one cursor, and

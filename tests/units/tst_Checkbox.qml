@@ -84,4 +84,31 @@ TestCase {
         compare(unwiredCheck.checked, true, "checkbox wrote its own host-owned checked state");
         compare(unwiredCheck.indeterminate, true, "checkbox wrote its own host-owned indeterminate state");
     }
+
+    function test_accessible_mixed_actions_report_host_owned_intent() {
+        unwiredCheck.checked = true;
+        unwiredCheck.indeterminate = true;
+        compare(unwiredCheck.Accessible.checkStateMixed, true);
+        compare(unwiredCheck.Accessible.checked, false);
+
+        unwiredCheck.Accessible.pressAction();
+        compare(unwiredSpy.count, 1);
+        compare(unwiredSpy.signalArguments[0][0], false);
+        compare(unwiredCheck.checked, true);
+        compare(unwiredCheck.indeterminate, true);
+
+        unwiredCheck.checked = false;
+        unwiredCheck.indeterminate = false;
+        compare(unwiredCheck.Accessible.checkStateMixed, false);
+        compare(unwiredCheck.Accessible.checked, false);
+        unwiredCheck.Accessible.toggleAction();
+        compare(unwiredSpy.count, 2);
+        compare(unwiredSpy.signalArguments[1][0], true);
+        compare(unwiredCheck.checked, false);
+        compare(unwiredCheck.indeterminate, false);
+
+        disabledCheck.Accessible.pressAction();
+        disabledCheck.Accessible.toggleAction();
+        compare(disabledToggles, 0);
+    }
 }

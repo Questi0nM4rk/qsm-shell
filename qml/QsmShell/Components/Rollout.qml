@@ -1,27 +1,13 @@
 import QtQuick
 import qs.QsmShell.Style
 
-// THE rollout component (spec 02-rollouts): every edge surface reveals
-// through this one mechanism; consumers only provide content, declared
-// attached edge(s), and a size tier.
-//
-// The canonical value is `offsetScale` (0 = fully shown, 1 = fully hidden;
-// 12-mechanism). It ALONE drives: position offset along every attached edge,
-// whole-surface opacity (content rides fully drawn — nothing fades
-// separately), the silhouette rect the host's shader sees (live and
-// unclamped, including the off-screen excursion), and the input hit-rect
-// (which activates only near-settled, past ~90% revealed; 09-input).
-// A reveal reversed mid-flight retargets smoothly — the Behavior animates
-// the one value from wherever it currently is.
-//
-// This component paints NOTHING. The body is the melt shader's fill
-// (02-rollouts silhouette law: no backdrops, no chrome — content sits
-// directly on the silhouette). Goo deform (phase 8) will feed the host's
-// deform/param slots; until then the host holds them at identity.
+// Full-size content and a source-attached clip aperture are separate geometries.
+// ShellBorder paints their contour; this item owns placement and reports intent.
 Item {
     id: root
 
     default property alias content: inner.data
+    readonly property alias contentItem: inner
 
     // The host hosting this rollout — owner of both registries.
     required property var host
@@ -51,37 +37,31 @@ Item {
     // "large" = 500ms tier (top panel, launcher, session, notifications);
     // "small" = 250ms tier (rail popouts, OSD, calendar). 02-rollouts.
     property string tier: "large"
-    // Goo intensity (10-motion RATIFIED map: popouts 0.10, OSD 0.25,
-    // notifications 0.15, top panel 0.10, launcher 0.10, session 0.20).
-    property real deformScale: 0.1
     // A modal that owns a bigger catch region (launcher's full-scene
     // click-anywhere-closes) registers its OWN hit rect instead; the
     // silhouette bulge is always registered here regardless.
     property bool registerHitRect: true
-    // The spawn border's inner wall, measured from the anchored screen edge:
-    // the band the rollout spawns FROM (rail popouts: the 60px left band;
-    // everything else: its 16px band). The rollout is a WINDOW at this wall
-    // that grows outward while the content slides out of the band inside it
-    // (caelestia's ClipWrapper mechanic — extrusion, never a rect placed
-    // onto the border). bodyWidth/bodyHeight are the fully-shown size.
-    property real edgeInset: Style.frameThickness
-    // Corner rollouts attach to two bands of different depths.
-    property real edgeInsetH: edgeInset
-    property real edgeInsetV: edgeInset
+    // Negative means automatic; nonnegative overrides apply to both axes.
+    property real edgeInset: -1
+    property real edgeInsetH: edgeInset >= 0 ? edgeInset
+        : attached("left") ? (host?.leftEdge ?? host?.edge ?? Style.frameThickness)
+        : (host?.edge ?? Style.frameThickness)
+    property real edgeInsetV: edgeInset >= 0 ? edgeInset
+        : (host?.edge ?? Style.frameThickness)
     property real padding: 0
-    property real bodyWidth: inner.childrenRect.width + padding * 2
-    property real bodyHeight: inner.childrenRect.height + padding * 2
+    required property real bodyWidth
+    required property real bodyHeight
     // Allowlisted native-fullscreen surfaces use the same content but a
     // detached capsule geometry. Normal rollouts never consult these values.
     property bool fullscreenDetached: false
     property bool fullscreenCapsule: true
     property real fullscreenInset: Style.space4
     property real fullscreenRadius: Style.radiusPill
-    // One shared content settle applies to every consumer by default. A
-    // surface whose CONTENT animates its own entrance (the notification
-    // stack's cards) opts out here, so the two never compose into a
-    // double-pop on the first appearance.
-    property bool settleContent: true
+    // Detached-only compatibility; attached content never travels or deforms.
+    property real deformScale: Motion.rolloutDeformScale
+    property bool settleContent: false
+    // Animated child extents already provide the size transition.
+    property bool animateBodySize: true
 
     // ── keep-open: the most ordinary thing on the web — a hover
     // area larger than the item, covering the approach corridors a pointer
@@ -112,9 +92,10 @@ Item {
     // of any kind -- the same honesty rule that split `hovered` from
     // `keepOpen`. Deliberately NOT gated on `root.visible`: the whole point
     // of a trigger area is to be found by a pointer BEFORE anything shows.
-    readonly property bool triggered: !!root.host && !!root.host.pointer
+    readonly property var pointer: root.host?.pointer ?? null
+    readonly property bool triggered: !!root.pointer
         && root.triggerAreas.length > 0
-        && root.triggerAreas.some(area => root.host.pointer.contains(area))
+        && root.triggerAreas.some(area => root.pointer.contains(area))
 
     // True while the pointer sits inside a hover area right now. No delay of
     // any kind: false when there is no pointer, no host, or the rollout is
@@ -123,10 +104,12 @@ Item {
     // consumer forced to repeat the nub rect in `hoverAreas` would eventually
     // forget to. The own-silhouette fallback still only fires when
     // `hoverAreas` itself is empty.
-    readonly property bool hovered: root.visible && !!root.host && !!root.host.pointer
-        && [...root.triggerAreas, ...(root.hoverAreas.length > 0 ? root.hoverAreas
+    readonly property bool hovered: root.visible && (!!root.pointer &&
+        [...root.triggerAreas, ...(root.hoverAreas.length > 0 ? root.hoverAreas
             : [root.rectInHost(0, 0, root.width, root.height)])]
-            .some(area => root.host.pointer.contains(area))
+            .some(area => root.pointer.contains(area)) || root._childHovered)
+    readonly property bool _childHovered: childRollout?.visible === true
+        && childRollout.parentRollout === root && childRollout.hovered
 
     // The keep-open verdict a consumer reads: `hovered`, extended by
     // `closeDelay` after it drops. Kept separate from `hovered` on purpose --
@@ -151,8 +134,29 @@ Item {
         interval: root.closeDelay
     }
 
+    onVisibleChanged: {
+        syncRegistries()
+        if (!visible)
+            closeDelayTimer.stop()
+        else if (!hovered)
+            closeDelayTimer.restart()
+    }
+    onSuppressedChanged: {
+        if (suppressed) {
+            closeDelayTimer.stop()
+            revealAnim.complete()
+            widthMorph.complete()
+            heightMorph.complete()
+        }
+        syncRegistries()
+    }
+    onPointerChanged: {
+        if (!pointer || !pointer.inside)
+            closeDelayTimer.stop()
+    }
+
     onHoveredChanged: {
-        if (root.hovered || !root.visible)
+        if (root.hovered || !root.visible || root.suppressed)
             closeDelayTimer.stop();
         else
             closeDelayTimer.restart();
@@ -164,11 +168,15 @@ Item {
 
     readonly property bool _anchored: anchorItem !== null || parentRollout !== null
     readonly property rect _parentRect: parentRollout
-        ? parentRollout.rectInHost(0, 0, parentRollout.width, parentRollout.height)
+        ? (_joined ? parentRollout.settledBodyRect
+            : parentRollout.rectInHost(0, 0, parentRollout.width, parentRollout.height))
         : Qt.rect(0, 0, 0, 0)
     readonly property rect _placementArea: parentRollout ? _parentRect : placementBounds
     readonly property rect _anchorRect: anchorItem && host && typeof host.mapFromItem === "function"
         ? (() => {
+            // mapFromItem does not notify when its source moves after loading.
+            anchorItem.x;
+            anchorItem.y;
             const point = host.mapFromItem(anchorItem, 0, 0);
             return Qt.rect(point.x, point.y, anchorItem.width, anchorItem.height);
         })()
@@ -189,13 +197,13 @@ Item {
     readonly property real _rawPlacementX: revealHorizontal
         ? (parentRollout
             ? (attached("left") ? _parentRect.x + _parentRect.width : _parentRect.x - width)
-            : (attached("left") ? edgeInsetH : placementBounds.x + placementBounds.width - edgeInsetH - width))
+            : (attached("left") ? placementBounds.x + edgeInsetH : placementBounds.x + placementBounds.width - edgeInsetH - width))
         : _anchorCenterX - width / 2
     readonly property real _rawPlacementY: revealHorizontal
         ? _anchorCenterY - height / 2
         : (parentRollout
             ? (attached("top") ? _parentRect.y + _parentRect.height : _parentRect.y - height)
-            : (attached("top") ? edgeInsetV : placementBounds.y + placementBounds.height - edgeInsetV - height))
+            : (attached("top") ? placementBounds.y + edgeInsetV : placementBounds.y + placementBounds.height - edgeInsetV - height))
     readonly property real _placementX: revealHorizontal || !nudgeToBounds
         ? _rawPlacementX
         : _clampCross(_rawPlacementX, width, _placementArea.x, _placementArea.width)
@@ -203,17 +211,24 @@ Item {
         ? _rawPlacementY
         : _clampCross(_rawPlacementY, height, _placementArea.y, _placementArea.height)
     readonly property point nudge: Qt.point(_placementX - _rawPlacementX, _placementY - _rawPlacementY)
+    // Placement is computed in host space even when the item's QML parent is
+    // a translated scene container. Keep the semantic source separate from it.
+    readonly property point _placementInParent: host && parent
+        && typeof host.mapFromItem === "function"
+        && typeof parent.mapFromItem === "function"
+        ? parent.mapFromItem(host, _placementX, _placementY)
+        : Qt.point(_placementX, _placementY)
 
     Binding {
         target: root
         property: "x"
-        value: root._placementX
+        value: root._placementInParent.x
         when: root._anchored
     }
     Binding {
         target: root
         property: "y"
-        value: root._placementY
+        value: root._placementInParent.y
         when: root._anchored
     }
 
@@ -221,8 +236,10 @@ Item {
     // br, bl): rolloutRadius on free corners, 0 ONLY on the DECLARED
     // attached edge(s), CLAMPED to half the current size so a budding
     // window grows organically (caelestia clamps the same way).
+    // Attached paint is the aperture; detached paint retains its full body.
     readonly property real clampedRadius: Math.max(0, Math.min(Style.rolloutRadius,
-        width / 2, height / 2))
+        (_joined ? viewportRect.width : body.width) / 2,
+        (_joined ? viewportRect.height : body.height) / 2))
     readonly property bool _childSpansCross: childRollout?.visible === true
         && childRollout.parentRollout === root
         && (revealHorizontal
@@ -249,36 +266,13 @@ Item {
         (attached("bottom") || attached("right") || _coveredByChild("bottom") || _coveredByChild("right")) ? 0 : clampedRadius,
         (attached("bottom") || attached("left") || _coveredByChild("bottom") || _coveredByChild("left")) ? 0 : clampedRadius)
 
-    // ── centring against the WHOLE shape ────────────────────────────────
-    // A rollout is not a panel sitting next to the band; it is the band
-    // BULGING. The shader melts the two into one silhouette, and a person
-    // reads that silhouette as one object -- so content that centres itself
-    // must centre in the whole object, band included, not in the body alone.
-    //
-    // The body's own centre sits half a band-depth away from the shape's, on
-    // the side the rollout is attached to. Centring in the body therefore
-    // pushes content half a band AWAY from the edge, every time, on every
-    // rollout: the OSD's three sliders sat 8px left of the middle of the
-    // shape they were drawn in, and the session column sat 8px left of its
-    // own. Both had been "fixed" once by eye -- the OSD carried a bare `4`.
-    //
-    //     anchors.horizontalCenter: parent.horizontalCenter
-    //     anchors.horizontalCenterOffset: rollout.contentCenterOffsetX
-    //
-    // Only the attached axis is corrected: on the free axis the body and the
-    // shape already share a centre.
-    // Signed contributions from BOTH sides, not a ternary picking one. A
-    // corner rollout attached to two opposite bands gets equal pulls that
-    // cancel; a ternary would have shifted it half an inset toward whichever
-    // side it happened to test first.
-    //
-    // Fullscreen is the other exception, and it is not academic: a detached
-    // capsule has no band to be part of, so correcting toward one puts the
-    // content half an inset off in exactly the mode where nothing anchors it.
+    // Optional centring in the body-plus-band shape pulls content half a band
+    // toward each contact. Detached capsules and nested expansions have no
+    // source frame band to include in their content centre.
     readonly property bool _joined: !(fullscreenDetached && host.fullscreen)
-    readonly property real contentCenterOffsetX: !_joined ? 0
+    readonly property real contentCenterOffsetX: !_joined || parentRollout !== null ? 0
         : ((attached("right") ? edgeInsetH : 0) - (attached("left") ? edgeInsetH : 0)) / 2
-    readonly property real contentCenterOffsetY: !_joined ? 0
+    readonly property real contentCenterOffsetY: !_joined || parentRollout !== null ? 0
         : ((attached("bottom") ? edgeInsetV : 0) - (attached("top") ? edgeInsetV : 0)) / 2
 
     // Consumers describe trigger/hover areas in host coordinates. Keep the
@@ -286,11 +280,24 @@ Item {
     // rollout is nested below another item.
     function rectInHost(localX: real, localY: real, width: real, height: real): rect {
         if (root.host && typeof root.host.mapFromItem === "function") {
-            const point = root.host.mapFromItem(root, localX, localY);
+            const point = root.parent
+                ? root.host.mapFromItem(root.parent, root.x + localX, root.y + localY)
+                : Qt.point(root.x + localX, root.y + localY);
             return Qt.rect(point.x, point.y, width, height);
         }
         return Qt.rect(root.x + localX, root.y + localY, width, height);
     }
+
+    // One attached aperture feeds paint and input before paint-only welds.
+    readonly property rect silhouetteRect: _joined ? viewportRect
+        : rectInHost(body.x, body.y, body.width, body.height)
+    readonly property rect viewportRect: rectInHost(0, 0, width, height)
+    // The source's final edge must not drift with its animated aperture. Use
+    // the parked body position rather than its current aperture.
+    readonly property rect settledBodyRect: rectInHost(
+        revealHorizontal && attached("right") ? width - bodyWidth : 0,
+        !revealHorizontal && attached("bottom") ? height - bodyHeight : 0,
+        bodyWidth, bodyHeight)
 
     // The reveal animates along ONE axis only — the FIRST declared edge's
     // axis (owner: a corner rollout scaling both axes reads as a popup
@@ -300,29 +307,22 @@ Item {
         && (edges[0] === "left" || edges[0] === "right")
 
     // The WINDOW: full size on the free axis, growing from 0 to body along
-    // the reveal axis as offsetScale falls.
-    implicitWidth: revealHorizontal ? Math.max(0, bodyWidth * (1 - slideScale)) : bodyWidth
-    implicitHeight: !revealHorizontal ? Math.max(0, bodyHeight * (1 - slideScale)) : bodyHeight
+    // the reveal axis as progress grows.
+    implicitWidth: revealHorizontal ? Math.max(0, bodyWidth * revealProgress) : bodyWidth
+    implicitHeight: !revealHorizontal ? Math.max(0, bodyHeight * revealProgress) : bodyHeight
     width: fullscreenDetached && host.fullscreen ? bodyWidth : implicitWidth
     height: fullscreenDetached && host.fullscreen ? bodyHeight : implicitHeight
     clip: true
 
-    // 12-mechanism reveal choreography, verbatim shape. No opacity binding:
-    // content rides fully drawn and OPAQUE — the surface disappears by
-    // sliding into the edge (02-rollouts no-opacity-ramp law). Visible until
-    // the animation SETTLES, not until the value crosses 1: the overshoot
-    // curve crosses 1 mid-retract, and cutting off there unregisters the
-    // bulge while the band sink is still easing — the jitter law.
+    // Retain the picture through retract; input follows semantic intent instead.
     property real offsetScale: (shouldBeActive && !suppressed) ? 0 : 1
-    visible: revealAnim.running || offsetScale < 1
-    // Back limit (02-rollouts): the curve overshoots past 0, but position
-    // clamps at FLUSH — letting it cross detaches the attached edge from
-    // the band and the melt eats the corner behind it (owner-caught).
-    readonly property real slideScale: Math.max(0, offsetScale)
-    // The window's attached edge sits FIXED at the spawn wall; only its
-    // size changes (extrusion). Content inside slides toward/out of the
-    // band, so the content's leading part emerges first — rolling out of
-    // the border, never a rect placed onto it.
+    readonly property bool animating: revealAnim.running || widthMorph.running || heightMorph.running
+    visible: !suppressed && (revealAnim.running || offsetScale < 1)
+    // Even a custom offset must never grow past the flush body extent.
+    readonly property real _detachedTravel: _joined ? 0 : Math.max(0, offsetScale)
+    readonly property real revealProgress: Math.max(0, Math.min(1, 1 - offsetScale))
+    // Anchor-item placement and explicit QML anchors share the same
+    // source wall; only the aperture depth changes with reveal.
     anchors.topMargin: attached("top") ? edgeInsetV : 0
     anchors.bottomMargin: attached("bottom") ? edgeInsetV : 0
     anchors.leftMargin: attached("left") ? edgeInsetH : 0
@@ -349,32 +349,38 @@ Item {
     // second one fighting it produces exactly the jitter the back limit exists
     // to prevent.
     Behavior on bodyWidth {
-        enabled: root.visible && root.offsetScale <= 0 && !revealAnim.running
+        enabled: root.animateBodySize && root.visible && root.offsetScale <= 0 && !revealAnim.running
         NumberAnimation {
+            id: widthMorph
             duration: Motion.morphGlide
             easing.type: Motion.emphasizedEasing
         }
     }
 
     Behavior on bodyHeight {
-        enabled: root.visible && root.offsetScale <= 0 && !revealAnim.running
+        enabled: root.animateBodySize && root.visible && root.offsetScale <= 0 && !revealAnim.running
         NumberAnimation {
+            id: heightMorph
             duration: Motion.morphGlide
             easing.type: Motion.emphasizedEasing
         }
     }
 
-    // Registry feed: silhouette rect while anything is visible (the live
-    // rect, off-screen excursion included — the shader melts around the
-    // moving rect every frame); hit rect only near-settled (09-input law).
-    readonly property bool hitActive: registerHitRect && visible && offsetScale <= 0.1
+    // Paint survives retract; input is only the near-settled active aperture.
+    readonly property bool hitActive: registerHitRect && shouldBeActive && !suppressed
+        && visible && revealProgress >= 0.9
 
     // Melt-blend factor: the neck's reach grows with the window's size, so
     // the join closes exactly as the window vanishes into the wall.
     readonly property real protrusion: revealHorizontal ? width : height
     readonly property real meltBlend: Math.max(0, Math.min(1, protrusion / Style.meltSmoothing))
+    // A detached integrator's stale state cannot affect attached paint/content.
+    readonly property real effectiveDm00: _joined ? 1 : 1 + meltBlend * (dm00 - 1)
+    readonly property real effectiveDm01: _joined ? 0 : meltBlend * dm01
+    readonly property real effectiveDm11: _joined ? 1 : 1 + meltBlend * (dm11 - 1)
+    readonly property vector3d effectiveDeform: Qt.vector3d(effectiveDm00, effectiveDm01, effectiveDm11)
 
-    // --- Goo physics (12-mechanism): a symmetric 2x2 deform matrix
+    // Detached compatibility only: a symmetric 2x2 deform matrix
     // spring-driven by the rect's own scene-space velocity, applied to the
     // content transform AND handed to the shader (inverse + minEig) so
     // silhouette and content deform together. Reduced motion disables goo.
@@ -387,12 +393,13 @@ Item {
 
     FrameAnimation {
         running: root.visible && !Style.reducedMotion && root.deformScale > 0
+            && !root._joined
         onTriggered: root.stepGoo(frameTime)
     }
 
     function stepGoo(dt: real): void {
-        const cx = x + width / 2;
-        const cy = y + height / 2;
+        const cx = x + body.x + body.width / 2;
+        const cy = y + body.y + body.height / 2;
         const state = goo;
         // dt outside [0.001, 0.1]: skip INTEGRATION only; resample position
         // so the next frame's velocity is sane.
@@ -412,7 +419,7 @@ Item {
         let t01 = 0;
         let t11 = 1;
         if (speed > 5.0) {
-            const stretch = 1 + Math.min((speed / 1000) * deformScale, 0.35);
+            const stretch = 1 + Math.min((speed / 1000) * deformScale, Motion.rolloutDeformLimit);
             const compress = 1 / stretch;
             const c = vx / speed;
             const s = vy / speed;
@@ -422,8 +429,8 @@ Item {
         }
 
         // Implicit damping — unconditionally stable at any dt.
-        const stiffness = 200;
-        const damping = 16;
+        const stiffness = Motion.rolloutDeformStiffness;
+        const damping = Motion.rolloutDeformDamping;
         const invDamp = 1 / (1 + damping * dt);
         state.v00 = (state.v00 - stiffness * (dm00 - t00) * dt) * invDamp;
         state.v01 = (state.v01 - stiffness * (dm01 - t01) * dt) * invDamp;
@@ -457,11 +464,13 @@ Item {
     // Content deform: translate(center) · M · translate(-center).
     transform: Matrix4x4 {
         matrix: {
-            const cx = root.width / 2;
-            const cy = root.height / 2;
+            const cx = body.x + body.width / 2;
+            const cy = body.y + body.height / 2;
             return Qt.matrix4x4(
-                root.dm00, root.dm01, 0, cx - root.dm00 * cx - root.dm01 * cy,
-                root.dm01, root.dm11, 0, cy - root.dm01 * cx - root.dm11 * cy,
+                root.effectiveDm00, root.effectiveDm01, 0,
+                    cx - root.effectiveDm00 * cx - root.effectiveDm01 * cy,
+                root.effectiveDm01, root.effectiveDm11, 0,
+                    cy - root.effectiveDm01 * cx - root.effectiveDm11 * cy,
                 0, 0, 1, 0,
                 0, 0, 0, 1);
         }
@@ -470,18 +479,18 @@ Item {
     function syncRegistries() {
         if (!host)
             return;
-        const sceneRect = root.rectInHost(0, 0, root.width, root.height);
-        if (visible) {
+        const sceneRect = silhouetteRect;
+        if (visible && !suppressed) {
             // CPU-precomputed inverse 2x2 (row-major) + min eigenvalue.
-            const det = dm00 * dm11 - dm01 * dm01;
+            const det = effectiveDm00 * effectiveDm11 - effectiveDm01 * effectiveDm01;
             const safeDet = Math.abs(det) < 0.0001 ? 0.0001 : det;
-            const inverse = Qt.vector4d(dm11 / safeDet, -dm01 / safeDet,
-                -dm01 / safeDet, dm00 / safeDet);
-            const mean = (dm00 + dm11) / 2;
-            const dev = Math.sqrt(((dm00 - dm11) / 2) ** 2 + dm01 * dm01);
-            // Attached-edge bits (1 left, 2 right, 4 top, 8 bottom): the
-            // shader extends the RIM copy of the rect through its band so
-            // no rim seam draws where the rollout meets its border.
+            const inverse = Qt.vector4d(effectiveDm11 / safeDet, -effectiveDm01 / safeDet,
+                -effectiveDm01 / safeDet, effectiveDm00 / safeDet);
+            const mean = (effectiveDm00 + effectiveDm11) / 2;
+            const dev = Math.sqrt(((effectiveDm00 - effectiveDm11) / 2) ** 2
+                + effectiveDm01 * effectiveDm01);
+            // Origin sides extend fill through the source; child-facing
+            // continuations extend rim paint only (12-mechanism).
             const edgeBits = (attached("left") ? 1 : 0) + (attached("right") ? 2 : 0)
                 + (attached("top") ? 4 : 0) + (attached("bottom") ? 8 : 0);
             // outness is the same ratio here: a Rollout's melt and its
@@ -493,7 +502,7 @@ Item {
                 false, meltBlend);
             if (fullscreenDetached && host.fullscreen && fullscreenCapsule)
                 host.registerFullscreenCapsule(rolloutId,
-                    Qt.rect(x, y, width, height), fullscreenRadius);
+                    viewportRect, fullscreenRadius);
             else
                 host.unregisterFullscreenCapsule(rolloutId);
         } else {
@@ -501,7 +510,7 @@ Item {
             host.unregisterFullscreenCapsule(rolloutId);
         }
         if (hitActive)
-            host.registerRolloutRegion(rolloutId, sceneRect);
+            host.registerRolloutRegion(rolloutId, viewportRect);
         else
             host.unregisterRolloutRegion(rolloutId);
     }
@@ -510,11 +519,25 @@ Item {
     onYChanged: syncRegistries()
     onWidthChanged: syncRegistries()
     onHeightChanged: syncRegistries()
-    onVisibleChanged: syncRegistries()
     onHitActiveChanged: syncRegistries()
     onFullscreenDetachedChanged: syncRegistries()
     onFullscreenCapsuleChanged: syncRegistries()
     onChildRolloutChanged: syncRegistries()
+    onSilhouetteRectChanged: syncRegistries()
+    onViewportRectChanged: syncRegistries()
+    onCornerRadiiChanged: syncRegistries()
+    onMeltBlendChanged: syncRegistries()
+    onEffectiveDeformChanged: syncRegistries()
+    onFlushToParentChanged: syncRegistries()
+    on_ChildRimBitsChanged: syncRegistries()
+
+    Connections {
+        target: body
+        function onXChanged() { root.syncRegistries(); }
+        function onYChanged() { root.syncRegistries(); }
+        function onWidthChanged() { root.syncRegistries(); }
+        function onHeightChanged() { root.syncRegistries(); }
+    }
 
     Connections {
         target: root.childRollout
@@ -538,6 +561,8 @@ Item {
     }
 
     Component.onCompleted: {
+        if (visible && !hovered && !suppressed)
+            closeDelayTimer.restart();
         // 1..3 edges: edges[0] names the REVEAL axis; the rest are flush
         // contacts (squared corners + rim burial). An opposite pair is only
         // legal on the CROSS axis (a full-extent column/strip).
@@ -553,39 +578,43 @@ Item {
         syncRegistries();
     }
 
-    // Content viewport (caelestia's ClipWrapper): the body-sized content
-    // slides toward the wall as the window shrinks, so its LEADING part
-    // emerges first on reveal and disappears last on retract.
+    // Full-size attached content stays at its final HOST coordinate while the
+    // aperture grows. Right/bottom local offsets cancel the moving clip origin:
+    //   right:  hostX = (wall - root.width) + (root.width - bodyWidth)
+    //                 = wall - bodyWidth                      (constant)
+    //   left:   hostX = edgeInsetH + 0                        (constant)
+    //   bottom: hostY = (wall - root.height) + (root.height - bodyHeight)
+    //                 = wall - bodyHeight                   (constant)
+    //   top:    hostY = edgeInsetV + 0                        (constant)
+    // Detached fullscreen presentation alone retains its travelling offset.
     Item {
         id: body
         width: root.bodyWidth
         height: root.bodyHeight
-        // Content slides only along the REVEAL axis; a second attached edge
-        // just pins alignment.
         x: !root.revealHorizontal ? 0
-            : root.attached("left") ? -(root.bodyWidth + 5) * root.slideScale
-            : root.width - root.bodyWidth + (root.bodyWidth + 5) * root.slideScale
+            : root.attached("left")
+                ? -(root.bodyWidth + 5) * root._detachedTravel
+                : root.width - root.bodyWidth
+                    + (root.bodyWidth + 5) * root._detachedTravel
         y: root.revealHorizontal ? 0
-            : root.attached("top") ? -(root.bodyHeight + 5) * root.slideScale
-            : root.height - root.bodyHeight + (root.bodyHeight + 5) * root.slideScale
+            : root.attached("top")
+                ? -(root.bodyHeight + 5) * root._detachedTravel
+                : root.height - root.bodyHeight
+                    + (root.bodyHeight + 5) * root._detachedTravel
 
         Item {
             id: inner
             x: root.padding
             y: root.padding
-            width: root.bodyWidth - root.padding * 2
-            height: root.bodyHeight - root.padding * 2
-            // One shared content settle for every rollout consumer. Geometry,
-            // edge attachment, clipping, and the handle still come solely from
-            // the canonical extrusion above; this only adds the small visual
-            // settle once content has emerged. Consumers whose content owns
-            // its own entrance set settleContent false and stay at full scale.
-            scale: !root.settleContent ? 1
+            width: Math.max(0, root.bodyWidth - root.padding * 2)
+            height: Math.max(0, root.bodyHeight - root.padding * 2)
+            enabled: root.shouldBeActive && !root.suppressed
+            scale: root._joined || !root.settleContent ? 1
                 : (root.shouldBeActive && !root.suppressed ? 1 : Motion.microPopScale)
             transformOrigin: Item.Center
 
             Behavior on scale {
-                enabled: !root.suppressed
+                enabled: !root.suppressed && !root._joined
                 NumberAnimation { duration: Motion.microPopDuration; easing.type: Motion.emphasizedEasing }
             }
         }

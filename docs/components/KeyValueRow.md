@@ -9,4 +9,6 @@ screen reader: label and value are plain text roles; the value keeps its reading
 size: content-driven row with fixed spacing; the label fills and the value holds its natural width; the optional glyph is icon small.
 tokens: space2, iconSm, text and textMuted; no local colours or measurements.
 motion: none.
+expected: setting, replacing or clearing `icon` after construction re-lays out the actual row before the next rendered frame; label and reading never overlap the glyph. No unit-side reconstruction or extra spacing compensates for it.
+source: Qt RowLayout owns the optional glyph's participation and spacing; compare live geometry after render polish, not during the property-write stack. Caelestia has no corresponding passive label/value row. The native rendered-frame regression covers empty/populated/empty changes.
 not designed: selection, action or editing; use ListRow, a slot action or the host for those.

@@ -35,10 +35,18 @@ Item {
     // notification centre's currently-toggled row.
     property bool alwaysExpanded: false
     property bool draggable: false
+    // A retiring stack row keeps its current expansion but cannot receive input.
+    property bool inputEnabled: true
+    property bool expansionFrozen: false
+    property bool frozenExpanded: false
+    property real frozenHeight: 0
     // Vertical drag-to-expand is opt-in: a delegate inside a Flickable list
     // must not let a vertical drag double as the list's own scroll gesture.
     property bool verticalDragEnabled: false
     property bool showActions: true
+    // Set by a host only when this exact live record currently offers the
+    // protocol's default action. The card owns the activation affordance only.
+    property bool primaryActionEnabled: false
     property bool showDivider: false
     // A list with its own cursor thickens this card's tick instead of
     // drawing a second mark on top of it.
@@ -48,35 +56,63 @@ Item {
     property int actionFocusIndex: -1
     // Toggled by a vertical drag past the threshold; additive to hover.
     property bool dragExpanded: false
+    property bool swipeDismissPending: false
+    property double currentTimeMs: Date.now()
     // Defaults from the entry shape; a consumer whose entry does not carry a
     // swatch of its own (or which decides one under a rule the card cannot
     // see — an app name, say) overrides it directly.
     property var swatch: root.entry.swatch
 
     readonly property bool verticalDrag: drag.active && Math.abs(drag.translation.y) > Math.abs(drag.translation.x)
+    readonly property bool dragActive: drag.active
     readonly property bool hovered: layer.hovered
-    readonly property bool expanded: root.alwaysExpanded || root.hovered || root.dragExpanded
-        || (root.entry.paused ?? false)
+    readonly property bool primaryPressed: layer.pressed
+    readonly property bool expansionAnimating: expansionAnimation.running
+    readonly property bool expanded: root.expansionFrozen ? root.frozenExpanded
+        : root.alwaysExpanded || root.hovered || root.dragExpanded || (root.entry.paused ?? false)
     readonly property bool archived: root.entry.archivedAt !== undefined && root.entry.archivedAt !== null
     readonly property bool hasSwatch: root.swatch !== undefined && root.swatch !== null
+    readonly property bool primaryActionAvailable: root.primaryActionEnabled
+        && !root.showActions && !root.archived
+        && !!root.defaultAction() && !(root.defaultAction().disabled ?? false)
+    readonly property string primaryActionLabel: {
+        const action = root.defaultAction();
+        const label = String(action?.label ?? "").trim();
+        return label.length > 0 ? label : `Open ${root.entry.appName}`;
+    }
 
     signal dismissed
     signal actionTriggered(string actionId)
-    readonly property list<T.Action> actions: [dismissAction, firstAction, secondAction, thirdAction]
+    signal primaryTriggered(var entry)
+    readonly property list<T.Action> actions: [dismissAction, primaryAction, firstAction, secondAction, thirdAction]
         .filter(action => action.text.length > 0)
+
+    Accessible.role: root.primaryActionAvailable ? Accessible.Button : Accessible.StaticText
+    Accessible.name: root.primaryActionAvailable
+        ? `${root.primaryActionLabel}: ${root.entry.summary}`
+        : `${root.entry.appName}: ${root.entry.summary}`
+    Accessible.description: String(root.entry.body ?? "")
+    Accessible.onPressAction: root.activatePrimary()
 
     T.Action {
         id: dismissAction
         text: "Dismiss"
-        enabled: root.enabled && root.visible
+        enabled: root.enabled && root.visible && root.inputEnabled
         onTriggered: root.dismiss()
+    }
+
+    T.Action {
+        id: primaryAction
+        text: root.primaryActionAvailable ? root.primaryActionLabel : ""
+        enabled: root.enabled && root.visible && root.inputEnabled && root.primaryActionAvailable
+        onTriggered: root.activatePrimary()
     }
 
     component EntryAction: T.Action {
         required property int index
         readonly property var entryAction: root.entry.actions?.[index] ?? null
         text: entryAction ? String(entryAction.label ?? entryAction.id ?? "") : ""
-        enabled: !!entryAction && root.enabled && root.visible && root.expanded
+        enabled: !!entryAction && root.enabled && root.visible && root.inputEnabled && root.expanded
             && root.showActions && !root.archived && !(entryAction.disabled ?? false)
         onTriggered: root.activateAction(String(entryAction.id))
     }
@@ -86,18 +122,56 @@ Item {
     EntryAction { id: thirdAction; index: 2 }
 
     function dismiss(): void {
-        if (root.enabled && root.visible)
+        if (root.enabled && root.visible && root.inputEnabled)
             root.dismissed()
     }
 
-    function activateAction(actionId: string): void {
-        const actions = root.entry.actions ?? [];
-        if (!root.enabled || !root.visible || !root.expanded || !root.showActions || root.archived || !actionId)
+    function freezePresentation(): void {
+        if (root.expansionFrozen)
             return;
-        const action = actions.slice(0, 3).find(item => String(item.id) === actionId);
+        const paintedHeight = root.height;
+        const paintedProgress = root.entranceProgress;
+        root.frozenExpanded = root.expanded;
+        root.frozenHeight = paintedHeight;
+        root.expansionFrozen = true;
+        // Behavior owns its animation; a disabled write replaces its target.
+        root.entranceProgress = paintedProgress;
+    }
+
+    function releasePresentation(): void {
+        root.entranceProgress = 1;
+        root.expansionFrozen = false;
+    }
+
+    function activateAction(actionId: string): void {
+        const actions = root.actionList();
+        if (!root.enabled || !root.visible || !root.inputEnabled || !root.expanded || !root.showActions || root.archived || !actionId)
+            return;
+        const action = actions.find(item => String(item.id) === actionId);
         if (!action || action.disabled)
             return;
         root.actionTriggered(actionId);
+    }
+
+    function activatePrimary(): bool {
+        if (!root.enabled || !root.visible || !root.inputEnabled || !root.primaryActionAvailable)
+            return false;
+        root.primaryTriggered(root.entry);
+        return true;
+    }
+
+    function actionList(): var {
+        const source = root.entry.actions;
+        const result = [];
+        if (!source)
+            return result;
+        for (let index = 0; index < source.length && index < 3; index++)
+            result.push(source[index]);
+        return result;
+    }
+
+    function defaultAction(): var {
+        return (root.entry.actions ?? []).find(item => String(item.id) === "default") ?? null;
     }
 
     readonly property string iconSource: root.entry.imagePath ?? ""
@@ -108,14 +182,21 @@ Item {
         : root.entry.urgency === "low" ? Style.textMuted
         : Style.accent
 
+    Timer {
+        interval: 60 * 1000
+        repeat: true
+        running: !root.archived && root.entry.createdAt !== undefined && root.entry.createdAt !== null
+        onTriggered: root.currentTimeMs = Date.now()
+    }
+
     // Named rather than inlined in the label's binding so it is one call
     // away from a test, the same reasoning `Style.childRadius` is a function.
     function timestampText(): string {
         if (root.archived)
             return Qt.formatDateTime(new Date(root.entry.archivedAt), "hh:mm");
-        if (!root.expanded || root.entry.createdAt === undefined)
+        if (root.entry.createdAt === undefined || root.entry.createdAt === null)
             return "";
-        const seconds = Math.max(0, (Date.now() - root.entry.createdAt) / 1000);
+        const seconds = Math.max(0, (root.currentTimeMs - root.entry.createdAt) / 1000);
         if (seconds < 60)
             return "just now";
         if (seconds < 3600)
@@ -124,8 +205,10 @@ Item {
     }
 
     implicitWidth: Style.notificationWidth
-    implicitHeight: root.expanded ? headline.height + details.implicitHeight + Style.space2
-                                  : Style.notificationCollapsedHeight
+    implicitHeight: root.expansionFrozen ? root.frozenHeight
+        : root.expanded ? headline.height + details.implicitHeight + Style.space2
+        : String(root.entry.body ?? "").length > 0 ? Style.notificationPreviewHeight
+        : Style.notificationCollapsedHeight
 
     clip: true
 
@@ -136,11 +219,12 @@ Item {
     // A small settle rather than a real button press — the same idiom every
     // control's own `pressScale` uses, named as its own property rather than
     // a literal in the scale expression below (same law, `pressScale` etc.).
-    property real entranceScale: 0.97
+    property real entranceScale: Motion.microPopScale
     opacity: root.entranceProgress
     scale: root.entranceScale + root.entranceProgress * (1 - root.entranceScale)
     Behavior on entranceProgress {
-        NumberAnimation { duration: Motion.microPop; easing.type: Motion.emphasizedEasing }
+        enabled: !root.expansionFrozen
+        NumberAnimation { id: entranceAnimation; duration: Motion.microPop; easing.type: Motion.emphasizedEasing }
     }
     Component.onCompleted: {
         if (root.animateEntrance)
@@ -148,7 +232,12 @@ Item {
     }
 
     Behavior on implicitHeight {
-        NumberAnimation { duration: Motion.fast; easing.type: Motion.emphasizedEasing }
+        enabled: !root.expansionFrozen
+        NumberAnimation {
+            id: expansionAnimation
+            duration: Motion.fast
+            easing.type: Motion.emphasizedEasing
+        }
     }
 
     // The urgency tick doubles as the list cursor when this card sits in one:
@@ -161,7 +250,7 @@ Item {
         shown: true
         strong: root.selected
         restOpacity: 0.75
-        markColor: root.tickColor
+        markColor: root.enabled ? root.tickColor : Style.disabled(root.tickColor)
     }
 
     RowLayout {
@@ -203,56 +292,156 @@ Item {
                 visible: !root.hasSwatch && root.iconSource.length === 0
                 name: root.iconName
                 size: Style.iconSm
+                color: root.enabled ? Style.text : Style.disabled(Style.text)
             }
         }
 
         // A NAME, not a value — the technical face is reserved for numbers
         // and machine text.
-        Prose { role: "metadata"; text: root.entry.appName }
-        Prose { Layout.fillWidth: true; role: "title"; text: root.entry.summary }
+        Prose {
+            id: appNameLabel
+            role: "metadata"
+            text: root.entry.appName
+            Layout.maximumWidth: (Style.notificationWidth - Style.iconSm - Style.space3 * 3) / 3
+            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+        }
+        Prose {
+            Layout.fillWidth: true
+            role: "title"
+            text: root.entry.summary
+            visible: !root.expanded
+            color: !root.enabled ? Style.disabled(Style.text)
+                : root.primaryPressed && root.primaryActionAvailable ? Style.accent : Style.text
+        }
+        Prose {
+            role: "metadata"
+            technical: true
+            text: root.timestampText()
+            visible: text.length > 0
+            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+        }
+    }
+
+    Text {
+        id: bodyPreview
+        anchors.left: headline.left
+        anchors.leftMargin: Style.iconSm + Style.space2
+        anchors.right: headline.right
+        anchors.top: headline.bottom
+        anchors.topMargin: Style.space1
+        height: Math.max(0, Style.notificationPreviewHeight - headline.height - Style.space1)
+        visible: !root.expanded && String(root.entry.body ?? "").length > 0
+        text: root.entry.body ?? ""
+        textFormat: Text.StyledText
+        color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+        font.family: Style.fontFamily
+        font.pixelSize: Style.textSm
+        lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
+        lineHeightMode: Text.FixedHeight
+        wrapMode: Text.WordWrap
+        maximumLineCount: 2
+        elide: Text.ElideRight
+        clip: true
+        Accessible.role: Accessible.StaticText
     }
 
     ColumnLayout {
         id: details
-        anchors.left: tick.right
+        anchors.left: headline.left
+        anchors.leftMargin: Style.iconSm + Style.space2
         anchors.right: parent.right
         anchors.top: headline.bottom
-        anchors.leftMargin: Style.space2
         anchors.rightMargin: Style.space3
         spacing: Style.space1
         visible: root.expanded
 
-        Text {
+        Item {
+            id: bodyViewportHost
             Layout.fillWidth: true
-            visible: text.length > 0
-            wrapMode: Text.WordWrap
-            maximumLineCount: 6
-            elide: Text.ElideRight
-            text: root.entry.body ?? ""
-            // Already sanitized by the consumer to bare b/i/u/br.
-            textFormat: Text.StyledText
-            color: Style.textMuted
-            font.family: Style.fontFamily
-            font.pixelSize: Style.textSm
+            implicitHeight: Math.min(expandedContent.implicitHeight, Style.notificationBodyViewportHeight)
+            height: implicitHeight
+
+            Flickable {
+                id: bodyViewport
+                anchors.fill: parent
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                contentWidth: width
+                contentHeight: expandedContent.implicitHeight
+                flickableDirection: Flickable.VerticalFlick
+
+                Column {
+                    id: expandedContent
+                    width: bodyViewport.width
+                    spacing: Style.space1
+
+                    Text {
+                        width: parent.width
+                        text: root.entry.summary
+                        color: !root.enabled ? Style.disabled(Style.text)
+                            : root.primaryPressed && root.primaryActionAvailable ? Style.accent : Style.text
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.textMd
+                        font.weight: Style.weightMedium
+                        lineHeight: Style.rhythm(Style.textMd * Style.lineBody)
+                        lineHeightMode: Text.FixedHeight
+                        wrapMode: Text.WordWrap
+                        Accessible.role: Accessible.StaticText
+                    }
+
+                    Text {
+                        id: bodyText
+                        width: parent.width
+                        visible: text.length > 0
+                        text: root.entry.body ?? ""
+                        // Ingress sanitizes to the supported b/i/u/br subset.
+                        textFormat: Text.StyledText
+                        color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.textSm
+                        lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
+                        lineHeightMode: Text.FixedHeight
+                        wrapMode: Text.WordWrap
+                        Accessible.role: Accessible.StaticText
+                    }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: bodyViewport
+                acceptedButtons: Qt.NoButton
+                onWheel: event => {
+                    const next = Math.max(0, Math.min(bodyViewport.contentHeight - bodyViewport.height,
+                        bodyViewport.contentY - event.angleDelta.y));
+                    if (next !== bodyViewport.contentY) {
+                        bodyViewport.contentY = next;
+                        event.accepted = true;
+                    } else {
+                        event.accepted = false;
+                    }
+                }
+            }
         }
 
         RowLayout {
-            visible: root.showActions && !root.archived && (root.entry.actions?.length ?? 0) > 0
+            visible: root.showActions && !root.archived && root.actionList().length > 0
             spacing: Style.space3
 
             Repeater {
-                model: (root.entry.actions ?? []).slice(0, 3)
+                model: root.actionList()
 
                 Text {
                     required property var modelData
                     required property int index
-                    readonly property bool available: root.enabled && !(modelData.disabled ?? false)
+                    readonly property bool available: root.enabled && root.inputEnabled
+                        && !(modelData.disabled ?? false)
                     enabled: available
                     // Addressable by a consumer or a test without exposing a
                     // repeater handle from the card's own public interface.
                     objectName: "notificationAction" + index
                     text: modelData.label ?? String(modelData)
-                    color: available ? (root.actionFocusIndex === index ? Style.text : Style.accent)
+                    color: root.enabled && !(modelData.disabled ?? false)
+                        ? (root.actionFocusIndex === index ? Style.text : Style.accent)
                         : Style.disabled(root.actionFocusIndex === index ? Style.text : Style.accent)
                     Accessible.role: Accessible.Button
                     Accessible.name: text
@@ -274,13 +463,6 @@ Item {
             }
         }
 
-        Prose {
-            role: "metadata"
-            technical: true
-            // Relative timestamp while live; archived rows show wall-clock.
-            visible: text.length > 0
-            text: root.timestampText()
-        }
     }
 
     Divider {
@@ -299,14 +481,27 @@ Item {
     StateLayer {
         id: layer
         anchors.fill: parent
-        interactive: root.enabled
-        clickable: false
+        interactive: root.enabled && root.inputEnabled
+        clickable: root.primaryActionAvailable
         target: null
+        onClicked: root.activatePrimary()
+    }
+
+    activeFocusOnTab: root.primaryActionAvailable && root.enabled && root.inputEnabled
+
+    Keys.onPressed: event => {
+        if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space)
+            return;
+        if (!root.primaryActionAvailable || !root.enabled || !root.inputEnabled)
+            return;
+        event.accepted = true;
+        if (!event.isAutoRepeat)
+            root.activatePrimary();
     }
 
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.MiddleButton
+        acceptedButtons: root.inputEnabled ? Qt.MiddleButton : Qt.NoButton
         onClicked: root.dismiss()
     }
 
@@ -322,19 +517,34 @@ Item {
 
     DragHandler {
         id: drag
-        enabled: root.draggable
+        enabled: root.draggable && root.inputEnabled
         target: null
         xAxis.enabled: true
-        yAxis.enabled: root.verticalDragEnabled
-        onActiveChanged: {
+        yAxis.enabled: root.verticalDragEnabled && !root.expanded
+        // Remember a completed horizontal swipe while the grab is active, so
+        // dismissal does not depend only on the handler's terminal translation.
+        onTranslationChanged: {
             if (active)
+                root.swipeDismissPending = Math.abs(translation.x) > root.width * Style.notificationDismissFraction
+                    && Math.abs(translation.x) >= Math.abs(translation.y);
+        }
+        onActiveChanged: {
+            if (active) {
+                root.swipeDismissPending = false;
                 return;
+            }
+            if (!root.inputEnabled) {
+                root.swipeDismissPending = false;
+                return;
+            }
             if (Math.abs(translation.y) > Math.abs(translation.x)) {
                 if (Math.abs(translation.y) > Style.notificationExpandDragPx)
                     root.dragExpanded = translation.y > 0;
-            } else if (Math.abs(translation.x) > root.width * Style.notificationDismissFraction) {
+            } else if (root.swipeDismissPending
+                    || Math.abs(translation.x) > root.width * Style.notificationDismissFraction) {
                 root.dismiss();
             }
+            root.swipeDismissPending = false;
         }
     }
 }

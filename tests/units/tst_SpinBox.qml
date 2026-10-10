@@ -24,6 +24,22 @@ TestCase {
     }
     SignalSpy { id: modifiedSpy; target: spin; signalName: "valueModified" }
 
+    Item {
+        id: feedbackHost
+        property real value: 42.5
+        SpinBox {
+            id: feedbackSpin
+            from: 0
+            to: 100
+            stepSize: 0.5
+            decimals: 1
+            value: feedbackHost.value
+            onValueModified: feedbackHost.value = value
+        }
+    }
+
+    SignalSpy { id: feedbackSpy; target: feedbackSpin; signalName: "valueModified" }
+
     function init() {
         spin.from = 0;
         spin.to = 12;
@@ -34,6 +50,13 @@ TestCase {
         spin.editable = true;
         spin.value = 4.5;
         modifiedSpy.clear();
+        feedbackHost.value = 42.5;
+        feedbackSpin.from = 0;
+        feedbackSpin.to = 100;
+        feedbackSpin.stepSize = 0.5;
+        feedbackSpin.decimals = 1;
+        feedbackSpin.wrap = false;
+        feedbackSpy.clear();
     }
 
     // One regression check: native pointer stepping, the component's bound
@@ -50,5 +73,40 @@ TestCase {
         spin.actions[0].trigger();
         fuzzyCompare(spin.value, 0.5, 0.0001, "Increase action did not use the native step");
         compare(modifiedSpy.count, 3, "one value-changing route was not reported exactly once");
+    }
+
+    function test_host_feedback_uses_component_actions_and_preserves_external_writes() {
+        compare(feedbackSpin.value, 42.5);
+        verify(feedbackSpin.stepUp());
+        compare(feedbackHost.value, 43);
+        compare(feedbackSpin.value, feedbackHost.value);
+        compare(feedbackSpy.count, 1);
+
+        feedbackHost.value = 17.5;
+        compare(feedbackSpin.value, 17.5);
+        verify(feedbackSpin.stepDown());
+        compare(feedbackHost.value, 17);
+        compare(feedbackSpy.count, 2);
+
+        feedbackHost.value = 100;
+        feedbackSpy.clear();
+        verify(!feedbackSpin.stepUp());
+        compare(feedbackSpy.count, 0);
+        feedbackSpin.wrap = true;
+        verify(feedbackSpin.stepUp());
+        compare(feedbackHost.value, 0);
+        compare(feedbackSpin.value, feedbackHost.value);
+        compare(feedbackSpy.count, 1);
+    }
+
+    function test_native_input_feedback_reports_once() {
+        feedbackHost.value = 42.5;
+        feedbackSpy.clear();
+        feedbackSpin.forceActiveFocus();
+        compare(feedbackSpin.value, 42.5);
+        keyClick(Qt.Key_Up);
+        compare(feedbackHost.value, 43);
+        compare(feedbackSpin.value, feedbackHost.value);
+        compare(feedbackSpy.count, 1);
     }
 }

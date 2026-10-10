@@ -14,6 +14,7 @@ QtObject {
     readonly property color colorText: "#f6f1f9"
     readonly property color colorTextMuted: "#b6a8c2"
     readonly property color colorBandFill: "#15081e"
+    readonly property color colorShadow: "#000000"
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -48,6 +49,10 @@ QtObject {
     readonly property int motionRevealLarge: 500
     readonly property int motionRevealSmall: 250
     readonly property int motionMorphGlide: 250
+    readonly property real motionRolloutDeformScale: 0.01
+    readonly property real motionRolloutDeformLimit: 0.02
+    readonly property int motionRolloutDeformStiffness: 200
+    readonly property int motionRolloutDeformDamping: 28
     readonly property real motionMicroPopScale: 0.97
     readonly property real motionCapsuleHoverScale: 1.04
     readonly property int motionSpin: 900
@@ -59,6 +64,7 @@ QtObject {
     readonly property real opacityRecede: 0.45
     readonly property int opacityBandRimStrength: 0
     readonly property real opacityBandStrokeStrength: 0.55
+    readonly property real opacityFloatingShadow: 0.28
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28
@@ -68,6 +74,8 @@ QtObject {
     readonly property int geometryNotificationWidth: 380
     readonly property int geometryControlWidth: 380
     readonly property int geometryNotificationCollapsedHeight: 36
+    readonly property int geometryNotificationPreviewHeight: 80
+    readonly property int geometryNotificationBodyViewportHeight: 96
     readonly property int geometryControlHeightLg: 52
     readonly property int geometrySwatchTarget: 44
     readonly property int geometrySpinBoxWidth: 140
@@ -95,9 +103,12 @@ QtObject {
     readonly property int geometryEdgeSnapReach: 32
     readonly property int geometryBandRimWidth: 6
     readonly property int geometryBandStrokeWidth: 2
+    readonly property real geometryFloatingShadowBlur: 0.6
+    readonly property int geometryFloatingShadowOffset: 8
+    readonly property int geometryFloatingShadowExtent: 24
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55
     readonly property real trackingWide: 1.4
-    readonly property var sizes: ({"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"SpinBox":{"sm":32,"md":40,"lg":52},"Slider":{"sm":16,"md":24,"lg":40},"TextField":{"sm":32,"md":40,"lg":52},"Segmented":{"sm":32,"md":40,"lg":52}})
+    readonly property var sizes: ({"DataCapsule":{"sm":32,"md":64,"lg":96},"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"SpinBox":{"sm":32,"md":40,"lg":52},"Slider":{"sm":16,"md":24,"lg":40},"TextField":{"sm":32,"md":40,"lg":52},"Segmented":{"sm":32,"md":40,"lg":52}})
 }

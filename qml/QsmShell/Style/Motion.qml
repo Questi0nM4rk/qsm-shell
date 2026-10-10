@@ -30,7 +30,7 @@ QtObject {
     // silently retune the other.
     readonly property int microPop: Style.reducedMotion ? 60 : Tokens.motionMicroPop
     // microPopDuration — the same settle, named for a host whose content
-    // slot rides it directly (Rollout's `settleContent`). One fact, two
+    // slot rides it directly (Rollout's detached `settleContent`). One fact, two
     // names during the transition: retuning `microPop` retunes this too.
     readonly property int microPopDuration: microPop
     // microPopScale — the one settle scale every micro-pop entrance shares
@@ -66,14 +66,19 @@ QtObject {
     // a glide and a reveal are different events and must be retunable apart.
     readonly property int morphGlide: Style.reducedMotion ? 120 : Tokens.motionMorphGlide
 
+    readonly property real rolloutDeformScale: Tokens.motionRolloutDeformScale
+    readonly property real rolloutDeformLimit: Tokens.motionRolloutDeformLimit
+    readonly property real rolloutDeformStiffness: Tokens.motionRolloutDeformStiffness
+    readonly property real rolloutDeformDamping: Tokens.motionRolloutDeformDamping
+
     // The reveal curves are bezier control points, not durations, so they are
     // constants rather than theme tokens: a theme changes how long the border
     // takes, never what shape the deformation has.
     //
     // NO overshoot in either. A spring was tried and cut: overshoot made every
     // reveal read as a popup landing on top of the shell rather than as the
-    // border itself moving. Where organic feel is wanted, the goo deformation
-    // supplies it -- the curve stays honest.
+    // border itself moving. Attached Rollout changes aperture depth only;
+    // detached compatibility can deform without changing this curve.
     //
     // Reveal is a strong decelerate: fast out of the border, soft landing.
     readonly property var revealCurve: [0.05, 0.7, 0.1, 1.0, 1.0, 1.0]

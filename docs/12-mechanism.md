@@ -3,6 +3,34 @@
 The implementation vocabulary the spec assumes. Code below is NORMATIVE: implementers use
 these exact formulas/patterns; deviations require editing this file first.
 
+The attached Rollout contract is source-silhouette expansion, specified in
+`openspec/changes/rollout-expansion`: bounded progress, full-size slot access,
+automatic frame insets, settled parent origins and immediate close input withdrawal.
+There is no attached style selector. Detached fullscreen presentation remains
+separate; shader code is unchanged. Source adoption is not live owner acceptance.
+Superseded motion is retained in
+`docs/archive/rollout-travel/`, not as an alternative target contract. Shader
+composition formulas below remain unchanged.
+
+## Render boundary and terminal handoff
+
+Follow one body through `Rollout.qml` → `ShellBorder.registerBulge` / `snapToEdges`
+→ shader uniforms → `edgemelt.frag` → visibility/registry removal. Record local,
+host and rendered coordinates separately. For attached expansion, `silhouetteRect`
+is the growing aperture and `viewportRect` is its exposed clip/input rectangle.
+Full-size content is a separate stationary source-relative geometry. Registry
+helpers may add paint-only non-origin weld contacts, but cannot move the source
+wall, content or input as a side effect. A correct producer rect is insufficient
+if a later helper normalizes it into a different shape.
+
+The terminal comparison is almost hidden → hidden slot still present → slot
+removed. At zero outness, composition preserves the incoming fill/rim field,
+existing edge gate and lighting, and effective deformation is identity. Removing
+that neutral slot changes neither paint nor geometry; input already excludes the
+hidden body. Preserving only the zero contour is insufficient because stroke
+depth and lighting use the field's interior values and gradient. See
+**Composition and fill**, **Glass edge** and **Reveal choreography** for formulas.
+
 ## Silhouette shader
 
 One full-screen ShaderEffect per monitor computes the whole silhouette (band + all rollouts)
@@ -12,6 +40,30 @@ The fill carries ONE line of paint: the glass edge, a lit stroke hugging the INS
 merged silhouette (see "Glass edge" below). It is not a border and not a stroke around a
 shape — 01-frame still forbids those, and nothing draws its own chrome. It is the union's own
 edge, painted, and it exists only on inner boundaries.
+
+### Attached expansion
+
+Growing contour is the attached target at the PRODUCER, not a registry shim or
+second shader. `silhouetteRect` IS `viewportRect` before paint normalization;
+free radii clamp to current aperture half extents. `effectiveDm00/01/11` are
+`1, 0, 1`, and full-size content parks at its settled source-relative coordinate.
+No attached goo integration or independent content scale/fade runs. A source is
+the frame band or a registered parent Rollout in the same host, not an arbitrary
+Item or inherited QML clipping ancestor. A fullscreen-detached capsule does not
+pretend to expand an absent frame.
+
+Use the same `registerBulge`, origin mask, blend and outness: one slot, one fill,
+one pass, no extra rectangle or registry. Outness reaches zero before removal,
+preserving the incoming fill/rim field and lighting. No caller-specific geometry
+selection is part of this contract.
+
+The render chain to follow for one body is
+progress → viewport/silhouette → registry → shader → hidden neutral.
+`viewportRect` is the clip/input aperture and `silhouetteRect` is the contour
+supplied to paint normalization. Trace both
+through `ShellBorder.registerBulge` / `snapToEdges` → shader uniforms →
+`edgemelt.frag` → visibility/registry removal, and confirm the terminal slot
+present at zero outness contributes nothing before it is unregistered.
 
 ### SDF primitives
 
@@ -67,21 +119,22 @@ float kFrame = clamp(min(smoothFactor, minThickness - 1.0), 1.0, smoothFactor);
 float dFrame = smaxSharpA(dOuter, -dInner, kFrame);
 ```
 
-### Border sink — ABOLISHED (owner, 2026-08-17)
+### Fixed frame — no border sink
 
-The sink (wall receding toward a penetrating rect) belonged to the era when rollouts
-approached the band from the viewport side. Under the border-origin travel law
-(02-rollouts) every rollout keeps a tail permanently under its band, which saturated the
-sink and carved visible pockets around every bulge and parked rollout. The merged fill
-erases the wall behind a bulge natively — `dInner` is used unmodified.
+Keep `dInner` unmodified while composing rollouts. Their origin fill continuation
+already joins body and band; a receding wall would carve pockets around those
+tails and add a second restoration motion when they disappear.
 
 ### Composition and fill
 
 ```glsl
 // mergedSdf: start from dFrame and fold every occupied slot iteratively —
-// result = smin(result, d_i, smoothFactor * param_i.y) — the per-slot blend
-// factor (2026-08-17) shrinks a rollout's neck with its protrusion so a body
-// absorbed behind its band stops bridging exactly when it disappears.
+// Preserve the incoming field before composing each slot. Compose its full
+// body and origin continuation into slotSdf with the existing union rules.
+// Outness restores the incoming distance field, not merely the zero contour:
+mergedSdf = mix(incomingSdf, slotSdf, outness);
+// The exact-union rim field follows the same endpoint.
+rimSdf = mix(incomingRimSdf, min(incomingRimSdf, dRim), outness);
 float fw = fwidth(mergedSdf);                       // derivative AA: equal weight every axis
 float alpha = 1.0 - smoothstep(-fw, fw, mergedSdf);
 fragColor = vec4(fillColor.rgb * alpha, alpha) * qt_Opacity;
@@ -92,11 +145,23 @@ Constants (ratified in 01-frame): band left 60 / others 16, smoothFactor 20, rol
 band segment is the smin's job, not a radius zeroing), viewport rounding 25. All shader
 coordinates are LOGICAL pixels; fractional monitor scale is absorbed by fwidth-based AA.
 
-### Deformed evaluation (squash/stretch, see Physics)
+`incomingSdf` and `incomingRimSdf` are saved before this slot contributes anything.
+The slot's melt radius still follows blend, independently of outness. At outness
+one its established composition is unchanged; at zero the entire incoming field
+is unchanged, including its gradient and interior depth used by lighting/stroke.
+This is distance-field composition, not opacity on the painted body or its content.
+It prevents slot removal from becoming a separate border-lighting recovery.
 
+### Generic deformation inputs
+
+Attached expansion supplies identity deformation. The generic shader still
+accepts deformation inputs from other or detached producers;
+support for those inputs does not require attached Rollout goo.
 The shader evaluates each rect's SDF in the rect's undeformed frame by inverse-transforming
 the sample point; a min-eigenvalue factor corrects the distance metric under non-uniform
-scale:
+scale. Registry rects are mapped through the rollout's parent, not the rollout itself, so
+the registered center is the undeformed scene-space pivot. Mapping through the rollout would
+already apply its Matrix4x4 and then the shader would deform that displaced center again:
 
 ```glsl
 mat2 invDeform = mat2(invDm.xy, invDm.zw);          // CPU-precomputed inverse 2x2
@@ -110,12 +175,65 @@ d *= max(minEig, 0.01);
 Qt cannot bind QML arrays to GLSL array uniforms — use NAMED per-slot uniforms:
 `rect0..rect7` (vec4: cx, cy, halfW, halfH), `radii0..radii7` (vec4 per-corner),
 `deform0..deform7` (vec4: the inverse 2x2, row-major), `param0..param7` (vec4: x = minEig,
-y = melt-blend factor [0,1], z = edge bits, w = outness [0,1]).
+y = melt-blend factor [0,1], z = packed rim/origin side masks, w = outness [0,1]).
 Empty slot = zero rect (contributes nothing), and its param is `(1, 1, 0, 1)`.
 
-`z` is a bitmask of the bands this rect is welded through — 1 left, 2 right, 4 top, 8 bottom
-— used to extend the RIM copy of the rect through them so no readability line is drawn at the
-seam where a rollout meets its border.
+Before packing, automatic edge snapping applies only to sides not declared in
+the source-origin mask. A declared origin already has squared corners and a
+shader fill continuation; normalization must preserve that source attachment.
+Non-origin snapping remains paint-only and cannot change the input aperture or
+full-size content placement.
+For `snapToEdges(rect, radius, edgeBits)`, guard the existing gap comparisons:
+
+```qml
+// edgeBits is the incoming declared origin mask, before adding snap contacts.
+if (!(edgeBits & 1) && x - root.leftEdge <= reach) { /* snap left */ }
+if (!(edgeBits & 2) && rightGap <= reach) { /* snap right */ }
+if (!(edgeBits & 4) && y - root.edge <= reach) { /* snap top */ }
+if (!(edgeBits & 8) && bottomGap <= reach) { /* snap bottom */ }
+```
+
+Non-origin edge snapping, weld caps and neighbour seam overlap remain unchanged.
+This paint registration never enlarges the separately registered input viewport.
+
+`z` packs two side masks (1 left, 2 right, 4 top, 8 bottom): the low four
+bits name rim continuations, the next four name the body's declared origin
+sides. A parent can extend its rim toward a child still emerging, but cannot
+extend fill there. Only origin sides extend fill through the body's source.
+A rim-only extension cannot remove a stroke computed from `mergedSdf`, and
+leaves a gap when deformation compresses the body away from its origin.
+
+```glsl
+float ext = max(leftEdge, edge) + smoothFactor;
+float originBits = floor(param.z / 16.0);
+vec2 weldCenter = center;
+vec2 weldHalf = halfSize;
+// For each named side, extend by ext; left is shown here.
+if (mod(originBits, 2.0) >= 1.0) {
+    weldCenter.x -= ext * 0.5;
+    weldHalf.x += ext * 0.5;
+}
+// tp is the original body's inverse-deformed sample, not a new transform
+// around weldCenter: changing that pivot moves the exterior edge too.
+float dWeld = sdRoundedBox4(tp, weldCenter, weldHalf, radii)
+    * max(param.x, 0.01);
+// Blend 0 keeps the parent/child union exact, not the child's frame join.
+// Smooth only against the ORIGINAL frame, never the accumulated parent.
+float outness = clamp(param.w, 0.0, 1.0);
+float frameJoin = min(smoothFactor, minThickness * 0.5) * outness;
+float attachedBody = param.y == 0.0
+    ? (frameJoin > 0.0 ? smin(dFrame, dWeld, frameJoin) : min(dFrame, dWeld))
+    : dWeld;
+slotSdf = min(slotSdf, attachedBody);
+// Rim uses mod(param.z, 16.0), its own extended box, and the SAME tp.
+```
+
+This retains a straight full-span parent/child seam while a child touching a
+second band gets that band's concave fillet. The frame join is capped at half
+the thinnest band, the same weld-depth rule as the CPU registration. Its reach
+also goes to zero with outness. A slot with outness zero contributes no body,
+fill continuation, rim or stroke gate: skip it before merging its fields. Never
+call this circular smin with zero reach as a substitute for exact min.
 
 `w` is OUTNESS: how far this body has emerged, 0 hidden to 1 fully out. It is a different
 fact from `y` and the two must not be conflated. `y` is the melt radius, and a caller may set
@@ -145,15 +263,20 @@ the line also traces the outer screen edge and the band reads as double-lined.
 **Water law.** A body that has not come out yet has no edge of its own. A barely-out rollout
 drives its melt radius toward zero, smin degenerates to a hard min, and the union keeps a full
 boundary where the new body meets whatever it is emerging from — which the stroke would then
-draw as a hard line between them. So the stroke is gated by OUTNESS, per slot, near that
-slot's own boundary:
+draw as a hard line between them. Gate only the newly exposed boundary, never
+the existing frame/parent boundary. Read the incoming field before this slot:
 
 ```glsl
 const float seamReach = 6.0;
 float outness = clamp(param.w, 0.0, 1.0);              // param.w, NEVER param.y
 float nearThis = 1.0 - smoothstep(0.0, seamReach, abs(d));
-strokeGate = min(strokeGate, mix(1.0, outness, nearThis));
+float newBoundary = nearThis * smoothstep(0.0, seamReach, incomingSdf);
+strokeGate = min(strokeGate, mix(1.0, outness, newBoundary));
 ```
+
+At the incoming union's edge (`incomingSdf = 0`) the slot gate is exactly one.
+As its exposed edge approaches that wall, the mask returns continuously to one;
+zero-outness slot removal therefore cannot switch a dark frame edge back on.
 
 **Light.** A point light at the CENTRE OF THE SCREEN, radiating outward. Not an overhead
 vector: the band wraps all four screen edges, so one global up-vector lights the top band and
@@ -187,74 +310,71 @@ band it came out of.
 For symmetric 2x2 [[a,b],[b,c]]: mean = (a+c)/2; dev = sqrt(((a-c)/2)^2 + b^2);
 minEig = mean - dev. Inverse: 1/(ac - b^2) * [[c,-b],[-b,a]].
 
-## Physics (squash/stretch spring)
+## Attached content transform
 
-Per rollout: a symmetric 2x2 deform matrix (dm00, dm01, dm11; rest = 1,0,1) spring-driven by
-the rect's own scene-space velocity. Applied twice: as a `Matrix4x4` transform on the content
-(pivot = item center) and as `invDeform`+`minEig` to the shader (above) — content and
-silhouette deform together.
-
-```text
-each frame (dt outside [0.001, 0.1] -> skip the INTEGRATION step only; still resample
-prevScenePos so the next frame's velocity is sane):
-  vel = (scenePos - prevScenePos) / dt ; speed = |vel|   # logical px/second
-  active only when speed > 5.0
-  # deformScale multiplies speed in px/MILLISECOND (speed/1000) — at px/s the
-  # ratified intensities (0.10..0.25) would saturate the cap instantly.
-  stretch  = 1 + min((speed / 1000) * deformScale, 0.35)   # hard cap 35%
-  compress = 1 / stretch
-  c = velX/speed ; s = velY/speed          # no atan2 needed
-  target00 = stretch*c*c + compress*s*s
-  target01 = (stretch - compress)*c*s
-  target11 = stretch*s*s + compress*c*c
-  # implicit damping — unconditionally stable at any dt:
-  invDamp = 1 / (1 + damping * dt)
-  dmVel = (dmVel - stiffness * (dm - target) * dt) * invDamp
-  dm   += dmVel * dt
-  at rest (|dm - identity| < 0.002 and |dmVel| small and speed < 5): snap to identity
-```
-
-Defaults: stiffness 200, damping 16. Per-surface `deformScale` (intensity) — RATIFIED in
-10-motion: popouts 0.10, OSD 0.25, notifications 0.15, top panel 0.10, launcher 0.10,
-session 0.20.
-
-QML port shape: three `real` properties + a `FrameAnimation`-driven sampler for scene
-velocity; content transform built as translate(c) · M · translate(−c).
+Attached expansion uses identity for content and shader transforms throughout,
+not merely at the endpoint. An old integrator matrix cannot affect its geometry.
+The superseded velocity-driven travelling formulas are archived separately;
+remaining motion code serves detached compatibility only, not attached reveal.
 
 ## Reveal choreography (ratified in 02-rollouts)
 
-One value per rollout: `offsetScale` (0 shown → 1 hidden).
+One value per rollout: `offsetScale` (0 shown → 1 hidden), with
+`p = clamp(1 - offsetScale, 0, 1)` for bounded aperture dimensions.
 
 ```qml
-property real offsetScale: shouldBeActive ? 0 : 1
-// Render until the animation SETTLES, not until the value crosses 1 — the
-// overshoot curve crosses 1 mid-retract and cutting off there snaps the
-// band sink back (02-rollouts no-opacity-ramp law). No opacity binding:
-// content rides fully drawn and opaque.
+property real offsetScale: shouldBeActive && !suppressed ? 0 : 1
+// Retain the item until the transition settles. Content rides opaque.
 visible: revealAnim.running || offsetScale < 1
-// Back limit: position clamps at flush — overshoot past 0 detaches the
-// attached edge. Border-origin travel: the rect keeps an edgeInset-deep
-// tail under the band (implicit size = body + edgeInset); shown at the
-// screen edge, hidden = body swallowed behind the wall; content clipped
-// at the wall (02-rollouts laws, 2026-08-17).
-anchors.topMargin: -(bodyHeight + smoothFactor + 5) * Math.max(0, offsetScale) // per attached edge
+readonly property real revealProgress: Math.max(0, Math.min(1, 1 - offsetScale))
+// The viewport extrudes from the fixed origin along one axis.
+implicitWidth: revealHorizontal ? bodyWidth * revealProgress : bodyWidth
+implicitHeight: revealHorizontal ? bodyHeight : bodyHeight * revealProgress
+// Full-size content parks inside the growing aperture; it does not travel.
+body.x: revealHorizontal && attached("right") ? width - bodyWidth : 0
+body.y: !revealHorizontal && attached("bottom") ? height - bodyHeight : 0
 Behavior on offsetScale { NumberAnimation { id: revealAnim
-    /* the 10-motion token: 500ms or 250ms tier, bezier 0.38,1.21,0.22,1
-       via easing.bezierCurve */ } }
+    /* Motion.revealLarge / revealSmall and revealCurve / retractCurve */ } }
 ```
 
-The silhouette rect the shader receives is bound 1:1 to the LIVE item rect — including its
-off-screen excursion while sliding. No clamping, no synthetic rects.
+At right, `root.x = wallX - width`, so the full body host x is
+`wallX - width + width - bodyWidth = wallX - bodyWidth`. At bottom the same
+algebra gives `wallY - bodyHeight`; left/top park directly on their source wall.
+Only the aperture changes with reveal. Its source wall and free-axis placement
+stay fixed unless the host explicitly changes source placement or target size.
+Free radii clamp against current aperture half extents; content remains full-size.
+
+Normal source depth comes from the host's left band or other band depth, with
+Style fallback and explicit inset overrides. A nested source uses the parent's
+settled full-body edge in host coordinates, not its animated aperture. It need
+not be a QML child under the parent's clip.
+
+Size changes have one animation owner. `Rollout.animateBodySize` defaults to
+true for content that supplies a target size; a body already following animated
+child extents sets it false. In that case body dimensions, clip and registry use
+those extents directly, with no second morph that lets content outrun its rim.
+This does not change `offsetScale` reveal/retract or any shader formula.
+
+At hidden progress the aperture has zero depth at the source wall; stationary
+full-size content is clipped out. Outness is zero and deformation identity before
+slot removal. No parking travel, later border restoration or visibility timer is
+introduced. Detached fullscreen placement remains outside this attached contract.
 
 ## Motion token (RATIFIED — see 10-motion)
 
-500ms, cubic-bezier control points `(0.38, 1.21)`, `(0.22, 1.0)` — first control point above
-1 produces the overshoot.
+Large reveals use 500ms, small reveals and size morphs use 250ms. Reveal
+control points are `(0.05, 0.7)`, `(0.1, 1.0)`; retract uses `(0.3, 0.0)`,
+`(0.2, 1.0)`. Both end at `(1, 1)` without overshoot. Attached reveal changes
+aperture depth only; no deformation or bouncing content settle is added.
 
 ## Registries
 
 The scene window owns two registries keyed by rollout id, reassigned-not-mutated so bindings
 fire: silhouette rects (shader uniforms, 8 slots) and hit rects (input mask Region slots, 8).
-Both are fed by the SAME live geometry (02-rollouts input law). The input mask ADDITIONALLY
+Both derive from reveal progress: the producer paint contour and exposed viewport
+are the aperture before paint normalization. Shader welds/snapping may extend
+paint, never input. Input registration is near-settled and withdraws on semantic
+close/suppression, while the outgoing picture remains until hidden. Full-size
+clipped content must never expand input over the application. The input mask ADDITIONALLY
 always contains: the band/rail strip (60px revealed or peeked, 16px collapsed) and the two
 handle hover-zones (09-input) — these are standing regions, not registry slots.

@@ -85,6 +85,28 @@ TestCase {
         tryCompare(activeLayer, "response", 1, 500);
     }
 
+    function test_programmatic_activation_uses_the_real_intent_guard() {
+        activeClicked.clear()
+        verify(activeLayer.activate())
+        compare(activeClicked.count, 1)
+        activeLayer.clickable = false
+        verify(!activeLayer.activate())
+        compare(activeClicked.count, 1)
+        activeLayer.clickable = true
+        activeHost.enabled = false
+        activeLayer.manualHoverOverride = true
+        activeLayer.manualPressOverride = true
+        verify(!activeLayer.hovered)
+        verify(!activeLayer.pressed)
+        verify(!activeLayer.activate())
+        compare(activeClicked.count, 1)
+        activeLayer.manualHoverOverride = false
+        activeLayer.manualPressOverride = false
+        activeHost.enabled = true
+        verify(!inactiveLayer.activate())
+        verify(!hostedLayer.activate())
+    }
+
     function test_inactive_layer_ignores_real_pointer_interaction() {
         mouseMove(probe, 340, 220);
         inactiveClicked.clear();
@@ -105,6 +127,29 @@ TestCase {
         mouseMove(activeHost, 80, 32);
         compare(activeLayer.hovered, true, "pointer selection gate hid the raw hover fact");
         compare(activeHovered.count, 0, "pointer selection gate did not suppress hover claim");
+    }
+
+    function test_visual_overrides_never_fabricate_intent_and_real_entry_still_reports() {
+        mouseMove(probe, 340, 220)
+        activeClicked.clear()
+        activeHovered.clear()
+        activeLayer.manualHoverOverride = true
+        activeLayer.manualPressOverride = true
+        compare(activeLayer.hovered, true)
+        compare(activeLayer.pressed, true)
+        compare(activeClicked.count, 0)
+        compare(activeHovered.count, 0)
+        mouseMove(activeHost, 80, 32)
+        compare(activeHovered.count, 1)
+        mousePress(activeHost, 80, 32)
+        compare(activeClicked.count, 0)
+        mouseRelease(activeHost, 80, 32)
+        activeLayer.interactive = false
+        compare(activeLayer.hovered, false)
+        compare(activeLayer.pressed, false)
+        activeLayer.interactive = true
+        activeLayer.manualHoverOverride = false
+        activeLayer.manualPressOverride = false
     }
 
     function test_hover_only_layer_reports_hover_without_a_tap_action() {

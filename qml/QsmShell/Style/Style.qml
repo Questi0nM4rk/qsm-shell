@@ -22,6 +22,7 @@ QtObject {
 
     // ── mode ────────────────────────────────────────────────────────────
     readonly property bool reducedMotion: backend?.reducedMotion ?? false
+    readonly property bool reducedEffects: backend?.reducedEffects ?? false
 
     // ── colour ──────────────────────────────────────────────────────────
     readonly property color accent: backend?.accent ?? Tokens.colorAccent
@@ -54,6 +55,11 @@ QtObject {
     // rather than the palette ramp (spec 01-frame), so the melt silhouette
     // reads as a frame around the content, not a panel floating on it.
     readonly property color bandFill: backend?.bandFill ?? Tokens.colorBandFill
+    readonly property color shadow: backend?.shadow ?? Tokens.colorShadow
+    readonly property real floatingShadowOpacity: backend?.floatingShadowOpacity ?? Tokens.opacityFloatingShadow
+    readonly property real floatingShadowBlur: backend?.floatingShadowBlur ?? Tokens.geometryFloatingShadowBlur
+    readonly property real floatingShadowOffset: backend?.floatingShadowOffset ?? Tokens.geometryFloatingShadowOffset
+    readonly property int floatingShadowExtent: backend?.floatingShadowExtent ?? Tokens.geometryFloatingShadowExtent
     // Edge-readability rim and glass-edge stroke on the melt silhouette. Both
     // default to an EXISTING role rather than a private hex, mirroring the
     // consumer theme this was measured against: the rim is the outline
@@ -303,6 +309,12 @@ QtObject {
     readonly property int spinBoxWidth: backend?.spinBoxWidth ?? Tokens.geometrySpinBoxWidth
     readonly property int notificationCollapsedHeight: backend?.notificationCollapsedHeight
         ?? Tokens.geometryNotificationCollapsedHeight
+    // Full compact message composition: headline plus two readable body lines.
+    readonly property int notificationPreviewHeight: backend?.notificationPreviewHeight
+        ?? Tokens.geometryNotificationPreviewHeight
+    // Long message content scrolls inside this fixed expanded viewport.
+    readonly property int notificationBodyViewportHeight: backend?.notificationBodyViewportHeight
+        ?? Tokens.geometryNotificationBodyViewportHeight
     // The melt reach every join neck derives from (spec 01-frame), how close
     // a silhouette must come to a band before it fuses rather than leaves a
     // sliver, and the rim/stroke thicknesses drawn on the merged shape.

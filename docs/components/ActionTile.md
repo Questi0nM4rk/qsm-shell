@@ -10,3 +10,4 @@ size: fixed footprint buttonWidth/buttonHeight from the tile scale so a set line
 tokens: tileWidth, tileHeight, radiusMd, iconLg, space scale, surface ladder, accent, danger, text roles, Style.disabled, Motion, StateLayer and Surface; no local colors or measurements.
 motion: StateLayer hover and press response plus color settling; reduced motion shortens the duration, never invents another state.
 not designed: confirmation policy, product consequence, asynchronous progress and menus; the host owns what armed means and what activation does.
+review: choose a concrete session action with the owner; glyph, verb and confirmation name that same consequence. Power-off is one possible example, not the type's identity. The current fixture is not owner-accepted.

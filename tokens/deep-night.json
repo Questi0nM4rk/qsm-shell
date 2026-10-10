@@ -10,7 +10,8 @@
     "surface": "#2d2036",
     "text": "#f6f1f9",
     "textMuted": "#b6a8c2",
-    "bandFill": "#15081e"
+    "bandFill": "#15081e",
+    "shadow": "#000000"
   },
   "space": {
     "tight": 2,
@@ -55,6 +56,10 @@
     "revealLarge": 500,
     "revealSmall": 250,
     "morphGlide": 250,
+    "rolloutDeformScale": 0.01,
+    "rolloutDeformLimit": 0.02,
+    "rolloutDeformStiffness": 200,
+    "rolloutDeformDamping": 28,
     "microPopScale": 0.97,
     "capsuleHoverScale": 1.04,
     "spin": 900,
@@ -67,7 +72,8 @@
     "surface": 0.9,
     "recede": 0.45,
     "bandRimStrength": 0,
-    "bandStrokeStrength": 0.55
+    "bandStrokeStrength": 0.55,
+    "floatingShadow": 0.28
   },
   "font": {
     "family": "sans-serif",
@@ -81,6 +87,8 @@
     "notificationWidth": 380,
     "controlWidth": 380,
     "notificationCollapsedHeight": 36,
+    "notificationPreviewHeight": 80,
+    "notificationBodyViewportHeight": 96,
     "controlHeightLg": 52,
     "swatchTarget": 44,
     "spinBoxWidth": 140,
@@ -107,7 +115,10 @@
     "meltSmoothing": 20,
     "edgeSnapReach": 32,
     "bandRimWidth": 6,
-    "bandStrokeWidth": 2
+    "bandStrokeWidth": 2,
+    "floatingShadowBlur": 0.6,
+    "floatingShadowOffset": 8,
+    "floatingShadowExtent": 24
   },
   "line": {
     "tight": 1.2,
@@ -118,6 +129,7 @@
     "wide": 1.4
   },
   "sizes": {
+    "DataCapsule": { "sm": 32, "md": 64, "lg": 96 },
     "Switch": { "sm": 12, "md": 16, "lg": 24 },
     "Checkbox": { "sm": 12, "md": 16, "lg": 24 },
     "Radio": { "sm": 12, "md": 16, "lg": 24 },

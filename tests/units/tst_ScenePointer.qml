@@ -18,6 +18,18 @@ TestCase {
     visible: true
     when: windowShown
 
+    QtObject {
+        id: injected
+        property bool inside: true
+        property point position: Qt.point(20, 20)
+    }
+
+    Item {
+        id: injectedScene
+        x: 200; y: 200; width: 180; height: 180
+        ScenePointer { id: injectedPointer; source: injected }
+    }
+
     // ── row 1: declared on the ANCESTOR ─────────────────────────────────
     // The correct placement: the reader and a descendant handler at any depth
     // are told about the pointer independently, because neither shadows the
@@ -100,5 +112,31 @@ TestCase {
         mouseMove(probe, 350, 350);
         compare(leavePointer.inside, false, "ScenePointer still reports inside after the pointer left its scene");
         compare(leavePointer.contains(leaveScene.target), false, "contains() used the stale ghost position instead of noticing the pointer left");
+    }
+
+    function test_injected_source_uses_shared_rectangle_and_triangle_containment() {
+        const rectangle = Qt.rect(10, 10, 40, 40)
+        const triangle = injectedPointer.triangleArea(Qt.point(0, 0), Qt.point(40, 0), Qt.point(0, 40))
+        compare(injectedPointer.inside, true)
+        compare(injectedPointer.position, Qt.point(20, 20))
+        compare(injectedPointer.contains(rectangle), true)
+        compare(injectedPointer.contains(triangle), true)
+        injected.position = Qt.point(20, 20)
+        compare(injectedPointer.contains(triangle), true)
+        injected.position = Qt.point(40, 40)
+        compare(injectedPointer.contains(triangle), false)
+        injected.position = Qt.point(0, 0)
+        compare(injectedPointer.contains(triangle), true)
+        compare(injectedPointer.contains(injectedPointer.triangleArea(Qt.point(1, 1), Qt.point(2, 2), Qt.point(3, 3))), false)
+        injected.inside = false
+        compare(injectedPointer.contains(rectangle), false)
+    }
+
+    function test_null_source_reads_native_pointer() {
+        mouseMove(leaveScene, 80, 50)
+        compare(leavePointer.source, null)
+        compare(leavePointer.inside, true)
+        compare(Math.round(leavePointer.position.x), 80)
+        compare(Math.round(leavePointer.position.y), 50)
     }
 }

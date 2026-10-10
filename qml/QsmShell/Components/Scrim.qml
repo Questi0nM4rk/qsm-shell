@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -20,6 +21,12 @@ Rectangle {
     property real strength: 0.55
 
     signal dismissed
+    readonly property list<T.Action> actions: [T.Action { text: "Dismiss"; enabled: root.enabled && root.shown; onTriggered: root.dismiss() }]
+
+    function dismiss(): void {
+        if (root.shown && root.enabled)
+            root.dismissed()
+    }
 
     anchors.fill: parent
     color: Qt.rgba(Style.background.r, Style.background.g, Style.background.b, root.strength)
@@ -37,10 +44,10 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        enabled: root.shown
+        enabled: root.shown && root.enabled
         // Every button, so a right-click cannot reach a context menu behind
         // an open modal.
         acceptedButtons: Qt.AllButtons
-        onClicked: root.dismissed()
+        onClicked: root.dismiss()
     }
 }

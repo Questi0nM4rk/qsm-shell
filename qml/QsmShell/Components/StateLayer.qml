@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -44,6 +45,9 @@ Item {
     // A hover-only trigger still answers pointer arrival, but must not offer a
     // press or emit a click for an action it deliberately does not own.
     property bool clickable: true
+    property int gesturePolicy: TapHandler.DragThreshold
+    property bool manualHoverOverride: false
+    property bool manualPressOverride: false
     property Item target: parent
     property real hoverScale: 1.08
     property real pressScale: 0.94
@@ -62,9 +66,24 @@ Item {
     property real focusRadius: 0
     property color focusColor: Style.accent
 
-    readonly property bool hovered: interactive && (_hosted ? host.hovered : hover.hovered)
-    readonly property bool pressed: interactive && (_hosted ? (host.pressed ?? false) : tap.pressed)
+    readonly property bool pointerHovered: enabled && interactive && (_hosted ? host.hovered : hover.hovered)
+    readonly property bool hovered: enabled && interactive && (pointerHovered || manualHoverOverride)
+    readonly property bool pressed: enabled && interactive && ((_hosted ? (host.pressed ?? false) : tap.pressed) || manualPressOverride)
     signal clicked
+    readonly property list<T.Action> actions: [
+        T.Action {
+            text: "Activate"
+            enabled: root.enabled && root.interactive && root.clickable && !root._hosted
+            onTriggered: root.activate()
+        }
+    ]
+
+    function activate(): bool {
+        if (!root.enabled || !root.interactive || !root.clickable || root._hosted)
+            return false
+        root.clicked()
+        return true
+    }
 
     // A hover-enter that is allowed to CLAIM the selection. A list binds its
     // cursor to this rather than to `hovered`, and then a pointer that never
@@ -72,8 +91,8 @@ Item {
     // Interaction.pointerSelects, which the consumer owns.
     signal hoveredEntered
 
-    onHoveredChanged: {
-        if (root.hovered && Interaction.pointerSelects)
+    onPointerHoveredChanged: {
+        if (root.pointerHovered && Interaction.pointerSelects)
             root.hoveredEntered();
     }
 
@@ -101,7 +120,7 @@ Item {
     // draw.
     Rectangle {
         anchors.fill: parent
-        visible: root.focused && root.interactive
+        visible: root.focused && root.enabled && root.interactive
         color: "transparent"
         radius: root.focusRadius
         border.width: 1
@@ -122,6 +141,7 @@ Item {
     TapHandler {
         id: tap
         enabled: root.interactive && root.clickable && !root._hosted
-        onTapped: root.clicked()
+        gesturePolicy: root.gesturePolicy
+        onTapped: root.activate()
     }
 }

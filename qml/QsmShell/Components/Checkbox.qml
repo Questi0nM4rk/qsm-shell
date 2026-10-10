@@ -60,8 +60,11 @@ T.AbstractButton {
     hoverEnabled: true
     Accessible.role: Accessible.CheckBox
     Accessible.checkable: true
-    Accessible.checked: root.checked || root.indeterminate
+    Accessible.checked: root.checked && !root.indeterminate
+    Accessible.checkStateMixed: root.indeterminate
     Accessible.name: root.accessibleName
+    Accessible.onPressAction: root.flip()
+    Accessible.onToggleAction: root.flip()
 
     readonly property real _box: root.boxSize
     readonly property bool _marked: root.checked || root.indeterminate

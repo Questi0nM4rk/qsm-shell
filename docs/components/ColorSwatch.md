@@ -10,3 +10,4 @@ size: `size` is the painted face; the layout footprint is `max(size, swatchTarge
 tokens: swatchTarget, controlHeight, radiusSm, spaceTight, markThickness, textXs, surface, text, background, outline, accent and StateLayer; no local colours or measurements.
 motion: micro ring response plus StateLayer face swell on hover and press; reduced motion shortens the duration.
 not designed: a colour picker, palette model or editing; it shows one sample and reports the click.
+review: the value follows the rendered sample across theme changes and alpha is explicit; unrelated glyphs do not describe a colour. Selection and activation have a stated host consequence; the owner judges the example before accepting it.

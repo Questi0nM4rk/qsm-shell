@@ -26,9 +26,8 @@ Rectangle {
 
     implicitHeight: thickness
     radius: height / 2
-    color: trackColor
+    color: enabled ? trackColor : Style.disabled(trackColor)
     clip: true
-    opacity: enabled ? 1 : Style.opacityDisabled
 
     // Determinate: a lead that grows from the start edge.
     Rectangle {
@@ -38,7 +37,7 @@ Rectangle {
         width: parent.width * root._fraction
         height: parent.height
         radius: parent.radius
-        color: root.fill
+        color: root.enabled ? root.fill : Style.disabled(root.fill)
 
         // Progress that snaps between readings reads as jitter rather than as
         // movement; it eases at both ends because neither end is an arrival.
@@ -55,7 +54,7 @@ Rectangle {
         width: parent.width * 0.3
         height: parent.height
         radius: parent.radius
-        color: root.fill
+        color: root.enabled ? root.fill : Style.disabled(root.fill)
 
         XAnimator {
             target: sweep
