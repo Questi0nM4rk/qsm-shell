@@ -1,3 +1,15 @@
 artifacts/
 graphify-out/
 previews/.capture-*.qml
+
+# Agent scratch: worktrees are merged back and deleted after each task.
+.opencode/
+
+# Agent task backlog lives in docs/BACKLOG.md.
+.codeagent/
+
+# Agent scratch: worktrees are merged back and deleted after each task.
+.opencode/
+
+# Agent task backlog lives in docs/BACKLOG.md.
+.codeagent/
