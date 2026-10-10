@@ -30,7 +30,10 @@ Item {
     // that disappear under a full-span child.
     property var parentRollout: null
     property var childRollout: null
-    // Reveal intent. The one input consumers drive.
+    // Reveal intent. The one input consumers drive. A child rollout that is
+    // still painted keeps this source revealed through its own `childRollout`
+    // link, NOT by being folded in here: intent that outlives its meaning
+    // cannot be told apart from intent that is still open.
     property bool shouldBeActive: false
     // Fullscreen (09-input DEFAULT): surfaces hide INSTANTLY, no retract.
     property bool suppressed: false
@@ -315,8 +318,19 @@ Item {
     clip: true
 
     // Retain the picture through retract; input follows semantic intent instead.
-    property real offsetScale: (shouldBeActive && !suppressed) ? 0 : 1
-    readonly property bool animating: revealAnim.running || widthMorph.running || heightMorph.running
+    //
+    // A child that is still painted is a REASON to keep this source revealed,
+    // and never this rollout's own intent: the child owns its own retract, so
+    // until it finishes this source is held, not open, and it retracts the
+    // instant that child hides.
+    readonly property bool _sourceRetained: !shouldBeActive && !suppressed
+        && childRollout?.visible === true
+    property real offsetScale: ((shouldBeActive || _sourceRetained) && !suppressed) ? 0 : 1
+    // At rest means the motion is finished AND nothing is holding this source
+    // open for a child. Reporting a retained source as settled tells a host
+    // that is waiting for the retract that the picture it sees is finished.
+    readonly property bool animating: revealAnim.running || widthMorph.running
+        || heightMorph.running || _sourceRetained
     visible: !suppressed && (revealAnim.running || offsetScale < 1)
     // Even a custom offset must never grow past the flush body extent.
     readonly property real _detachedTravel: _joined ? 0 : Math.max(0, offsetScale)

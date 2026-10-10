@@ -63,6 +63,9 @@ separate from the desktop surfaces the owner reviewed.
   `animating`; normal hit registration uses only the near-settled aperture and
    withdraws on close/suppression. The content slot disables on close/suppression;
    hosts retaining a source for its child also disable their retired actions.
+   Retention for a still-painted `childRollout` belongs here, not inside the
+   host's `shouldBeActive`: a retained source stays revealed, keeps its own
+   input and content withdrawn, and reports `animating` until that child hides.
   outgoing content identity and dimensions survive until hidden. Modal catch
   regions remain host policy through `registerHitRect: false`.
 - **Motion/sizing:** existing small/large Motion curves, no overshoot, independent

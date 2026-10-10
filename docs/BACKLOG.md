@@ -165,3 +165,12 @@ until the current cleanup commits land.
 - **SH-C8 Neutral base control grouping correction** — declaration-only
   regrouping so independent choices are separate from commands; the migrated
   53-step flow passes, live review open.
+
+## Three Rollout unit checks fail on the current tree, before this change
+
+`npm run unit -- Rollout` reports 13 passed, 3 failed: the nested full-span seam,
+the free-axis anchor nudge, and the undeformed pivot under compression and shear.
+Verified pre-existing by restoring `Rollout.qml` from HEAD and re-running: the
+same three fail, so the retention fix did not cause them. Nobody had run this
+file since the geometry work; they need a session of their own before the library
+is called clean.
