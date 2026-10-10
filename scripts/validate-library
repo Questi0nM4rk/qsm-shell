@@ -14,6 +14,7 @@ lint_dir() {
 
 /usr/lib/qt6/bin/qmllint -I "$root/qml" "$root"/qml/QsmShell/Style/*.qml "$root"/qml/QsmShell/Components/*.qml
 lint_dir "$root/workbench"
+lint_dir "$root/workbench/units"
 lint_dir "$root/tests"
 lint_dir "$root/tests/interaction"
 lint_dir "$root/tests/units"
