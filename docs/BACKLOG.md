@@ -8,13 +8,15 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - Shell readiness first: close concrete component defects and keyboard/public-action
   parity through desktop hosts and the existing action menu; defer desktop-only
   improvements and Workbench polish unless they block the selected item (`GOAL.md`).
-- Release verification: `npm test` passes smoke, both native test directories and
-  shader freshness; lint emits warnings, so this is not a warning-free claim.
+- Release verification: the last requested `npm test` passed smoke, 51 interaction
+  and 261 unit checks plus shader freshness; it predates the Menu activation typing
+  cleanup and added glyphs. Those edits are source-reviewed, not fresh whole-suite
+  proof. Lint warnings remain, so this is not a warning-free claim.
   Desktop menu clicks and OSD pointer/key/action routes pass isolated flows;
   generic Rollout variants, live pointer/drag/focus, panel tabs and real-backend
   operation still need the owner's named review; passing checks are not acceptance.
-- Residual lint: `Menu` calls `activate` on an Item-typed row, NotificationCard
-  sets layout-managed height, and composition Loaders expose QObject-typed APIs;
+- Residual lint: NotificationCard sets layout-managed height and composition
+  Loaders expose QObject-typed APIs;
   repair with each owning item. Current release evidence is in the desktop backlog.
 
 - ListRow's additive headingHeight/expansionHeight contract is source-prepared for desktop inline audio; live consumer sizing awaits the current desktop item review. The owner approved shell Compositions / menu-items for that adoption.
@@ -31,8 +33,8 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   internal dependencies listed in `GOAL.md` (31 types). Reconcile existing component
   acceptance evidence against its R0-R5 roadmap, then prepare one selected item at a
   time; catalog/flow presence alone is not acceptance.
-- R0: provider installs no `Style.backend`, so reduced motion defaults to false and
-  README's `workbench/theme.json` claim is unsupported; add a provider-owned review
+- R0: provider installs no `Style.backend`, so reduced motion defaults to false;
+  add a provider-owned review
   environment, deferred to the first selected implementation item.
 - R1: NotificationStack lifetime and production fullscreen input are exercised;
   the watched capsule appearance is owner-accepted. Recording cadence guidance

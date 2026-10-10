@@ -62,8 +62,10 @@ components. Re-derive the table when desktop use changes.
 
 ## Next, in this order
 
-0. **Keep the technical gates green.** `npm test` passes native interaction and
-   unit checks, smoke and shader freshness. Lint warnings remain; desktop's
+0. **Keep the technical gates honest.** The last requested `npm test` passed native
+   interaction and unit checks, smoke and shader freshness, before the small Menu
+   activation typing cleanup and glyph additions. Repeat the full gate only when
+   requested. Lint warnings remain; desktop's
    isolated checks and production-only checks are separate evidence, not acceptance.
 1. **Owner review of the action menu and the panel tab group** in the live window.
    Nothing below starts before that: keyboard reach, attached editors, repeated

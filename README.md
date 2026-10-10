@@ -53,8 +53,9 @@ table (`sizes.<Type>.<name>`, defaults in `tokens/deep-night.json`). Your
 backend's `sizes` extends or overrides that table, so `sizes: { Switch: { xl: 40 } }`
 makes `Switch { size: "xl" }` valid in your project. The resolved number
 (`knobSize`, `thumbSize`, `fieldHeight`) stays settable directly when one
-call site needs one value. `workbench/theme.json` is the consumer-shaped theme
-the provider stories and captures run under, extra presets included.
+  call site needs one value. The shell provider currently uses the library
+  defaults; it does not install `workbench/theme.json` as a backend. The desktop
+  provider installs its own `Theme` explicitly.
 `Interaction` is the one place you state a fact components cannot see for
 themselves (whether a hover may claim a selection).
 
