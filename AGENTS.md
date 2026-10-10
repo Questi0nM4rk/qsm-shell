@@ -1,16 +1,23 @@
 # qsm-shell
 
-Reusable QML components for Qt 6 shell surfaces. One developer, one consumer
-(`qsm-desktop`), no external users. Everything here is judged by one
+Reusable QML components for Qt 6 and Quickshell desktops. One developer and
+one current proof consumer (`qsm-desktop`); the API must remain usable by other
+desktops without inheriting that consumer's policy. Everything is judged by one
 question: does the feature work in a live window, and does every pixel of it
 follow the design sources.
 
 ## Direction
 
+- The product is a fully functional, beautiful component system with dynamic,
+  accessible UX. Workbench is its supporting tool, not the delivery priority;
+  improve harness UI only when it blocks component development or judgement.
 - qsm-shell is Quiet Luminous: a calm dark shell that stays subordinate to the
   application beneath it while its information remains immediately legible.
   The default deep-night theme uses quiet raised surfaces, luminous text and a
-  restrained lilac accent; it is rethemeable through `Style`.
+  restrained lilac accent; it is rethemeable through `Style`. Aim for cosy,
+  minimal dusk/night: deep quiet grounds and diffuse lilac light, inspired by
+  the desktop's `dark-rain-world.png` and `light-forest-dark-winter.jpg` wallpapers.
+  Borrow their atmosphere, not their artwork or decorative noise.
 - Build auxiliary and transient shell primitives, not a web dashboard: bar and
   rail status, panel popouts, launcher, OSD, notifications, session actions,
   colour tools and compact performance readouts. The bar is glanceable; a
@@ -26,38 +33,45 @@ follow the design sources.
   possible. Fewer docs, more features.
 - The least code that works. The least documentation that keeps the next
   session honest. A line of either needs a reason.
-- No TDD. Build the real QML, look at it in the unit window after the style
-  work, then add one regression check only for behaviour that can
-  realistically regress. Never grow tests for coverage; `npm test` staying
-  green is the whole floor. No JavaScript models of QML behaviour,
-  expected-red tests, source-shape tests, documentation gates, or assertions
-  about pixels or appearance. How a thing looks is a human's job against the
-  live window.
+- The owner tests and judges ONE item at a time. Prepare it, explain its task
+  and reachable states, ask the owner to check it, then wait. Revise that same
+  item from feedback until the owner accepts it before moving on. An agent's
+  capture, tree dump, audit or green suite is not acceptance.
+- No automatic tests, validation, capture sweeps, input traces or skill evals.
+  Run or add checks only when explicitly requested; a request to build or
+  review a component is not permission to test it. No TDD, coverage growth,
+  JavaScript models of QML behaviour, source-shape tests, documentation gates,
+  or standalone assertions about static text, sizes, colours or pixels. If
+  requested, check real input and changing states along an integration flow.
 - Before touching a component, answer in writing (the component record):
   what does a fully working, production-ready X look like? Which settings
   does it have, how does it behave under pointer, keyboard, wheel, focus and
   a screen reader, which sizes exist, what grows and what stays constant, and
   which of that is globally accepted across component libraries rather than
-  our taste. Copy the answer from caelestia
+  our taste. Start with the person's shell task and consequence, then choose
+  the interaction, hierarchy, content, glyphs and motion. Compare caelestia
   (`~/Clonned/caelestia/repo/components/controls/Styled*.qml`) and from other
-  component libraries (Material 3, Radix, shadcn, Fluent) before inventing.
+  component libraries (Material 3, Radix, shadcn, Fluent) before inventing;
+  use relevant patterns, not the union of every library's configuration flags.
 - A component is a caller. It renders state the host owns, exposes every
   action as a function listed in `actions`, and reports intent (`moved`,
   `committed`, `accepted`, `hovered`). It never mutates host state and never
   manages its own dismissal. Pointer, keyboard and programmatic routes call
   the same function; programmatic control is never a synthesized event.
 - Every pixel is a decision with a token behind it. Design sources, in rank:
-  measured native QML, the component laws below, `design-system-blueprint.pdf`
+  the owner's accepted design and current component record, the component laws
+  below, `design-system-blueprint.pdf`
   at the repo root (semantic tokens, the 4px rhythm, every state designed,
   one type and icon scale, purposeful motion), then the qsm-uiux skills:
-  `ui-design` before writing, `ux-audit` for interaction and `ui-audit` for
-  the native visual result after. Design every resting, hover, pressed,
+  `ui-design` informs preparation; `ux-audit` and `ui-audit` run only when
+  the owner requests an audit. Design every resting, hover, pressed,
   focused, selected, disabled, loading, empty and error state the component
   supports. Motion communicates state and respects `Style.reducedMotion`.
+  Native measurements describe what is rendered, not what the owner has accepted.
 - No versioning in docs: no dates, no CLOSED/LANDED history, no counters. A
   doc says what is true now or it goes. Durable docs are `README.md`,
   `docs/BACKLOG.md` (open items only), `docs/components/<Type>.md` (one short
-  record per type, the `expected` column an audit measures against) and
+   record per type, `expected` describes the owner-review contract) and
   `docs/adr/` for irreversible decisions. `docs/12-mechanism.md` is NORMATIVE
   code for the edge shader: use its exact formulas, and changing behaviour
   means editing that file first.
@@ -66,6 +80,10 @@ follow the design sources.
 - `qsm-desktop` policy, services, persistence and compositor integration stay
   out of this library.
 - Load the project skill `develop-component` for the step loop of one type.
+- Give researchers and implementers small, bounded tasks; keep user judgement
+  with the owner. Use `openai/gpt-6-luna`, medium for straightforward work and
+  runners, high for complex research or mechanics. A runner gets a testing
+  task only after the owner requests that check.
 
 ## Definition of done for a component
 
@@ -81,14 +99,52 @@ follow the design sources.
 5. Natural size is a constant. Long content scrolls or elides, never grows
    the control.
 6. Every number comes from `Style` or `Motion`.
-7. `workbench/units/<Type>.qml` with `controls` for states a pointer cannot
-   reach; `tests/units/tst_<Type>.qml` with real events, written after the
-   behaviour works; `tst_units` walks `actions` and triggers each.
-7. `ui-audit` and `ux-audit` against the live window with a tree dump;
-   findings fixed or carried as one line in `docs/BACKLOG.md`.
-8. The owner judges it in the live window. Not delegable; no capture
-   substitutes for it.
+7. `workbench/units/<Type>.qml` hosts every intent and exposes coherent examples
+   and supported property states for the owner to inspect.
+8. The owner judges its look and feel in the live window and accepts the item.
+   Feedback is fixed in the owning component or token; unresolved decisions
+   remain one line in `docs/BACKLOG.md`. Requested automated checks are separate
+   evidence, never a replacement for acceptance.
+
+## Interaction contract laws
+
+- **Typed required/optional fields**: Schema before rendering, not blind
+  `String(value)` fallback. Provider sent `origin/name/payload` but Workbench
+  rendered missing `sequence`/`kind`/etc as `undefined`. Normalize display once
+  at ingress, typed required/optional fields, preserve original
+  `identity/provenance/node` metadata, omit missing optionals not
+  `String('undefined')` or made-up success. — `../qsm-workbench/docs/interaction-contract.md#event-boundary`
+- **Kind vs identity**: `kind` denotes distinct semantic component, not shared
+  visual template. Instance/node identity is separate (app rows share `app`
+  type). Title does not fix missing identity. — `../qsm-workbench/docs/interaction-contract.md#identity-and-provenance`
+- **Reset suppresses initialization noise**: `reset` cancels timers/work, no
+  later completion. Actual native cancellation must not activate controls.
+- **Diagnostics are user-tools**: Events log is selectable, Ctrl+C works, Copy all
+  copies entire log, empty state shown, long content scrolls, selection stable
+  on append/cap. Actual `Events` uses `Flickable+TextArea.flickable` (NOT
+  `ScrollView`). — `../qsm-workbench/docs/interaction-contract.md#layout-and-diagnostics`
+- **One behavior vertically, sibling-pattern search**: When a defect is found,
+  follow one behavior vertically and search sibling patterns before fixing.
+  For rendering/motion, follow `develop-component`'s **Motion and rendering
+  changes** through registry helpers and shader paint to removal/unloading, not
+  only the animated component. Replace conflicting spec formulas in place.
+  Do not invent raw key events from state changes, do not claim focus support
+  merely because native driver accepts keys. No global every-pointer-move
+  telemetry. Component intent vs service result vs scenario setup vs
+  injected/route evidence are separate. Repeated same-value operations matter;
+  observe operation signal not propertyChanged alone.
+- **Review process**: Symptom patches (add title instead of kind) are insufficient.
+  Incomplete route testing does not prove readiness. Prior suite predates edits
+  and does not prove current behavior. Owner approval only for named item;
+  runtime checks only when explicitly requested. Report source-reviewed vs
+  runtime-exercised vs owner-accepted separately.
 ## Commands
+
+- Preview and requested captures use installed `qsm-workbench` on `PATH`, never
+  sibling checkout scripts. Session control uses `qsm-workbench session`; attach
+  by explicit PID and confirm provider plus the required story through `describe`.
+  `qsm-shell` and `qsm-desktop` are different catalogs; Notification Layer belongs
+  to the desktop provider. Do not reuse an old session file blindly.
 
 - `npm run preview` opens the storybook catalog in one real wayland window.
   Every story is reachable, the catalog is a browser, and a story window holds
@@ -96,13 +152,19 @@ follow the design sources.
   `npm run unit -- <Type>` runs one test file; `--window` runs it on the
   compositor.
   `bash scripts/capture-all <dir>` captures every scenario. `--inspect <file>`
-  on `preview` and `capture` writes the item-tree dump; F12 re-dumps live.
+  on `preview` writes the item-tree dump; F12 re-dumps live. Captures write PNGs;
+  native glyph judgement and inspection belong to the live preview.
 - `npm run tokens` regenerates outputs from `tokens/deep-night.json`.
 - The shader is the one non-QML thing here. `.frag` and `.qsb` are committed
   together; rebuild with `bash scripts/build-shaders`, `npm test` fails on
   drift.
-- Run `npm test` before handing work back. Never claim completion from
-  mocks, lint, or screenshots of other surfaces.
+- These are available commands, not an automatic work loop. Run tests,
+  validation or captures only on the owner's explicit request. State what is
+  prepared, user-accepted and unverified accurately.
+- For requested native recordings, capture actual frames at 25–60 fps according
+  to motion complexity: roughly 25 fps is enough for simple content/fades; deep,
+  difficult animation requires genuine 60 fps. A 60-fps CFR encode with
+  duplicated frames does not prove 60-fps capture.
 
 ## Preview units
 
@@ -130,16 +192,25 @@ follow the design sources.
   `[{ label, options: [{ label, set: {prop: value} } | { label, call: "method" }] }]`.
   States a pointer can reach (hover, press, focus) are never control options.
   Names are DERIVED from this declaration, never written a second time.
+- A fixture is a designed example of a real task, not random API values.
+  Glyph, verb, reading, confirmation and outcome describe the SAME intent.
+  Switch a purpose as a whole composition; decoration must earn its place.
+  A sample glyph does not become library policy or a required visual slot.
+- Controls expose supported cases rather than one arbitrarily chosen instance:
+  per-option availability includes first, middle, last and all disabled; content
+  includes empty and long where valid; sizes include the theme's supported names.
+  Keep them compact and understandable; do not invent states the type lacks.
 - **The storybook holds every story, there is no entry point that opens one,
   and units migrate one at a time with the catalog as the checklist.** A type
   moves to `workbench/units/` and its keys are repointed before the next type
   starts; half a catalog in two places is worse than both halves finished.
   `npm run preview` with no argument opens the catalog, a story window holds
   one exact item, and the catalog is a browser rather than a judging surface.
-- When an agent opens a preview, it announces it is taking the pointer,
-  drives the whole planned state trace, then says the window is ready and
-  stops injecting input so the owner can judge. If the owner is away, the
-  agent completes the judgement loop itself.
+- Prepare only the current item for owner review. If asked to open or operate
+  its preview, use `qsm-compuse` on workspace 10, announce pointer use, then
+  stop input and say what the owner should inspect. Wait for feedback; owner
+  absence never grants self-acceptance or an automatic catalog sweep. Close
+  only your own test windows after the owner finishes; leave no stray instances.
 - A defect the unit uncovers belongs in the COMPONENT, never worked around in
   the unit.
 - `qml` has no hot reload: restart the preview window to pick up an edit.

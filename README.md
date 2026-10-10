@@ -1,6 +1,18 @@
 # qsm-shell
 
-Reusable QML components and design tokens for Qt 6 surfaces.
+Reusable QML components and design tokens for Qt 6 and Quickshell desktops.
+
+The product is a fully functional component system with beautiful Quiet
+Luminous defaults and responsive, accessible interaction. Callers can compose
+different desktops through slots, actions, host-owned state and `Style`; the
+current proof consumer, `qsm-desktop`, does not define the library's policy.
+Workbench supports that development and verification. Its chrome is not the
+product and is improved only when it blocks component work.
+
+The visual direction is cosy, minimal dusk/night: deep quiet surfaces and
+diffuse lilac light, inspired by the desktop's two wallpapers. A glyph, label,
+state and action consequence must tell the same story; generic sample content
+is not a design decision.
 
 It knows nothing about any application. Everything an application owns —
 services, state, persistence, compositor integration, which keys mean what —
@@ -48,12 +60,18 @@ themselves (whether a hover may claim a selection).
 
 Public types are listed in `qml/QsmShell/Components/qmldir`.
 
+## Links
+
+- Interaction contract (workbench): `../qsm-workbench/docs/interaction-contract.md`
+- Workbench provider requirements: `../qsm-shell/docs/WORKBENCH_PROVIDER.md`
+- Owner-review loop: `AGENTS.md`
+
 ## What is in it
 
 | | |
 | --- | --- |
 | **foundation** | `Prose` (ten type roles), `SvgIcon`, `Surface` (a body on the ladder), `Card`, `Divider`, `StateLayer` |
-| **controls** | `Capsule`, `IconButton`, `TextField`, `Field`, `ControlLabel`, `Switch`, `Checkbox`, `Segmented`, `Slider` (one or two thumbs) |
+| **controls** | `Capsule`, `IconButton`, `TextField`, `Field`, `ControlLabel`, `Switch`, `Checkbox`, `Radio`, `SpinBox`, `Segmented`, `Slider` (one or two thumbs) |
 | **lists** | `ListRow`, `Menu`, `SelectionMark`, `ScrollArea`, `ScrollCue`, `Section`, `Disclosure` |
 | **state** | `Spinner`, `ProgressBar`, `Skeleton`, `Callout`, `EmptyState` |
 | **readouts** | `Badge`, `Meter`, `Stat`, `StatRing`, `Sparkline`, `KeyValueRow`, `Marquee`, `ColorSwatch`, `Kbd`, `Avatar` |
@@ -65,15 +83,18 @@ Public types are listed in `qml/QsmShell/Components/qmldir`.
 ## Develop
 
 ```bash
-npm run preview -- <scenario>
+npm run preview                   # the complete provider catalog
+npm run preview -- --inspect /tmp/scene.json
 npm run capture -- <scenario> /tmp/out.png
 npm run unit -- <Type>            # --window runs it on the compositor instead
 npm test
 bash scripts/build-shaders        # only after editing a .frag; commit .frag + .qsb together
 ```
 
-- `preview` delegates to the sibling generic workbench with this repo as the
-  provider; story names come from `workbench/stories.json`.
+- `preview` uses installed `qsm-workbench` on `PATH` with this repo as the
+  provider; story names come from `workbench/stories.json`. No sibling checkout
+  or source-script fallback is used. Desktop stories such as Notification Layer
+  belong to the `qsm-desktop` provider, not this component catalog.
 - `capture` delegates to the same provider workbench entry point.
 - `unit` runs one type's test file under `tests/units/` (falling back to
   `tests/interaction/` for types not yet migrated).
@@ -82,19 +103,25 @@ bash scripts/build-shaders        # only after editing a .frag; commit .frag + .
 - Provider runtime QML lives under `workbench/`; production components remain
   under `qml/QsmShell/Components/`.
 
-A component is judged in a live native QML window and nowhere else. See
-`AGENTS.md` for a unit's shape and the step-by-step loop for migrating one.
+A component is prepared and judged one item at a time. The agent explains its
+purpose and reachable states; the owner checks it in the live window and gives
+feedback. Revise the same item until accepted before starting the next. Tests,
+validation, captures and automated input run only when explicitly requested.
+See `AGENTS.md` for the unit contract.
 
 The shader is the one thing here that is not pure QML. Both the `.frag` and the
 built `.qsb` are committed, because Quickshell loads the `.qsb` at runtime and
 no consumer should need a Qt shader toolchain to run. `npm test` fails if the
 committed `.qsb` does not match a rebuild of its `.frag`.
 
-Build the feature, look at it in the live window, then add one regression
-check only if the behaviour can realistically regress. No TDD, no plans, no
-dated docs. `AGENTS.md` holds the direction and the component laws; the
-project skill `develop-component` holds the step loop for one type.
+Build real QML with a coherent task fixture and all supported cases reachable.
+The owner tests; automated checks are optional, requested evidence. No TDD,
+coverage growth or standalone assertions about static styles. Keep docs short,
+current and history-free. `AGENTS.md` holds the laws; `develop-component` holds
+the owner-review loop.
 
 ## Next
 
-Open items, in order, live in `docs/BACKLOG.md`.
+The desktop's 31-component production scope, ordered roadmap and per-component
+review queue live in [GOAL.md](GOAL.md#roadmap). Open findings and deferred work
+live in [docs/BACKLOG.md](docs/BACKLOG.md).
