@@ -61,6 +61,9 @@ components. Re-derive the table when desktop use changes.
 
 ## Next, in this order
 
+0. **The suite must be green.** It is 310 checks with 2 failures, both in
+   `Rollout`'s anchored placement binding; `docs/BACKLOG.md` has the measurement
+   and what still has to be settled.
 1. **Owner review of the action menu and the panel tab group** in the live window.
    Nothing below starts before that: keyboard reach, attached editors, repeated
    operations, NEIO/slash, the tab group.
