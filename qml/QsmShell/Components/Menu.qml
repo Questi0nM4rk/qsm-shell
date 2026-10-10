@@ -119,7 +119,7 @@ Item {
 
     // Selectable is the ROW's own state (normal, enabled, interactive). Visibility
     // is not: it is inherited from whatever scene the menu happens to sit in,
-// so a menu inside a scene that is not shown yet — a smoke run, a rollout
+    // so a menu inside a scene that is not shown yet — a smoke run, a rollout
     // before it opens — would have no selectable row at all.
     function _isSelectable(i) {
         const r = _rows[i]
@@ -147,7 +147,7 @@ Item {
     // Emit the generic activation hook for the current row when it is selectable.
     function activateCurrent() {
         if (!_isSelectable(currentIndex)) return false
-        const row = root.rowAt(currentIndex)
+        const row = root._rows[root.currentIndex]
         row.activate()
         return true
     }

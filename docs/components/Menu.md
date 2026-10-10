@@ -3,6 +3,7 @@
 A keyboard-navigable container for rows; the host owns the model, the delegate and what activation does.
 states: one `currentIndex` cursor over visible/selectable rows; navigation wraps, skipping headers, separators, disabled and report-only entries.
 actions: `step(delta)` moves the cursor; `activateCurrent()` calls the selected row's `activate()` and reports `activated(index)` through the same route as a pointer. `rowAt(index)` and `rowCount` let hosts resolve identity and scroll the actual item into view. Static content and model with delegate feed the same rows.
+boundary: `rowAt` exposes an Item for positioning/native input; activation keeps the consumer row's full protocol from the registry, without pretending every delegate is only a generic Item.
 pointer: rows keep their own targets; the container claims no clicks and wheel passes through.
 keyboard: arrows step along the orientation and Return and Enter activate the current row; the container holds focus for its rows.
 screen reader: rows name themselves; the container adds no role beyond grouping.
