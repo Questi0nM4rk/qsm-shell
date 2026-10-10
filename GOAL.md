@@ -49,15 +49,16 @@ components. Re-derive the table when desktop use changes.
 
 - All 31 types have implementations, units and stories; the owner has reviewed the
   set. New types enter this scope when the desktop needs them.
-- The desktop action menu is functional end to end: audio with the output Slider
-  under its row, Wi-Fi with the list and a row-attached password editor,
+- The desktop action menu is source-wired and exercised in isolation: audio with
+  the output Slider under its row, Wi-Fi with the list and a row-attached password editor,
   Bluetooth through a service that owns each operation's lifetime, and repeatable
   Keep awake / Night light toggles. Every per-kind decision is a table keyed by
   `kind`, so a new kind adds an entry rather than another branch.
 - The panel's tab group is the shared `Segmented` with opt-in Tab/Shift+Tab,
   clamped at its visible ends, and Down enters the tab content.
-- `scripts/check-action-menu` drives five desktop stories through native input and
-  they pass. That is integration evidence, not owner acceptance.
+- `scripts/check-action-menu` drives five desktop stories through simulated Qt
+  input and they pass. Production services are wired, but actual hardware success
+  and owner acceptance are separate, still-open gates.
 
 ## Next, in this order
 
@@ -67,10 +68,10 @@ components. Re-derive the table when desktop use changes.
 1. **Owner review of the action menu and the panel tab group** in the live window.
    Nothing below starts before that: keyboard reach, attached editors, repeated
    operations, NEIO/slash, the tab group.
-2. **Pointer parity** — clicks and drags on every route the flows only drive with
-   the keyboard, judged in a real window. The offscreen driver has not delivered a
-   pointer event to a launcher row yet; whether the harness or surface is at
-   fault remains unverified, and the live window settles it.
+2. **Live pointer parity** — clicks, drags, wheel and focus judged in a real
+   window. Isolated launcher clicks now pass after waiting for the actual reveal,
+   including repeated toggles and Wi-Fi confirmation; OSD pointer/key/action mute
+   also passes. That does not establish live hit testing or owner acceptance.
 3. **Real backends** — the same flows against the actual nmcli, Bluetooth and
    audio services. The isolated fixtures are proven; the hardware is not.
 4. **Release readiness** — the owner's remaining backlog items, one at a time, in

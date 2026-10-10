@@ -10,8 +10,12 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   improvements and Workbench polish unless they block the selected item (`GOAL.md`).
 - Release verification: `npm test` passes smoke, both native test directories and
   shader freshness; lint emits warnings, so this is not a warning-free claim.
-  Generic Rollout variants, action-menu/panel pointer routes and real-backend
+  Desktop menu clicks and OSD pointer/key/action routes pass isolated flows;
+  generic Rollout variants, live pointer/drag/focus, panel tabs and real-backend
   operation still need the owner's named review; passing checks are not acceptance.
+- Residual lint: `Menu` calls `activate` on an Item-typed row, NotificationCard
+  sets layout-managed height, and composition Loaders expose QObject-typed APIs;
+  repair with each owning item. Current release evidence is in the desktop backlog.
 
 - ListRow's additive headingHeight/expansionHeight contract is source-prepared for desktop inline audio; live consumer sizing awaits the current desktop item review. The owner approved shell Compositions / menu-items for that adoption.
 
@@ -142,9 +146,9 @@ Each cost real time once. None is findable by reading the code.
 
 ## Agent task backlog (folded in from `.codeagent`)
 
-The codeagent task files are gone; these lines are what they still say.
-`SH-C3` is the only one the owner accepted, and none of the work is committed
-until the current cleanup commits land.
+The codeagent task files are gone; these lines retain their scope.
+The implementation is committed on `main`; `SH-C3` is the only owner-accepted
+task in this group.
 
 - **SH-C1 Forward the shared preview environment** — implemented; composition
   boundary checks pass, story opt-in source-reviewed, runtime proof rides on
