@@ -35,7 +35,7 @@ TestCase {
             height: 480
             property alias rollout: body
             property alias border: frame
-            ShellBorder { id: frame; anchors.fill: parent }
+            ShellBorder { id: frame; anchors.fill: parent; fullscreen: true }
             Item {
                 x: 70
                 y: 80
@@ -50,6 +50,11 @@ TestCase {
                     bodyHeight: 80
                     shouldBeActive: true
                     deformScale: 0
+                    // Deformation belongs to the DETACHED silhouette: a joined
+                    // rollout rides the frame's own edge and never travels or
+                    // shears, so the pivot rule is proven on the one case that
+                    // actually has one.
+                    fullscreenDetached: true
                 }
             }
         }
