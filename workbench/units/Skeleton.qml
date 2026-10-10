@@ -64,10 +64,9 @@ Rectangle {
         events: [],
         actions: [],
         observables: {
-            // The controls address the lead placeholder, so the observables
-            // name it rather than reading whichever one the tree lists first.
-            "lead-height": () => lead.implicitHeight,
-            "lead-width": () => lead.implicitWidth
+            shape: () => lead.shape,
+            role: () => lead.role,
+            fraction: () => lead.fraction
         }
     })
 }

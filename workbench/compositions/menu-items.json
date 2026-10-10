@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "key": "menu-items",
+  "viewport": [620, 760],
+  "root": {
+    "id": "shell-menu",
+    "type": "menu-items",
+    "props": { "size": "md", "width": 620, "height": 760 }
+  },
+  "links": []
+}

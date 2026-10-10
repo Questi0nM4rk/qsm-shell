@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "key": "sparkline-series-extent",
+  "target": { "story": "sparkline" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "series", "equals": [12, 18, 14, 26, 31, 24, 38, 44, 36, 52, 47, 61] },
+    { "type": "expect", "observable": "area", "equals": true },
+    { "type": "control", "group": "fill", "option": "line" },
+    { "type": "expect", "observable": "area", "equals": false },
+    { "type": "control", "group": "series", "option": "settled" },
+    { "type": "expect", "observable": "series", "equals": [40, 44, 38, 42, 41, 39, 43, 40, 42, 41] },
+    { "type": "control", "group": "series", "option": "spiking" },
+    { "type": "expect", "observable": "series", "equals": [8, 9, 10, 96, 12, 11, 13, 88, 14, 12, 11, 10] },
+    { "type": "control", "group": "extent", "option": "pinned" },
+    { "type": "expect", "observable": "scale-min", "equals": 0 },
+    { "type": "expect", "observable": "scale-max", "equals": 100 },
+    { "type": "control", "group": "extent", "option": "auto" },
+    { "type": "control", "group": "series", "option": "climbing" },
+    { "type": "expect", "observable": "series", "equals": [12, 18, 14, 26, 31, 24, 38, 44, 36, 52, 47, 61] },
+    { "type": "control", "group": "fill", "option": "area" },
+    { "type": "expect", "observable": "area", "equals": true }
+  ]
+}

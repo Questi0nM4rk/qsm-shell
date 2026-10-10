@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "key": "progressbar-mode-value",
+  "target": { "story": "progress" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "indeterminate", "equals": true },
+    { "type": "expect", "observable": "value", "equals": 0.42 },
+    { "type": "expect", "observable": "enabled", "equals": true },
+    { "type": "control", "group": "mode", "option": "determinate" },
+    { "type": "expect", "observable": "indeterminate", "equals": false },
+    { "type": "control", "group": "value", "option": "half" },
+    { "type": "expect", "observable": "value", "equals": 0.5 },
+    { "type": "control", "group": "value", "option": "full" },
+    { "type": "expect", "observable": "value", "equals": 1 },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "expect", "observable": "enabled", "equals": false },
+    { "type": "control", "group": "state", "option": "enabled" },
+    { "type": "expect", "observable": "enabled", "equals": true }
+  ]
+}

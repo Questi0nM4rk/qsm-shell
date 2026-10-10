@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "key": "stat-ring-form-value",
+  "target": { "story": "stat-ring" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "value", "equals": 0.42 },
+    { "type": "expect", "observable": "reading", "equals": "42%" },
+    { "type": "expect", "observable": "label", "equals": "CPU" },
+    { "type": "expect", "observable": "start-angle", "equals": -225 },
+    { "type": "expect", "observable": "sweep-angle", "equals": 270 },
+    { "type": "control", "group": "form", "option": "closed" },
+    { "type": "expect", "observable": "start-angle", "equals": -90 },
+    { "type": "expect", "observable": "sweep-angle", "equals": 360 },
+    { "type": "control", "group": "form", "option": "open" },
+    { "type": "expect", "observable": "start-angle", "equals": -225 },
+    { "type": "expect", "observable": "sweep-angle", "equals": 270 },
+    { "type": "control", "group": "value", "option": "none" },
+    { "type": "expect", "observable": "value", "equals": 0 },
+    { "type": "control", "group": "value", "option": "full" },
+    { "type": "expect", "observable": "value", "equals": 1 },
+    { "type": "control", "group": "value", "option": "part" },
+    { "type": "expect", "observable": "value", "equals": 0.42 },
+    { "type": "control", "group": "content", "option": "reading-only" },
+    { "type": "expect", "observable": "label", "equals": "" },
+    { "type": "expect", "observable": "reading", "equals": "42%" },
+    { "type": "control", "group": "content", "option": "bare" },
+    { "type": "expect", "observable": "reading", "equals": "" },
+    { "type": "control", "group": "content", "option": "full" },
+    { "type": "expect", "observable": "reading", "equals": "42%" },
+    { "type": "expect", "observable": "label", "equals": "CPU" }
+  ]
+}

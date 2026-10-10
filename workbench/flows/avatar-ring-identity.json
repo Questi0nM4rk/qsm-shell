@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "key": "avatar-ring-identity",
+  "target": { "story": "avatar" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "initials", "equals": "KM" },
+    { "type": "expect", "observable": "presence", "equals": "success" },
+    { "type": "expect", "observable": "progress", "equals": -1 },
+    { "type": "control", "group": "identity", "option": "one-word" },
+    { "type": "expect", "observable": "initials", "equals": "M" },
+    { "type": "control", "group": "identity", "option": "icon" },
+    { "type": "expect", "observable": "initials", "equals": "" },
+    { "type": "control", "group": "presence", "option": "away" },
+    { "type": "expect", "observable": "presence", "equals": "warning" },
+    { "type": "control", "group": "presence", "option": "none" },
+    { "type": "expect", "observable": "presence", "equals": "" },
+    { "type": "control", "group": "ring", "option": "half" },
+    { "type": "expect", "observable": "progress", "equals": 0.5 },
+    { "type": "control", "group": "ring", "option": "full" },
+    { "type": "expect", "observable": "progress", "equals": 1 },
+    { "type": "control", "group": "ring", "option": "none" },
+    { "type": "expect", "observable": "progress", "equals": -1 }
+  ]
+}

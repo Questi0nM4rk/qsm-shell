@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "key": "slider-ods",
+  "target": { "story": "osd-slider" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "value", "equals": 72 },
+    { "type": "expect", "observable": "orientation", "equals": "vertical" },
+    { "type": "expect", "observable": "thumb-icon", "equals": "volume" },
+    { "type": "expect", "observable": "label-position", "equals": "above" },
+    { "type": "expect", "observable": "range", "equals": false },
+    { "type": "action", "name": "increase" },
+    { "type": "expect", "observable": "value", "equals": 77 },
+    { "type": "expectEvent", "event": "moved", "origin": "component" },
+    { "type": "action", "name": "decrease" },
+    { "type": "expect", "observable": "value", "equals": 72 },
+    { "type": "action", "name": "maximum" },
+    { "type": "expect", "observable": "value", "equals": 100 },
+    { "type": "expect", "observable": "can-increase", "equals": false },
+    { "type": "action", "name": "minimum" },
+    { "type": "expect", "observable": "value", "equals": 0 },
+    { "type": "control", "group": "thumb", "option": "pill" },
+    { "type": "expect", "observable": "thumb-style", "equals": "pill" },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "expect", "observable": "can-increase", "equals": false }
+  ]
+}

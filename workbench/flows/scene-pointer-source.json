@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "key": "scene-pointer-source",
+  "target": { "story": "scene-pointer" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "source", "option": "injected" },
+    { "type": "expect", "observable": "injected-source", "equals": true },
+    { "type": "expect", "observable": "inside", "equals": true },
+    { "type": "expect", "observable": "rectangle", "equals": true },
+    { "type": "control", "group": "source", "option": "native" },
+    { "type": "expect", "observable": "injected-source", "equals": false }
+  ]
+}

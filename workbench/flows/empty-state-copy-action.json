@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "key": "empty-state-copy-action",
+  "target": { "story": "empty-state" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "title", "equals": "No devices match" },
+    { "type": "expect", "observable": "detail", "equals": "Widen the filter, or pair a device to see it here." },
+    { "type": "expect", "observable": "icon", "equals": "search" },
+    { "type": "expect", "observable": "clicks", "equals": 0 },
+    { "type": "control", "group": "detail", "option": "title-only" },
+    { "type": "expect", "observable": "detail", "equals": "" },
+    { "type": "control", "group": "glyph", "option": "none" },
+    { "type": "expect", "observable": "icon", "equals": "" },
+    { "type": "action", "name": "activate" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
+    { "type": "expect", "observable": "clicks", "equals": 1 },
+    { "type": "control", "group": "action", "option": "none" },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "clicks", "equals": 2 },
+    { "type": "control", "group": "action", "option": "recovery" },
+    { "type": "control", "group": "glyph", "option": "shown" },
+    { "type": "expect", "observable": "icon", "equals": "search" },
+    { "type": "control", "group": "detail", "option": "with-detail" },
+    { "type": "expect", "observable": "detail", "equals": "Widen the filter, or pair a device to see it here." }
+  ]
+}

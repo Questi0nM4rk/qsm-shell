@@ -11,8 +11,10 @@
     { "type": "control", "group": "purpose", "option": "trigger" },
     { "type": "expect", "observable": "interactive", "equals": true },
     { "type": "expect", "observable": "clickable", "equals": false },
+    { "type": "control", "group": "purpose", "option": "action" },
     { "type": "action", "name": "click" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
     { "type": "expect", "observable": "interactive", "equals": true },
-    { "type": "expect", "observable": "clickable", "equals": false }
+    { "type": "expect", "observable": "clickable", "equals": true }
   ]
 }

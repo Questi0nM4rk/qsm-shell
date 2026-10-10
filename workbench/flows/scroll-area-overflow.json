@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "key": "scroll-area-overflow",
+  "target": { "story": "scroll" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "overflows", "equals": true },
+    { "type": "expect", "observable": "at-start", "equals": true },
+    { "type": "action", "name": "to-end" },
+    { "type": "expect", "observable": "at-end", "equals": true },
+    { "type": "expect", "observable": "at-start", "equals": false },
+    { "type": "action", "name": "to-start" },
+    { "type": "expect", "observable": "at-start", "equals": true },
+    { "type": "control", "group": "content", "option": "fitting" },
+    { "type": "expect", "observable": "overflows", "equals": false },
+    { "type": "control", "group": "content", "option": "overflowing" },
+    { "type": "expect", "observable": "overflows", "equals": true },
+    { "type": "control", "group": "chrome", "option": "bare" },
+    { "type": "expect", "observable": "cues", "equals": false },
+    { "type": "expect", "observable": "overflows", "equals": true },
+    { "type": "control", "group": "axis", "option": "horizontal" },
+    { "type": "expect", "observable": "overflows", "equals": true },
+    { "type": "action", "name": "to-end" },
+    { "type": "expect", "observable": "at-end", "equals": true },
+    { "type": "action", "name": "settle" },
+    { "type": "expect", "observable": "at-end", "equals": true }
+  ]
+}

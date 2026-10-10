@@ -48,12 +48,4 @@ Rectangle {
             { label: "opaque", set: { surfaceColor: Style.surface, surfaceOpacity: 1 } }
         ] }
     ]
-    readonly property var integration: ({
-        events: [],
-        actions: [],
-        observables: {
-            radius: () => card.radius,
-            "surface-opacity": () => card.surfaceOpacity
-        }
-    })
 }

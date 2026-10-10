@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "key": "form-pair",
+  "viewport": [900, 520],
+  "root": {
+    "id": "form",
+    "type": "column",
+    "props": { "spacing": "md", "padding": "md" },
+    "children": [
+      {
+        "id": "display-name",
+        "type": "text-field",
+        "props": { "size": "md", "state": "filled", "label": "Display name", "text": "Ada Lovelace" }
+      },
+      {
+        "id": "handle",
+        "type": "text-field",
+        "props": { "size": "sm", "state": "filled", "label": "Handle", "text": "ada" }
+      },
+      {
+        "id": "commit",
+        "type": "checkbox",
+        "props": { "checked": false, "label": "Commit on accept" }
+      }
+    ]
+  },
+  "links": [
+    { "from": { "node": "commit", "event": "toggled" }, "to": { "node": "handle", "action": "clear" } },
+    { "from": { "node": "display-name", "event": "accepted" }, "to": { "node": "commit", "action": "check" } },
+    { "from": { "node": "handle", "event": "accepted" }, "to": { "node": "commit", "action": "check" } }
+  ]
+}

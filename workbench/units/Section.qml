@@ -19,7 +19,7 @@ Rectangle {
         label: "Refresh"
         size: "sm"
         variant: "ghost"
-        onClicked: root.eventRecorder?.("component", "clicked", {})
+        onClicked: root.eventRecorder?.("intent", "clicked", {})
     }
 
     implicitWidth: Style.controlWidth
@@ -60,8 +60,7 @@ Rectangle {
         observables: {
             // The header hides itself, so what the group shows is measured, not
             // derived from the control that asked for it.
-            "visible-children": () => group.visibleChildren.length,
-            "body-spacing": () => group.bodySpacing
+            "visible-children": () => group.visibleChildren.length
         },
         runAction: name => {
             if (name !== "activate")

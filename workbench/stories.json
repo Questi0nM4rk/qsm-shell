@@ -1,6 +1,17 @@
 {
   "version": 1,
   "stories": {
+    "data-capsule": {
+      "component": "data-capsule",
+      "variant": "neutral",
+      "unit": "workbench/units/DataCapsule.qml",
+      "viewport": [960, 600],
+      "title": "DataCapsule / Neutral details",
+      "description": "Host-owned details content positioned over a simulated desktop.",
+      "tags": ["data", "feedback"],
+      "source": "qml/QsmShell/Components/DataCapsule.qml",
+      "docs": "docs/components/DataCapsule.md"
+    },
     "badge": {
       "component": "badge",
       "variant": "warning",
@@ -54,6 +65,7 @@
         "loading",
         "meter"
       ],
+      "unit": "workbench/units/ProgressBar.qml",
       "source": "qml/QsmShell/Components/ProgressBar.qml",
       "docs": "docs/components/ProgressBar.md"
     },
@@ -70,6 +82,7 @@
         "data",
         "status"
       ],
+      "unit": "workbench/units/Meter.qml",
       "source": "qml/QsmShell/Components/Meter.qml",
       "docs": "docs/components/Meter.md"
     },
@@ -103,6 +116,7 @@
         "feedback",
         "message"
       ],
+      "unit": "workbench/units/Callout.qml",
       "source": "qml/QsmShell/Components/Callout.qml",
       "docs": "docs/components/Callout.md"
     },
@@ -211,6 +225,7 @@
         "data",
         "metric"
       ],
+      "unit": "workbench/units/Stat.qml",
       "source": "qml/QsmShell/Components/Stat.qml",
       "docs": "docs/components/Stat.md"
     },
@@ -227,6 +242,7 @@
         "data",
         "chart"
       ],
+      "unit": "workbench/units/Sparkline.qml",
       "source": "qml/QsmShell/Components/Sparkline.qml",
       "docs": "docs/components/Sparkline.md"
     },
@@ -243,6 +259,7 @@
         "color",
         "data"
       ],
+      "unit": "workbench/units/ColorSwatch.qml",
       "source": "qml/QsmShell/Components/ColorSwatch.qml",
       "docs": "docs/components/ColorSwatch.md"
     },
@@ -276,6 +293,7 @@
         "identity",
         "status"
       ],
+      "unit": "workbench/units/Avatar.qml",
       "source": "qml/QsmShell/Components/Avatar.qml",
       "docs": "docs/components/Avatar.md"
     },
@@ -327,7 +345,8 @@
         "control"
       ],
       "source": "qml/QsmShell/Components/Disclosure.qml",
-      "docs": "docs/components/Disclosure.md"
+      "docs": "docs/components/Disclosure.md",
+      "unit": "workbench/units/Disclosure.qml"
     },
     "scroll": {
       "component": "scroll",
@@ -343,7 +362,8 @@
         "scroll"
       ],
       "source": "qml/QsmShell/Components/ScrollArea.qml",
-      "docs": "docs/components/ScrollArea.md"
+      "docs": "docs/components/ScrollArea.md",
+      "unit": "workbench/units/ScrollArea.qml"
     },
     "field": {
       "component": "field",
@@ -359,7 +379,8 @@
         "validation"
       ],
       "source": "qml/QsmShell/Components/Field.qml",
-      "docs": "docs/components/Field.md"
+      "docs": "docs/components/Field.md",
+      "unit": "workbench/units/Field.qml"
     },
     "segmented": {
       "component": "segmented",
@@ -399,6 +420,7 @@
       ],
       "source": "qml/QsmShell/Components/MonthCalendar.qml",
       "docs": "docs/components/MonthCalendar.md",
+      "unit": "workbench/units/MonthCalendar.qml",
       "tests": [
         {
           "label": "month calendar unit",
@@ -472,6 +494,7 @@
       ],
       "source": "qml/QsmShell/Components/ScenePointer.qml",
       "docs": "docs/components/ScenePointer.md",
+      "unit": "workbench/units/ScenePointer.qml",
       "tests": [
         {
           "label": "scene pointer unit",
@@ -486,14 +509,15 @@
         800,
         500
       ],
-      "title": "Rollout / Hover",
-      "description": "Rollout interaction fixture for hover behavior.",
+      "title": "Rollout / Notification sounds",
+      "description": "Stationary sound settings in an expanding border, with optional nested alarm settings.",
       "tags": [
         "overlay",
         "interaction"
       ],
       "source": "qml/QsmShell/Components/Rollout.qml",
       "docs": "docs/components/Rollout.md",
+      "unit": "workbench/units/Rollout.qml",
       "tests": [
         {
           "label": "rollout unit",
@@ -514,6 +538,7 @@
         "feedback",
         "empty"
       ],
+      "unit": "workbench/units/EmptyState.qml",
       "source": "qml/QsmShell/Components/EmptyState.qml",
       "docs": "docs/components/EmptyState.md"
     },
@@ -566,6 +591,7 @@
       ],
       "source": "qml/QsmShell/Components/Slider.qml",
       "docs": "docs/components/Slider.md",
+      "unit": "workbench/units/Slider.qml",
       "tests": [
         {
           "label": "slider unit",
@@ -587,7 +613,8 @@
         "list"
       ],
       "source": "qml/QsmShell/Components/Menu.qml",
-      "docs": "docs/components/Menu.md"
+      "docs": "docs/components/Menu.md",
+      "unit": "workbench/units/Menu.qml"
     },
     "list-row": {
       "component": "list-row",
@@ -604,6 +631,7 @@
       ],
       "source": "qml/QsmShell/Components/ListRow.qml",
       "docs": "docs/components/ListRow.md",
+      "unit": "workbench/units/ListRow.qml",
       "tests": [
         {
           "label": "list row unit",
@@ -625,7 +653,8 @@
         "message"
       ],
       "source": "qml/QsmShell/Components/NotificationCard.qml",
-      "docs": "docs/components/NotificationCard.md"
+      "docs": "docs/components/NotificationCard.md",
+      "unit": "workbench/units/NotificationCard.qml"
     },
     "notification-stack": {
       "component": "notification-stack",
@@ -641,7 +670,8 @@
         "list"
       ],
       "source": "qml/QsmShell/Components/NotificationStack.qml",
-      "docs": "docs/components/NotificationStack.md"
+      "docs": "docs/components/NotificationStack.md",
+      "unit": "workbench/units/NotificationStack.qml"
     },
     "osd-slider": {
       "component": "osd-slider",
@@ -658,6 +688,7 @@
       ],
       "source": "qml/QsmShell/Components/Slider.qml",
       "docs": "docs/components/Slider.md",
+      "unit": "workbench/units/Slider.qml",
       "tests": [
         {
           "label": "slider unit",
@@ -680,6 +711,7 @@
       ],
       "source": "qml/QsmShell/Components/ListRow.qml",
       "docs": "docs/components/ListRow.md",
+      "unit": "workbench/units/ListRow.qml",
       "tests": [
         {
           "label": "list row unit",
@@ -702,6 +734,7 @@
       ],
       "source": "qml/QsmShell/Components/ListRow.qml",
       "docs": "docs/components/ListRow.md",
+      "unit": "workbench/units/ListRow.qml",
       "tests": [
         {
           "label": "list row unit",
@@ -724,6 +757,7 @@
       ],
       "source": "qml/QsmShell/Components/TextField.qml",
       "docs": "docs/components/TextField.md",
+      "unit": "workbench/units/TextField.qml",
       "tests": [
         {
           "label": "text field unit",
@@ -746,6 +780,7 @@
       ],
       "source": "qml/QsmShell/Components/TextField.qml",
       "docs": "docs/components/TextField.md",
+      "unit": "workbench/units/TextField.qml",
       "tests": [
         {
           "label": "text field unit",
@@ -768,6 +803,7 @@
       ],
       "source": "qml/QsmShell/Components/TextField.qml",
       "docs": "docs/components/TextField.md",
+      "unit": "workbench/units/TextField.qml",
       "tests": [
         {
           "label": "text field unit",
@@ -790,6 +826,7 @@
       ],
       "source": "qml/QsmShell/Components/TextField.qml",
       "docs": "docs/components/TextField.md",
+      "unit": "workbench/units/TextField.qml",
       "tests": [
         {
           "label": "text field unit",
@@ -811,7 +848,8 @@
         "typography"
       ],
       "source": "qml/QsmShell/Components/Prose.qml",
-      "docs": "docs/components/Prose.md"
+      "docs": "docs/components/Prose.md",
+      "unit": "workbench/units/Prose.qml"
     },
     "action-tile": {
       "component": "action-tile",
@@ -866,6 +904,7 @@
         "data",
         "metric"
       ],
+      "unit": "workbench/units/StatRing.qml",
       "source": "qml/QsmShell/Components/StatRing.qml",
       "docs": "docs/components/StatRing.md"
     },
@@ -916,7 +955,8 @@
         "typography"
       ],
       "source": "qml/QsmShell/Components/Prose.qml",
-      "docs": "docs/components/Prose.md"
+      "docs": "docs/components/Prose.md",
+      "unit": "workbench/units/Prose.qml"
     },
     "shell-border": {
       "component": "shell-border",
@@ -932,7 +972,161 @@
         "overlay"
       ],
       "source": "qml/QsmShell/Components/ShellBorder.qml",
-      "docs": "docs/components/ShellBorder.md"
+      "docs": "docs/components/ShellBorder.md",
+      "unit": "workbench/units/ShellBorder.qml"
+    },
+    "armed-action": {
+      "component": "armed-action",
+      "variant": "confirm",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ArmedAction / Confirm",
+      "description": "Confirm-then-fire guard for a destructive command.",
+      "tags": [
+        "action",
+        "control"
+      ],
+      "source": "qml/QsmShell/Components/ArmedAction.qml",
+      "docs": "docs/components/ArmedAction.md",
+      "unit": "workbench/units/ArmedAction.qml"
+    },
+    "control-label": {
+      "component": "control-label",
+      "variant": "clickable",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ControlLabel / Clickable",
+      "description": "Label element naming a control, acting as its action surface.",
+      "tags": [
+        "text",
+        "label"
+      ],
+      "source": "qml/QsmShell/Components/ControlLabel.qml",
+      "docs": "docs/components/ControlLabel.md",
+      "unit": "workbench/units/ControlLabel.qml"
+    },
+    "dialog": {
+      "component": "dialog",
+      "variant": "open",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Dialog / Open",
+      "description": "Modal takeover with slotted actions and focus return.",
+      "tags": [
+        "overlay",
+        "modal"
+      ],
+      "source": "qml/QsmShell/Components/Dialog.qml",
+      "docs": "docs/components/Dialog.md",
+      "unit": "workbench/units/Dialog.qml"
+    },
+    "notification-center": {
+      "component": "notification-center",
+      "variant": "resting",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "NotificationCenter / Resting",
+      "description": "Searchable notification history grouped by application.",
+      "tags": [
+        "notification",
+        "list"
+      ],
+      "source": "qml/QsmShell/Components/NotificationCenter.qml",
+      "docs": "docs/components/NotificationCenter.md",
+      "unit": "workbench/units/NotificationCenter.qml"
+    },
+    "popover": {
+      "component": "popover",
+      "variant": "open",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Popover / Open",
+      "description": "Anchored floating content beside its anchor item.",
+      "tags": [
+        "overlay",
+        "anchor"
+      ],
+      "source": "qml/QsmShell/Components/Popover.qml",
+      "docs": "docs/components/Popover.md",
+      "unit": "workbench/units/Popover.qml"
+    },
+    "scrim": {
+      "component": "scrim",
+      "variant": "shown",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Scrim / Shown",
+      "description": "Dimmed ground catching the pointer behind a modal.",
+      "tags": [
+        "overlay",
+        "modal"
+      ],
+      "source": "qml/QsmShell/Components/Scrim.qml",
+      "docs": "docs/components/Scrim.md",
+      "unit": "workbench/units/Scrim.qml"
+    },
+    "scroll-cue": {
+      "component": "scroll-cue",
+      "variant": "overflowing",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ScrollCue / Overflowing",
+      "description": "Position cue attached to an overflowing list viewport.",
+      "tags": [
+        "scroll",
+        "layout"
+      ],
+      "source": "qml/QsmShell/Components/ScrollCue.qml",
+      "docs": "docs/components/ScrollCue.md",
+      "unit": "workbench/units/ScrollCue.qml"
+    },
+    "selection-mark": {
+      "component": "selection-mark",
+      "variant": "shown",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "SelectionMark / Shown",
+      "description": "Accent tick marking the current row.",
+      "tags": [
+        "list",
+        "selection"
+      ],
+      "source": "qml/QsmShell/Components/SelectionMark.qml",
+      "docs": "docs/components/SelectionMark.md",
+      "unit": "workbench/units/SelectionMark.qml"
+    },
+    "surface": {
+      "component": "surface",
+      "variant": "selected",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "Surface / Selected",
+      "description": "Component body binding the state matrix to its base.",
+      "tags": [
+        "surface",
+        "interaction"
+      ],
+      "source": "qml/QsmShell/Components/Surface.qml",
+      "docs": "docs/components/Surface.md",
+      "unit": "workbench/units/Surface.qml"
     }
   }
 }

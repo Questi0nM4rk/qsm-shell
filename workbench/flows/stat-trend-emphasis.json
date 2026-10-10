@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "key": "stat-trend-emphasis",
+  "target": { "story": "stat" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "value", "equals": "72" },
+    { "type": "expect", "observable": "label", "equals": "CPU" },
+    { "type": "expect", "observable": "trend", "equals": "" },
+    { "type": "expect", "observable": "good", "equals": "up" },
+    { "type": "expect", "observable": "emphasis", "equals": "display" },
+    { "type": "control", "group": "trend", "option": "up" },
+    { "type": "expect", "observable": "trend", "equals": "up" },
+    { "type": "control", "group": "good", "option": "down" },
+    { "type": "expect", "observable": "good", "equals": "down" },
+    { "type": "control", "group": "emphasis", "option": "hero" },
+    { "type": "expect", "observable": "emphasis", "equals": "hero" },
+    { "type": "control", "group": "label", "option": "bare" },
+    { "type": "expect", "observable": "label", "equals": "" },
+    { "type": "control", "group": "label", "option": "named" },
+    { "type": "expect", "observable": "label", "equals": "CPU" },
+    { "type": "control", "group": "trend", "option": "flat" },
+    { "type": "expect", "observable": "trend", "equals": "flat" }
+  ]
+}

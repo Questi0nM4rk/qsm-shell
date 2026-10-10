@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "key": "shell-panel",
+  "viewport": [960, 600],
+  "root": {
+    "id": "deck",
+    "type": "row",
+    "props": { "spacing": "lg", "padding": "md" },
+    "children": [
+      {
+        "id": "levels",
+        "type": "stack",
+        "props": { "spacing": "sm" },
+        "children": [
+          {
+            "id": "volume",
+            "type": "slider",
+            "props": { "value": 30, "orientation": "horizontal", "label": "Volume" }
+          },
+          {
+            "id": "mode",
+            "type": "segmented",
+            "props": { "selected": 1, "label": "Mode" }
+          },
+          {
+            "id": "retries",
+            "type": "spin-box",
+            "props": { "value": 7, "label": "Retries" }
+          }
+        ]
+      },
+      {
+        "id": "account",
+        "type": "menu",
+        "props": { "title": "Account", "open": true },
+        "children": [
+          { "id": "notify", "type": "switch", "props": { "checked": true, "label": "Notify" } },
+          { "id": "exact", "type": "radio", "props": { "checked": false, "label": "Exact match" } }
+        ]
+      },
+      {
+        "id": "edge",
+        "type": "shell-border-rollout",
+        "props": { "side": "right", "open": false, "width": 240, "height": 200 },
+        "children": [
+          {
+            "id": "token",
+            "type": "text-field",
+            "props": { "size": "sm", "state": "default", "label": "Token", "text": "" }
+          }
+        ]
+      }
+    ]
+  },
+  "links": [
+    { "from": { "node": "retries", "event": "changed" }, "to": { "node": "edge", "action": "open" } },
+    { "from": { "node": "exact", "event": "selected" }, "to": { "node": "account", "action": "close" } }
+  ]
+}

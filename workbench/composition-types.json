@@ -109,6 +109,20 @@
       "events": ["changed"],
       "actions": ["reset"]
     },
+    "sound-channel": {
+      "label": "Sound channel",
+      "category": "leaf",
+      "children": "none",
+      "props": {
+        "level": { "type": "number", "min": 0, "max": 100, "default": 50 },
+        "muted": { "type": "boolean", "default": false },
+        "icon": { "type": "string", "maxLength": 80, "default": "volume" },
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": ["changed", "mute-changed"],
+      "actions": ["increase", "decrease", "minimum", "maximum", "toggle-mute"]
+    },
     "segmented": {
       "label": "Segmented",
       "category": "leaf",
@@ -135,6 +149,18 @@
       "events": ["changed"],
       "actions": ["increment", "decrement", "reset"]
     },
+    "menu-items": {
+      "label": "Shell menu composition",
+      "category": "fixture",
+      "children": "none",
+      "props": {
+        "size": { "type": "enum", "values": ["sm", "md", "lg"], "default": "md" },
+        "width": { "type": "number", "min": 240, "max": 1920 },
+        "height": { "type": "number", "min": 240, "max": 1200 }
+      },
+      "events": ["activated", "moved", "committed", "mute-toggled", "wifi-radio-toggled", "bluetooth-radio-toggled", "wifi-connect", "wifi-result", "ble-connect", "ble-result", "device-toggled", "device-forgotten", "scan-result"],
+      "actions": ["step-next", "step-previous", "activate", "close-editor", "increase", "decrease", "toggle-mute", "connect-wifi", "connect-ble"]
+    },
     "menu": {
       "label": "Menu",
       "category": "container",
@@ -160,6 +186,37 @@
       },
       "events": ["opened", "closed"],
       "actions": ["open", "close", "toggle"]
+    },
+    "mock-screen": {
+      "label": "Mock screen",
+      "category": "container",
+      "children": "many",
+      "props": {
+        "width": { "type": "number", "min": 40, "max": 1920 },
+        "height": { "type": "number", "min": 24, "max": 1200 }
+      },
+      "events": [],
+      "actions": []
+    },
+    "data-capsule": {
+      "label": "Data capsule",
+      "category": "container",
+      "children": "many",
+      "props": {
+        "open": { "type": "boolean", "default": true },
+        "hover-stay": { "type": "boolean", "default": true },
+        "interactive": { "type": "boolean", "default": false },
+        "elevated": { "type": "boolean", "default": true },
+        "timeout": { "type": "number", "min": 0, "max": 3600000, "default": 0 },
+        "edge": { "type": "enum", "values": ["left", "right", "top", "bottom"], "default": "bottom" },
+        "alignment": { "type": "enum", "values": ["start", "center", "end"], "default": "center" },
+        "inset": { "type": "spacing", "default": "md" },
+        "orientation": { "type": "enum", "values": ["horizontal", "vertical"], "default": "horizontal" },
+        "size": { "type": "enum", "values": ["sm", "md", "lg"], "default": "md" },
+        "length": { "type": "enum", "values": ["short", "default", "long", "content"], "default": "default" }
+      },
+      "events": ["activated", "timeout-requested"],
+      "actions": ["open", "close", "restart", "cancel-timeout", "activate"]
     }
   }
 }

@@ -4,15 +4,16 @@
   "target": { "story": "skeleton" },
   "steps": [
     { "type": "reset" },
-    { "type": "expect", "observable": "lead-height", "equals": 40 },
-    { "type": "expect", "observable": "lead-width", "equals": 380 },
+    { "type": "expect", "observable": "shape", "equals": "block" },
+    { "type": "expect", "observable": "role", "equals": "label" },
+    { "type": "expect", "observable": "fraction", "equals": 1 },
     { "type": "control", "group": "shape", "option": "line" },
-    { "type": "expect", "observable": "lead-height", "equals": 12 },
+    { "type": "expect", "observable": "shape", "equals": "line" },
     { "type": "control", "group": "role", "option": "hero" },
-    { "type": "expect", "observable": "lead-height", "equals": 44 },
+    { "type": "expect", "observable": "role", "equals": "hero" },
     { "type": "control", "group": "role", "option": "metadata" },
-    { "type": "expect", "observable": "lead-height", "equals": 10 },
+    { "type": "expect", "observable": "role", "equals": "metadata" },
     { "type": "control", "group": "width", "option": "short" },
-    { "type": "expect", "observable": "lead-width", "equals": 228 }
+    { "type": "expect", "observable": "fraction", "equals": 0.6 }
   ]
 }

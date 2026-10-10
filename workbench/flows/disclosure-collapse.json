@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "key": "disclosure-collapse",
+  "target": { "story": "disclosure" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "expanded", "equals": true },
+    { "type": "expect", "observable": "badge", "equals": "3" },
+    { "type": "expect", "observable": "icon", "equals": "gauge" },
+    { "type": "control", "group": "expansion", "option": "closed" },
+    { "type": "expect", "observable": "expanded", "equals": false },
+    { "type": "control", "group": "badge", "option": "none" },
+    { "type": "expect", "observable": "badge", "equals": "" },
+    { "type": "control", "group": "icon", "option": "none" },
+    { "type": "expect", "observable": "icon", "equals": "" },
+    { "type": "control", "group": "expansion", "option": "open" },
+    { "type": "expect", "observable": "expanded", "equals": true },
+    { "type": "action", "name": "toggle" },
+    { "type": "expectEvent", "event": "toggled", "origin": "component" },
+    { "type": "expect", "observable": "expanded", "equals": false },
+    { "type": "expect", "observable": "toggles", "equals": 1 },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "action", "name": "toggle" },
+    { "type": "expect", "observable": "toggles", "equals": 1 },
+    { "type": "expect", "observable": "expanded", "equals": false },
+    { "type": "control", "group": "state", "option": "enabled" },
+    { "type": "action", "name": "toggle" },
+    { "type": "expect", "observable": "expanded", "equals": true },
+    { "type": "expect", "observable": "toggles", "equals": 2 }
+  ]
+}

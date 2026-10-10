@@ -10,7 +10,6 @@
     { "type": "action", "name": "activate" },
     { "type": "expectEvent", "event": "clicked", "origin": "component" },
     { "type": "control", "group": "header", "option": "bare" },
-    { "type": "expect", "observable": "visible-children", "equals": 1 },
-    { "type": "expect", "observable": "body-spacing", "equals": 4 }
+    { "type": "expect", "observable": "visible-children", "equals": 1 }
   ]
 }

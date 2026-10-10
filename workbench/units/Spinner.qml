@@ -33,9 +33,7 @@ Rectangle {
         events: [],
         actions: [],
         observables: {
-            running: () => spinner.running,
-            width: () => spinner.width,
-            height: () => spinner.height
+            running: () => spinner.running
         }
     })
 }

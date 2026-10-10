@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "key": "callout-tone-recovery",
+  "target": { "story": "callout" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "tone", "equals": "danger" },
+    { "type": "expect", "observable": "title", "equals": "Output device is not available" },
+    { "type": "expect", "observable": "body", "equals": "The dock was unplugged. Reconnect it, or pick another output." },
+    { "type": "control", "group": "tone", "option": "warning" },
+    { "type": "expect", "observable": "tone", "equals": "warning" },
+    { "type": "control", "group": "copy", "option": "title-only" },
+    { "type": "expect", "observable": "body", "equals": "" },
+    { "type": "control", "group": "copy", "option": "bare" },
+    { "type": "expect", "observable": "title", "equals": "" },
+    { "type": "control", "group": "mark", "option": "stated" },
+    { "type": "expect", "observable": "icon", "equals": "wifi-off" },
+    { "type": "control", "group": "mark", "option": "tone" },
+    { "type": "expect", "observable": "icon", "equals": "" },
+    { "type": "action", "name": "activate" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
+    { "type": "expect", "observable": "clicks", "equals": 1 },
+    { "type": "control", "group": "action", "option": "none" },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "clicks", "equals": 2 }
+  ]
+}

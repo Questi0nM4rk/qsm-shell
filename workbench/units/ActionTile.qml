@@ -21,7 +21,7 @@ Item {
         confirmLabel: "Confirm?"
         selected: root.selected
         armed: root.armed
-        onActivated: root.eventRecorder?.("component", "activated", { selected: root.selected, armed: root.armed })
+        onActivated: root.eventRecorder?.("intent", "activated", { selected: root.selected, armed: root.armed })
     }
 
     readonly property var controls: [

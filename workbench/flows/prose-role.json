@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "key": "prose-role",
+  "target": { "story": "prose" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "role", "equals": "heading" },
+    { "type": "expect", "observable": "ladder-mode", "equals": false },
+    { "type": "expect", "observable": "muted", "equals": false },
+    { "type": "expect", "observable": "technical", "equals": false },
+    { "type": "expect", "observable": "wraps", "equals": false },
+    { "type": "expect", "observable": "ladder-roles", "equals": 0 },
+    { "type": "control", "group": "role", "option": "reading" },
+    { "type": "expect", "observable": "role", "equals": "reading" },
+    { "type": "control", "group": "technical", "option": "off" },
+    { "type": "expect", "observable": "technical", "equals": false },
+    { "type": "control", "group": "technical", "option": "on" },
+    { "type": "expect", "observable": "technical", "equals": true },
+    { "type": "control", "group": "role", "option": "body" },
+    { "type": "expect", "observable": "wraps", "equals": true },
+    { "type": "control", "group": "muted", "option": "on" },
+    { "type": "expect", "observable": "muted", "equals": true },
+    { "type": "control", "group": "role", "option": "hero" },
+    { "type": "expect", "observable": "wraps", "equals": false },
+    { "type": "expect", "observable": "muted", "equals": true }
+  ]
+}

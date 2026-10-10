@@ -23,7 +23,6 @@ Rectangle {
             text: "Displays"
         }
         Divider {
-            id: rule
             width: parent.width
             inset: Style.space3
         }
@@ -34,15 +33,4 @@ Rectangle {
     }
 
     readonly property var controls: []
-    readonly property var integration: ({
-        events: [],
-        actions: [],
-        observables: {
-            // The record says the implicit height IS the thickness, so the
-            // observable reads that rather than the property it came from.
-            "rule-height": () => rule.implicitHeight,
-            "line-inset": () => rule.inset,
-            "line-span": () => rule.width - rule.inset * 2
-        }
-    })
 }

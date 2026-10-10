@@ -53,8 +53,9 @@ Rectangle {
         observables: {
             tone: () => badge.tone,
             filled: () => badge.filled,
-            visible: () => badge.visible,
-            "pill-width": () => badge.implicitWidth
+            icon: () => badge.icon,
+            dot: () => badge.dot,
+            visible: () => badge.visible
         }
     })
 }

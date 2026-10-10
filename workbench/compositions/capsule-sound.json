@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "key": "capsule-sound",
+  "viewport": [1200, 800],
+  "root": {
+    "id": "mock-screen",
+    "type": "mock-screen",
+    "props": { "width": 1200, "height": 800 },
+    "children": [
+      {
+        "id": "capsule",
+        "type": "data-capsule",
+        "props": {
+          "open": true,
+          "hover-stay": true,
+          "interactive": false,
+          "elevated": true,
+          "timeout": 3000,
+          "edge": "right",
+          "alignment": "center",
+          "inset": "md",
+          "orientation": "vertical",
+          "size": "lg",
+          "length": "content"
+        },
+        "children": [
+          {
+            "id": "sound",
+            "type": "sound-channel",
+            "props": { "level": 42, "muted": false, "icon": "volume" }
+          }
+        ]
+      }
+    ]
+  },
+  "links": [
+    { "from": { "node": "sound", "event": "changed" }, "to": { "node": "capsule", "action": "open" } },
+    { "from": { "node": "sound", "event": "mute-changed" }, "to": { "node": "capsule", "action": "open" } }
+  ]
+}

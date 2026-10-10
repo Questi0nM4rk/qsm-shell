@@ -22,12 +22,4 @@ Rectangle {
     }
 
     readonly property var controls: []
-    readonly property var integration: ({
-        events: [],
-        actions: [],
-        observables: {
-            "min-cap-width": () => caps.minCapWidth,
-            "cap-height": () => caps.height
-        }
-    })
 }

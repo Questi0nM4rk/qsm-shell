@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "key": "scrim-dismiss",
+  "target": { "story": "scrim" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "shown", "equals": true },
+    { "type": "action", "name": "dismiss" },
+    { "type": "expectEvent", "event": "dismissed", "origin": "component" },
+    { "type": "expect", "observable": "dismissals", "equals": 1 },
+    { "type": "expect", "observable": "shown", "equals": false },
+    { "type": "action", "name": "dismiss" },
+    { "type": "expect", "observable": "dismissals", "equals": 1 },
+    { "type": "control", "group": "visibility", "option": "shown" },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "action", "name": "dismiss" },
+    { "type": "expect", "observable": "shown", "equals": true },
+    { "type": "expect", "observable": "dismissals", "equals": 1 },
+    { "type": "control", "group": "state", "option": "enabled" },
+    { "type": "action", "name": "dismiss" },
+    { "type": "expect", "observable": "dismissals", "equals": 2 },
+    { "type": "expect", "observable": "shown", "equals": false }
+  ]
+}

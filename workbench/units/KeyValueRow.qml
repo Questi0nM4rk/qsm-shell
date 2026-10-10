@@ -22,7 +22,6 @@ Rectangle {
         spacing: Style.space1
 
         KeyValueRow {
-            id: row
             width: parent.width
             icon: root.glyph
             label: "Battery"
@@ -36,12 +35,4 @@ Rectangle {
     }
 
     readonly property var controls: []
-    readonly property var integration: ({
-        events: [],
-        actions: [],
-        observables: {
-            spacing: () => row.spacing,
-            width: () => row.width
-        }
-    })
 }

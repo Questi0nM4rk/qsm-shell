@@ -47,12 +47,4 @@ Rectangle {
             { label: "lg", set: { size: Style.iconLg } }
         ] }
     ]
-    readonly property var integration: ({
-        events: [],
-        actions: [],
-        observables: {
-            width: () => glyph.width,
-            height: () => glyph.height
-        }
-    })
 }

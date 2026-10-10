@@ -20,7 +20,7 @@ Item {
         accessibleName: optionLabel.text
         onSelectionRequested: {
             root.checked = true
-            root.eventRecorder?.("component", "selection-requested", {})
+            root.eventRecorder?.("intent", "selection-requested", {})
         }
 
         Prose {

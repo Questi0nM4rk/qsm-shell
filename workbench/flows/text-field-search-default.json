@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "key": "text-field-search-default",
+  "target": { "story": "search" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "purpose", "equals": "search" },
+    { "type": "expect", "observable": "text", "equals": "volume" },
+    { "type": "expect", "observable": "input-type", "equals": "text" },
+    { "type": "expect", "observable": "leading-glyph", "equals": "search" },
+    { "type": "expect", "observable": "trailing-action", "equals": "" }
+  ]
+}

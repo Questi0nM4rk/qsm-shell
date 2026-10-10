@@ -1,7 +1,8 @@
 import QtQuick
 
 // The provider's whole contribution to the storybook: host ONE unit, the one
-// its catalog names, and forward that unit's contract. No window, no view.
+// its catalog names, or ONE composition scene, the document it was handed, and
+// forward that contract. No window, no view, no catalog of its own.
 Item {
     id: root
 
@@ -15,41 +16,92 @@ Item {
     property int viewportHeight: 0
     property int resetGeneration: 0
     property bool interactive: false
+    property var previewEnvironment: null
+
+    // Optional native-input seam: the harness supplies its window-local Qt
+    // input driver here when the unit names real targets. Without it the
+    // adapter keeps its semantic API, which is what older adapters speak.
+    property var inputDriver: null
+
+    // A document is a composition whatever the caller called the mode: the
+    // live canvas hands over a composition and nothing else.
+    readonly property bool _isComposition: composition !== null && composition !== undefined
 
     // Read from the unit. A story with no harness, or a harness that has not
     // reported its states, says so here rather than pretending to be ready.
-    readonly property bool _loaded: unitLoader.status === Loader.Ready && !!unitLoader.item
+    readonly property bool _loaded: !_isComposition && unitLoader.status === Loader.Ready && !!unitLoader.item
     readonly property var _unit: _loaded ? unitLoader.item : null
+    readonly property bool _sceneLoaded: sceneLoader.status === Loader.Ready && !!sceneLoader.item
+    readonly property var _scene: _sceneLoaded ? sceneLoader.item : null
 
-    readonly property string storyStatus: mode === "composition"
-        ? (compositionStatus())
+    readonly property string storyStatus: _isComposition
+        ? (sceneLoader.status === Loader.Error ? "error" : _scene ? _scene.storyStatus : "loading")
         : _loaded ? "ready" : unitLoader.status === Loader.Error ? "failed" : "loading"
-    readonly property string storySource: _loaded ? String(_unit.objectName ?? storyKey) : ""
-    readonly property string storyError: unitLoader.status === Loader.Error
-        ? "could not load the unit for story '" + storyKey + "'"
-        : mode === "composition" ? "compositions are not hosted by this provider" : ""
-    readonly property var controls: _loaded ? asArray(_unit.controls) : []
+    readonly property string storySource: _isComposition
+        ? (_scene ? _scene.storyKey : "")
+        : _loaded ? String(_unit.objectName ?? storyKey) : ""
+    readonly property string storyError: _isComposition
+        ? (sceneLoader.status === Loader.Error
+            ? "could not load the composition scene"
+            : _scene ? _scene.storyError : "")
+        : unitLoader.status === Loader.Error
+            ? "could not load the unit for story '" + storyKey + "'" : ""
+    readonly property var controls: _isComposition
+        ? (_scene ? asArray(_scene.controls) : [])
+        : _loaded ? asArray(_unit.controls) : []
     // The unit's own action names, unchanged: the flow addresses an action by
     // the name the unit gave it, and a second label list here would be a second
     // rule for what an action is called.
-    readonly property var actions: _loaded ? asArray(integration?.actions) : []
-    readonly property real contentExtentWidth: _loaded && _unit.contentExtentWidth !== undefined
-        ? Number(_unit.contentExtentWidth) : width
-    readonly property real contentExtentHeight: _loaded && _unit.contentExtentHeight !== undefined
-        ? Number(_unit.contentExtentHeight) : height
+    readonly property var actions: _isComposition
+        ? (_scene ? asArray(_scene.actions) : [])
+        : _loaded ? asArray(integration?.actions) : []
+    readonly property real contentExtentWidth: _isComposition
+        ? (_scene ? Number(_scene.contentExtentWidth) : width)
+        : _loaded && _unit.contentExtentWidth !== undefined
+            ? Number(_unit.contentExtentWidth) : width
+    readonly property real contentExtentHeight: _isComposition
+        ? (_scene ? Number(_scene.contentExtentHeight) : height)
+        : _loaded && _unit.contentExtentHeight !== undefined
+            ? Number(_unit.contentExtentHeight) : height
 
-    // `integration` is the contract a flow drives. A unit declaring none is a
-    // story you can look at and not test, and the harness reports exactly that.
-    readonly property var integration: _loaded ? (_unit.integration ?? null) : null
+    // A composition's root answers with aggregate idleness only: every node
+    // owns its own capabilities, and a global control list would be a second
+    // place claiming to know which node a control meant.
+    readonly property var integration: _isComposition
+        ? (_scene ? _scene.integration : null)
+        : _loaded ? (_unit.integration ?? null) : null
     readonly property var events: asArray(integration?.events)
     readonly property var observables: integration?.observables ?? null
     readonly property bool _drivable: integration !== null
+    readonly property var previewEnvironmentSnapshot: previewEnvironment
+        ? ({
+            supported: true,
+            fullscreen: previewEnvironment.fullscreen === true,
+            screenRect: {
+                x: previewEnvironment.screenRect.x,
+                y: previewEnvironment.screenRect.y,
+                width: previewEnvironment.screenRect.width,
+                height: previewEnvironment.screenRect.height
+            },
+            source: String(previewEnvironment.source)
+        })
+        : ({
+            supported: false,
+            fullscreen: false,
+            screenRect: { x: 0, y: 0, width: root.width, height: root.height },
+            source: "desktop-simulation"
+        })
 
     signal eventRecorded(var record)
     signal inspectionReady(var inspection)
 
-    width: viewportWidth > 0 ? viewportWidth : 1
-    height: viewportHeight > 0 ? viewportHeight : 1
+    readonly property int _documentWidth: _isComposition
+        ? Number(asArray(composition?.viewport)[0]) || 0 : 0
+    readonly property int _documentHeight: _isComposition
+        ? Number(asArray(composition?.viewport)[1]) || 0 : 0
+
+    width: viewportWidth > 0 ? viewportWidth : _documentWidth > 0 ? _documentWidth : 1
+    height: viewportHeight > 0 ? viewportHeight : _documentHeight > 0 ? _documentHeight : 1
 
     // The catalog's `unit` arrives as an absolute URL from the launcher.
     readonly property url _unitSource: story && typeof story.unit === "string" && story.unit.length > 0
@@ -70,13 +122,38 @@ Item {
         return []
     }
 
-    function compositionStatus() {
-        return "empty"
+    function integrationForNode(nodeId: string): var {
+        return _isComposition && _scene ? _scene.integrationForNode(nodeId) : null
+    }
+
+    function controlsForNode(nodeId: string): var {
+        return _isComposition && _scene ? _scene.controlsForNode(nodeId) : []
+    }
+
+    function actionsForNode(nodeId: string): var {
+        return _isComposition && _scene ? _scene.actionsForNode(nodeId) : []
+    }
+
+    function applyNodeControl(nodeId: string, groupIndex: int, optionIndex: int): bool {
+        return _isComposition && _scene
+            ? _scene.applyNodeControl(nodeId, groupIndex, optionIndex) : false
+    }
+
+    function triggerNodeAction(nodeId: string, actionIndex: int): bool {
+        return _isComposition && _scene ? _scene.triggerNodeAction(nodeId, actionIndex) : false
+    }
+
+    // Declared semantic injection, and the injection hook the nodes are given:
+    // both arrive as an injected event, never as a component one.
+    function emitNodeEvent(nodeId: string, event: string, payload: var): bool {
+        return _isComposition && _scene ? _scene.emitNodeEvent(nodeId, event, payload) : false
     }
 
     // A control applies to the UNIT, never to a list this file holds, so a
     // state the pointer cannot reach is reached the same way for every type.
     function applyControl(groupIndex: int, optionIndex: int): bool {
+        if (_isComposition)
+            return _scene ? _scene.applyControl(groupIndex, optionIndex) : false
         if (!_loaded)
             return false
         const groups = controls
@@ -105,6 +182,8 @@ Item {
     // through the unit's own `runAction`. Pointer, keyboard and the harness all
     // arrive at that one door.
     function triggerAction(index: int): bool {
+        if (_isComposition)
+            return _scene ? _scene.triggerAction(index) : false
         if (!_loaded || typeof integration?.runAction !== "function")
             return false
         const list = actions
@@ -123,7 +202,7 @@ Item {
     // states it declared and whether it can be driven at all.
     function dumpTree(): void {
         inspectionReady({
-            story: storyKey,
+            story: _isComposition ? storySource : storyKey,
             component: component,
             variant: variant,
             status: storyStatus,
@@ -131,7 +210,9 @@ Item {
             drivable: _drivable,
             events: events,
             controlGroups: controls.length,
-            actionCount: actions.length
+            actionCount: actions.length,
+            nodeCount: _isComposition && _scene ? _scene.nodeCount : 0,
+            previewEnvironment: previewEnvironmentSnapshot
         })
     }
 
@@ -142,10 +223,8 @@ Item {
 
     Loader {
         id: unitLoader
-        // `undefined` rather than an empty URL: an assigned source puts the
-        // Loader in URL mode even when blank, and then status never reaches
-        // "ready".
-        source: root.mode === "story" ? root._unitSource : undefined
+        active: !root._isComposition && String(root._unitSource) !== ""
+        source: root._unitSource
         anchors.fill: parent
         visible: root._loaded
         onLoaded: {
@@ -157,13 +236,27 @@ Item {
             if ("variant" in item)
                 item.variant = Qt.binding(() => root.variant)
             if ("eventRecorder" in item)
-                item.eventRecorder = (kind, name, payload) => root.eventRecorded({ "origin": kind, "name": name, "payload": payload ?? {} })
+                item.eventRecorder = (kind, name, payload) => root.eventRecorded({ "origin": "component", "kind": kind, "name": name, "payload": payload ?? {} })
+            if ("previewEnvironment" in item)
+                item.previewEnvironment = Qt.binding(() => root.previewEnvironment)
+        }
+    }
+
+    Loader {
+        id: sceneLoader
+        active: root._isComposition
+        source: "CompositionScene.qml"
+        anchors.fill: parent
+        onLoaded: {
+            root._scene.composition = Qt.binding(() => root.composition)
+            root._scene.resetGeneration = Qt.binding(() => root.resetGeneration)
+            root._scene.previewEnvironment = Qt.binding(() => root.previewEnvironment)
         }
     }
 
     // Reset is a reconstruction, not a message nothing has to implement.
     onResetGenerationChanged: {
-        if (_unitSource === "")
+        if (_isComposition || _unitSource === "")
             return
         unitLoader.active = false
         unitLoader.active = true
@@ -173,5 +266,10 @@ Item {
         target: unitLoader.item
         function onEventRecorded(record) { root.eventRecorded(record) }
         function onInspectionReady(inspection) { root.inspectionReady(inspection) }
+    }
+
+    Connections {
+        target: sceneLoader.item
+        function onEventRecorded(record) { root.eventRecorded(record) }
     }
 }

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "key": "month-calendar-shift",
+  "target": { "story": "calendar" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "shown", "equals": "2026-08" },
+    { "type": "expect", "observable": "today-marker", "equals": "2026-08-30" },
+    { "type": "expect", "observable": "shifts", "equals": 0 },
+    { "type": "action", "name": "shift-next" },
+    { "type": "expect", "observable": "shown", "equals": "2026-09" },
+    { "type": "expect", "observable": "last-delta", "equals": 1 },
+    { "type": "expectEvent", "event": "month-shifted" },
+    { "type": "control", "group": "today", "option": "before" },
+    { "type": "expect", "observable": "today-marker", "equals": "2026-07-12" },
+    { "type": "control", "group": "today", "option": "after" },
+    { "type": "expect", "observable": "today-marker", "equals": "2026-10-04" },
+    { "type": "control", "group": "today", "option": "this-month" },
+    { "type": "action", "name": "shift-previous" },
+    { "type": "expect", "observable": "shown", "equals": "2026-08" },
+    { "type": "expect", "observable": "last-delta", "equals": -1 },
+    { "type": "expect", "observable": "shifts", "equals": 2 },
+    { "type": "action", "name": "shift-next" },
+    { "type": "action", "name": "shift-next" },
+    { "type": "action", "name": "shift-next" },
+    { "type": "action", "name": "shift-next" },
+    { "type": "action", "name": "shift-next" },
+    { "type": "expect", "observable": "shown", "equals": "2027-01" }
+  ]
+}

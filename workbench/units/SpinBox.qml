@@ -11,6 +11,7 @@ Item {
     property bool failed: false
     property bool editable: true
     property bool wrap: false
+    property string size: "md"
 
     implicitWidth: spin.implicitWidth
     implicitHeight: spin.implicitHeight
@@ -22,6 +23,7 @@ Item {
         to: 100
         stepSize: 0.5
         decimals: 1
+        size: root.size
         wrap: root.wrap
         editable: root.editable
         failed: root.failed
@@ -29,11 +31,17 @@ Item {
         accessibleName: "Brightness"
         onValueModified: {
             root.value = spin.value
-            root.eventRecorder?.("component", "value-modified", { value: root.value })
+            root.eventRecorder?.("intent", "value-modified", { value: root.value })
         }
     }
 
     readonly property var controls: [
+        { label: "size", options: [
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } },
+            { label: "wide", set: { size: "xl" } }
+        ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
             { label: "disabled", set: { enabled: false } }
@@ -56,6 +64,7 @@ Item {
         actions: ["increase", "decrease", "minimum", "maximum"],
         observables: {
             value: () => root.value,
+            size: () => root.size,
             "acceptable-input": () => spin.acceptableInput
         },
         runAction: name => {

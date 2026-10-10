@@ -20,7 +20,7 @@ Item {
         active: root.active
         onClicked: {
             root.active = !root.active
-            root.eventRecorder?.("component", "clicked", { active: root.active })
+            root.eventRecorder?.("intent", "clicked", { active: root.active })
         }
     }
 

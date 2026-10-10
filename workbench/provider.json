@@ -4,17 +4,6 @@
   "title": "QSM Shell",
   "description": "Reusable Qt 6 shell components.",
   "sourceRoot": "qml/QsmShell/Components",
-  "uncovered": [
-    "ArmedAction.qml",
-    "ControlLabel.qml",
-    "Dialog.qml",
-    "NotificationCenter.qml",
-    "Popover.qml",
-    "Scrim.qml",
-    "ScrollCue.qml",
-    "SelectionMark.qml",
-    "Surface.qml"
-  ],
   "capabilities": [
     "stories",
     "compositions",

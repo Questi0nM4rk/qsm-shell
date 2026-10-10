@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "key": "control-label-caption",
+  "target": { "story": "control-label" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "clickable", "equals": true },
+    { "type": "expect", "observable": "required", "equals": true },
+    { "type": "action", "name": "activate" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
+    { "type": "expect", "observable": "clicks", "equals": 1 },
+    { "type": "control", "group": "interaction", "option": "caption" },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "clicks", "equals": 1 },
+    { "type": "control", "group": "required", "option": "no" },
+    { "type": "expect", "observable": "required", "equals": false },
+    { "type": "control", "group": "icon", "option": "none" },
+    { "type": "control", "group": "text", "option": "empty" },
+    { "type": "control", "group": "interaction", "option": "clickable" },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "has-content", "equals": false },
+    { "type": "expect", "observable": "clicks", "equals": 1 },
+    { "type": "control", "group": "text", "option": "full" },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "clicks", "equals": 1 },
+    { "type": "control", "group": "state", "option": "enabled" },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "clicks", "equals": 2 }
+  ]
+}

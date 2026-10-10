@@ -4,19 +4,26 @@
   "target": { "story": "badge" },
   "steps": [
     { "type": "reset" },
-    { "type": "expect", "observable": "visible", "equals": true },
     { "type": "expect", "observable": "tone", "equals": "warning" },
     { "type": "control", "group": "tone", "option": "danger" },
     { "type": "expect", "observable": "tone", "equals": "danger" },
     { "type": "control", "group": "weight", "option": "filled" },
     { "type": "expect", "observable": "filled", "equals": true },
-    { "type": "control", "group": "presence", "option": "dot" },
-    { "type": "expect", "observable": "visible", "equals": true },
-    { "type": "expect", "observable": "pill-width", "equals": 8 },
-    { "type": "control", "group": "presence", "option": "empty" },
-    { "type": "expect", "observable": "visible", "equals": false },
+    { "type": "control", "group": "weight", "option": "tinted" },
+    { "type": "expect", "observable": "filled", "equals": false },
     { "type": "control", "group": "presence", "option": "reading" },
     { "type": "expect", "observable": "visible", "equals": true },
-    { "type": "expect", "observable": "pill-width", "equals": 16 }
+    { "type": "expect", "observable": "icon", "equals": "" },
+    { "type": "expect", "observable": "dot", "equals": false },
+    { "type": "control", "group": "presence", "option": "glyph" },
+    { "type": "expect", "observable": "visible", "equals": true },
+    { "type": "expect", "observable": "icon", "equals": "check" },
+    { "type": "expect", "observable": "dot", "equals": false },
+    { "type": "control", "group": "presence", "option": "dot" },
+    { "type": "expect", "observable": "visible", "equals": true },
+    { "type": "expect", "observable": "icon", "equals": "" },
+    { "type": "expect", "observable": "dot", "equals": true },
+    { "type": "control", "group": "presence", "option": "empty" },
+    { "type": "expect", "observable": "visible", "equals": false }
   ]
 }

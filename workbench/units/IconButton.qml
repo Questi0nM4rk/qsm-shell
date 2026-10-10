@@ -16,7 +16,7 @@ Item {
         anchors.centerIn: parent
         icon: "check"
         accessibleName: "Apply"
-        onClicked: root.eventRecorder?.("component", "clicked", {})
+        onClicked: root.eventRecorder?.("intent", "clicked", {})
     }
 
     readonly property var controls: [

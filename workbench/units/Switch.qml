@@ -18,7 +18,7 @@ Item {
         checked: root.checked
         onToggleRequested: next => {
             root.checked = next
-            root.eventRecorder?.("component", "toggle-requested", { checked: next })
+            root.eventRecorder?.("intent", "toggle-requested", { checked: next })
         }
     }
 

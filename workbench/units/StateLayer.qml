@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import qs.QsmShell.Components
 import qs.QsmShell.Style
 
@@ -12,25 +11,45 @@ import qs.QsmShell.Style
 // pointer cannot, through declared controls. It decides nothing about the
 // component's behaviour — five states, clickable vs interactive and the focus
 // ring all belong to `StateLayer`.
-Rectangle {
+Item {
     id: root
 
     property string variant: ""
     property var eventRecorder: null
 
-    implicitWidth: 160
-    implicitHeight: 64
-    radius: Style.radiusMd
-    color: Style.surface
+    implicitWidth: Style.controlWidth / 2
+    implicitHeight: Style.controlHeightLg
 
-    StateLayer {
-        anchors.fill: parent
-        interactive: root.variant !== "disabled"
-        // A rollout trigger takes part in hover and not in press. The unit
-        // reaches it through a control because a pointer cannot produce it.
-        clickable: root.variant !== "trigger"
-        onClicked: root.eventRecorder?.("intent", "clicked", {})
-        onHoveredEntered: root.eventRecorder?.("intent", "hovered", {})
+    Rectangle {
+        id: body
+        anchors.centerIn: parent
+        width: root.implicitWidth
+        height: root.implicitHeight
+        enabled: root.variant !== "disabled"
+        activeFocusOnTab: enabled
+        radius: Style.radiusMd
+        color: enabled ? Style.surface : Style.disabled(Style.surface)
+        Accessible.role: Accessible.Button
+        Accessible.name: "State layer sample"
+        Accessible.onPressAction: layer.activate()
+        Keys.onSpacePressed: layer.activate()
+        Keys.onReturnPressed: layer.activate()
+
+        StateLayer {
+            id: layer
+            x: -Style.spaceTight
+            y: -Style.spaceTight
+            width: body.width + Style.spaceTight * 2
+            height: body.height + Style.spaceTight * 2
+            interactive: body.enabled
+            clickable: root.variant !== "trigger"
+            focusRadius: body.radius + Style.spaceTight
+            onClicked: {
+                body.forceActiveFocus(Qt.MouseFocusReason)
+                root.eventRecorder?.("intent", "clicked", {})
+            }
+            onHoveredEntered: root.eventRecorder?.("intent", "hovered", {})
+        }
     }
 
     readonly property var controls: [
@@ -44,14 +63,13 @@ Rectangle {
         events: ["clicked", "hovered"],
         actions: ["click"],
         observables: {
-            interactive: () => root.variant !== "disabled",
-            clickable: () => root.variant !== "trigger"
+            interactive: () => layer.interactive,
+            clickable: () => layer.clickable
         },
         runAction: name => {
             if (name !== "click")
                 return false;
-            root.eventRecorder?.("intent", "clicked", {});
-            return true;
+            return layer.activate();
         }
     })
 }

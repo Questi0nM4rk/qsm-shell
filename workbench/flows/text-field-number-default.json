@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "key": "text-field-number-default",
+  "target": { "story": "number-input" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "purpose", "equals": "number" },
+    { "type": "expect", "observable": "text", "equals": "42" },
+    { "type": "expect", "observable": "input-type", "equals": "number" },
+    { "type": "expect", "observable": "trailing-action", "equals": "unit" }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "key": "form-pair-route",
+  "target": { "composition": "compositions/form-pair.json" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "node": "display-name", "observable": "text", "equals": "Ada Lovelace" },
+    { "type": "expect", "node": "handle", "observable": "text", "equals": "ada" },
+    { "type": "write", "node": "display-name", "text": "Alan Turing" },
+    { "type": "expect", "node": "display-name", "observable": "text", "equals": "Alan Turing" },
+    { "type": "expect", "node": "handle", "observable": "text", "equals": "ada" },
+    { "type": "key", "node": "display-name", "key": "Enter" },
+    { "type": "expectEvent", "node": "display-name", "event": "accepted", "origin": "component" },
+    { "type": "expectEvent", "node": "display-name", "event": "accepted", "origin": "route", "targetNode": "commit" },
+    { "type": "expect", "node": "commit", "observable": "checked", "equals": true },
+    { "type": "expect", "node": "handle", "observable": "text", "equals": "ada" },
+    { "type": "action", "node": "commit", "name": "toggle" },
+    { "type": "expectEvent", "node": "commit", "event": "toggled", "origin": "component" },
+    { "type": "expect", "node": "commit", "observable": "checked", "equals": false },
+    { "type": "control", "node": "display-name", "group": "state", "option": "error" },
+    { "type": "expect", "node": "display-name", "observable": "failed", "equals": true },
+    { "type": "expect", "node": "handle", "observable": "failed", "equals": false },
+    { "type": "emit", "node": "handle", "event": "accepted", "payload": { "via": "flow" } },
+    { "type": "expectEvent", "node": "handle", "event": "accepted", "origin": "injected" },
+    { "type": "expectEvent", "node": "handle", "event": "accepted", "origin": "route", "targetNode": "commit" },
+    { "type": "expect", "node": "commit", "observable": "checked", "equals": true }
+  ]
+}

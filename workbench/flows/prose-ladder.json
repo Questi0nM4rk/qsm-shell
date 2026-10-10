@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "key": "prose-ladder",
+  "target": { "story": "prose-ladder" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "ladder-mode", "equals": true },
+    { "type": "expect", "observable": "ladder-roles", "equals": 10 }
+  ]
+}
