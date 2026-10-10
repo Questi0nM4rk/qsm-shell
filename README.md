@@ -123,5 +123,5 @@ the owner-review loop.
 ## Next
 
 The desktop's 31-component production scope, ordered roadmap and per-component
-review queue live in [GOAL.md](GOAL.md#roadmap). Open findings and deferred work
+what is true now and what comes next live in [GOAL.md](GOAL.md#next-in-this-order). Open findings and deferred work
 live in [docs/BACKLOG.md](docs/BACKLOG.md).
