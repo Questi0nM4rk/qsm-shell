@@ -4,6 +4,7 @@
 
 **Qt 6 components and design tokens for a Quickshell desktop on Hyprland, built for my own setup.**
 
+[![last commit](https://img.shields.io/github/last-commit/Questi0nM4rk/qsm-shell)](https://github.com/Questi0nM4rk/qsm-shell/commits)
 [![license](https://img.shields.io/badge/license-GPL--3.0-blue)](./LICENSE)
 [![Quickshell](https://img.shields.io/badge/Quickshell-0.3-8a7fd6)](https://quickshell.org)
 [![QML](https://img.shields.io/badge/QML-Qt%206-41cd52)](https://doc.qt.io/qt-6/qmlapplications.html)
@@ -31,7 +32,7 @@ It would have no reason to exist if I stopped writing my own shell.
 
 ## Quickstart
 
-Requires Arch Linux, Hyprland, Quickshell 0.3 and Qt 6.12 (`qt6-declarative`, `qt6-shadertools`). Tested with Quickshell 0.3.2 and Hyprland 0.56.
+Requires Arch Linux, Hyprland, Quickshell 0.3 and Qt 6.12 (`qt6-declarative`, `qt6-shadertools`).
 
 ```bash
 git clone https://github.com/Questi0nM4rk/qsm-shell && cd qsm-shell
@@ -62,19 +63,21 @@ The application owns state and passes it in through slots and actions.
 
 ## Numbers
 
-Measured with `scc --no-cocomo qml tests workbench scripts`:
+[![last commit](https://img.shields.io/github/last-commit/Questi0nM4rk/qsm-shell)](https://github.com/Questi0nM4rk/qsm-shell/commits)
 
-| | |
+| What | How to measure |
 | --- | --- |
-| QML files | 150 |
-| QML code lines | 18,081 |
-| All code lines (QML, JSON, SVG, GLSL, shell, JS) | 22,986 |
-| Icons (SVG) | 94 |
+| QML files | `scc --no-cocomo qml tests workbench scripts`, QML row, Files column |
+| QML code lines | `scc --no-cocomo qml tests workbench scripts`, QML row, Code column |
+| All code lines (QML, JSON, SVG, GLSL, shell, JS) | `scc --no-cocomo qml tests workbench scripts`, Total row, Code column |
+| Icons (SVG) | `ls qml/QsmShell/assets/icons/*.svg \| wc -l` |
+
+Commits include agent-authored work under my identity; design, orchestration and review are mine.
 
 ## Status
 
-- Works: the component set in `qml/QsmShell/Components`, the token system, the edge shader, and the
-  interaction tests (50 of 51 pass on a clean clone; the unit suites did not run in that pass because the script stops at the first failure).
+- Works: the component set in `qml/QsmShell/Components`, the token system, the edge shader, and most of
+  the interaction tests. The script stops at the first failure, so the suites after it do not run.
 - Known failure: `scripts/validate-library` exits 1 because
   `test_notification_center_remove_selected_reports_without_mutating_entries` fails.
 - Known gaps: `qmllint` prints warnings (for example `id-shadows-member` in `Capsule.qml`), so it is
