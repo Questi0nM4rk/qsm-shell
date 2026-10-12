@@ -19,7 +19,7 @@ development and judgement. Keep the least code and documentation that work.
    routes, sizes and overflow behaviour in that short record before coding.
    Extend an existing type unless the concept genuinely differs.
 2. **Design deliberately.** Start from the task, then interaction, hierarchy,
-   content, glyphs, tokens and motion. Use `ui-design`, the blueprint PDF and
+   content, glyphs, tokens and motion. Use `ui-design`, the design-system rules in AGENTS.md and
    actual named Caelestia files in `~/Clonned/caelestia/repo/`; compare relevant
    Material, Radix or Fluent patterns without collecting every configuration
     flag. Follow the owner's accepted decisions first. The two desktop wallpapers

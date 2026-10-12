@@ -66,8 +66,8 @@ follow the design sources.
   the same function; programmatic control is never a synthesized event.
 - Every pixel is a decision with a token behind it. Design sources, in rank:
   the owner's accepted design and current component record, the component laws
-  below, `design-system-blueprint.pdf`
-  at the repo root (semantic tokens, the 4px rhythm, every state designed,
+  below, a design-system floor
+  (semantic tokens, the 4px rhythm, every state designed,
   one type and icon scale, purposeful motion), then the qsm-uiux skills:
   `ui-design` informs preparation; `ux-audit` and `ui-audit` run only when
   the owner requests an audit. Design every resting, hover, pressed,

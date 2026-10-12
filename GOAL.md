@@ -96,7 +96,7 @@ a daemon, or a rewrite of view logic.
 ## Source hierarchy
 
 1. `AGENTS.md` — binding component law and measured Qt/Wayland reality.
-2. `design-system-blueprint.pdf` — the visual floor: semantic tokens, the 4px
+2. A design-system floor: semantic tokens, the 4px
    rhythm, one type and icon scale, designed states, purposeful motion.
 3. `~/Clonned/caelestia/repo/components/controls/Styled*.qml` — the primary QML
    reference for wiring, geometry and interaction mechanics, translated into this
