@@ -39,9 +39,9 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - R1: NotificationStack lifetime and production fullscreen input are exercised;
   the watched capsule appearance is owner-accepted. Recording cadence guidance
   distinguishes actual capture rate from CFR encoding in `AGENTS.md`.
-- R1: `NotificationCenter.qml:169-181` mutates the host array during sorting and
-  `NotificationCard.qml:113-123` has no ticking age dependency; deferred beyond
-  the selected NotificationStack lifetime item.
+- NotificationCenter's snapshot sorting, same-count identity and hover/pause
+  preservation are exercised by focused checks and the desktop history flow;
+  live notification action targets, spoken output and appearance await owner review.
 - R2/R3: Slider's unit does not answer label clicks; compact Capsule/IconButton,
   horizontal ScrollCue and long Kbd cases are missing from their review controls.
   Extend existing units with their owning milestone, not a new catalog or flow suite.
@@ -64,8 +64,8 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   owner acceptance is still open; a desktop rollout trace does not establish it.
 - Popup family (`Menu`, `Popover`, `Dialog`, `ToolTip`) stays hand-rolled:
   `T.Popup` inside a `PanelWindow` paints only inside the window rect.
-- From the consumer: `NotificationCenter` needs a deterministic tie-break
-  between app groups (alphabetical vs recency, owner chooses); `Segmented`
+- From the consumer: equal-recency NotificationCenter groups now retain feed order;
+   an alphabetical preference would need an owner decision. `Segmented`
   may want one gliding indicator instead of a fill per cell (`ui-design` and
   live judgement first); a compact CPU/memory readout is composed from
   `Stat`, `Meter` and `Prose`, never a new type.

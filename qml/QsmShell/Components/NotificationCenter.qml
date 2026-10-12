@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQml.Models
 
 import qs.QsmShell.Style
 import "fuzzy.js" as Fuzzy
@@ -67,30 +68,66 @@ ColumnLayout {
     function focusField(): void { searchField.forceActiveFocus(); }
 
     function entryKey(entry: var): string {
-        return String(entry.notificationId ?? `archive-${entry.archivedAt ?? ""}-${entry.appName}-${entry.summary}`);
+        if (entry.notificationId !== undefined) return `live-${entry.notificationId}`;
+        return entry.archiveId ?? JSON.stringify([entry.archivedAt, entry.appName,
+            entry.summary, entry.body, entry.urgency]);
     }
 
     function selectedEntry(): var {
-        return historyList.currentItem?.entry ?? null;
+        return root.restoringCursor ? null : historyList.currentItem?.entry ?? null;
     }
 
-    // The cursor follows the ENTRY, not the row number.
-    //
-    // `items` is recomputed from scratch whenever anything upstream moves: an
-    // entry archiving, a live timer, a search keystroke. Assigning the new
-    // array resets the view's numeric cursor, so acting on a row threw the
-    // person somewhere else in the list -- which is the one thing a keyboard
-    // list must never do, because the next keystroke then lands on a row they
-    // never chose. Remembering the KEY and finding it again in the new array
-    // makes the cursor mean "this notification" instead of "position 7".
-    //
-    // The launcher solved the same problem the same way and this list did not
-    // have it yet.
+    // Selection follows identity, not the numeric position of a sorted snapshot.
     property string cursorKey: ""
+    property var renderedItems: []
+    property bool restoringCursor: false
+    property int previousIndex: 0
+    ListModel { id: historyModel; dynamicRoles: true }
+    onItemsChanged: { root.restoringCursor = true; modelSync.restart(); }
+    Component.onCompleted: modelSync.restart()
+
+    Timer {
+        id: modelSync
+        interval: 0
+        onTriggered: {
+            root.previousIndex = historyList.currentIndex;
+            root.restoringCursor = true;
+            root.renderedItems = root.items;
+            // Keep delegates alive across snapshot updates, especially hover →
+            // pause. Replacing the whole array would recreate the hovered card
+            // and turn that state update into a false pointer departure.
+            for (let index = 0; index < root.items.length; index++) {
+                const entry = root.items[index];
+                const identity = root.entryKey(entry);
+                let previous = -1;
+                for (let at = index; at < historyModel.count; at++) {
+                    if (historyModel.get(at).identity === identity) { previous = at; break; }
+                }
+                if (previous < 0) historyModel.insert(index,
+                    { identity: identity, appName: entry.appName, record: entry });
+                else {
+                    if (previous !== index) historyModel.move(previous, index, 1);
+                    historyModel.setProperty(index, "appName", entry.appName);
+                    historyModel.setProperty(index, "record", entry);
+                }
+            }
+            if (historyModel.count > root.items.length)
+                historyModel.remove(root.items.length, historyModel.count - root.items.length);
+            cursorSync.restart();
+        }
+    }
+    Timer {
+        id: cursorSync
+        interval: 0
+        onTriggered: {
+            root.restoreCursor();
+            root.restoringCursor = false;
+            const entry = root.renderedItems[historyList.currentIndex];
+            root.cursorKey = entry ? root.entryKey(entry) : "";
+        }
+    }
 
     function restoreCursor(): void {
-        if (root.cursorKey.length === 0)
-            return;
         const at = root.items.findIndex(entry => root.entryKey(entry) === root.cursorKey);
         if (at >= 0) {
             historyList.currentIndex = at;
@@ -99,8 +136,8 @@ ColumnLayout {
         // The entry is gone (dismissed, cleared, filtered out). Hold the
         // position rather than jumping home: the neighbour is the nearest
         // thing to where they were.
-        historyList.currentIndex = Math.max(0,
-            Math.min(historyList.currentIndex, root.items.length - 1));
+        historyList.currentIndex = root.items.length === 0 ? -1 : Math.max(0,
+            Math.min(root.previousIndex, root.items.length - 1));
     }
 
     function clearActionFocus(): void {
@@ -128,6 +165,7 @@ ColumnLayout {
     // Dismiss the highlighted entry — reported, never performed: the
     // consumer decides what dismissing an entry does.
     function removeSelected(): void {
+        if (root.restoringCursor) return;
         historyList.currentItem?.dismiss();
         root.expandedKey = "";
         root.clearActionFocus();
@@ -149,6 +187,7 @@ ColumnLayout {
     }
 
     function activateSelected(): void {
+        if (root.restoringCursor) return;
         const card = historyList.currentItem;
         if (!card)
             return;
@@ -165,31 +204,39 @@ ColumnLayout {
     // A plain alias, not a readonly mirror: a consumer restoring a search
     // (or a test) sets it directly instead of reaching into a private field.
     property alias query: searchField.text
+    readonly property Item searchTarget: searchField
     readonly property var items: {
-        const all = root.entries;
+        const all = root.entries.slice();
         const scored = root.query.length === 0
             ? all
-            : all.filter(entry => Fuzzy.score(root.query, `${entry.summary} ${entry.body}`) >= 0);
+            : all.filter(entry => Fuzzy.score(root.query, `${entry.appName} ${entry.summary} ${entry.body}`) >= 0);
         // App groups ordered by most-recent notification: newest-first
         // within groups; the list's own section adjacency needs it sorted.
-        const latestByApp = {};
+        const groups = new Map();
         for (const entry of scored) {
-            const at = entry.archivedAt ?? Number.MAX_VALUE; // live beats archived
             const app = String(entry.appName);
-            latestByApp[app] = Math.max(latestByApp[app] ?? 0, at);
+            const group = groups.get(app) ?? { live: false, latest: 0, order: groups.size };
+            group.live = group.live || entry.notificationId !== undefined;
+            group.latest = Math.max(group.latest, entry.archivedAt ?? entry.createdAt ?? 0);
+            groups.set(app, group);
         }
         return scored.sort((left, right) => {
             const appLeft = String(left.appName);
             const appRight = String(right.appName);
-            if (appLeft !== appRight)
-                return latestByApp[appRight] - latestByApp[appLeft];
+            if (appLeft !== appRight) {
+                const leftGroup = groups.get(appLeft);
+                const rightGroup = groups.get(appRight);
+                return Number(rightGroup.live) - Number(leftGroup.live)
+                    || rightGroup.latest - leftGroup.latest || leftGroup.order - rightGroup.order;
+            }
 
             const leftLive = left.notificationId !== undefined;
             const rightLive = right.notificationId !== undefined;
             if (leftLive !== rightLive)
                 return leftLive ? -1 : 1;
 
-            return (right.archivedAt ?? 0) - (left.archivedAt ?? 0);
+            return (right.archivedAt ?? right.createdAt ?? 0)
+                - (left.archivedAt ?? left.createdAt ?? 0);
         });
     }
 
@@ -247,19 +294,16 @@ ColumnLayout {
             anchors.fill: parent
             clip: true
             spacing: Style.space1
-            model: root.items
+            model: historyModel
             boundsBehavior: Flickable.StopAtBounds
 
-            // Remember which entry the cursor is on, and put it back after the
-            // model is replaced. `onCountChanged` rather than the root's
-            // `onItemsChanged` on purpose: the restore has to run AFTER the
-            // view has taken the new model, and handler order against a
-            // binding re-evaluation is not something to rely on.
+            // Model replacement temporarily resets the numeric cursor; only
+            // user navigation updates the stable identity during that handoff.
             onCurrentIndexChanged: {
-                const entry = root.items[currentIndex];
+                if (root.restoringCursor) return;
+                const entry = root.renderedItems[currentIndex];
                 root.cursorKey = entry ? root.entryKey(entry) : "";
             }
-            onCountChanged: root.restoreCursor()
 
             section.property: "appName"
             section.delegate: Prose {
@@ -271,7 +315,8 @@ ColumnLayout {
 
             delegate: NotificationCard {
                 id: delegateCard
-                required property var modelData
+                required property var record
+                readonly property var modelData: record
                 required property int index
                 width: ListView.view.width
                 entry: modelData
@@ -283,22 +328,10 @@ ColumnLayout {
                 swatch: root.swatchFor ? root.swatchFor(modelData) : modelData.swatch
                 onDismissed: root.dismissRequested(modelData)
                 onActionTriggered: id => root.actionTriggered(modelData, id)
-                onHoveredChanged: root.hoverChanged(modelData, delegateCard.hovered)
-
-                // Pointer and keyboard drive ONE cursor here: hovering a row
-                // selects it (unless the keyboard just moved and the pointer
-                // did not — `Interaction.pointerSelects`, the one place that
-                // fact lives), so Enter and Delete always act on the row the
-                // person can see marked.
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton
-                    hoverEnabled: true
-                    onEntered: {
-                        if (Interaction.pointerSelects)
-                            historyList.currentIndex = delegateCard.index;
-                    }
-                    onClicked: historyList.currentIndex = delegateCard.index
+                onHoveredChanged: {
+                    root.hoverChanged(modelData, delegateCard.hovered);
+                    if (delegateCard.hovered && Interaction.pointerSelects)
+                        historyList.currentIndex = delegateCard.index;
                 }
             }
         }

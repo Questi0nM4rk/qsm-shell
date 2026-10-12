@@ -16,8 +16,10 @@ TestCase {
     }
     SignalSpy { id: triggered; target: center; signalName: "actionTriggered" }
     SignalSpy { id: dismissed; target: center; signalName: "dismissRequested" }
+    SignalSpy { id: hovered; target: center; signalName: "hoverChanged" }
 
     function init() {
+        center.query = ""
         center.enabled = true
         center.visible = true
         center.entries = [{ notificationId: "n1", appName: "App", summary: "Alert", actions: [
@@ -33,6 +35,40 @@ TestCase {
         center.focusField()
         triggered.clear()
         dismissed.clear()
+        mouseMove(center, -20, -20)
+        hovered.clear()
+    }
+
+    function test_sort_does_not_change_host_feed_and_searches_application() {
+        const entries = [
+            { archiveId: "old", archivedAt: 10, appName: "Mail", summary: "First", body: "" },
+            { archiveId: "new", archivedAt: 20, appName: "Build", summary: "Done", body: "" }
+        ]
+        center.entries = entries
+        tryVerify(() => center.selectedEntry()?.archiveId === "new")
+        compare(entries[0].archiveId, "old")
+        compare(entries[1].archiveId, "new")
+        center.query = "Mail"
+        tryVerify(() => center.selectedEntry()?.archiveId === "old")
+        compare(center.items.length, 1)
+    }
+
+    function test_same_count_replacement_retains_identity() {
+        center.entries = [
+            { archiveId: "a", archivedAt: 20, appName: "Mail", summary: "A", body: "" },
+            { archiveId: "b", archivedAt: 10, appName: "Mail", summary: "B", body: "" }
+        ]
+        tryVerify(() => center.selectedEntry()?.archiveId === "a")
+        center.moveSelection(1)
+        compare(center.selectedEntry().archiveId, "b")
+        center.entries = [
+            { archiveId: "a", archivedAt: 5, appName: "Mail", summary: "A", body: "" },
+            { archiveId: "b", archivedAt: 30, appName: "Mail", summary: "B updated", body: "" }
+        ]
+        tryVerify(() => center.selectedEntry()?.summary === "B updated")
+        center.removeSelected()
+        compare(dismissed.count, 1)
+        compare(dismissed.signalArguments[0][0].archiveId, "b")
     }
 
     function test_navigation_and_enter_share_card_availability() {
@@ -47,6 +83,22 @@ TestCase {
         compare(triggered.signalArguments[0][1], "reply")
         compare(center.actionFocusIndex, -1)
         compare(center.entries.length, 1)
+    }
+
+    function test_hover_pause_snapshot_keeps_the_hovered_delegate() {
+        const button = findChild(center, "notificationAction0")
+        verify(button !== null)
+        mouseMove(button, button.width / 2, button.height / 2)
+        tryVerify(() => hovered.count > 0)
+        compare(hovered.signalArguments[hovered.count - 1][1], true)
+        hovered.clear()
+        center.entries = [Object.assign({}, center.entries[0], { paused: true })]
+        tryVerify(() => center.selectedEntry()?.paused === true && !center.restoringCursor)
+        compare(findChild(center, "notificationAction0"), button)
+        compare(hovered.count, 0)
+        mouseClick(button, button.width / 2, button.height / 2)
+        compare(triggered.count, 1)
+        compare(triggered.signalArguments[0][1], "open")
     }
 
     function test_stale_or_unavailable_action_data() {
