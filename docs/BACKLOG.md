@@ -5,6 +5,8 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 
 ## Next
 
+- Menu and MonthCalendar assign host-owned selection/month directly; these writes can replace host bindings. Source-confirmed ownership mismatch, left for each type's named repair and live review (`qss-bcn`).
+- Rollout unregisters only its current host/key; changing either on a living instance can orphan the previous paint/input registration. Production reachability is unverified; settle the lifetime contract before changing the mechanism (`qss-3il`).
 - Shell readiness first: close concrete component defects and keyboard/public-action
   parity through desktop hosts and the existing action menu; defer desktop-only
   improvements and Workbench polish unless they block the selected item (`GOAL.md`).
