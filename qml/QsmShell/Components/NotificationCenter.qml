@@ -47,6 +47,8 @@ ColumnLayout {
     property color fadeColor: Style.surface
 
     signal dismissRequested(var entry)
+    // A plain click on an unread row: the host decides what "seen" means.
+    signal activated(var entry)
     signal actionTriggered(var entry, string actionId)
     // The card only REPORTS hover; whether that pauses anything is the
     // consumer's call (same law the card itself follows).
@@ -326,6 +328,9 @@ ColumnLayout {
                 animateEntrance: false
                 draggable: modelData.notificationId !== undefined
                 swatch: root.swatchFor ? root.swatchFor(modelData) : modelData.swatch
+                unread: modelData.read === false
+                activatable: modelData.read === false
+                onActivated: root.activated(modelData)
                 onDismissed: root.dismissRequested(modelData)
                 onActionTriggered: id => root.actionTriggered(modelData, id)
                 onHoveredChanged: {

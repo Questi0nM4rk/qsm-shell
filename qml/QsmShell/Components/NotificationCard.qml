@@ -48,6 +48,11 @@ Item {
     // protocol's default action. The card owns the activation affordance only.
     property bool primaryActionEnabled: false
     property bool showDivider: false
+    // The host says this entry has not been seen (a 6px accent dot by the
+    // app name) and whether a plain click on the body should report
+    // `activated` when there is no primary action to run.
+    property bool unread: false
+    property bool activatable: false
     // A list with its own cursor thickens this card's tick instead of
     // drawing a second mark on top of it.
     property bool selected: false
@@ -84,6 +89,7 @@ Item {
     signal dismissed
     signal actionTriggered(string actionId)
     signal primaryTriggered(var entry)
+    signal activated(var entry)
     readonly property list<T.Action> actions: [dismissAction, primaryAction, firstAction, secondAction, thirdAction]
         .filter(action => action.text.length > 0)
 
@@ -305,6 +311,14 @@ Item {
             Layout.maximumWidth: (Style.notificationWidth - Style.iconSm - Style.space3 * 3) / 3
             color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
         }
+        Rectangle {
+            visible: root.unread
+            width: Style.space1 + Style.spaceTight
+            height: width
+            radius: width / 2
+            color: Style.accent
+            Accessible.name: "unread"
+        }
         Prose {
             Layout.fillWidth: true
             role: "title"
@@ -482,9 +496,14 @@ Item {
         id: layer
         anchors.fill: parent
         interactive: root.enabled && root.inputEnabled
-        clickable: root.primaryActionAvailable
+        clickable: root.primaryActionAvailable || root.activatable
         target: null
-        onClicked: root.activatePrimary()
+        onClicked: {
+            if (root.primaryActionAvailable)
+                root.activatePrimary();
+            else if (root.activatable)
+                root.activated(root.entry);
+        }
     }
 
     activeFocusOnTab: root.primaryActionAvailable && root.enabled && root.inputEnabled
