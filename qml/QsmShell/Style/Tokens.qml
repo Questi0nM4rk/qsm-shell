@@ -17,6 +17,7 @@ QtObject {
     readonly property color colorWarning: "#d9c284"
     readonly property color colorDanger: "#f5aeb7"
     readonly property color colorShadow: "#000000"
+    readonly property color colorEdgeGlow: "#46305a"
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12

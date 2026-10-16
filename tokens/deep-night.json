@@ -13,7 +13,8 @@
     "success": "#a2d3a2",
     "warning": "#d9c284",
     "danger": "#f5aeb7",
-    "shadow": "#000000"
+    "shadow": "#000000",
+    "edgeGlow": "#46305a"
   },
   "space": {
     "1": 4,

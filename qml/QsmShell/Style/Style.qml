@@ -72,7 +72,7 @@ QtObject {
     // tint thickening toward the merged shape's inner edge, drawn by the shader
     // on top of the flat fill. Strength is the tint's share at the very edge;
     // the glow is gone edgeGlowWidth px inward. No line; the rim is gone.
-    readonly property color edgeGlow: backend?.edgeGlow ?? text
+    readonly property color edgeGlow: backend?.edgeGlow ?? Tokens.colorEdgeGlow
     readonly property real edgeGlowStrength: backend?.edgeGlowStrength ?? Tokens.opacityEdgeGlowStrength
 
     // THE way a control says "unavailable", as a colour rather than as
