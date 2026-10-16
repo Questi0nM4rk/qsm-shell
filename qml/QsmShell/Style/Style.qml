@@ -68,6 +68,11 @@ QtObject {
     // number from `opacityDisabled`, because receding says "later" and
     // disabled says "never".
     readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
+    // The glass edge of the melt silhouette (01-frame, owner 2026-10-16): a
+    // thin lit line of text hugging the merged shape, drawn by the shader on
+    // top of the flat fill. The only line the silhouette has; the rim is gone.
+    readonly property color bandStroke: backend?.bandStroke ?? text
+    readonly property real bandStrokeStrength: backend?.bandStrokeStrength ?? Tokens.opacityBandStrokeStrength
 
     // THE way a control says "unavailable", as a colour rather than as
     // `opacity`. Opacity on a control applies to each CHILD separately, so a
@@ -307,6 +312,7 @@ QtObject {
     readonly property int meltSmoothing: backend?.meltSmoothing ?? Tokens.geometryMeltSmoothing
     readonly property int edgeSnapReach: backend?.edgeSnapReach ?? Tokens.geometryEdgeSnapReach
     readonly property real seamOverlap: backend?.seamOverlap ?? Tokens.geometrySeamOverlap
+    readonly property int bandStrokeWidth: backend?.bandStrokeWidth ?? Tokens.geometryBandStrokeWidth
 
     // The "this one" mark: the same 3x18 pill the launcher, the menu rows, the
     // notification history and the device lists all use to say which row is

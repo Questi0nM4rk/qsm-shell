@@ -3,13 +3,13 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    readonly property color colorBand: "#221d27"
-    readonly property color colorSurface: "#36313b"
-    readonly property color colorOverlay: "#48424d"
+    readonly property color colorBand: "#271e30"
+    readonly property color colorSurface: "#3b3245"
+    readonly property color colorOverlay: "#4d4357"
     readonly property color colorText: "#f0ecf5"
-    readonly property color colorTextMuted: "#b5aebc"
+    readonly property color colorTextMuted: "#bcb0c8"
     readonly property color colorPrimary: "#d9b4ea"
-    readonly property color colorTextOnPrimary: "#221d27"
+    readonly property color colorTextOnPrimary: "#271e30"
     readonly property color colorAccent: "#d9b4ea"
     readonly property color colorFocus: "#d9b4ea"
     readonly property color colorInfo: "#89cff1"
@@ -65,6 +65,7 @@ QtObject {
     readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.45
     readonly property real opacityFloatingShadow: 0.28
+    readonly property real opacityBandStrokeStrength: 0.55
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28
@@ -105,6 +106,7 @@ QtObject {
     readonly property int geometryFloatingShadowOffset: 8
     readonly property int geometryFloatingShadowExtent: 24
     readonly property int geometrySeamOverlap: 8
+    readonly property int geometryBandStrokeWidth: 2
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

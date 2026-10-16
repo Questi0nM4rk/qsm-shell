@@ -1,12 +1,12 @@
 {
   "color": {
-    "band": "#221d27",
-    "surface": "#36313b",
-    "overlay": "#48424d",
+    "band": "#271e30",
+    "surface": "#3b3245",
+    "overlay": "#4d4357",
     "text": "#f0ecf5",
-    "textMuted": "#b5aebc",
+    "textMuted": "#bcb0c8",
     "primary": "#d9b4ea",
-    "textOnPrimary": "#221d27",
+    "textOnPrimary": "#271e30",
     "accent": "#d9b4ea",
     "focus": "#d9b4ea",
     "info": "#89cff1",
@@ -73,7 +73,8 @@
     "selected": 0.12,
     "surface": 0.9,
     "recede": 0.45,
-    "floatingShadow": 0.28
+    "floatingShadow": 0.28,
+    "bandStrokeStrength": 0.55
   },
   "font": {
     "family": "sans-serif",
@@ -117,7 +118,8 @@
     "floatingShadowBlur": 0.6,
     "floatingShadowOffset": 8,
     "floatingShadowExtent": 24,
-    "seamOverlap": 8
+    "seamOverlap": 8,
+    "bandStrokeWidth": 2
   },
   "line": {
     "tight": 1.2,

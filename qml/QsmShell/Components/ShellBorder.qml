@@ -353,11 +353,13 @@ Item {
     property real seamOverlap: Style.seamOverlap
 
     // The band's fill: the one colour the melt shader paints, the frame and
-    // every rollout. There is no rim and no glass stroke: the silhouette
-    // separates from the wallpaper by its fill alone (11-theme), so the
-    // shader's rim and stroke uniforms are fed zero below until they are
-    // removed from edgemelt.frag with 12-mechanism.
+    // every rollout; and the glass edge the shader draws on top of it. There
+    // is no rim: its uniforms are fed zero below until the rim path leaves
+    // edgemelt.frag with 12-mechanism.
     property color bandFill: Style.band
+    property color bandStroke: Style.bandStroke
+    property real bandStrokeStrength: Style.bandStrokeStrength
+    property real strokeWidth: Style.bandStrokeWidth
 
     // Handle circles (12-mechanism): dedicated circle SDFs the shader folds
     // in alongside the slots, (cx, cy, radius, blend) with radius 0 = absent
@@ -404,8 +406,10 @@ Item {
         property vector4d fillColor: Qt.vector4d(root.bandFill.r, root.bandFill.g,
             root.bandFill.b, root.bandFill.a)
         property vector4d rimColor: Qt.vector4d(0, 0, 0, 0)
-        property vector4d strokeColor: Qt.vector4d(0, 0, 0, 0)
-        property real strokeWidth: 0
+        // The glass edge rides the same merged silhouette (see edgemelt.frag).
+        property vector4d strokeColor: Qt.vector4d(root.bandStroke.r, root.bandStroke.g,
+            root.bandStroke.b, root.bandStrokeStrength)
+        property real strokeWidth: root.strokeWidth
         property int fullscreenMode: root.fullscreen ? 1 : 0
         property int capsuleOccupied: Math.min(root.fullscreenPaintEntries.length,
             root.maxFullscreenCapsuleSlots)
