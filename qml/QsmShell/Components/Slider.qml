@@ -131,6 +131,12 @@ T.RangeSlider {
     // pill; the low thumb of a range stays plain.
     property string thumbIcon: ""
     property string thumbText: ""
+    // The glyph's edge. Defaults to the thumb less one step of air per side.
+    property real thumbIconSize: Math.max(Style.iconXs, root.thumbSize - Style.space2 * 2)
+    // A press that lands on the thumb grabs it and moves nothing: the value
+    // only changes once the pointer does. Off, a press anywhere jumps the
+    // value to the pointer, the thumb included.
+    property bool grabThumb: false
     // Beside the control, on any of its four sides, whatever the orientation:
     // above | below | left | right. The label takes padding on its side, so
     // the track never moves to make room for it.
@@ -569,7 +575,7 @@ T.RangeSlider {
                 anchors.centerIn: parent
                 sourceComponent: SvgIcon {
                     name: root.thumbIcon
-                    size: Math.max(Style.iconXs, root.thumbSize - Style.space2 * 2)
+                    size: root.thumbIconSize
                     color: root._paintedThumbContent
                 }
             }
@@ -670,6 +676,11 @@ T.RangeSlider {
         acceptedButtons: Qt.LeftButton
         anchors.fill: layer
         onPressed: mouse => {
+            // On the thumb, the template's own hit test grabs it with no jump.
+            if (root.grabThumb && highThumb.contains(mapToItem(highThumb, mouse.x, mouse.y))) {
+                mouse.accepted = false;
+                return;
+            }
             // The commit compares against the value BEFORE the gesture, and
             // the jump below is already part of it.
             root._pressValue = root.second.value;
