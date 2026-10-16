@@ -16,7 +16,7 @@ Rectangle {
 
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
-    color: Style.background
+    color: Style.band
 
     Avatar {
         id: mark

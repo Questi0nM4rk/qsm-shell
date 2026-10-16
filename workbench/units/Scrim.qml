@@ -11,7 +11,7 @@ Rectangle {
     property bool shown: variant === "shown"
     property int dismissals: 0
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 

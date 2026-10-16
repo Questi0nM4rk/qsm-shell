@@ -7,6 +7,6 @@ pointer: none; it claims no events and wheel passes through.
 keyboard: none; it describes keys but takes none and is never a tab stop.
 screen reader: the combo text is the announcement; caps and joins are plain text roles.
 size: each cap keeps at least a minimum width with fixed box insets; caps size to their content and joins take no extra space.
-tokens: spaceTight, space5, space2, space1, badgeHeight, radiusXs, surfaceHover, outline and textXs; no local colours or measurements.
+tokens: spaceTight, space5, space2, space1, badgeHeight, radiusXs, overlay and textXs; no local colours or measurements.
 motion: none.
 not designed: input, shortcut handling or editing; it labels a shortcut the surface owns.

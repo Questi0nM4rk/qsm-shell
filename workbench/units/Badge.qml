@@ -15,7 +15,7 @@ Rectangle {
 
     implicitWidth: badge.implicitWidth
     implicitHeight: badge.implicitHeight
-    color: Style.background
+    color: Style.band
 
     Badge {
         id: badge

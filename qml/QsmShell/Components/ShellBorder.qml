@@ -251,8 +251,8 @@ Item {
     // through as a translucent hairline) and the glass stroke (`innerDepth` ~ 0,
     // so a full-strength lit line is painted down the join). Both are computed
     // from `mergedSdf` alone, which is why the law's third piece could never
-    // have worked -- it extends the RIM copy, and `bandRimStrength` is 0, so the
-    // rim contributes nothing to either.
+    // have worked -- it extends the RIM copy, and the rim is fed zero, so it
+    // contributes nothing to either.
     //
     // rimBits already names the sides where a neighbouring silhouette continues,
     // so it is the same question and needs no new argument. Reaching into the
@@ -352,16 +352,12 @@ Item {
     property real edgeSnapReach: Style.edgeSnapReach
     property real seamOverlap: Style.seamOverlap
 
-    // Band colour/rim/stroke uniforms — the melt shader's own paint, exposed
-    // so a themed consumer can override any of them; every default comes
-    // from Style, never a bare number.
-    property color bandFill: Style.bandFill
-    property real rimWidth: Style.bandRimWidth
-    property color bandRim: Style.bandRim
-    property real bandRimStrength: Style.bandRimStrength
-    property color bandStroke: Style.bandStroke
-    property real bandStrokeStrength: Style.bandStrokeStrength
-    property real strokeWidth: Style.bandStrokeWidth
+    // The band's fill: the one colour the melt shader paints, the frame and
+    // every rollout. There is no rim and no glass stroke: the silhouette
+    // separates from the wallpaper by its fill alone (11-theme), so the
+    // shader's rim and stroke uniforms are fed zero below until they are
+    // removed from edgemelt.frag with 12-mechanism.
+    property color bandFill: Style.band
 
     // Handle circles (12-mechanism): dedicated circle SDFs the shader folds
     // in alongside the slots, (cx, cy, radius, blend) with radius 0 = absent
@@ -404,15 +400,12 @@ Item {
         property real viewportRadius: root.viewportRadius
         property real smoothFactor: root.meltSmoothing
         property int occupied: Math.min(root.bulgeEntries.length, root.maxBulgeSlots)
-        property real rimWidth: root.rimWidth
+        property real rimWidth: 0
         property vector4d fillColor: Qt.vector4d(root.bandFill.r, root.bandFill.g,
             root.bandFill.b, root.bandFill.a)
-        property vector4d rimColor: Qt.vector4d(root.bandRim.r, root.bandRim.g,
-            root.bandRim.b, root.bandRimStrength)
-        // The glass edge rides the same merged silhouette (see edgemelt.frag).
-        property vector4d strokeColor: Qt.vector4d(root.bandStroke.r, root.bandStroke.g,
-            root.bandStroke.b, root.bandStrokeStrength)
-        property real strokeWidth: root.strokeWidth
+        property vector4d rimColor: Qt.vector4d(0, 0, 0, 0)
+        property vector4d strokeColor: Qt.vector4d(0, 0, 0, 0)
+        property real strokeWidth: 0
         property int fullscreenMode: root.fullscreen ? 1 : 0
         property int capsuleOccupied: Math.min(root.fullscreenPaintEntries.length,
             root.maxFullscreenCapsuleSlots)

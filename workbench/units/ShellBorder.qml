@@ -15,7 +15,7 @@ Rectangle {
     property var entryFilter: null
     property bool registerHitRect: true
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 

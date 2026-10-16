@@ -20,7 +20,7 @@ expected: shell Workbench → Compositions → menu-items contains Wi-Fi secure/
 | ia/interaction | audio, Wi-Fi, Bluetooth groups; one cursor, one row route; up/down always navigates | owner's keyboard contract; Caelestia MenuItem separates intent; APG menu uses arrow stepping | Menu.step/activateCurrent, Slider/TextField key hook | actual repeated keys and pointer operations |
 | hierarchy/token | compact editor beneath the text column, no duplicate Volume label or extra box | owner rejected detached slider; blueprint rhythm and hierarchy | ListRow.contentInset, Style.spaceTight/space2; existing type scale | owner judges association and reveal |
 | responsive/state | one scrollable column; availability follows radios; pending/failure/retry; drafts retained until reset | hidden input must not activate; no lost work or fabricated production success | ScrollArea, Field, cancellable local fixture | keyboard into view, radio off, submit/retry/reset |
-| polish | restrained common surface, motion only for disclosure/state | Quiet Luminous and reduced-motion law | Style.surfaceRaised/radiusLg, Motion.fast | owner review, no automatic audit |
+| polish | restrained common surface, motion only for disclosure/state | Quiet Luminous and reduced-motion law | Style.overlay/radiusLg, Motion.fast | owner review, no automatic audit |
 
 Not designed: real network/audio services, production action-menu identity repair,
 arbitrary nested menus, screen-reader speech verification or a JSON menu framework.

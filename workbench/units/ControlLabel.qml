@@ -14,7 +14,7 @@ Rectangle {
     property string caption: "Volume"
     property int clicks: 0
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: label.implicitHeight + Style.space4 * 2
 

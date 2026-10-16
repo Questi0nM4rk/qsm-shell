@@ -33,7 +33,7 @@ Item {
     // one — three letters is a monogram, not a glance.
     property string name: ""
     property real size: Style.controlHeight
-    property color background: Style.surfaceHover
+    property color background: Style.overlay
     // Empty = no dot. Otherwise a Badge tone.
     property string status: ""
 
@@ -41,7 +41,9 @@ Item {
     // is no ring and the item is exactly `size`.
     property real progress: -1
     property color progressColor: Style.accent
-    property color progressTrack: Style.outline
+    // The ring's empty part: a line of content, drawn in the band so it
+    // reads on the overlay picture it circles.
+    property color progressTrack: Style.band
     property real ringWidth: Math.max(2, Math.round(size * 0.06))
     // Air between the picture and its ring, so the two read as a thing and its
     // frame rather than as one thick border.

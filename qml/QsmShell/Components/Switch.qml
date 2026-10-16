@@ -67,16 +67,16 @@ T.AbstractButton {
     onClicked: root.flip()
     Keys.onReturnPressed: root.flip()
 
-    // Off: the track is a line (`outline`) and the knob a muted mark. On: a
+    // Off: the track is a line (`textMuted`) and the knob a band-coloured dot. On: a
     // toggle with its own fill is selected as SOLID accent, and content on
-    // the accent is the background, as the Checkbox mark. Disabled dims every
+    // the accent is textOnPrimary, as the Checkbox mark. Disabled dims every
     // role by colour, never by opacity on the composite.
     background: Rectangle {
         id: track
         radius: height / 2
         color: root.enabled
-            ? (root.checked ? root.accentColor : Style.outline)
-            : Style.disabled(root.checked ? root.accentColor : Style.outline)
+            ? (root.checked ? root.accentColor : Style.textMuted)
+            : Style.disabled(root.checked ? root.accentColor : Style.textMuted)
 
         Behavior on color {
             ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -92,8 +92,8 @@ T.AbstractButton {
             height: width
             radius: width / 2
             color: root.enabled
-                ? (root.checked ? Style.background : Style.textMuted)
-                : Style.disabled(root.checked ? Style.background : Style.textMuted)
+                ? (root.checked ? Style.textOnPrimary : Style.band)
+                : Style.disabled(root.checked ? Style.textOnPrimary : Style.band)
 
             // The knob SLIDES: both ends already exist, so it eases at both.
             // An arrival curve here reads as the knob being thrown.

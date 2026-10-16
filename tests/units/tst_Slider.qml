@@ -717,7 +717,7 @@ TestCase {
 
         tryCompare(thumb, "color", Style.disabled(Style.text), 500,
             "a disabled thumb is not its rest colour blended toward the background");
-        compare(track.color, Style.disabled(Style.outline),
+        compare(track.color, Style.disabled(Style.overlay),
             "a disabled track is not its rest colour blended toward the background");
         compare(fill.color, Style.disabled(Style.accent),
             "a disabled fill is not its rest colour blended toward the background");

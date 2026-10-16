@@ -7,7 +7,7 @@ pointer: the target answers on the `swatchTarget` floor while the face stays `si
 keyboard: tab reaches an enabled swatch, click takes focus, and Space and Return share the `activate()` route.
 screen reader: a Button whose `reading` names the sample; ink is chosen against both check cells so the text reads on any ground.
 size: `size` is the painted face; the layout footprint is `max(size, swatchTarget)` with the face centred, so 24px palette samples keep 24px faces on 44px targets; reading has a `spaceTight` inset and elides before the edge; radius is `radiusSm`; rings hug the face instead of the target.
-tokens: swatchTarget, controlHeight, radiusSm, spaceTight, markThickness, textXs, surface, text, background, outline, accent and StateLayer; no local colours or measurements.
+tokens: swatchTarget, controlHeight, radiusSm, spaceTight, markThickness, textXs, surface, text, band, textMuted, accent and StateLayer; no local colours or measurements.
 motion: micro ring response plus StateLayer face swell on hover and press; reduced motion shortens the duration.
 not designed: a colour picker, palette model or editing; it shows one sample and reports the click.
 review: the value follows the rendered sample across theme changes and alpha is explicit; unrelated glyphs do not describe a colour. Selection and activation have a stated host consequence; the owner judges the example before accepting it.

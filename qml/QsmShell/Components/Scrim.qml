@@ -29,7 +29,7 @@ Rectangle {
     }
 
     anchors.fill: parent
-    color: Qt.rgba(Style.background.r, Style.background.g, Style.background.b, root.strength)
+    color: Qt.rgba(Style.band.r, Style.band.g, Style.band.b, root.strength)
     opacity: shown ? 1 : 0
     // Not merely transparent: an invisible scrim still eats every click on the
     // surface underneath, which is a shell that has silently stopped working.

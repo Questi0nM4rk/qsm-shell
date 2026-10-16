@@ -12,7 +12,7 @@ Rectangle {
     property bool strong: false
     property bool dimmed: false
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.markHeight + Style.space4 * 2
 

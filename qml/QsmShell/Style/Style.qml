@@ -25,47 +25,37 @@ QtObject {
     readonly property bool reducedEffects: backend?.reducedEffects ?? false
 
     // ── colour ──────────────────────────────────────────────────────────
-    readonly property color accent: backend?.accent ?? Tokens.colorAccent
-    readonly property color secondary: backend?.secondary ?? Tokens.colorSecondary
-    readonly property color success: backend?.success ?? Tokens.colorSuccess
-    // The semantic status set, complete. It shipped with success and danger
-    // only, so a surface with a degraded state or an informational one had
-    // nowhere to put it and reached for the accent -- which is the accent
-    // budget being spent on a passive readout, and the interactive world going
-    // grey as a result.
-    readonly property color warning: backend?.warning ?? Tokens.colorWarning
-    readonly property color info: backend?.info ?? Tokens.colorInfo
-    readonly property color danger: backend?.danger ?? Tokens.colorDanger
-    readonly property color background: backend?.background ?? Tokens.colorBackground
+    // The roles (AGENTS.md, "Surface ladder"). Three neutral steps separate
+    // by lightness alone, 1.30:1 each: band is the one silhouette the shell
+    // paints (frame and every rollout), surface a card inside it, overlay a
+    // popout over a card. No rung is derived here: a theme generates all
+    // three from its wallpaper, and a component reads a role, never a lift.
+    readonly property color band: backend?.band ?? Tokens.colorBand
     readonly property color surface: backend?.surface ?? Tokens.colorSurface
-    // The surface ladder (AGENTS.md). Every layer above the resting surface is
-    // DERIVED from it by contrast against the background, so a theme tunes
-    // `surface` once and hover, raised and outline follow: raised sits a half
-    // step (+0.2) above rest, hover a whole step (+0.4), outline and pressed
-    // two steps (+0.8). Hand-tuned tokens drifted -- raised had sunk to the
-    // resting value and the lift was gone -- and a backend cannot override
-    // these, because a raised colour below hover is a ladder with a rung
-    // missing.
-    readonly property color surfaceRaised: lift(surface, 0.2)
-    readonly property color surfaceHover: lift(surface, 0.4)
-    readonly property color outline: lift(surface, 0.8)
+    readonly property color overlay: backend?.overlay ?? Tokens.colorOverlay
     readonly property color text: backend?.text ?? Tokens.colorText
     readonly property color textMuted: backend?.textMuted ?? Tokens.colorTextMuted
-    // The band's own fill: the one colour drawn from the wallpaper's darkness
-    // rather than the palette ramp (spec 01-frame), so the melt silhouette
-    // reads as a frame around the content, not a panel floating on it.
-    readonly property color bandFill: backend?.bandFill ?? Tokens.colorBandFill
+    // primary is the one filled action per surface and the active part of a
+    // track; textOnPrimary is its text. accent is what is current (the selected
+    // row, the active tab); focus is the keyboard ring. The three share a
+    // pastel in the default theme, and the split is what lets a theme give
+    // them different ones.
+    readonly property color primary: backend?.primary ?? Tokens.colorPrimary
+    readonly property color textOnPrimary: backend?.textOnPrimary ?? Tokens.colorTextOnPrimary
+    readonly property color accent: backend?.accent ?? Tokens.colorAccent
+    readonly property color focus: backend?.focus ?? Tokens.colorFocus
+    // The status set, complete: a passive readout never spends the accent.
+    readonly property color info: backend?.info ?? Tokens.colorInfo
+    readonly property color success: backend?.success ?? Tokens.colorSuccess
+    readonly property color warning: backend?.warning ?? Tokens.colorWarning
+    readonly property color danger: backend?.danger ?? Tokens.colorDanger
+    // The floating shadow is read by DataCapsule alone, for the one body with
+    // nothing behind it but a client; nothing in the frame draws a shadow.
     readonly property color shadow: backend?.shadow ?? Tokens.colorShadow
     readonly property real floatingShadowOpacity: backend?.floatingShadowOpacity ?? Tokens.opacityFloatingShadow
     readonly property real floatingShadowBlur: backend?.floatingShadowBlur ?? Tokens.geometryFloatingShadowBlur
     readonly property real floatingShadowOffset: backend?.floatingShadowOffset ?? Tokens.geometryFloatingShadowOffset
     readonly property int floatingShadowExtent: backend?.floatingShadowExtent ?? Tokens.geometryFloatingShadowExtent
-    // Edge-readability rim and glass-edge stroke on the melt silhouette. Both
-    // default to an EXISTING role rather than a private hex, mirroring the
-    // consumer theme this was measured against: the rim is the outline
-    // colour, the stroke is the text colour, at low strength.
-    readonly property color bandRim: backend?.bandRim ?? outline
-    readonly property color bandStroke: backend?.bandStroke ?? text
 
     // ── opacity ─────────────────────────────────────────────────────────
     readonly property real opacityDisabled: backend?.opacityDisabled ?? Tokens.opacityDisabled
@@ -78,17 +68,12 @@ QtObject {
     // number from `opacityDisabled`, because receding says "later" and
     // disabled says "never".
     readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
-    // Melt silhouette rim and glass-edge strengths (LIVE-TUNE): 0 disables
-    // the rim entirely — the band separates by fill, not by a lit edge.
-    readonly property real bandRimStrength: backend?.bandRimStrength ?? Tokens.opacityBandRimStrength
-    readonly property real bandStrokeStrength: backend?.bandStrokeStrength
-        ?? Tokens.opacityBandStrokeStrength
 
     // THE way a control says "unavailable", as a colour rather than as
     // `opacity`. Opacity on a control applies to each CHILD separately, so a
     // dimmed composite is a stack of translucent layers: a thumb at 0.35
     // shows the 0.35 fill straight through itself and the two stop being two
-    // things. This blends one colour toward the background by the same
+    // things. This blends one colour toward the band by the same
     // `opacityDisabled` fraction and keeps it opaque, so the layers stay
     // layers and every part still hides what is behind it.
     //
@@ -98,7 +83,7 @@ QtObject {
     // one fact and the roles it applies to are the caller's business.
     function disabled(c: color): color {
         const k = root.opacityDisabled;
-        const bg = root.background;
+        const bg = root.band;
         return Qt.rgba(bg.r + (c.r - bg.r) * k,
                        bg.g + (c.g - bg.g) * k,
                        bg.b + (c.b - bg.b) * k,
@@ -131,13 +116,12 @@ QtObject {
         return Qt.tint(base, Qt.rgba(accent.r, accent.g, accent.b, root.opacitySelected));
     }
 
-    // THE way a layer says "above this one". `lift(c, 0.4)` is `c` blended
-    // toward `text` until its WCAG contrast against `background` has risen by
-    // 0.4; the ladder in AGENTS.md is written in that unit (raised +0.2,
-    // hover +0.4, outline and pressed +0.8), so a rung is one call and a
-    // theme tunes `surface` alone. Luminance is not linear in the blend, so
-    // the fraction is found by bisection rather than solved; twenty halvings
-    // land within a quarter of an 8-bit step.
+    // The press and hover tints `tone` stacks on a layer. `lift(c, 0.4)` is
+    // `c` blended toward `text` until its WCAG contrast against `band` has
+    // risen by 0.4. Luminance is not linear in the blend, so the fraction is
+    // found by bisection rather than solved; twenty halvings land within a
+    // quarter of an 8-bit step. No role is derived from it: the ladder's
+    // three steps come whole from the theme.
     function contrast(a: color, b: color): real {
         const hi = Math.max(_luminance(a), _luminance(b));
         const lo = Math.min(_luminance(a), _luminance(b));
@@ -145,12 +129,12 @@ QtObject {
     }
 
     function lift(c: color, by: real): color {
-        const target = contrast(c, root.background) + by;
+        const target = contrast(c, root.band) + by;
         const toward = root.text;
         let lo = 0, hi = 1;
         for (let i = 0; i < 20; i++) {
             const mid = (lo + hi) / 2;
-            if (contrast(_blend(c, toward, mid), root.background) < target)
+            if (contrast(_blend(c, toward, mid), root.band) < target)
                 lo = mid;
             else
                 hi = mid;
@@ -317,15 +301,12 @@ QtObject {
         ?? Tokens.geometryNotificationBodyViewportHeight
     // The melt reach every join neck derives from (spec 01-frame), how close
     // a silhouette must come to a band before it fuses rather than leaves a
-    // sliver, and the rim/stroke thicknesses drawn on the merged shape.
+    // sliver, and how far a flush silhouette reaches into the neighbour it
+    // seams against (see ShellBorder.overlapSeams), so the AA never finds a
+    // zero-depth edge along the join.
     readonly property int meltSmoothing: backend?.meltSmoothing ?? Tokens.geometryMeltSmoothing
     readonly property int edgeSnapReach: backend?.edgeSnapReach ?? Tokens.geometryEdgeSnapReach
-    readonly property int bandRimWidth: backend?.bandRimWidth ?? Tokens.geometryBandRimWidth
-    readonly property int bandStrokeWidth: backend?.bandStrokeWidth ?? Tokens.geometryBandStrokeWidth
-    // How far a flush silhouette reaches into the neighbour it seams against
-    // (see ShellBorder.overlapSeams): derived from the stroke width, not its
-    // own token, because the seam only has to outrun the stroke's own depth.
-    readonly property real seamOverlap: bandStrokeWidth * 4
+    readonly property real seamOverlap: backend?.seamOverlap ?? Tokens.geometrySeamOverlap
 
     // The "this one" mark: the same 3x18 pill the launcher, the menu rows, the
     // notification history and the device lists all use to say which row is

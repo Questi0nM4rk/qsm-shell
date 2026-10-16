@@ -276,7 +276,7 @@ Item {
                 radius: Style.radiusSm
                 color: root.swatch ?? "transparent"
                 border.width: 1
-                border.color: Style.outline
+                border.color: Style.textMuted
             }
 
             Image {

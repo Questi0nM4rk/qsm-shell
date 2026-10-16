@@ -12,7 +12,7 @@ Rectangle {
     property bool pressed: false
     property bool selected: variant === "selected"
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: body.height + Style.space4 * 2
 

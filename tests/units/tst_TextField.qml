@@ -298,7 +298,7 @@ TestCase {
         mouseMove(field, field.width / 2 + 1, field.height / 2);
         compare(field.hovered, true, "the pointer never arrived on the editable field");
         wait(Motion.micro * 3);
-        compare(surface.color, Style.surfaceHover,
+        compare(surface.color, Style.lift(Style.surface, 0.4),
             "an editable field did not lift under the pointer");
     }
 

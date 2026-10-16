@@ -253,41 +253,44 @@ follow the design sources.
 
 ## Surface ladder and borders
 
-One ladder, written in WCAG contrast against `background`. Every rung is
-`Style.lift(surface, by)`, so a theme tunes `surface` once and the rest
-follows; hand-tuned tokens drifted until raised sat at the resting value.
+Three neutral steps, each 1.30:1 on the one below, and nothing is derived:
+a theme generates all three from its wallpaper and a component reads a role.
+Lightness is the only separation: no hairline, no card border, no rim, no
+shadow does that job. A line is content (a track, a meter), never an edge.
 
-| Rung | Contrast | Role |
+| Role | Where | Holds |
 | --- | --- | --- |
-| background | 1.0 | the shell, the ground under everything |
-| `surface` | 1.2 | a component's resting body; the one hand-set colour |
-| `surfaceRaised` | +0.2 | a layer above the shell: popup, dialog, capsule |
-| `surfaceHover` | +0.4 | hover of a body that cannot grow (text, rows) |
-| `outline` | +0.8 | pressed where growth is impossible; dividers, tracks, the empty toggle's rim |
-| `accent` | | selected, focus, primary fill |
+| `band` | the one silhouette the shader paints: frame and every rollout | `surface` cards, text, glyphs |
+| `surface` | a card, a row group, a field inside a rollout | `overlay` popouts, text, controls |
+| `overlay` | a popout, a menu, a hover container over a card; an inactive track | text, glyphs, controls only |
+| `primary` / `textOnPrimary` | the one filled action per surface, the active part of a track | its text |
+| `accent` | what is current: the selected row at `opacitySelected`, its text and glyph | |
+| `focus` | the keyboard ring, 2px outside the control at `spaceTight` | |
 
 - `Style.tone(base, hovered, pressed, selected, enabled, accent)` is THE
   state matrix and `Surface` is the Rectangle that binds it; a component's
   body is one `Surface` (or one `tone` call) and never its own ternary. Four
   components each wrote their own and disagreed on the selected tint.
-- Hover is a lift of one step above the layer the item lies on. An item on
-  a raised layer hovers one step above raised. Controls that can grow keep
-  growth (`StateLayer`); tint is for what cannot scale.
-- An inactive track (progress, meter, ring, slider) is `outline`, a line,
-  never a body's rung; `surfaceHover` means hover and nothing else.
+- Hover grows (`StateLayer`) and never tints a container. `tone`'s hover and
+  press lifts remain for text and rows that cannot grow.
+- An inactive track (progress, meter, ring, slider) is `overlay`, a line of
+  content on the card, never a body's step.
 - Selected is identity, not a lift: `accent` at 12 % over the layer plus
   accent content (text, glyph). A toggle with its own fill (Switch, Checkbox,
-  Radio) is selected as solid accent. Selected plus hover adds the step.
-- A border encodes a fact colour cannot, and there are five: a failed
-  value (danger), the shape of an empty toggle, containment of a foreign
-  colour (a swatch may equal the ground), the focus ring outside at a half
-  step, and a physical object the person knows from the world (a key cap in
-  `Kbd`, the convention GitHub, MDN and shadcn share). Layers are separated
-  by a rung, never by a line.
+  Radio) is selected as solid `accent` with `textOnPrimary` content.
+- A border encodes a fact colour cannot, and there are four: a failed
+  value (`danger`), the shape of an empty toggle (`textMuted`), containment
+  of a foreign colour (a swatch may equal the ground), and the focus ring.
+  Layers are separated by a step, never by a line.
 
 ## Component laws
 
 Earned, each from a specific failure. Break one and name which.
+
+- **No property is named `on<Capital>`.** QML reads that shape as a signal
+  handler, and a `Behavior on` such a property inside a singleton segfaults
+  Quickshell 0.3.2 / Qt 6.12 at load with no QML error. `onPrimary` cost a
+  crash-looped desktop; the role is `textOnPrimary`.
 
 - **A type is a concept, never a surface.** `OsdSlider` and `LevelBar` were one
   slider wearing two names because two surfaces asked for it; they differed in
@@ -458,10 +461,9 @@ Earned, each from a specific failure. Break one and name which.
 - **A resting surface reads at 1.2:1 against the shell background; hover
   and any highlight sit 0.4 above the rest.** The text box surface sat at
   1.05:1 and an empty field was invisible; 3:1 (the rubric's line) shouted.
-  Judged in the window at 1.2 (`surface`) with hover at 1.6 (`surfaceHover`):
-  visible, quiet, and the lift still reads. WCAG contrast ratios, computed
-  against `background`, are the unit; a new surface token states both
-  numbers before it lands in `tokens/deep-night.json`.
+  The ladder now fixes the rest at one step (`surface`, 1.30:1 on `band`)
+  and the hover lift at 0.4 above it. WCAG contrast ratios, computed
+  against `band`, are the unit.
 - **The cursor describes the region under it, not the outer component.** The
   editable body stays I-beam, a trailing action is a hand, and a leading
   action states its cursor explicitly.

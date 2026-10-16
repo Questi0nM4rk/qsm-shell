@@ -28,7 +28,7 @@ Rectangle {
     readonly property bool openIntent: root.revealed || (root.hoverOpen && rollout.wantsOpen)
     readonly property var activeRollout: rollout
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth * 2 + Style.space6 * 2
     implicitHeight: Style.controlWidth + Style.space6 * 2
 

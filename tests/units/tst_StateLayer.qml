@@ -25,7 +25,7 @@ TestCase {
         x: 20; y: 20; width: 280; height: 64
         focus: false
 
-        Rectangle { anchors.fill: parent; color: Style.surfaceRaised }
+        Rectangle { anchors.fill: parent; color: Style.overlay }
 
         StateLayer {
             id: activeLayer

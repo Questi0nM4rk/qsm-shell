@@ -7,6 +7,6 @@ pointer: none; it never claims hover, press, focus or wheel.
 keyboard: none; it is never a tab stop and takes no keys.
 screen reader: no role of its own; the surrounding row or surface names the person.
 size: one `size` box for the picture; the implicit size grows by the ring gap plus ring width only while ringed; radius is half the size and the glyph is two fifths of it.
-tokens: controlHeight, surfaceHover, accent, outline, spaceTight, textMuted, Prose and SvgIcon; no local colours or measurements.
+tokens: controlHeight, overlay, accent, spaceTight, textMuted, Prose and SvgIcon; no local colours or measurements.
 motion: none; image, ring and dot settle without animation.
 not designed: selection, action, editing, a badge count or a menu; use Badge, IconButton or the host for those.

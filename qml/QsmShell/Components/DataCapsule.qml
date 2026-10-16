@@ -21,7 +21,7 @@ T.Control {
     readonly property real sizeScale: bodySize / Style.size("DataCapsule", "md")
     property real preferredLength: Style.rhythm(Style.controlWidth * sizeScale)
     property real radius: Style.rolloutRadius
-    property color surfaceColor: Style.bandFill
+    property color surfaceColor: Style.band
     property bool elevated: true
 
     readonly property bool pointerHovered: pointer.hovered

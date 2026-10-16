@@ -19,7 +19,7 @@ Rectangle {
     property real value: 0
     property bool indeterminate: false
     property color fill: Style.accent
-    property color trackColor: Style.outline
+    property color trackColor: Style.overlay
     property real thickness: Style.trackThickness
 
     readonly property real _fraction: Math.max(0, Math.min(1, value))

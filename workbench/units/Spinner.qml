@@ -12,7 +12,7 @@ Rectangle {
 
     implicitWidth: spinner.width
     implicitHeight: spinner.height
-    color: Style.background
+    color: Style.band
 
     Spinner {
         id: spinner

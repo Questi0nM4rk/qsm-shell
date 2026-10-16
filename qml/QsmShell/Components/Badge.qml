@@ -42,7 +42,7 @@ Rectangle {
     // On a filled badge the reading sits ON the tone, so it takes the ground
     // colour rather than the text colour — text-on-accent is the one place
     // this palette cannot be read.
-    readonly property color _prose: filled ? Style.background : _tone
+    readonly property color _prose: filled ? Style.textOnPrimary : _tone
 
     implicitHeight: dot ? Style.spaceTight * 2 + Style.space1 : Style.badgeHeight
     // A single character stays circular; anything longer grows into a pill

@@ -62,8 +62,8 @@ Item {
 
     // The swatch decides its own ink so no call site has to, and it decides it
     // by MEASURING rather than by assuming the theme is dark. The first
-    // version returned `Style.background` for a pale sample and `Style.text`
-    // for a dark one, which is only right while background is the dark one —
+    // version returned `Style.band` for a pale sample and `Style.text`
+    // for a dark one, which is only right while band is the dark one —
     // under a light backend it hands a pale swatch pale ink.
     //
     // The sample is composited over what is actually BEHIND it first: a
@@ -111,9 +111,9 @@ Item {
     }
 
     // Whichever of the theme's two inks actually reads on this sample.
-    readonly property color ink: _worst(Style.text) >= _worst(Style.background)
+    readonly property color ink: _worst(Style.text) >= _worst(Style.band)
         ? Style.text
-        : Style.background
+        : Style.band
 
     // One route in: pointer, Space, Return and callers share it, guarded here
     // so no route fires while unavailable. The host still owns `selected`
@@ -224,7 +224,7 @@ Item {
             color: "transparent"
             radius: Style.radiusSm
             border.width: 1
-            border.color: root._paint(Style.outline)
+            border.color: root._paint(Style.textMuted)
         }
 
         // Focus belongs to the face, not the target: an accent ring outside

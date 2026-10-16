@@ -45,11 +45,7 @@ RowLayout {
                 Layout.preferredWidth: Math.max(root.minCapWidth, cap.implicitWidth + Style.space2)
                 Layout.preferredHeight: Style.badgeHeight + Style.space1
                 radius: Style.radiusXs
-                color: Style.surfaceHover
-                // The one line that makes it a cap rather than a chip: a key
-                // has an edge, and without it this is a badge.
-                border.width: 1
-                border.color: Style.outline
+                color: Style.overlay
 
                 Prose {
                     id: cap

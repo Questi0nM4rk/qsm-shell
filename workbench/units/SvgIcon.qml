@@ -21,7 +21,7 @@ Rectangle {
 
     implicitWidth: glyph.width
     implicitHeight: glyph.height
-    color: Style.background
+    color: Style.band
 
     SvgIcon {
         id: glyph

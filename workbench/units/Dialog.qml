@@ -14,7 +14,7 @@ Rectangle {
     property int closes: 0
     property int confirms: 0
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 

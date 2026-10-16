@@ -13,7 +13,7 @@ Rectangle {
 
     implicitWidth: caps.width
     implicitHeight: caps.height
-    color: Style.background
+    color: Style.band
 
     Kbd {
         id: caps

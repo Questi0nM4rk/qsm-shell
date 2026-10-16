@@ -12,7 +12,7 @@ Rectangle {
 
     implicitWidth: Style.controlWidth
     implicitHeight: line.implicitHeight
-    color: Style.background
+    color: Style.band
 
     Marquee {
         id: line

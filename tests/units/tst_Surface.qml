@@ -18,7 +18,7 @@ TestCase {
     Surface { id: body; width: 100; height: 40 }
 
     function step(a, b) {
-        return Style.contrast(a, Style.background) - Style.contrast(b, Style.background);
+        return Style.contrast(a, Style.band) - Style.contrast(b, Style.band);
     }
 
     // The colour animates (Motion.micro), so every read waits for it to land.

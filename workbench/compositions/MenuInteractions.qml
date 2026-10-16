@@ -92,14 +92,14 @@ FocusScope {
         Surface {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            base: Style.surfaceRaised
+            base: Style.overlay
             radius: Style.radiusLg
 
             ScrollArea {
                 id: scroll
                 anchors.fill: parent
                 anchors.margins: Style.space2
-                fadeColor: Style.surfaceRaised
+                fadeColor: Style.overlay
                 fadeDepth: Style.space4
 
                 Menu {

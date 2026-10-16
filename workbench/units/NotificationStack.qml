@@ -33,7 +33,7 @@ Rectangle {
     property var replacementRow: null
     property bool replacementKeptRow: false
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.notificationWidth + Style.space6 * 2
     implicitHeight: Style.controlWidth + Style.space6 * 2
 

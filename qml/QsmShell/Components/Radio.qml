@@ -60,7 +60,7 @@ T.AbstractButton {
                 ? (root.checked ? Style.disabled(root.accentColor) : "transparent")
                 : (root.checked ? root.accentColor : "transparent")
             border.width: root.checked ? 0 : Style.spaceTight
-            border.color: root.enabled ? Style.outline : Style.disabled(Style.outline)
+            border.color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
 
             Behavior on color {
                 ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -72,7 +72,7 @@ T.AbstractButton {
                 height: width
                 radius: width / 2
                 visible: root.checked
-                color: root.enabled ? Style.background : Style.disabled(Style.background)
+                color: root.enabled ? Style.textOnPrimary : Style.disabled(Style.textOnPrimary)
             }
         }
 

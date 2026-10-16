@@ -13,7 +13,7 @@ Rectangle {
     property int openRequests: 0
     property int dismissRequests: 0
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 
@@ -23,7 +23,7 @@ Rectangle {
         y: Style.space4
         width: Style.space6 * 2
         height: Style.controlHeightSm
-        color: Style.surfaceRaised
+        color: Style.overlay
         radius: Style.radiusSm
     }
 

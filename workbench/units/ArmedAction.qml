@@ -12,7 +12,7 @@ Rectangle {
     property int fired: 0
     property int disarmed: 0
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: status.implicitHeight + Style.space4 * 2
 

@@ -3,17 +3,19 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    readonly property color colorAccent: "#c5a5e9"
-    readonly property color colorSecondary: "#e1b7e1"
-    readonly property color colorSuccess: "#91d6c2"
-    readonly property color colorWarning: "#e8c58a"
-    readonly property color colorDanger: "#ff8b94"
-    readonly property color colorInfo: "#9fc2ea"
-    readonly property color colorBackground: "#1c0e27"
-    readonly property color colorSurface: "#2d2036"
-    readonly property color colorText: "#f6f1f9"
-    readonly property color colorTextMuted: "#b6a8c2"
-    readonly property color colorBandFill: "#15081e"
+    readonly property color colorBand: "#221d27"
+    readonly property color colorSurface: "#36313b"
+    readonly property color colorOverlay: "#48424d"
+    readonly property color colorText: "#f0ecf5"
+    readonly property color colorTextMuted: "#b5aebc"
+    readonly property color colorPrimary: "#d9b4ea"
+    readonly property color colorTextOnPrimary: "#221d27"
+    readonly property color colorAccent: "#d9b4ea"
+    readonly property color colorFocus: "#d9b4ea"
+    readonly property color colorInfo: "#89cff1"
+    readonly property color colorSuccess: "#a2d3a2"
+    readonly property color colorWarning: "#d9c284"
+    readonly property color colorDanger: "#f5aeb7"
     readonly property color colorShadow: "#000000"
     readonly property int space1: 4
     readonly property int space2: 8
@@ -62,8 +64,6 @@ QtObject {
     readonly property real opacitySelected: 0.12
     readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.45
-    readonly property int opacityBandRimStrength: 0
-    readonly property real opacityBandStrokeStrength: 0.55
     readonly property real opacityFloatingShadow: 0.28
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
@@ -101,11 +101,10 @@ QtObject {
     readonly property real geometryNotificationDismissFraction: 0.4
     readonly property int geometryMeltSmoothing: 20
     readonly property int geometryEdgeSnapReach: 32
-    readonly property int geometryBandRimWidth: 6
-    readonly property int geometryBandStrokeWidth: 2
     readonly property real geometryFloatingShadowBlur: 0.6
     readonly property int geometryFloatingShadowOffset: 8
     readonly property int geometryFloatingShadowExtent: 24
+    readonly property int geometrySeamOverlap: 8
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

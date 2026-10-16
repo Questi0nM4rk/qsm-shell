@@ -12,7 +12,7 @@ Rectangle {
     property int orientation: Qt.Vertical
     property bool cues: true
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 

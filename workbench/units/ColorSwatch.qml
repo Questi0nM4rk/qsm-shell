@@ -17,12 +17,12 @@ Rectangle {
 
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
-    color: Style.background
+    color: Style.band
 
     ColorSwatch {
         id: swatch
         anchors.centerIn: parent
-        sample: root.empty ? Style.outline : root.sample
+        sample: root.empty ? Style.textMuted : root.sample
         empty: root.empty
         reading: root.reading
         size: root.face
@@ -38,7 +38,7 @@ Rectangle {
             { label: "pale", set: { empty: false, sample: Style.warning, reading: "#E8C58A" } },
             { label: "deep", set: { empty: false, sample: Style.accent, reading: "#C5A5E9" } },
             { label: "translucent", set: { empty: false, sample: Qt.rgba(Style.accent.r, Style.accent.g, Style.accent.b, 0.2), reading: "20%" } },
-            { label: "empty", set: { empty: true, sample: Style.outline, reading: "" } }
+            { label: "empty", set: { empty: true, sample: Style.textMuted, reading: "" } }
         ] },
         { label: "selection", options: [
             { label: "rest", set: { selected: false } },

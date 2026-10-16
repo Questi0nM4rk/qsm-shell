@@ -1,26 +1,28 @@
 {
   "color": {
-    "accent": "#c5a5e9",
-    "secondary": "#e1b7e1",
-    "success": "#91d6c2",
-    "warning": "#e8c58a",
-    "danger": "#ff8b94",
-    "info": "#9fc2ea",
-    "background": "#1c0e27",
-    "surface": "#2d2036",
-    "text": "#f6f1f9",
-    "textMuted": "#b6a8c2",
-    "bandFill": "#15081e",
+    "band": "#221d27",
+    "surface": "#36313b",
+    "overlay": "#48424d",
+    "text": "#f0ecf5",
+    "textMuted": "#b5aebc",
+    "primary": "#d9b4ea",
+    "textOnPrimary": "#221d27",
+    "accent": "#d9b4ea",
+    "focus": "#d9b4ea",
+    "info": "#89cff1",
+    "success": "#a2d3a2",
+    "warning": "#d9c284",
+    "danger": "#f5aeb7",
     "shadow": "#000000"
   },
   "space": {
-    "tight": 2,
     "1": 4,
     "2": 8,
     "3": 12,
     "4": 16,
     "5": 24,
-    "6": 32
+    "6": 32,
+    "tight": 2
   },
   "radius": {
     "xs": 4,
@@ -71,8 +73,6 @@
     "selected": 0.12,
     "surface": 0.9,
     "recede": 0.45,
-    "bandRimStrength": 0,
-    "bandStrokeStrength": 0.55,
     "floatingShadow": 0.28
   },
   "font": {
@@ -114,11 +114,10 @@
     "notificationDismissFraction": 0.4,
     "meltSmoothing": 20,
     "edgeSnapReach": 32,
-    "bandRimWidth": 6,
-    "bandStrokeWidth": 2,
     "floatingShadowBlur": 0.6,
     "floatingShadowOffset": 8,
-    "floatingShadowExtent": 24
+    "floatingShadowExtent": 24,
+    "seamOverlap": 8
   },
   "line": {
     "tight": 1.2,
@@ -129,13 +128,45 @@
     "wide": 1.4
   },
   "sizes": {
-    "DataCapsule": { "sm": 32, "md": 64, "lg": 96 },
-    "Switch": { "sm": 12, "md": 16, "lg": 24 },
-    "Checkbox": { "sm": 12, "md": 16, "lg": 24 },
-    "Radio": { "sm": 12, "md": 16, "lg": 24 },
-    "SpinBox": { "sm": 32, "md": 40, "lg": 52 },
-    "Slider": { "sm": 16, "md": 24, "lg": 40 },
-    "TextField": { "sm": 32, "md": 40, "lg": 52 },
-    "Segmented": { "sm": 32, "md": 40, "lg": 52 }
+    "DataCapsule": {
+      "sm": 32,
+      "md": 64,
+      "lg": 96
+    },
+    "Switch": {
+      "sm": 12,
+      "md": 16,
+      "lg": 24
+    },
+    "Checkbox": {
+      "sm": 12,
+      "md": 16,
+      "lg": 24
+    },
+    "Radio": {
+      "sm": 12,
+      "md": 16,
+      "lg": 24
+    },
+    "SpinBox": {
+      "sm": 32,
+      "md": 40,
+      "lg": 52
+    },
+    "Slider": {
+      "sm": 16,
+      "md": 24,
+      "lg": 40
+    },
+    "TextField": {
+      "sm": 32,
+      "md": 40,
+      "lg": 52
+    },
+    "Segmented": {
+      "sm": 32,
+      "md": 40,
+      "lg": 52
+    }
   }
 }

@@ -10,7 +10,7 @@ Rectangle {
 
     implicitWidth: Style.controlWidth
     implicitHeight: column.implicitHeight
-    color: Style.background
+    color: Style.band
 
     Column {
         id: column

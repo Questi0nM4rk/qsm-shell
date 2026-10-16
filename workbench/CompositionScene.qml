@@ -35,7 +35,7 @@ Rectangle {
     property var _rootNode: null
     property int _generation: 0
 
-    color: Style.background
+    color: Style.band
 
     function list(value: var): var {
         if (value === null || value === undefined)

@@ -12,7 +12,7 @@ Rectangle {
 
     implicitWidth: card.width
     implicitHeight: card.height
-    color: Style.background
+    color: Style.band
 
     Card {
         id: card
@@ -44,7 +44,7 @@ Rectangle {
     readonly property var controls: [
         { label: "surface", options: [
             { label: "resting", set: { surfaceColor: Style.surface, surfaceOpacity: Style.surfaceOpacity } },
-            { label: "raised", set: { surfaceColor: Style.surfaceRaised, surfaceOpacity: Style.surfaceOpacity } },
+            { label: "raised", set: { surfaceColor: Style.surface, surfaceOpacity: Style.surfaceOpacity } },
             { label: "opaque", set: { surfaceColor: Style.surface, surfaceOpacity: 1 } }
         ] }
     ]

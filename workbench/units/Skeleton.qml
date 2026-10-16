@@ -13,7 +13,7 @@ Rectangle {
 
     implicitWidth: Style.controlWidth
     implicitHeight: place.implicitHeight
-    color: Style.background
+    color: Style.band
 
     Column {
         id: place

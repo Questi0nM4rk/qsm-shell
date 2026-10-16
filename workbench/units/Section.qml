@@ -24,7 +24,7 @@ Rectangle {
 
     implicitWidth: Style.controlWidth
     implicitHeight: group.implicitHeight
-    color: Style.background
+    color: Style.band
 
     Section {
         id: group

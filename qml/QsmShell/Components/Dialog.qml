@@ -123,7 +123,7 @@ FocusScope {
         width: root.dialogWidth
         implicitHeight: content.implicitHeight + Style.space5 * 2
         radius: Style.radiusXl
-        surfaceColor: Style.surfaceRaised
+        surfaceColor: Style.overlay
         focus: true
         opacity: root.open ? 1 : 0
         scale: root.open ? 1 : 0.96

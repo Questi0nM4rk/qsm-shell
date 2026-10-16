@@ -14,7 +14,7 @@ Rectangle {
     property bool fade: true
     property bool indicator: true
 
-    color: Style.background
+    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 

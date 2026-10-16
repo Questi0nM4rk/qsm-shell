@@ -17,7 +17,7 @@ Rectangle {
 
     property real inset: 0
     property real strength: .35
-    property color lineColor: Style.outline
+    property color lineColor: Style.textMuted
     property real thickness: 1
 
     implicitHeight: thickness

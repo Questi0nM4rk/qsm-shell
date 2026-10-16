@@ -44,7 +44,7 @@ Rectangle {
     // of a known width states it: `Layout.preferredWidth: parent.width * .6`.
     implicitWidth: Style.controlWidth * Math.max(0, Math.min(1, fraction))
     radius: shape === "line" ? height / 2 : Style.radiusSm
-    color: Style.surfaceHover
+    color: Style.overlay
 
     // It breathes rather than shimmers. A travelling highlight is a second
     // motion vocabulary for one idea, and on a surface already carrying a

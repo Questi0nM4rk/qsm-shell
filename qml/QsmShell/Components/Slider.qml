@@ -77,10 +77,10 @@ T.RangeSlider {
 
     // ── colours, all the host's ────────────────────────────────────────
     property color fill: Style.accent
-    property color trackColor: Style.outline
+    property color trackColor: Style.overlay
     property color thumbColor: Style.text
     // What paints INSIDE the thumb, over `thumbColor`.
-    property color thumbContentColor: Style.background
+    property color thumbContentColor: Style.textOnPrimary
 
     // ── shape ──────────────────────────────────────────────────────────
     // A preset NAME, resolved through the theme's size table. The preset is

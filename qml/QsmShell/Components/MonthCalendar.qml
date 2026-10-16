@@ -65,7 +65,7 @@ Item {
                         font.pixelSize: Style.textXs
                         font.weight: parent.isToday ? Style.weightBold : Style.weightRegular
                         text: parent.cellDate.getDate()
-                        color: parent.isToday ? Style.background : parent.inMonth ? Style.text : Style.textMuted
+                        color: parent.isToday ? Style.textOnPrimary : parent.inMonth ? Style.text : Style.textMuted
                         opacity: parent.inMonth || parent.isToday ? 1 : 0.4
                     }
                 }

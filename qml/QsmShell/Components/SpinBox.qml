@@ -133,7 +133,7 @@ T.DoubleSpinBox {
             verticalAlignment: TextInput.AlignVCenter
             color: root.enabled ? Style.text : Style.disabled(Style.text)
             selectionColor: Style.accent
-            selectedTextColor: Style.background
+            selectedTextColor: Style.textOnPrimary
             font.family: Style.technicalFontFamily
             font.pixelSize: root.fieldTextSize
             cursorDelegate: Item {}

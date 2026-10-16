@@ -7,6 +7,6 @@ pointer: none; it claims no events and wheel passes through.
 keyboard: none; it is never a tab stop and takes no keys.
 screen reader: none; it is a placeholder with no accessible name until real content lands.
 size: width is a fraction of the control width and never content-derived; line height follows the role scale from hero to metadata.
-tokens: controlHeight, controlWidth, radiusSm, surfaceHover and the text scale; no local colours or measurements.
+tokens: controlHeight, controlWidth, radiusSm, overlay and the text scale; no local colours or measurements.
 motion: an infinite opacity pulse while visible; reduced motion lengthens the period.
 not designed: progress values, error copy or empty explanation; use ProgressBar, Callout or EmptyState for those.

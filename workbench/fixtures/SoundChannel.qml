@@ -109,7 +109,7 @@ Item {
         value: root.level
         fill: root.muted ? Style.textMuted : Style.accent
         thumbColor: root.muted ? Style.textMuted : Style.text
-        thumbContentColor: Style.background
+        thumbContentColor: Style.textOnPrimary
         thumbText: root.muted ? "—" : String(Math.round(root.level))
         labelIcon: root.channelIcon
         labelAccessibleName: root.muted ? "Unmute output" : "Mute output"

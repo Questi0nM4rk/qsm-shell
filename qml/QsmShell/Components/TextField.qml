@@ -291,7 +291,7 @@ T.Control {
             activeFocusOnTab: true
             color: root.enabled ? Style.text : Style.disabled(Style.text)
             selectionColor: Style.accent
-            selectedTextColor: Style.background
+            selectedTextColor: Style.textOnPrimary
             verticalAlignment: TextInput.AlignVCenter
             font.family: Style.fontFamily
             font.pixelSize: root.fieldTextSize

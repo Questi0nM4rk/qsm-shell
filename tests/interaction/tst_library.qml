@@ -364,7 +364,7 @@ TestCase {
     // A swatch decides its own ink, so no call site has to, and so a pale
     // sample never carries pale text.
     function test_swatch_picks_readable_ink() {
-        compare(String(paleSwatch.ink), String(Style.background), "pale swatch kept light ink");
+        compare(String(paleSwatch.ink), String(Style.band), "pale swatch kept light ink");
         compare(String(darkSwatch.ink), String(Style.text), "dark swatch took dark ink");
     }
 
