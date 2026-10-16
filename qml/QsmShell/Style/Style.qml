@@ -68,11 +68,12 @@ QtObject {
     // number from `opacityDisabled`, because receding says "later" and
     // disabled says "never".
     readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
-    // The glass edge of the melt silhouette (01-frame, owner 2026-10-16): a
-    // thin lit line of text hugging the merged shape, drawn by the shader on
-    // top of the flat fill. The only line the silhouette has; the rim is gone.
-    readonly property color bandStroke: backend?.bandStroke ?? text
-    readonly property real bandStrokeStrength: backend?.bandStrokeStrength ?? Tokens.opacityBandStrokeStrength
+    // The edge glow of the melt silhouette (owner 2026-10-17): grain of this
+    // tint thickening toward the merged shape's inner edge, drawn by the shader
+    // on top of the flat fill. Strength is the tint's share at the very edge;
+    // the glow is gone edgeGlowWidth px inward. No line; the rim is gone.
+    readonly property color edgeGlow: backend?.edgeGlow ?? text
+    readonly property real edgeGlowStrength: backend?.edgeGlowStrength ?? Tokens.opacityEdgeGlowStrength
 
     // THE way a control says "unavailable", as a colour rather than as
     // `opacity`. Opacity on a control applies to each CHILD separately, so a
@@ -312,7 +313,7 @@ QtObject {
     readonly property int meltSmoothing: backend?.meltSmoothing ?? Tokens.geometryMeltSmoothing
     readonly property int edgeSnapReach: backend?.edgeSnapReach ?? Tokens.geometryEdgeSnapReach
     readonly property real seamOverlap: backend?.seamOverlap ?? Tokens.geometrySeamOverlap
-    readonly property int bandStrokeWidth: backend?.bandStrokeWidth ?? Tokens.geometryBandStrokeWidth
+    readonly property int edgeGlowWidth: backend?.edgeGlowWidth ?? Tokens.geometryEdgeGlowWidth
 
     // The "this one" mark: the same 3x18 pill the launcher, the menu rows, the
     // notification history and the device lists all use to say which row is

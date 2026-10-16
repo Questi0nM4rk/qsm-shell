@@ -248,8 +248,8 @@ Item {
     // the bulge -- but an exact union of two rects that share an edge leaves the
     // merged SDF at ZERO all along it. Zero is the shader's definition of "edge"
     // in two independent places: `alpha` (a ~0.5 dip, so the wallpaper shows
-    // through as a translucent hairline) and the glass stroke (`innerDepth` ~ 0,
-    // so a full-strength lit line is painted down the join). Both are computed
+    // through as a translucent hairline) and the edge glow (depth ~ 0, so a
+    // full-strength tint is painted down the join). Both are computed
     // from `mergedSdf` alone, which is why the law's third piece could never
     // have worked -- it extends the RIM copy, and the rim is fed zero, so it
     // contributes nothing to either.
@@ -279,7 +279,7 @@ Item {
     // `blend`. blend is the melt radius and a caller may legitimately set it
     // to 0 to ask for an exact union (a flush nested host does exactly that);
     // outness says whether this body has emerged at all, which is what the
-    // glass edge is allowed to draw on. Conflating them makes a settled flush
+    // edge glow is allowed to draw on. Conflating them makes a settled flush
     // child look like something still coming out of the wall.
     function registerBulge(id, rect, radius, blend, deform, minEig, edgeBits, rimBits,
             detached = false, outness = 1) {
@@ -353,13 +353,13 @@ Item {
     property real seamOverlap: Style.seamOverlap
 
     // The band's fill: the one colour the melt shader paints, the frame and
-    // every rollout; and the glass edge the shader draws on top of it. There
+    // every rollout; and the edge glow the shader draws on top of it. There
     // is no rim: its uniforms are fed zero below until the rim path leaves
     // edgemelt.frag with 12-mechanism.
     property color bandFill: Style.band
-    property color bandStroke: Style.bandStroke
-    property real bandStrokeStrength: Style.bandStrokeStrength
-    property real strokeWidth: Style.bandStrokeWidth
+    property color edgeGlow: Style.edgeGlow
+    property real edgeGlowStrength: Style.edgeGlowStrength
+    property real edgeGlowWidth: Style.edgeGlowWidth
 
     // Handle circles (12-mechanism): dedicated circle SDFs the shader folds
     // in alongside the slots, (cx, cy, radius, blend) with radius 0 = absent
@@ -406,10 +406,11 @@ Item {
         property vector4d fillColor: Qt.vector4d(root.bandFill.r, root.bandFill.g,
             root.bandFill.b, root.bandFill.a)
         property vector4d rimColor: Qt.vector4d(0, 0, 0, 0)
-        // The glass edge rides the same merged silhouette (see edgemelt.frag).
-        property vector4d strokeColor: Qt.vector4d(root.bandStroke.r, root.bandStroke.g,
-            root.bandStroke.b, root.bandStrokeStrength)
-        property real strokeWidth: root.strokeWidth
+        // The edge glow rides the same merged silhouette; the shader keeps the
+        // stroke uniform names (see edgemelt.frag).
+        property vector4d strokeColor: Qt.vector4d(root.edgeGlow.r, root.edgeGlow.g,
+            root.edgeGlow.b, root.edgeGlowStrength)
+        property real strokeWidth: root.edgeGlowWidth
         property int fullscreenMode: root.fullscreen ? 1 : 0
         property int capsuleOccupied: Math.min(root.fullscreenPaintEntries.length,
             root.maxFullscreenCapsuleSlots)

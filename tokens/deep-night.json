@@ -74,7 +74,7 @@
     "surface": 0.9,
     "recede": 0.45,
     "floatingShadow": 0.28,
-    "bandStrokeStrength": 0.55
+    "edgeGlowStrength": 0.35
   },
   "font": {
     "family": "sans-serif",
@@ -119,7 +119,7 @@
     "floatingShadowOffset": 8,
     "floatingShadowExtent": 24,
     "seamOverlap": 8,
-    "bandStrokeWidth": 2
+    "edgeGlowWidth": 20
   },
   "line": {
     "tight": 1.2,

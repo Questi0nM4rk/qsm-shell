@@ -65,7 +65,7 @@ QtObject {
     readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.45
     readonly property real opacityFloatingShadow: 0.28
-    readonly property real opacityBandStrokeStrength: 0.55
+    readonly property real opacityEdgeGlowStrength: 0.35
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28
@@ -106,7 +106,7 @@ QtObject {
     readonly property int geometryFloatingShadowOffset: 8
     readonly property int geometryFloatingShadowExtent: 24
     readonly property int geometrySeamOverlap: 8
-    readonly property int geometryBandStrokeWidth: 2
+    readonly property int geometryEdgeGlowWidth: 20
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

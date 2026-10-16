@@ -1,7 +1,7 @@
 #version 440
 
 // docs/12-mechanism.md is normative. One pass fills the merged silhouette
-// and paints its inner glass edge, derivative-AA'd in logical coordinates.
+// and paints its inner edge glow, derivative-AA'd in logical coordinates.
 //
 // Uniform shape is NAMED per-slot (rect0..7 / radii0..7 / deform0..7 /
 // param0..7), not a GLSL array: QML array properties bind to GLSL array
@@ -37,7 +37,7 @@ layout(std140, binding = 0) uniform buf {
 // param.y = blend factor [0,1] scaling smoothFactor for this slot's melt;
 // param.z = rim side mask + 16 * origin side mask.
 // param.w = outness [0,1], how far this body has emerged (a flush nested
-// host is fully OUT at blend 0, so the glass edge reads this, not blend).
+// host is fully OUT at blend 0, so the edge glow reads this, not blend).
     vec4 rect0; vec4 rect1; vec4 rect2; vec4 rect3;
     vec4 rect4; vec4 rect5; vec4 rect6; vec4 rect7;
     vec4 radii0; vec4 radii1; vec4 radii2; vec4 radii3;
@@ -46,14 +46,12 @@ layout(std140, binding = 0) uniform buf {
     vec4 deform4; vec4 deform5; vec4 deform6; vec4 deform7;
     vec4 param0; vec4 param1; vec4 param2; vec4 param3;
     vec4 param4; vec4 param5; vec4 param6; vec4 param7;
-    // GLASS EDGE (owner 2026-08-19): a crisp light line hugging the INSIDE of
-    // the merged silhouette, drawn ON TOP of the flat fill. Not the old rim:
-    // that was a wide gradient ramp inside the body, which lit the melt necks
-    // unevenly and read as a different material. This is one stroke of the
-    // same union, so it follows every corner radius and every melt neck for
-    // free — the shape stops bleeding into the wallpaper and gains an edge.
-    vec4 strokeColor;      // rgb = glass tint, a = strength
-    float strokeWidth;     // inner stroke thickness in px
+    // EDGE GLOW (owner 2026-10-17): grain of tint thickening toward the
+    // INSIDE edge of the merged silhouette, on top of the flat fill. It is
+    // measured on the same union, so it follows every corner radius and melt
+    // neck. Names kept from the glass stroke so this block does not move.
+    vec4 strokeColor;      // rgb = glow tint, a = strength at the edge
+    float strokeWidth;     // glow width in px: the tint is gone this far in
     int fullscreenMode;    // native fullscreen: detached capsules only
     int capsuleOccupied;
     vec4 capsule0; vec4 capsule1; vec4 capsule2; vec4 capsule3;
@@ -102,6 +100,15 @@ float smaxSharpA(float a, float b, float k) {
     return max(a, b) + blend;
 }
 
+// --- Edge-glow grain ---------------------------------------------------------
+// Stable per device pixel, no time. Float-only (Hoskins hash12): an integer
+// hash fails qsb for the GLSL 100es/120 targets.
+float grainAt(vec2 p) {
+    vec3 q = fract(vec3(p.xyx) * 0.1031);
+    q += dot(q, q.yzx + 33.33);
+    return fract((q.x + q.y) * q.z);
+}
+
 // --- Named-slot lookup ------------------------------------------------------
 
 void slotAt(int i, out vec4 rect, out vec4 radii, out vec4 deform, out vec4 param) {
@@ -143,7 +150,7 @@ void main() {
     float dInner = sdRoundedBox(pixel, innerCenter, innerHalf, viewportRadius);
     float minThickness = min(leftEdge, edge);
     float kFrame = clamp(min(smoothFactor, minThickness - 1.0), 1.0, smoothFactor);
-    // Glass-edge gate, folded per slot below: 1 where every nearby body is
+    // Edge-glow gate, folded per slot below: 1 where every nearby body is
     // fully out, → 0 where a body is still emerging. seamReach is how far
     // from a body's own boundary the gate reaches.
     float strokeGate = 1.0;
@@ -210,9 +217,9 @@ void main() {
         // so at a == b it inflates the INTERIOR distance by 41% however small k
         // is. That is invisible to `alpha`, which only cares about the zero
         // crossing (at a == b == 0 the deviation is just -0.414 * k), but the
-        // glass stroke measures `innerDepth = -mergedSdf` against strokeWidth,
-        // so along a flush seam -- where the two fields are EQUAL, the worst
-        // case -- it believed it was 1.4x deeper inside and stopped drawing.
+        // edge glow measures `-mergedSdf` against strokeWidth, so along a
+        // flush seam -- where the two fields are EQUAL, the worst case -- it
+        // would believe it was 1.4x deeper inside and fade early.
         // Measured 2026-08-25: the edge kept its outer row and lost its inner
         // one across exactly the overlap span, which the owner read as "a dent
         // in the glass edge, from the inside only, not going outwards".
@@ -225,7 +232,7 @@ void main() {
         // no edge of its own. A barely-out rollout drives its melt radius
         // toward zero, smin degenerates to a hard min, and the union keeps a
         // full boundary where the new body meets whatever it is emerging
-        // from — which the glass stroke then draws as a hard line. Worst on a
+        // from — which the edge glow then draws as a line. Worst on a
         // second-level rollout, where the line flashes BETWEEN the two bodies
         // for the length of the reveal.
         //
@@ -258,7 +265,7 @@ void main() {
             ? (frameJoin > 0.0 ? smin(dFrame, dWeld, frameJoin) : min(dFrame, dWeld))
             : dWeld;
         slotSdf = min(slotSdf, attachedBody);
-        // Restore the whole incoming field, including stroke depth and normals,
+        // Restore the whole incoming field, including glow depth and normals,
         // before removal; matching only its zero contour leaves a lighting snap.
         mergedSdf = mix(incomingSdf, slotSdf, outness);
 
@@ -315,54 +322,19 @@ void main() {
         * smoothstep(0.0, 2.0, outerDist - innerDist);
     vec3 rgb = mix(fillColor.rgb, rimColor.rgb, rim * rimColor.a);
 
-    // Inner stroke: distance from the union's boundary, measured inward. 1 at
-    // the boundary, 0 once deeper than strokeWidth. Kept INSIDE the shape so
-    // the silhouette's alpha (and therefore its input mask) is untouched — the
-    // line is paint, not geometry.
-    // Solid across its whole width, with AA on the INNER side only: ramping
-    // over +/-fw made a 1.5px line entirely gradient, which read as a fade
-    // toward the middle rather than as an edge (owner 2026-08-19).
-    float innerDepth = -mergedSdf;
-    float stroke = (1.0 - smoothstep(strokeWidth - fw, strokeWidth, innerDepth))
-        * step(0.0, innerDepth)
-        // INNER edges only. mergedSdf measures distance to ANY boundary, so
-        // without this the line also traces the outer screen edge and the band
-        // reads as double-lined (owner 2026-08-19). Same gate the rim uses: a
-        // pixel nearer the outer edge than to any inner boundary gets none.
-        * (fullscreenMode != 0 ? 1.0 : smoothstep(0.0, 2.0, outerDist - innerDepth));
-
-    // Glassy, not uniform: the light sits at the CENTRE OF THE SCREEN and
-    // radiates outward (owner 2026-09-06), replacing a fixed overhead light.
-    // Overhead was wrong for this shape: the band wraps all four screen
-    // edges, so one global up-vector lit the top band and starved the bottom
-    // one no matter what the surface was doing. A centre light is symmetric
-    // about the thing the band actually surrounds, so every edge is lit by
-    // how much it FACES INWARD, which is the same everywhere on the ring.
-    // The SDF gradient is the surface normal pointing out of the shape;
-    // dotting it with the direction to the centre is the lit amount.
-    // dFdy is measured NEGATIVE against the pixel y axis on this stack: the
-    // RHI framebuffer is y-flipped relative to qt_TexCoord0, so the raw
-    // derivative pair is not the outward normal — its y is inverted. With the
-    // overhead light this only decided which band looked lit and was tuned by
-    // eye; with a centre light it cancelled the y term outright and the top
-    // and bottom bands lost their edge completely (owner 2026-09-06).
-    vec2 edgeNormal = vec2(dFdx(mergedSdf), -dFdy(mergedSdf));
-    vec2 toLight = (resolution * 0.5) - pixel;
-    float facing = (length(edgeNormal) > 0.0001 && length(toLight) > 0.0001)
-        ? dot(normalize(edgeNormal), normalize(toLight))
-        : 0.0;
-    // A point light has a distance term, and without one every edge on the
-    // screen was equally lit no matter how far in it reached — a rollout that
-    // pushes deep toward the light read no brighter than the band it came out
-    // of (owner 2026-09-06). Proximity BOOSTS rather than dims: the band sits
-    // at strokeColor.a as before and nearer edges climb above it, so nothing
-    // that already looked right got darker.
-    float prox = 1.0 - clamp(length(toLight) / (0.5 * length(resolution)), 0.0, 1.0);
-    float glass = mix(0.3, 1.0, clamp(facing * 0.5 + 0.5, 0.0, 1.0))
-        * mix(1.0, 1.7, prox);
-
-    rgb = mix(rgb, strokeColor.rgb,
-        clamp(stroke * strokeColor.a * glass * strokeGate, 0.0, 1.0));
+    // Edge glow (12-mechanism "Edge glow"): weight 1 at the union's edge, 0
+    // strokeWidth px inward. The STEP grain tints a pixel only when its
+    // random number is under the weight, so the share of tinted pixels IS
+    // the weight: dots thicken toward the edge and fuse into solid tint on it.
+    // Kept INSIDE the shape: paint, not geometry, so alpha and the input mask
+    // are untouched. The outer factor keeps it off the screen edge, which
+    // mergedSdf also measures (owner 2026-08-19: double-lined band).
+    float depth = -mergedSdf;
+    float glow = (1.0 - smoothstep(0.0, strokeWidth, depth))
+        * (fullscreenMode != 0 ? 1.0 : smoothstep(0.0, 2.0, outerDist - depth));
+    float n = grainAt(floor(gl_FragCoord.xy));
+    float m = glow * strokeColor.a * step(n, glow) * strokeGate;
+    rgb = mix(rgb, strokeColor.rgb, clamp(m, 0.0, 1.0));
 
     fragColor = vec4(rgb * alpha, alpha) * qt_Opacity;
 }

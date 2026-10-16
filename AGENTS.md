@@ -257,8 +257,8 @@ Three neutral steps, each 1.30:1 on the one below, and nothing is derived:
 a theme generates all three from its wallpaper and a component reads a role.
 Lightness is the only separation between containers: no hairline, no card
 border, no rim, no shadow does that job. A line inside is content (a track, a
-meter), never an edge. The silhouette itself keeps its glass edge
-(`bandStroke`), drawn by the shader, the one line on the band.
+meter), never an edge. The silhouette itself keeps its edge glow
+(`edgeGlow`), a grain the shader paints inside the edge, not a line.
 
 | Role | Where | Holds |
 | --- | --- | --- |
