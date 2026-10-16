@@ -175,7 +175,9 @@ T.RangeSlider {
 
     // The template has no `pressed` of its own; one thumb held is the control
     // held. `StateLayer` reads it from the host.
-    readonly property bool pressed: root.first.pressed || root.second.pressed
+    // A thumb held through the thumb's own drag handler (below) counts too.
+    readonly property bool pressed: root.first.pressed || root.second.pressed || root._thumbHeld
+    property bool _thumbHeld: false
 
     // The values the last gesture left behind. Set at completion rather than
     // bound, because a binding would make them follow the drag, which is the
@@ -330,12 +332,26 @@ T.RangeSlider {
     // ── geometry along the axis ────────────────────────────────────────
     // A thumb's extent ALONG the axis: its diameter as a circle, one step as
     // a pill. Across the axis it is `_thumbCross`.
-    readonly property real _thumbMain: root._pill ? Style.space1 : root.thumbSize
+    // A circle never travels less than the track is thick: its centre rides
+    // the track's own end caps, so at either bound the fill's round end is
+    // concentric with the track's.
+    readonly property real _thumbMain: root._pill ? Style.space1 : Math.max(root.thumbSize, root.thickness)
     // A pill stands in a gap cut through the track; a circle covers the seam.
     // The cut ends are nearly square (Material's 2dp) so the segments read as
     // one track with a bar through it, not as separate pills.
     readonly property real _gap: root._pill ? Style.space1 : 0
-    readonly property real _innerRadius: root._pill ? Style.radiusXs / 2 : root.thickness / 2
+    // The fill's end at a thumb is a full round cap in a circle's case and
+    // the rest of the track butts square UNDER it (the fill paints above), so
+    // the boundary is one arc and never a notch between two caps.
+    readonly property real _fillInnerRadius: root._pill ? Style.radiusXs / 2 : root.thickness / 2
+    readonly property real _restInnerRadius: root._pill ? Style.radiusXs / 2 : 0
+    // How far the fill runs past a circle's centre. A track thinner than its
+    // thumb ends the fill AT the centre and the thumb hides the round cap. A
+    // track thicker than its thumb would show that cap's shoulders and a
+    // crescent, so the fill runs on to a cap CONCENTRIC with the thumb: a
+    // ring of fill colour around the thumb, no straight edge, and at either
+    // bound the ring is the track's own end cap.
+    readonly property real _capReach: !root._pill && root.thickness > root.thumbSize ? root.thickness / 2 : 0
     readonly property real _mainSpan: root.vertical ? root.availableHeight : root.availableWidth
     readonly property real _travel: Math.max(0, _mainSpan - root._thumbMain)
     readonly property real _highOffset: root._paintedHigh * _travel
@@ -362,8 +378,8 @@ T.RangeSlider {
     readonly property real _leadInset: root._pill ? -root._gap : root._thumbMain / 2
     readonly property real _trailInset: root._pill ? root._thumbMain + root._gap : root._thumbMain / 2
     readonly property real _restStartEnd: root._aIsThumb ? root._aOffset + root._leadInset : 0
-    readonly property real _fillStart: root._aIsThumb ? root._aOffset + root._trailInset : 0
-    readonly property real _fillEnd: root._bIsThumb ? root._bOffset + root._leadInset : root._mainSpan
+    readonly property real _fillStart: root._aIsThumb ? root._aOffset + root._trailInset - root._capReach : 0
+    readonly property real _fillEnd: root._bIsThumb ? root._bOffset + root._leadInset + root._capReach : root._mainSpan
     readonly property real _restEndStart: root._bIsThumb ? root._bOffset + root._trailInset : root._mainSpan
 
     // ── geometry across the axis ───────────────────────────────────────
@@ -432,8 +448,9 @@ T.RangeSlider {
         property real length: 0
         property bool innerAtStart: false
         property bool innerAtEnd: false
-        readonly property real startRadius: innerAtStart ? root._innerRadius : radius
-        readonly property real endRadius: innerAtEnd ? root._innerRadius : radius
+        property real innerRadius: root._restInnerRadius
+        readonly property real startRadius: innerAtStart ? innerRadius : radius
+        readonly property real endRadius: innerAtEnd ? innerRadius : radius
         x: root.vertical ? (parent.width - width) / 2 : start
         y: root.vertical ? start : (parent.height - height) / 2
         width: root.vertical ? root.thickness : Math.max(0, length)
@@ -477,6 +494,8 @@ T.RangeSlider {
         }
         Segment {
             objectName: "sliderFill"
+            z: 1
+            innerRadius: root._fillInnerRadius
             start: root._fillStart
             length: root._fillEnd - root._fillStart
             innerAtStart: root._aIsThumb
@@ -532,9 +551,60 @@ T.RangeSlider {
         width: visible ? implicitWidth : 0
         height: visible ? implicitHeight : 0
 
-        readonly property bool active: root.enabled && (node.hovered || node.pressed)
+        readonly property bool active: root.enabled && (node.hovered || node.pressed || held)
         property real span: root._thumbCross + (active ? root._crossGrowth * 2 : 0)
-        property real lift: node.pressed ? Style.sliderThumbLift * 2 : Style.sliderThumbLift
+        property real lift: node.pressed || held ? Style.sliderThumbLift * 2 : Style.sliderThumbLift
+
+        // The thumb's own drag. A press on a thumb that carries a pointer
+        // handler of the host's (a TapHandler for a double-click) is taken by
+        // that handler's item and never reaches the template, so Qt's own drag
+        // would be dead whenever the host listens to its thumb. This handler
+        // is on the same item, so it always sees the press, and it moves the
+        // value the way the track jump does. The pointer keeps the distance it
+        // had from the thumb's centre, so a grab moves nothing.
+        DragHandler {
+            id: drag
+            target: null
+            dragThreshold: 0
+            enabled: root.enabled
+            acceptedButtons: Qt.LeftButton
+            onCentroidChanged: thumb._follow()
+        }
+        readonly property bool held: drag.centroid.pressedButtons !== 0
+        property real _grab: 0
+        function _along(): real {
+            const p = root.mapFromItem(null, drag.centroid.scenePosition.x, drag.centroid.scenePosition.y);
+            return root.vertical ? p.y : p.x;
+        }
+        onHeldChanged: {
+            const low = node === root.first;
+            root._thumbHeld = held;
+            if (held) {
+                const centre = root.mapFromItem(thumb, width / 2, height / 2);
+                // A grab keeps the pointer's distance from the centre, so it
+                // moves nothing; without `grabThumb` the thumb jumps under it.
+                thumb._grab = root.grabThumb ? thumb._along() - (root.vertical ? centre.y : centre.x) : 0;
+                root._pressChanged(node, low, true);
+                thumb._follow();
+                if (root.focusPolicy & Qt.ClickFocus)
+                    thumb.forceActiveFocus(Qt.MouseFocusReason);
+            } else {
+                root._pressChanged(node, low, false);
+            }
+        }
+        function _follow(): void {
+            if (!thumb.held)
+                return;
+            const before = node.value;
+            const low = node === root.first;
+            const at = root._valueAtAlong(thumb._along() - thumb._grab);
+            if (low)
+                root.setValues(Math.min(at, root.second.value), root.second.value);
+            else
+                root.setValues(root.first.value, Math.max(at, root.first.value));
+            if (node.value !== before)
+                root.moved();
+        }
 
         Behavior on span {
             NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -661,6 +731,17 @@ T.RangeSlider {
         focusRadius: root.thickness / 2 + gap
     }
 
+    // The value under a point `along` the main axis, measured in the control's
+    // own coordinates and snapped to `stepSize`. The track jump and the thumb
+    // drag both land through it.
+    function _valueAtAlong(along: real): real {
+        const start = root.vertical ? root.topPadding : root.leftPadding;
+        const visual = Math.max(0, Math.min(1, root._travel > 0 ? (along - start - root._thumbMain / 2) / root._travel : 0));
+        const raw = root.valueAt(root._valueAtStart ? visual : 1 - visual);
+        const snapped = root.from + Math.round((raw - root.from) / root.stepSize) * root.stepSize;
+        return Math.max(root.from, Math.min(root.to, snapped));
+    }
+
     // Which thumb a press grabs. Qt picks the node nearest the press BY
     // VALUE, which is right for a range and wrong for a single thumb: the low
     // node parked at `from` would win the whole lower half of the track. So
@@ -676,19 +757,13 @@ T.RangeSlider {
         acceptedButtons: Qt.LeftButton
         anchors.fill: layer
         onPressed: mouse => {
-            // On the thumb, the template's own hit test grabs it with no jump.
-            if (root.grabThumb && highThumb.contains(mapToItem(highThumb, mouse.x, mouse.y))) {
-                mouse.accepted = false;
-                return;
-            }
             // The commit compares against the value BEFORE the gesture, and
             // the jump below is already part of it.
             root._pressValue = root.second.value;
             root._preJumped = true;
             root._hostDriven = false;
-            const along = (root.horizontal ? mouse.x : mouse.y) - root._hoverGrowth - root._thumbMain / 2;
-            const visual = Math.max(0, Math.min(1, root._travel > 0 ? along / root._travel : 0));
-            root.setValues(root.first.value, root.valueAt(root._valueAtStart ? visual : 1 - visual));
+            const p = mapToItem(root, mouse.x, mouse.y);
+            root.setValues(root.first.value, root._valueAtAlong(root.horizontal ? p.x : p.y));
             // This setter precedes Qt's press; Qt then sees no delta to report to the host.
             if (root.second.value !== root._pressValue)
                 root.moved();
@@ -727,8 +802,8 @@ T.RangeSlider {
         return 0
     }
 
-    function _pressChanged(node, low: bool): void {
-        if (node.pressed) {
+    function _pressChanged(node, low: bool, down: bool): void {
+        if (down) {
             root._lowActive = low;
             if (!root._preJumped)
                 root._pressValue = node.value;
@@ -740,8 +815,8 @@ T.RangeSlider {
         if (node.value !== root._pressValue)
             root.committed();
     }
-    first.onPressedChanged: root._pressChanged(root.first, true)
-    second.onPressedChanged: root._pressChanged(root.second, false)
+    first.onPressedChanged: root._pressChanged(root.first, true, root.first.pressed)
+    second.onPressedChanged: root._pressChanged(root.second, false, root.second.pressed)
 
     // Qt's own RangeSlider handles the four arrows for the handle that has
     // focus; every branch here accepts its event first, from the focused

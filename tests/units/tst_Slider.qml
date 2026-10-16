@@ -193,6 +193,56 @@ TestCase {
             + "a drag that stops changing value partway through the track is a jump to a fixed step, not a follow");
     }
 
+    // The OSD channel's shape: vertical, thumb inside a thicker track, a
+    // grabbing press, and a TapHandler on the thumb for its double-click.
+    Slider {
+        id: sliderGrab
+        x: 340; y: 20; width: 40; height: 200
+        orientation: Qt.Vertical
+        thickness: 40
+        thumbSize: 28
+        grabThumb: true
+        value: 0.5
+        TapHandler { parent: sliderGrab.second.handle }
+    }
+
+    function test_a_press_on_the_thumb_grabs_it_and_the_drag_follows_the_pointer() {
+        sliderGrab.value = 0.5;
+        wait(Motion.fast + 100);
+        const thumb = sliderGrab.second.handle;
+        const c = sliderGrab.mapFromItem(thumb, thumb.width / 2, thumb.height / 2);
+
+        mousePress(sliderGrab, c.x, c.y);
+        compare(sliderGrab.value, 0.5, "a press on the thumb jumped the value");
+        mouseMove(sliderGrab, c.x, c.y - 40);
+        const up = sliderGrab.value;
+        mouseMove(sliderGrab, c.x, c.y + 40);
+        const down = sliderGrab.value;
+        mouseRelease(sliderGrab, c.x, c.y + 40);
+
+        verify(up > 0.5, "dragging up from the thumb did not raise the value: " + up);
+        verify(down < 0.5, "dragging down from the thumb did not lower the value: " + down);
+    }
+
+    // A track thicker than its thumb: the fill ends in a cap concentric with
+    // the thumb (centre + thickness / 2, radius thickness / 2), so no straight
+    // edge shows beside the thumb, and at `from` the fill is one circle.
+    function test_a_fill_on_a_track_thicker_than_the_thumb_ends_in_a_cap_around_the_thumb() {
+        const thumb = sliderGrab.second.handle;
+        const fill = findChild(sliderGrab, "sliderFill");
+        const r = sliderGrab.thickness / 2;
+
+        for (const v of [0.5, 0]) {
+            sliderGrab.value = v;
+            wait(Motion.fast + 100);
+            const centre = sliderGrab.mapFromItem(thumb, thumb.width / 2, thumb.height / 2).y;
+            const top = fill.mapToItem(sliderGrab, 0, 0).y;
+            compare(top, centre - r, "the fill's end is not a cap concentric with the thumb at value " + v);
+            compare(fill.topLeftRadius, r, "the fill's end cap is not a full round at value " + v);
+        }
+        compare(fill.height, sliderGrab.thickness, "at `from` the fill is not a single circle");
+    }
+
     function test_dragging_past_either_end_clamps_exactly_to_the_bound() {
         sliderH.value = 0.5;
 
