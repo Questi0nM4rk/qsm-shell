@@ -14,7 +14,7 @@
     "warning": "#d9c284",
     "danger": "#f5aeb7",
     "shadow": "#000000",
-    "edgeGlow": "#53326e"
+    "edgeGlow": "#5e357f"
   },
   "space": {
     "1": 4,
@@ -120,7 +120,7 @@
     "floatingShadowOffset": 8,
     "floatingShadowExtent": 24,
     "seamOverlap": 8,
-    "edgeGlowWidth": 20
+    "edgeGlowWidth": 28
   },
   "line": {
     "tight": 1.2,

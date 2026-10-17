@@ -17,7 +17,7 @@ QtObject {
     readonly property color colorWarning: "#d9c284"
     readonly property color colorDanger: "#f5aeb7"
     readonly property color colorShadow: "#000000"
-    readonly property color colorEdgeGlow: "#53326e"
+    readonly property color colorEdgeGlow: "#5e357f"
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -107,7 +107,7 @@ QtObject {
     readonly property int geometryFloatingShadowOffset: 8
     readonly property int geometryFloatingShadowExtent: 24
     readonly property int geometrySeamOverlap: 8
-    readonly property int geometryEdgeGlowWidth: 20
+    readonly property int geometryEdgeGlowWidth: 28
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55
