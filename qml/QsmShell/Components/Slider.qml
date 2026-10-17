@@ -722,6 +722,11 @@ T.RangeSlider {
         anchors.fill: layer
         z: 2
         property real _grab: 0
+        // Whether this press and the one before it landed on the thumb: a
+        // track press jumps the thumb under the pointer, so the second press
+        // of a track double-click would otherwise read as a thumb one.
+        property bool _pressedThumb: false
+        property bool _previousPressedThumb: false
         function _along(mouse): real {
             const p = mapToItem(root, mouse.x, mouse.y);
             return root.horizontal ? p.x : p.y;
@@ -736,7 +741,9 @@ T.RangeSlider {
             root._preJumped = true;
             root._hostDriven = false;
             const along = _along(mouse);
-            if (root.grabThumb && _onThumb(mouse)) {
+            _previousPressedThumb = _pressedThumb;
+            _pressedThumb = _onThumb(mouse);
+            if (root.grabThumb && _pressedThumb) {
                 const centre = root.mapFromItem(highThumb, highThumb.width / 2, highThumb.height / 2);
                 _grab = along - (root.horizontal ? centre.x : centre.y);
             } else {
@@ -770,7 +777,7 @@ T.RangeSlider {
             root._pressChanged(root.second, false, false);
         }
         onDoubleClicked: mouse => {
-            if (_onThumb(mouse))
+            if (_pressedThumb && _previousPressedThumb)
                 root.thumbDoubleClicked();
         }
     }

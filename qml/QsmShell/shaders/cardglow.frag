@@ -15,8 +15,8 @@ layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
-    vec2 size;      // card size in logical px
-    float radius;   // card corner radius
+    vec2 cardSize;      // card size in logical px
+    float cornerRadius; // card corner radius
     vec4 tint;      // rgb = glow tint, a = strength at the edge
     float glowWidth; // glow width in px: the tint is gone this far in (not `width`: that is the Item's)
 };
@@ -34,9 +34,9 @@ float grainAt(vec2 p) {
 }
 
 void main() {
-    vec2 halfSize = size * 0.5;
-    vec2 pixel = qt_TexCoord0 * size;
-    float sd = sdRoundedBox(pixel, halfSize, halfSize, min(radius, min(halfSize.x, halfSize.y)));
+    vec2 halfSize = cardSize * 0.5;
+    vec2 pixel = qt_TexCoord0 * cardSize;
+    float sd = sdRoundedBox(pixel, halfSize, halfSize, min(cornerRadius, min(halfSize.x, halfSize.y)));
 
     // Coverage of the rounded box, so the tint follows the Rectangle's
     // antialiased edge and never spills past its corners.

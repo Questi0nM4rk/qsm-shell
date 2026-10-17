@@ -22,8 +22,10 @@ Rectangle {
         visible: root.glow
         fragmentShader: Qt.resolvedUrl("../shaders/cardglow.frag.qsb")
 
-        property size size: Qt.size(root.width, root.height)
-        property real radius: root.radius
+        // Not `size` or `radius`: names Qt already owns on an Item or a
+        // Rectangle load as FINAL overrides and fail the whole config.
+        property size cardSize: Qt.size(root.width, root.height)
+        property real cornerRadius: root.radius
         property vector4d tint: Qt.vector4d(Style.edgeGlow.r, Style.edgeGlow.g,
             Style.edgeGlow.b, Style.edgeGlowStrength)
         property real glowWidth: Style.edgeGlowWidth
