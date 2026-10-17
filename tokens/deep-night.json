@@ -1,10 +1,10 @@
 {
   "color": {
     "band": "#271e30",
-    "surface": "#3b3245",
-    "overlay": "#4d4357",
+    "surface": "#42394c",
+    "overlay": "#534a5e",
     "text": "#f0ecf5",
-    "textMuted": "#bcb0c8",
+    "textMuted": "#c5bad1",
     "primary": "#d9b4ea",
     "textOnPrimary": "#271e30",
     "accent": "#d9b4ea",
@@ -14,7 +14,7 @@
     "warning": "#d9c284",
     "danger": "#f5aeb7",
     "shadow": "#000000",
-    "edgeGlow": "#46305a"
+    "edgeGlow": "#53326e"
   },
   "space": {
     "1": 4,

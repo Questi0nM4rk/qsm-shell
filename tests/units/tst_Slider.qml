@@ -205,6 +205,7 @@ TestCase {
         value: 0.5
         TapHandler { parent: sliderGrab.second.handle }
     }
+    SignalSpy { id: thumbDoubleClicks; target: sliderGrab; signalName: "thumbDoubleClicked" }
 
     function test_a_press_on_the_thumb_grabs_it_and_the_drag_follows_the_pointer() {
         sliderGrab.value = 0.5;
@@ -222,6 +223,38 @@ TestCase {
 
         verify(up > 0.5, "dragging up from the thumb did not raise the value: " + up);
         verify(down < 0.5, "dragging down from the thumb did not lower the value: " + down);
+    }
+
+    // The value a drag reached is the value after the release: nothing else
+    // drives the thumb once the pointer lets go (the snap-back of 2026-10-17
+    // came from Qt's own handleRelease fighting a second driver).
+    function test_a_release_keeps_the_dragged_value() {
+        sliderGrab.value = 0.5;
+        wait(Motion.fast + 100);
+        const thumb = sliderGrab.second.handle;
+        const c = sliderGrab.mapFromItem(thumb, thumb.width / 2, thumb.height / 2);
+        mousePress(sliderGrab, c.x, c.y);
+        mouseMove(sliderGrab, c.x, c.y - 60);
+        const during = sliderGrab.value;
+        mouseRelease(sliderGrab, c.x, c.y - 60);
+        wait(50);
+        compare(sliderGrab.value, during, "the value moved on release");
+    }
+
+    // A double-click on the thumb is reported as such; one on the bare track
+    // is two jumps and never reported.
+    function test_a_double_click_on_the_thumb_is_reported_and_one_on_the_track_is_not() {
+        sliderGrab.value = 0.5;
+        wait(Motion.fast + 100);
+        thumbDoubleClicks.clear();
+        const thumb = sliderGrab.second.handle;
+        const c = sliderGrab.mapFromItem(thumb, thumb.width / 2, thumb.height / 2);
+        mouseDoubleClickSequence(sliderGrab, c.x, c.y);
+        compare(thumbDoubleClicks.count, 1, "a double-click on the thumb was not reported once");
+        sliderGrab.value = 0.5;
+        wait(Motion.fast + 100);
+        mouseDoubleClickSequence(sliderGrab, c.x, 10);
+        compare(thumbDoubleClicks.count, 1, "a double-click on the bare track was reported");
     }
 
     // A track thicker than its thumb: the fill ends in a cap concentric with
@@ -775,10 +808,10 @@ TestCase {
 
         // A literal, and the one place one is right: comparing against
         // `Style.disabled` alone passes even if the blend is wrong, as long
-        // as both sides are wrong the same way. Deep-night's background is
-        // #1c0e27 and `opacityDisabled` is 0.35, so retuning either moves
+        // as both sides are wrong the same way. Deep-night's band is
+        // #271e30 and `opacityDisabled` is 0.35, so retuning either moves
         // this number and the message says which.
-        compare(String(Style.disabled(Style.text)), "#685d71",
+        compare(String(Style.disabled(Style.text)), "#6d6675",
             "the disabled blend of Style.text is not the measured deep-night value -- either "
             + "the arithmetic changed or the theme's background / opacityDisabled did");
     }

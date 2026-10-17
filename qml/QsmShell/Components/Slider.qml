@@ -170,6 +170,9 @@ T.RangeSlider {
     // changed something, because a notch has no release to wait for.
     signal moved()
     signal committed()
+    // A double-click that landed on the high thumb (a host's mute, say). A
+    // double-click on the bare track is two jumps and never this.
+    signal thumbDoubleClicked()
     first.onMoved: root.moved()
     second.onMoved: root.moved()
 
@@ -555,56 +558,8 @@ T.RangeSlider {
         property real span: root._thumbCross + (active ? root._crossGrowth * 2 : 0)
         property real lift: node.pressed || held ? Style.sliderThumbLift * 2 : Style.sliderThumbLift
 
-        // The thumb's own drag. A press on a thumb that carries a pointer
-        // handler of the host's (a TapHandler for a double-click) is taken by
-        // that handler's item and never reaches the template, so Qt's own drag
-        // would be dead whenever the host listens to its thumb. This handler
-        // is on the same item, so it always sees the press, and it moves the
-        // value the way the track jump does. The pointer keeps the distance it
-        // had from the thumb's centre, so a grab moves nothing.
-        DragHandler {
-            id: drag
-            target: null
-            dragThreshold: 0
-            enabled: root.enabled
-            acceptedButtons: Qt.LeftButton
-            onCentroidChanged: thumb._follow()
-        }
-        readonly property bool held: drag.centroid.pressedButtons !== 0
-        property real _grab: 0
-        function _along(): real {
-            const p = root.mapFromItem(null, drag.centroid.scenePosition.x, drag.centroid.scenePosition.y);
-            return root.vertical ? p.y : p.x;
-        }
-        onHeldChanged: {
-            const low = node === root.first;
-            root._thumbHeld = held;
-            if (held) {
-                const centre = root.mapFromItem(thumb, width / 2, height / 2);
-                // A grab keeps the pointer's distance from the centre, so it
-                // moves nothing; without `grabThumb` the thumb jumps under it.
-                thumb._grab = root.grabThumb ? thumb._along() - (root.vertical ? centre.y : centre.x) : 0;
-                root._pressChanged(node, low, true);
-                thumb._follow();
-                if (root.focusPolicy & Qt.ClickFocus)
-                    thumb.forceActiveFocus(Qt.MouseFocusReason);
-            } else {
-                root._pressChanged(node, low, false);
-            }
-        }
-        function _follow(): void {
-            if (!thumb.held)
-                return;
-            const before = node.value;
-            const low = node === root.first;
-            const at = root._valueAtAlong(thumb._along() - thumb._grab);
-            if (low)
-                root.setValues(Math.min(at, root.second.value), root.second.value);
-            else
-                root.setValues(root.first.value, Math.max(at, root.first.value));
-            if (node.value !== before)
-                root.moved();
-        }
+        // Set by the slider's one pointer path below while this thumb is grabbed.
+        property bool held: false
 
         Behavior on span {
             NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -752,22 +707,71 @@ T.RangeSlider {
     // here. `accepted = false` is what hands the press on. (A containment
     // mask on the high handle would also make Qt pick it, but at the cost of
     // the press jump and of the thumb growing on whole-track hover.)
+    // ONE pointer path for the single-thumb slider, above the thumbs: a press
+    // on the thumb grabs it (with `grabThumb`, keeping the pointer's offset
+    // so the grab moves nothing), a press on the bare track jumps, and the
+    // drag follows the pointer until release. Qt's own press never runs, so
+    // nothing fights the drag on release: two drivers of one value (Qt's
+    // handleRelease and a DragHandler) snapped the thumb back where the press
+    // began. A host's handler on the thumb (a TapHandler) would also have
+    // taken the press from Qt; double-click is reported from here instead.
     MouseArea {
+        id: pointerPath
         enabled: !root.range && root.enabled
         acceptedButtons: Qt.LeftButton
         anchors.fill: layer
+        z: 2
+        property real _grab: 0
+        function _along(mouse): real {
+            const p = mapToItem(root, mouse.x, mouse.y);
+            return root.horizontal ? p.x : p.y;
+        }
+        function _onThumb(mouse): bool {
+            return highThumb.visible && highThumb.contains(mapToItem(highThumb, mouse.x, mouse.y));
+        }
         onPressed: mouse => {
             // The commit compares against the value BEFORE the gesture, and
-            // the jump below is already part of it.
+            // a track jump is already part of it.
             root._pressValue = root.second.value;
             root._preJumped = true;
             root._hostDriven = false;
-            const p = mapToItem(root, mouse.x, mouse.y);
-            root.setValues(root.first.value, root._valueAtAlong(root.horizontal ? p.x : p.y));
-            // This setter precedes Qt's press; Qt then sees no delta to report to the host.
-            if (root.second.value !== root._pressValue)
+            const along = _along(mouse);
+            if (root.grabThumb && _onThumb(mouse)) {
+                const centre = root.mapFromItem(highThumb, highThumb.width / 2, highThumb.height / 2);
+                _grab = along - (root.horizontal ? centre.x : centre.y);
+            } else {
+                _grab = 0;
+                root.setValues(root.first.value, root._valueAtAlong(along));
+                if (root.second.value !== root._pressValue)
+                    root.moved();
+            }
+            highThumb.held = true;
+            root._thumbHeld = true;
+            root._pressChanged(root.second, false, true);
+            if (root.focusPolicy & Qt.ClickFocus)
+                highThumb.forceActiveFocus(Qt.MouseFocusReason);
+        }
+        onPositionChanged: mouse => {
+            if (!pressed)
+                return;
+            const before = root.second.value;
+            root.setValues(root.first.value, Math.max(root._valueAtAlong(_along(mouse) - _grab), root.first.value));
+            if (root.second.value !== before)
                 root.moved();
-            mouse.accepted = false;
+        }
+        onReleased: {
+            highThumb.held = false;
+            root._thumbHeld = false;
+            root._pressChanged(root.second, false, false);
+        }
+        onCanceled: {
+            highThumb.held = false;
+            root._thumbHeld = false;
+            root._pressChanged(root.second, false, false);
+        }
+        onDoubleClicked: mouse => {
+            if (_onThumb(mouse))
+                root.thumbDoubleClicked();
         }
     }
 

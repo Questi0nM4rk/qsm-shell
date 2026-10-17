@@ -4,10 +4,10 @@ import QtQuick
 
 QtObject {
     readonly property color colorBand: "#271e30"
-    readonly property color colorSurface: "#3b3245"
-    readonly property color colorOverlay: "#4d4357"
+    readonly property color colorSurface: "#42394c"
+    readonly property color colorOverlay: "#534a5e"
     readonly property color colorText: "#f0ecf5"
-    readonly property color colorTextMuted: "#bcb0c8"
+    readonly property color colorTextMuted: "#c5bad1"
     readonly property color colorPrimary: "#d9b4ea"
     readonly property color colorTextOnPrimary: "#271e30"
     readonly property color colorAccent: "#d9b4ea"
@@ -17,7 +17,7 @@ QtObject {
     readonly property color colorWarning: "#d9c284"
     readonly property color colorDanger: "#f5aeb7"
     readonly property color colorShadow: "#000000"
-    readonly property color colorEdgeGlow: "#46305a"
+    readonly property color colorEdgeGlow: "#53326e"
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
