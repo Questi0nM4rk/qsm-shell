@@ -30,6 +30,11 @@ ColumnLayout {
     property var swatchFor: null
 
     property string expandedKey: ""
+    // Which list shows: "unread" (entries whose `read` is false) or "all".
+    // Unread is its own view, not only a dot, so what is new never hides
+    // between what was seen. A host opening the menu picks the view.
+    property string view: "unread"
+    readonly property int unreadCount: root.entries.filter(entry => entry.read === false).length
     property int actionFocusIndex: -1
     // The cursor itself: exposed rather than only reachable by relative
     // `moveSelection` steps, so a consumer (or a test) can put it on a known
@@ -208,7 +213,9 @@ ColumnLayout {
     property alias query: searchField.text
     readonly property Item searchTarget: searchField
     readonly property var items: {
-        const all = root.entries.slice();
+        const all = root.view === "unread"
+            ? root.entries.filter(entry => entry.read === false)
+            : root.entries.slice();
         const scored = root.query.length === 0
             ? all
             : all.filter(entry => Fuzzy.score(root.query, `${entry.appName} ${entry.summary} ${entry.body}`) >= 0);
@@ -283,6 +290,22 @@ ColumnLayout {
         }
     }
 
+    Segmented {
+        id: viewBar
+        Layout.fillWidth: true
+        options: [
+            { label: root.unreadCount > 0 ? `Unread ${root.unreadCount}` : "Unread" },
+            { label: "All" }
+        ]
+        currentIndex: root.view === "unread" ? 0 : 1
+        Accessible.name: "Notification views"
+        onSelected: index => {
+            root.view = index === 0 ? "unread" : "all";
+            root.expandedKey = "";
+            root.clearActionFocus();
+        }
+    }
+
     // The cue is a SIBLING of the list, never a child: a Flickable's
     // declared children go into its contentItem, so they scroll with the
     // content and feed childrenRect instead of the viewport around it.
@@ -295,7 +318,7 @@ ColumnLayout {
             id: historyList
             anchors.fill: parent
             clip: true
-            spacing: Style.space1
+            spacing: Style.space2
             model: historyModel
             boundsBehavior: Flickable.StopAtBounds
 
@@ -326,6 +349,13 @@ ColumnLayout {
                 dragExpanded: root.expandedKey === root.entryKey(modelData)
                 actionFocusIndex: ListView.isCurrentItem ? root.actionFocusIndex : -1
                 animateEntrance: false
+                bodied: true
+                expandOnHover: false
+                onExpandRequested: {
+                    const key = root.entryKey(modelData);
+                    root.expandedKey = root.expandedKey === key ? "" : key;
+                    root.clearActionFocus();
+                }
                 draggable: modelData.notificationId !== undefined
                 swatch: root.swatchFor ? root.swatchFor(modelData) : modelData.swatch
                 unread: modelData.read === false
@@ -344,7 +374,8 @@ ColumnLayout {
         EmptyState {
             anchors.centerIn: parent
             visible: root.items.length === 0
-            title: root.query.length > 0 ? "No matches" : "Nothing here"
+            title: root.query.length > 0 ? "No matches"
+                : root.view === "unread" ? "All caught up" : "Nothing here"
         }
 
         ScrollCue {

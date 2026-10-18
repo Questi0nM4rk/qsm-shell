@@ -75,6 +75,7 @@
     "surface": 0.9,
     "recede": 0.45,
     "floatingShadow": 0.28,
+    "cardShadow": 0.18,
     "edgeGlowStrength": 0.35
   },
   "font": {
@@ -119,6 +120,9 @@
     "floatingShadowBlur": 0.6,
     "floatingShadowOffset": 8,
     "floatingShadowExtent": 24,
+    "cardShadowBlur": 0.35,
+    "cardShadowOffset": 2,
+    "cardShadowExtent": 12,
     "seamOverlap": 8,
     "edgeGlowWidth": 28
   },

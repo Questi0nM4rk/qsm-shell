@@ -56,6 +56,12 @@ QtObject {
     readonly property real floatingShadowBlur: backend?.floatingShadowBlur ?? Tokens.geometryFloatingShadowBlur
     readonly property real floatingShadowOffset: backend?.floatingShadowOffset ?? Tokens.geometryFloatingShadowOffset
     readonly property int floatingShadowExtent: backend?.floatingShadowExtent ?? Tokens.geometryFloatingShadowExtent
+    // A card in a list of cards lifts off the band by a slight shadow: the
+    // body step separates it, the shadow only says where it ends.
+    readonly property real cardShadowOpacity: backend?.cardShadowOpacity ?? Tokens.opacityCardShadow
+    readonly property real cardShadowBlur: backend?.cardShadowBlur ?? Tokens.geometryCardShadowBlur
+    readonly property real cardShadowOffset: backend?.cardShadowOffset ?? Tokens.geometryCardShadowOffset
+    readonly property int cardShadowExtent: backend?.cardShadowExtent ?? Tokens.geometryCardShadowExtent
 
     // ── opacity ─────────────────────────────────────────────────────────
     readonly property real opacityDisabled: backend?.opacityDisabled ?? Tokens.opacityDisabled

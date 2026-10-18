@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import QtQuick.Templates as T
 
 import qs.QsmShell.Style
@@ -48,6 +49,16 @@ Item {
     // protocol's default action. The card owns the activation affordance only.
     property bool primaryActionEnabled: false
     property bool showDivider: false
+    // A list of cards opts in to bodied cards: each entry is its own
+    // `surface` body with a slight shadow, so neighbours never read as one
+    // run of text. The default stays boxless for the popup stack.
+    property bool bodied: false
+    // Hover expands a popup, which nothing scrolls. Inside a scrolled list
+    // hover expansion steals the wheel under the pointer, so a list sets
+    // false: the leading column then asks for expansion by click
+    // (`expandRequested`), the rest of the card stays the card's action,
+    // and an expanded body shows in full instead of scrolling inside itself.
+    property bool expandOnHover: true
     // The host says this entry has not been seen (a 6px accent dot by the
     // app name) and whether a plain click on the body should report
     // `activated` when there is no primary action to run.
@@ -74,7 +85,7 @@ Item {
     readonly property bool primaryPressed: layer.pressed
     readonly property bool expansionAnimating: expansionAnimation.running
     readonly property bool expanded: root.expansionFrozen ? root.frozenExpanded
-        : root.alwaysExpanded || root.hovered || root.dragExpanded || (root.entry.paused ?? false)
+        : root.alwaysExpanded || (root.expandOnHover && root.hovered) || root.dragExpanded || (root.entry.paused ?? false)
     readonly property bool archived: root.entry.archivedAt !== undefined && root.entry.archivedAt !== null
     readonly property bool hasSwatch: root.swatch !== undefined && root.swatch !== null
     readonly property bool primaryActionAvailable: root.primaryActionEnabled
@@ -87,6 +98,8 @@ Item {
     }
 
     signal dismissed
+    // The leading column was clicked; the host owns which card is open.
+    signal expandRequested
     signal actionTriggered(string actionId)
     signal primaryTriggered(var entry)
     signal activated(var entry)
@@ -217,9 +230,14 @@ Item {
 
     implicitWidth: Style.notificationWidth
     implicitHeight: root.expansionFrozen ? root.frozenHeight
-        : root.expanded ? headline.height + details.implicitHeight + Style.space2
+        : root.restHeight + (root.bodied ? root.shadowRoom : 0)
+    readonly property real restHeight: root.expanded ? headline.height + details.implicitHeight + Style.space2
         : String(root.entry.body ?? "").length > 0 ? Style.notificationPreviewHeight
         : Style.notificationCollapsedHeight
+    // The card clips (its height animates), so a bodied card keeps room
+    // under its body for the shadow to fall into.
+    readonly property real shadowRoom: Style.space1
+    readonly property bool leadHovered: leadLayer.hovered
 
     clip: true
 
@@ -251,6 +269,26 @@ Item {
         }
     }
 
+    Surface {
+        id: body
+        anchors.fill: parent
+        anchors.bottomMargin: root.bodied ? root.shadowRoom : 0
+        visible: root.bodied
+        radius: Style.radiusLg
+        base: Style.surface
+        selected: root.selected
+        enabled: root.enabled
+        layer.enabled: root.bodied && !Style.reducedEffects
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Style.shadow
+            shadowOpacity: Style.cardShadowOpacity
+            shadowBlur: Style.cardShadowBlur
+            shadowVerticalOffset: Style.cardShadowOffset
+            blurMax: Style.cardShadowExtent
+        }
+    }
+
     // The urgency tick doubles as the list cursor when this card sits in one:
     // always present, dimmer at rest, thickening (not brightening) on select.
     SelectionMark {
@@ -258,7 +296,9 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: Style.space2
         anchors.verticalCenter: headline.verticalCenter
-        shown: true
+        // A bodied card shows selection on its body; a column of ticks read
+        // as one joined line down the list.
+        shown: !root.bodied
         strong: root.selected
         restOpacity: 0.75
         markColor: root.enabled ? root.tickColor : Style.disabled(root.tickColor)
@@ -281,9 +321,17 @@ Item {
             implicitWidth: Style.iconSm
             implicitHeight: Style.iconSm
 
+            SvgIcon {
+                anchors.fill: parent
+                visible: root.leadHovered
+                name: root.expanded ? "chevron-up" : "chevron-down"
+                size: Style.iconSm
+                color: Style.text
+            }
+
             Rectangle {
                 anchors.fill: parent
-                visible: root.hasSwatch
+                visible: root.hasSwatch && !root.leadHovered
                 radius: Style.radiusSm
                 color: root.swatch ?? "transparent"
                 border.width: 1
@@ -292,7 +340,7 @@ Item {
 
             Image {
                 anchors.fill: parent
-                visible: !root.hasSwatch && root.iconSource.length > 0
+                visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length > 0
                 source: root.iconSource
                 asynchronous: true
                 fillMode: Image.PreserveAspectFit
@@ -300,7 +348,7 @@ Item {
 
             SvgIcon {
                 anchors.fill: parent
-                visible: !root.hasSwatch && root.iconSource.length === 0
+                visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length === 0
                 name: root.iconName
                 size: Style.iconSm
                 color: root.enabled ? Style.text : Style.disabled(Style.text)
@@ -377,7 +425,9 @@ Item {
         Item {
             id: bodyViewportHost
             Layout.fillWidth: true
-            implicitHeight: Math.min(expandedContent.implicitHeight, Style.notificationBodyViewportHeight)
+            implicitHeight: root.expandOnHover
+                ? Math.min(expandedContent.implicitHeight, Style.notificationBodyViewportHeight)
+                : expandedContent.implicitHeight
             height: implicitHeight
 
             Flickable {
@@ -428,6 +478,7 @@ Item {
 
             MouseArea {
                 anchors.fill: bodyViewport
+                enabled: root.expandOnHover
                 acceptedButtons: Qt.NoButton
                 onWheel: event => {
                     const next = Math.max(0, Math.min(bodyViewport.contentHeight - bodyViewport.height,
@@ -509,6 +560,21 @@ Item {
             else if (root.activatable)
                 root.activated(root.entry);
         }
+    }
+
+    // The leading column (tick and glyph) opens and closes the card when
+    // hover does not; above the body layer, so the rest stays the action.
+    StateLayer {
+        id: leadLayer
+        x: 0
+        y: 0
+        width: headline.x + Style.iconSm + Style.space2
+        height: root.height - (root.bodied ? root.shadowRoom : 0)
+        visible: !root.expandOnHover
+        interactive: root.enabled && root.inputEnabled
+        clickable: true
+        target: null
+        onClicked: root.expandRequested()
     }
 
     activeFocusOnTab: root.primaryActionAvailable && root.enabled && root.inputEnabled
