@@ -335,6 +335,10 @@ ColumnLayout {
             // clipped by the list's edge only where the list itself ends.
             anchors.leftMargin: -root.shadowReach
             anchors.rightMargin: -root.shadowReach
+            // A ListView places every delegate at x 0, so the cards are moved
+            // in by the content margins, never by their own x.
+            leftMargin: root.shadowReach
+            rightMargin: root.shadowReach
             clip: true
             spacing: Style.space2
             model: historyModel
@@ -352,7 +356,7 @@ ColumnLayout {
             section.delegate: Prose {
                 required property string section
                 // The card's own text column: past its cursor, gap and glyph.
-                leftPadding: root.shadowReach + Style.space2 + Style.markThickness + Style.spaceTight
+                leftPadding: Style.space2 + Style.markThickness + Style.spaceTight
                     + Style.space2 + Style.iconSm + Style.space2
                 topPadding: Style.space2
                 role: "section"
@@ -364,7 +368,6 @@ ColumnLayout {
                 required property var record
                 readonly property var modelData: record
                 required property int index
-                x: root.shadowReach
                 width: ListView.view.width - root.shadowReach * 2
                 entry: modelData
                 selected: ListView.isCurrentItem

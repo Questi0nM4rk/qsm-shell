@@ -235,50 +235,51 @@ T.TabBar {
         // choice; hover answers in the label, never as a second tint.
         background: null
 
-        // The icon, label and badge are ONE group centred in the segment:
-        // a spacer on each side takes the slack, and the label shrinks (and
-        // elides) only when the group no longer fits.
-        contentItem: RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: root._inset
-            anchors.rightMargin: root._inset
-            spacing: root._gap
+        // The glyph and label group sits centred and takes only its own
+        // width; it shrinks (and the label elides) only when the segment is
+        // narrower. Two stretching spacers beside a stretching label split
+        // the room three ways and elided labels that had space.
+        contentItem: Item {
+            RowLayout {
+                anchors.centerIn: parent
+                width: Math.min(implicitWidth, parent.width - root._inset * 2)
+                spacing: root._gap
 
-            Item { Layout.fillWidth: true }
-
-            SvgIcon {
-                visible: name.length > 0
-                name: typeof tab.option === "string" ? "" : String(tab.option?.icon ?? "")
-                size: root._iconSize
-                color: tab.enabled
-                    ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
-                    : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
-                Layout.alignment: Qt.AlignVCenter
+                SvgIcon {
+                    visible: name.length > 0
+                    name: typeof tab.option === "string" ? "" : String(tab.option?.icon ?? "")
+                    size: root._iconSize
+                    color: tab.enabled
+                        ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
+                        : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
+                    Layout.alignment: Qt.AlignVCenter
+                }
+                Prose {
+                    visible: !tab.iconOnly
+                    role: "label"
+                    text: tab.labelText
+                    color: tab.enabled
+                        ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
+                        : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
+                    font.pixelSize: root._textSize
+                    font.weight: tab.selectedSegment ? Style.weightBold : Style.weightMedium
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
+                    Layout.fillWidth: true
+                    // Text measures in fractions and a layout hands out whole
+                    // pixels: ceil, or a label that fits elides by a hair.
+                    Layout.preferredWidth: Math.ceil(implicitWidth)
+                    Layout.maximumWidth: Math.ceil(implicitWidth)
+                    Layout.alignment: Qt.AlignVCenter
+                }
+                Badge {
+                    visible: text.length > 0
+                    tone: tab.selectedSegment ? "accent" : "neutral"
+                    text: typeof tab.option === "string" ? "" : String(tab.option?.badge ?? "")
+                    Layout.alignment: Qt.AlignVCenter
+                }
             }
-            Prose {
-                visible: !tab.iconOnly
-                role: "label"
-                text: tab.labelText
-                color: tab.enabled
-                    ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
-                    : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
-                font.pixelSize: root._textSize
-                font.weight: tab.selectedSegment ? Style.weightBold : Style.weightMedium
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                Layout.fillWidth: true
-                Layout.maximumWidth: implicitWidth
-                Layout.alignment: Qt.AlignVCenter
-            }
-            Badge {
-                visible: text.length > 0
-                tone: tab.selectedSegment ? "accent" : "neutral"
-                text: typeof tab.option === "string" ? "" : String(tab.option?.badge ?? "")
-                Layout.alignment: Qt.AlignVCenter
-            }
-
-            Item { Layout.fillWidth: true }
         }
 
         StateLayer {
