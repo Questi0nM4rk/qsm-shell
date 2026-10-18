@@ -72,6 +72,9 @@ ColumnLayout {
 
     spacing: Style.space3
 
+    // How far a bodied card's shadow reaches past its body.
+    readonly property real shadowReach: Style.reducedEffects ? 0 : Style.cardShadowExtent
+
     function focusField(): void { searchField.forceActiveFocus(); }
 
     function entryKey(entry: var): string {
@@ -276,16 +279,22 @@ ColumnLayout {
             onSelectionClaimed: root.selectionClaimed()
         }
 
-        Capsule {
-            icon: "bell"
-            label: "DND"
-            active: root.dnd
+        // Icon-only, so the field keeps the width its placeholder needs; the
+        // names are the accessible labels. A square of the field's own height.
+        IconButton {
+            icon: "moon"
+            accessibleName: "Do not disturb"
+            color: root.dnd ? Style.accent : Style.text
+            padding: (Style.controlHeight - Style.iconMd) / 2
+            Accessible.checkable: true
+            Accessible.checked: root.dnd
             onClicked: root.dndToggled()
         }
 
-        Capsule {
-            icon: "layers"
-            label: "Clear"
+        IconButton {
+            icon: "trash-2"
+            accessibleName: "Clear history"
+            padding: (Style.controlHeight - Style.iconMd) / 2
             onClicked: root.clearRequested()
         }
     }
@@ -321,6 +330,11 @@ ColumnLayout {
         ListView {
             id: historyList
             anchors.fill: parent
+            // The viewport reaches past the cards on both sides by the
+            // shadow's extent and the cards sit inside it, so the shadow is
+            // clipped by the list's edge only where the list itself ends.
+            anchors.leftMargin: -root.shadowReach
+            anchors.rightMargin: -root.shadowReach
             clip: true
             spacing: Style.space2
             model: historyModel
@@ -337,8 +351,11 @@ ColumnLayout {
             section.property: "appName"
             section.delegate: Prose {
                 required property string section
+                // The card's own text column: past its cursor, gap and glyph.
+                leftPadding: root.shadowReach + Style.space2 + Style.markThickness + Style.spaceTight
+                    + Style.space2 + Style.iconSm + Style.space2
                 topPadding: Style.space2
-                role: "metadata"
+                role: "section"
                 text: section
             }
 
@@ -347,7 +364,8 @@ ColumnLayout {
                 required property var record
                 readonly property var modelData: record
                 required property int index
-                width: ListView.view.width
+                x: root.shadowReach
+                width: ListView.view.width - root.shadowReach * 2
                 entry: modelData
                 selected: ListView.isCurrentItem
                 dragExpanded: root.expandedKey === root.entryKey(modelData)
@@ -378,8 +396,11 @@ ColumnLayout {
         EmptyState {
             anchors.centerIn: parent
             visible: root.items.length === 0
+            icon: "bell"
             title: root.query.length > 0 ? "No matches"
                 : root.view === "unread" ? "All caught up" : "Nothing here"
+            detail: root.query.length > 0 ? "Try another search"
+                : root.view === "unread" ? "New notifications appear here" : "History is empty"
         }
 
         ScrollCue {

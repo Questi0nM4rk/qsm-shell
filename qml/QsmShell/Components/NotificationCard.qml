@@ -214,37 +214,44 @@ Item {
     Timer {
         interval: 60 * 1000
         repeat: true
-        running: !root.archived && root.entry.createdAt !== undefined && root.entry.createdAt !== null
+        running: root.hasStamp
         onTriggered: root.currentTimeMs = Date.now()
     }
 
-    // Named rather than inlined in the label's binding so it is one call
-    // away from a test, the same reasoning `Style.childRadius` is a function.
+    // One format for every entry, live or archived: a list that mixed a clock
+    // time with "5m ago" read as two columns of different widths. The wall
+    // clock is the timestamp's accessible description.
+    readonly property var stampMs: root.archived ? root.entry.archivedAt : root.entry.createdAt
+    readonly property bool hasStamp: root.stampMs !== undefined && root.stampMs !== null
+
     function timestampText(): string {
-        if (root.archived)
-            return Qt.formatDateTime(new Date(root.entry.archivedAt), "hh:mm");
-        if (root.entry.createdAt === undefined || root.entry.createdAt === null)
+        if (!root.hasStamp)
             return "";
-        const seconds = Math.max(0, (root.currentTimeMs - root.entry.createdAt) / 1000);
+        const seconds = Math.max(0, (root.currentTimeMs - root.stampMs) / 1000);
         if (seconds < 60)
             return "just now";
         if (seconds < 3600)
             return `${Math.floor(seconds / 60)}m ago`;
-        return `${Math.floor(seconds / 3600)}h ago`;
+        if (seconds < 86400)
+            return `${Math.floor(seconds / 3600)}h ago`;
+        return `${Math.floor(seconds / 86400)}d ago`;
     }
 
     implicitWidth: Style.notificationWidth
-    implicitHeight: root.expansionFrozen ? root.frozenHeight
-        : root.restHeight + (root.bodied ? root.shadowRoom : 0)
-    readonly property real restHeight: root.expanded ? headline.height + details.implicitHeight + Style.space2
-        : String(root.entry.body ?? "").length > 0 ? Style.notificationPreviewHeight
+    // The shadow falls into the host's gap between cards: the card's height
+    // is its body's, so the gap a host sets is the gap a person sees.
+    implicitHeight: root.expansionFrozen ? root.frozenHeight : root.restHeight
+    readonly property bool hasBody: String(root.entry.body ?? "").length > 0
+    readonly property bool hasDetails: root.hasBody
+        || (root.showActions && !root.archived && root.actionList().length > 0)
+    // A preview is as tall as its real lines; the token is the ceiling.
+    readonly property real previewHeight: Math.min(Style.notificationPreviewHeight,
+        headline.height + Style.space1 + bodyPreview.implicitHeight + Style.space2)
+    readonly property real restHeight: root.expanded && root.hasDetails
+            ? headline.height + Style.space1 + details.implicitHeight + Style.space2
+        : root.hasBody ? root.previewHeight
         : Style.notificationCollapsedHeight
-    // The card clips (its height animates), so a bodied card keeps room
-    // under its body for the shadow to fall into.
-    readonly property real shadowRoom: Style.space1
     readonly property bool leadHovered: leadLayer.hovered
-
-    clip: true
 
     // A fixed reference instance (a preview, a list row re-entering from a
     // filter change) can skip the settle; a fresh arrival gets it.
@@ -277,10 +284,12 @@ Item {
     Surface {
         id: body
         anchors.fill: parent
-        anchors.bottomMargin: root.bodied ? root.shadowRoom : 0
         visible: root.bodied
         radius: root.bodyRadius
         base: Style.surface
+        // Only a menu row takes the lift: a popup row answers hover by growing.
+        hovered: root.hovered && !root.expandOnHover
+        pressed: root.primaryPressed
         selected: root.selected
         enabled: root.enabled
         layer.enabled: root.bodied && !Style.reducedEffects
@@ -294,257 +303,266 @@ Item {
         }
     }
 
-    // The list cursor: a card in a list that keeps its own cursor shows
-    // it here, thick and accent. Urgency has no tick (the glyph carries it),
-    // and a bodied card shows selection on its body instead.
-    SelectionMark {
-        id: tick
-        anchors.left: parent.left
-        anchors.leftMargin: Style.space2
-        anchors.verticalCenter: headline.verticalCenter
-        shown: root.selected && !root.bodied
-        strong: true
-        markColor: root.enabled ? Style.accent : Style.disabled(Style.accent)
-    }
-
-    RowLayout {
-        id: headline
-        anchors.left: tick.right
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: Style.space2
-        anchors.rightMargin: Style.space3
-        height: Style.notificationCollapsedHeight
-        spacing: Style.space2
-
-        // The app's own icon when it sent one, the swatch when the consumer
-        // decided this entry carries one, else the urgency glyph — all three
-        // occupy the same box so the headline never reflows on arrival.
-        Item {
-            implicitWidth: Style.iconSm
-            implicitHeight: Style.iconSm
-
-            SvgIcon {
-                anchors.fill: parent
-                visible: root.leadHovered
-                name: root.expanded ? "chevron-up" : "chevron-down"
-                size: Style.iconSm
-                color: Style.text
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                visible: root.hasSwatch && !root.leadHovered
-                radius: Style.radiusSm
-                color: root.swatch ?? "transparent"
-                border.width: 1
-                border.color: Style.textMuted
-            }
-
-            Image {
-                anchors.fill: parent
-                visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length > 0
-                source: root.iconSource
-                asynchronous: true
-                fillMode: Image.PreserveAspectFit
-            }
-
-            SvgIcon {
-                anchors.fill: parent
-                visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length === 0
-                name: root.iconName
-                size: Style.iconSm
-                color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
-            }
-        }
-
-        // A NAME, not a value — the technical face is reserved for numbers
-        // and machine text.
-        Prose {
-            id: appNameLabel
-            role: "metadata"
-            text: root.entry.appName
-            Layout.maximumWidth: (Style.notificationWidth - Style.iconSm - Style.space3 * 3) / 3
-            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
-        }
-        Rectangle {
-            visible: root.unread
-            width: Style.space1 + Style.spaceTight
-            height: width
-            radius: width / 2
-            color: Style.accent
-            Accessible.name: "unread"
-        }
-        Prose {
-            Layout.fillWidth: true
-            role: "title"
-            text: root.entry.summary
-            visible: !root.expanded
-            color: !root.enabled ? Style.disabled(Style.text)
-                : root.primaryPressed && root.primaryActionAvailable ? Style.accent : Style.text
-        }
-        Prose {
-            role: "metadata"
-            technical: true
-            text: root.timestampText()
-            visible: text.length > 0
-            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
-        }
-    }
-
-    Text {
-        id: bodyPreview
-        anchors.left: headline.left
-        anchors.leftMargin: Style.iconSm + Style.space2
-        anchors.right: headline.right
-        anchors.top: headline.bottom
-        anchors.topMargin: Style.space1
-        height: Math.max(0, Style.notificationPreviewHeight - headline.height - Style.space1)
-        visible: !root.expanded && String(root.entry.body ?? "").length > 0
-        text: root.entry.body ?? ""
-        textFormat: Text.StyledText
-        color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
-        font.family: Style.fontFamily
-        font.pixelSize: Style.textSm
-        lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
-        lineHeightMode: Text.FixedHeight
-        wrapMode: Text.WordWrap
-        maximumLineCount: 2
-        elide: Text.ElideRight
+    // The content clips to the card (the height animates) while the body and
+    // its shadow stay outside the clip, so the shadow keeps its full reach.
+    Item {
+        id: content
+        anchors.fill: parent
         clip: true
-        Accessible.role: Accessible.StaticText
-    }
 
-    ColumnLayout {
-        id: details
-        anchors.left: headline.left
-        anchors.leftMargin: Style.iconSm + Style.space2
-        anchors.right: parent.right
-        anchors.top: headline.bottom
-        anchors.rightMargin: Style.space3
-        spacing: Style.space1
-        visible: root.expanded
-
-        Item {
-            id: bodyViewportHost
-            Layout.fillWidth: true
-            implicitHeight: root.expandOnHover
-                ? Math.min(expandedContent.implicitHeight, Style.notificationBodyViewportHeight)
-                : expandedContent.implicitHeight
-            height: implicitHeight
-
-            Flickable {
-                id: bodyViewport
-                anchors.fill: parent
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-                contentWidth: width
-                contentHeight: expandedContent.implicitHeight
-                flickableDirection: Flickable.VerticalFlick
-
-                Column {
-                    id: expandedContent
-                    width: bodyViewport.width
-                    spacing: Style.space1
-
-                    Text {
-                        width: parent.width
-                        text: root.entry.summary
-                        color: !root.enabled ? Style.disabled(Style.text)
-                            : root.primaryPressed && root.primaryActionAvailable ? Style.accent : Style.text
-                        font.family: Style.fontFamily
-                        font.pixelSize: Style.textMd
-                        font.weight: Style.weightMedium
-                        lineHeight: Style.rhythm(Style.textMd * Style.lineBody)
-                        lineHeightMode: Text.FixedHeight
-                        wrapMode: Text.WordWrap
-                        Accessible.role: Accessible.StaticText
-                    }
-
-                    Text {
-                        id: bodyText
-                        width: parent.width
-                        visible: text.length > 0
-                        text: root.entry.body ?? ""
-                        // Ingress sanitizes to the supported b/i/u/br subset.
-                        textFormat: Text.StyledText
-                        color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
-                        font.family: Style.fontFamily
-                        font.pixelSize: Style.textSm
-                        lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
-                        lineHeightMode: Text.FixedHeight
-                        wrapMode: Text.WordWrap
-                        Accessible.role: Accessible.StaticText
-                    }
-                }
-            }
-
-            MouseArea {
-                anchors.fill: bodyViewport
-                enabled: root.expandOnHover
-                acceptedButtons: Qt.NoButton
-                onWheel: event => {
-                    const next = Math.max(0, Math.min(bodyViewport.contentHeight - bodyViewport.height,
-                        bodyViewport.contentY - event.angleDelta.y));
-                    if (next !== bodyViewport.contentY) {
-                        bodyViewport.contentY = next;
-                        event.accepted = true;
-                    } else {
-                        event.accepted = false;
-                    }
-                }
-            }
+        // The list cursor: a card in a list that keeps its own cursor shows
+        // it here, thick and accent. Urgency has no tick (the glyph carries it),
+        // and a bodied card shows selection on its body instead.
+        SelectionMark {
+            id: tick
+            anchors.left: parent.left
+            anchors.leftMargin: Style.space2
+            anchors.verticalCenter: headline.verticalCenter
+            shown: root.selected && !root.bodied
+            strong: true
+            markColor: root.enabled ? Style.accent : Style.disabled(Style.accent)
         }
 
         RowLayout {
-            visible: root.showActions && !root.archived && root.actionList().length > 0
-            spacing: Style.space3
+            id: headline
+            anchors.left: tick.right
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.leftMargin: Style.space2
+            anchors.rightMargin: Style.space3
+            height: Style.notificationCollapsedHeight
+            spacing: Style.space2
 
-            Repeater {
-                model: root.actionList()
+            // The app's own icon when it sent one, the swatch when the consumer
+            // decided this entry carries one, else the urgency glyph — all three
+            // occupy the same box so the headline never reflows on arrival.
+            Item {
+                implicitWidth: Style.iconSm
+                implicitHeight: Style.iconSm
 
-                Text {
-                    required property var modelData
-                    required property int index
-                    readonly property bool available: root.enabled && root.inputEnabled
-                        && !(modelData.disabled ?? false)
-                    enabled: available
-                    // Addressable by a consumer or a test without exposing a
-                    // repeater handle from the card's own public interface.
-                    objectName: "notificationAction" + index
-                    text: modelData.label ?? String(modelData)
-                    color: root.enabled && !(modelData.disabled ?? false)
-                        ? (root.actionFocusIndex === index ? Style.text : Style.accent)
-                        : Style.disabled(root.actionFocusIndex === index ? Style.text : Style.accent)
-                    Accessible.role: Accessible.Button
-                    Accessible.name: text
-                    Accessible.onPressAction: root.activateAction(String(modelData.id))
-                    font.family: Style.fontFamily
-                    font.pixelSize: Style.textSm
-                    font.weight: root.actionFocusIndex === index ? Style.weightBold : Style.weightMedium
-                    font.underline: root.actionFocusIndex === index
-
-                    MouseArea {
-                        anchors.fill: parent
-                        // Lifts a 14px label to a 24px-tall hit target.
-                        anchors.margins: -Style.notificationActionHitMargin
-                        cursorShape: parent.available ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        enabled: parent.available
-                        onClicked: root.activateAction(String(parent.modelData.id))
-                    }
+                SvgIcon {
+                    anchors.fill: parent
+                    visible: root.leadHovered
+                    name: root.expanded ? "chevron-up" : "chevron-down"
+                    size: Style.iconSm
+                    color: Style.text
                 }
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: root.hasSwatch && !root.leadHovered
+                    radius: Style.radiusSm
+                    color: root.swatch ?? "transparent"
+                    border.width: 1
+                    border.color: Style.textMuted
+                }
+
+                Image {
+                    anchors.fill: parent
+                    visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length > 0
+                    source: root.iconSource
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectFit
+                }
+
+                SvgIcon {
+                    anchors.fill: parent
+                    visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length === 0
+                    name: root.iconName
+                    size: Style.iconSm
+                    color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+                }
+            }
+
+            // A NAME, not a value — the technical face is reserved for numbers
+            // and machine text.
+            Prose {
+                id: appNameLabel
+                role: "supporting"
+                text: root.entry.appName
+                Layout.maximumWidth: (Style.notificationWidth - Style.iconSm - Style.space3 * 3) / 3
+                color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+            }
+            Rectangle {
+                visible: root.unread
+                width: Style.space1 + Style.spaceTight
+                height: width
+                radius: width / 2
+                color: Style.accent
+                Accessible.name: "unread"
+            }
+            Prose {
+                Layout.fillWidth: true
+                role: "title"
+                text: root.entry.summary
+                color: !root.enabled ? Style.disabled(Style.text)
+                    : root.primaryPressed && root.primaryActionAvailable ? Style.accent : Style.text
+            }
+            Prose {
+                role: "metadata"
+                technical: true
+                text: root.timestampText()
+                visible: text.length > 0
+                Accessible.description: root.hasStamp
+                    ? Qt.formatDateTime(new Date(root.stampMs), "ddd d MMM hh:mm") : ""
+                color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
             }
         }
 
-    }
+        Text {
+            id: bodyPreview
+            anchors.left: headline.left
+            anchors.leftMargin: Style.iconSm + Style.space2
+            anchors.right: headline.right
+            anchors.top: headline.bottom
+            anchors.topMargin: Style.space1
+            height: Math.min(implicitHeight, Style.notificationPreviewHeight - headline.height - Style.space1)
+            // Preview and full body start on the same line and cross-fade on
+            // the card's own height token, so opening reveals lines rather
+            // than swapping one text for another.
+            opacity: root.expanded && root.hasDetails ? 0 : 1
+            visible: opacity > 0 && root.hasBody
+            Behavior on opacity {
+                NumberAnimation { duration: Motion.fast; easing.type: Motion.emphasizedEasing }
+            }
+            text: root.entry.body ?? ""
+            textFormat: Text.StyledText
+            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+            font.family: Style.fontFamily
+            font.pixelSize: Style.textSm
+            lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
+            lineHeightMode: Text.FixedHeight
+            wrapMode: Text.WordWrap
+            maximumLineCount: 2
+            elide: Text.ElideRight
+            clip: true
+            Accessible.role: Accessible.StaticText
+        }
 
-    Divider {
-        visible: root.showDivider
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        inset: Style.notificationDividerInset
-        strength: 0.25
+        ColumnLayout {
+            id: details
+            anchors.left: headline.left
+            anchors.leftMargin: Style.iconSm + Style.space2
+            anchors.right: parent.right
+            anchors.top: headline.bottom
+            anchors.topMargin: Style.space1
+            anchors.rightMargin: Style.space3
+            spacing: Style.space1
+            opacity: root.expanded ? 1 : 0
+            // Visible the moment it is asked for: an invisible layout reports
+            // no height, and the card sizes itself from this one.
+            visible: (root.expanded || opacity > 0) && root.hasDetails
+            Behavior on opacity {
+                NumberAnimation { duration: Motion.fast; easing.type: Motion.emphasizedEasing }
+            }
+
+            Item {
+                id: bodyViewportHost
+                Layout.fillWidth: true
+                implicitHeight: root.expandOnHover
+                    ? Math.min(expandedContent.implicitHeight, Style.notificationBodyViewportHeight)
+                    : expandedContent.implicitHeight
+                height: implicitHeight
+
+                Flickable {
+                    id: bodyViewport
+                    anchors.fill: parent
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    contentWidth: width
+                    contentHeight: expandedContent.implicitHeight
+                    flickableDirection: Flickable.VerticalFlick
+
+                    Column {
+                        id: expandedContent
+                        width: bodyViewport.width
+                        spacing: Style.space1
+
+                        Text {
+                            id: bodyText
+                            width: parent.width
+                            visible: text.length > 0
+                            text: root.entry.body ?? ""
+                            // Ingress sanitizes to the supported b/i/u/br subset.
+                            textFormat: Text.StyledText
+                            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+                            font.family: Style.fontFamily
+                            font.pixelSize: Style.textSm
+                            lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
+                            lineHeightMode: Text.FixedHeight
+                            wrapMode: Text.WordWrap
+                            Accessible.role: Accessible.StaticText
+                        }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: bodyViewport
+                    enabled: root.expandOnHover
+                    acceptedButtons: Qt.NoButton
+                    onWheel: event => {
+                        const next = Math.max(0, Math.min(bodyViewport.contentHeight - bodyViewport.height,
+                            bodyViewport.contentY - event.angleDelta.y));
+                        if (next !== bodyViewport.contentY) {
+                            bodyViewport.contentY = next;
+                            event.accepted = true;
+                        } else {
+                            event.accepted = false;
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                visible: root.showActions && !root.archived && root.actionList().length > 0
+                spacing: Style.space3
+
+                Repeater {
+                    model: root.actionList()
+
+                    Text {
+                        required property var modelData
+                        required property int index
+                        readonly property bool available: root.enabled && root.inputEnabled
+                            && !(modelData.disabled ?? false)
+                        enabled: available
+                        // Addressable by a consumer or a test without exposing a
+                        // repeater handle from the card's own public interface.
+                        objectName: "notificationAction" + index
+                        text: modelData.label ?? String(modelData)
+                        color: root.enabled && !(modelData.disabled ?? false)
+                            ? (root.actionFocusIndex === index ? Style.text : Style.accent)
+                            : Style.disabled(root.actionFocusIndex === index ? Style.text : Style.accent)
+                        Accessible.role: Accessible.Button
+                        Accessible.name: text
+                        Accessible.onPressAction: root.activateAction(String(modelData.id))
+                        font.family: Style.fontFamily
+                        font.pixelSize: Style.textSm
+                        font.weight: root.actionFocusIndex === index ? Style.weightBold : Style.weightMedium
+                        font.underline: root.actionFocusIndex === index
+
+                        MouseArea {
+                            anchors.fill: parent
+                            // Lifts a 14px label to a 24px-tall hit target.
+                            anchors.margins: -Style.notificationActionHitMargin
+                            cursorShape: parent.available ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            enabled: parent.available
+                            onClicked: root.activateAction(String(parent.modelData.id))
+                        }
+                    }
+                }
+            }
+
+        }
+
+        Divider {
+            visible: root.showDivider
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            inset: Style.notificationDividerInset
+            strength: 0.25
+        }
     }
 
     // Hover pauses expiry AND expands (one gesture, reported once); the
@@ -572,7 +590,7 @@ Item {
         x: 0
         y: 0
         width: headline.x + Style.iconSm + Style.space2
-        height: root.height - (root.bodied ? root.shadowRoom : 0)
+        height: root.height
         visible: !root.expandOnHover
         interactive: root.enabled && root.inputEnabled
         clickable: true
