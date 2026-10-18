@@ -66,7 +66,7 @@ QtObject {
     readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.45
     readonly property real opacityFloatingShadow: 0.28
-    readonly property real opacityCardShadow: 0.18
+    readonly property real opacityCardShadow: 0.28
     readonly property real opacityEdgeStrength: 0.5
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"

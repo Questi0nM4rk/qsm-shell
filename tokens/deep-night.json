@@ -75,7 +75,7 @@
     "surface": 0.9,
     "recede": 0.45,
     "floatingShadow": 0.28,
-    "cardShadow": 0.18,
+    "cardShadow": 0.28,
     "edgeStrength": 0.5
   },
   "font": {
