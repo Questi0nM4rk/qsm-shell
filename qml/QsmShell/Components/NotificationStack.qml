@@ -404,8 +404,7 @@ Item {
                 inputEnabled: root.inputEnabled && inputEligible && phase === "active"
                 showActions: false
                 primaryActionEnabled: root.inputEnabled && inputEligible && phase === "active"
-                    && (payload.actions ?? []).some(action => String(action.id) === "default"
-                        && !(action.disabled ?? false))
+                    && defaultAction() !== null
                 draggable: inputEnabled
                 verticalDragEnabled: inputEnabled
                 showDivider: index < cardRepeater.count - 1
@@ -434,7 +433,7 @@ Item {
                 onDismissed: if (inputEnabled) root.dismissRequested(entry)
                 onPrimaryTriggered: requestedEntry => {
                     const current = root.stack.find(item => item.notificationId === requestedEntry.notificationId);
-                    if (inputEnabled && current && (current.actions ?? []).some(
+                    if (inputEnabled && current && actionsOf(current).some(
                             action => String(action.id) === "default" && !(action.disabled ?? false)))
                         root.primaryActionRequested(current);
                 }

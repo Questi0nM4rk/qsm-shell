@@ -79,7 +79,7 @@ Item {
     readonly property bool hasSwatch: root.swatch !== undefined && root.swatch !== null
     readonly property bool primaryActionAvailable: root.primaryActionEnabled
         && !root.showActions && !root.archived
-        && !!root.defaultAction() && !(root.defaultAction().disabled ?? false)
+        && root.defaultAction() !== null
     readonly property string primaryActionLabel: {
         const action = root.defaultAction();
         const label = String(action?.label ?? "").trim();
@@ -166,18 +166,23 @@ Item {
         return true;
     }
 
-    function actionList(): var {
-        const source = root.entry.actions;
+    // A record's actions may arrive as a QVariantList reference, which indexes
+    // like an array but has no Array methods; copy it before .find or .some.
+    function actionsOf(record: var): var {
+        const source = record?.actions;
         const result = [];
-        if (!source)
-            return result;
-        for (let index = 0; index < source.length && index < 3; index++)
+        for (let index = 0; source && index < source.length; index++)
             result.push(source[index]);
         return result;
     }
 
+    function actionList(): var {
+        return root.actionsOf(root.entry).slice(0, 3);
+    }
+
     function defaultAction(): var {
-        return (root.entry.actions ?? []).find(item => String(item.id) === "default") ?? null;
+        return root.actionsOf(root.entry).find(item => String(item.id) === "default"
+            && !(item.disabled ?? false)) ?? null;
     }
 
     readonly property string iconSource: root.entry.imagePath ?? ""
