@@ -28,6 +28,10 @@ T.Control {
     property string confirmLabel: ""
     property bool selected: false
     property bool armed: false
+    // The tile's resting glyph and label wear the danger colour: the one
+    // action that cannot be undone is named before it is ever armed. Armed and
+    // selected still outrank it.
+    property bool danger: false
     property color accent: Style.accent
     property color armedColor: Style.danger
     property real buttonWidth: Style.tileWidth
@@ -47,7 +51,7 @@ T.Control {
     Accessible.role: Accessible.Button
     Accessible.name: root.shownLabel
 
-    readonly property color _baseColor: armed ? armedColor : selected ? accent : Style.text
+    readonly property color _baseColor: armed ? armedColor : selected ? accent : danger ? armedColor : Style.text
     // Disabled dims each painted role through the colour, never through a
     // composite opacity: opacity would dim every child separately and let a
     // translucent glyph show the translucent body through itself.
@@ -79,7 +83,7 @@ T.Control {
             Prose {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "metadata"
-                color: root.armed || root.selected ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+                color: root.armed || root.selected || root.danger ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                 text: root.shownLabel
             }
         }
