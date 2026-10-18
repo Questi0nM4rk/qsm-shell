@@ -166,6 +166,8 @@ T.TabBar {
         readonly property bool available: root._enabled(tab.index)
         readonly property bool selectedSegment: root.currentIndex === tab.index
         readonly property var option: root._at(tab.index)
+        readonly property bool iconOnly: root._labelOf(tab.modelData).length === 0
+            && String(tab.option?.icon ?? "").length > 0
         objectName: "segmentedTab" + tab.index
         implicitWidth: root.width / Math.max(1, root.options.length)
         implicitHeight: root.barHeight
@@ -176,7 +178,8 @@ T.TabBar {
         hoverEnabled: enabled
         activeFocusOnTab: false
         Accessible.role: Accessible.PageTab
-        Accessible.name: root._labelOf(tab.modelData)
+        // An icon-only option has no label; `name` then speaks for it.
+        Accessible.name: root._labelOf(tab.modelData) || String(tab.option?.name ?? "")
         Accessible.selected: tab.selectedSegment
         onClicked: root.select(tab.index)
         Keys.priority: Keys.BeforeItem
@@ -195,6 +198,13 @@ T.TabBar {
             anchors.rightMargin: root._inset
             spacing: root._gap
 
+            // An icon-only option centres its glyph: the label that would
+            // have filled the row is absent, so these two do.
+            Item {
+                visible: tab.iconOnly
+                Layout.fillWidth: true
+            }
+
             SvgIcon {
                 visible: name.length > 0
                 name: typeof tab.modelData === "string" ? "" : String(tab.modelData?.icon ?? "")
@@ -205,6 +215,7 @@ T.TabBar {
                 Layout.alignment: Qt.AlignVCenter
             }
             Prose {
+                visible: !tab.iconOnly
                 role: "label"
                 text: root._labelOf(tab.modelData)
                 color: tab.enabled
@@ -216,6 +227,10 @@ T.TabBar {
                 maximumLineCount: 1
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
+            }
+            Item {
+                visible: tab.iconOnly
+                Layout.fillWidth: true
             }
             Badge {
                 visible: text.length > 0
