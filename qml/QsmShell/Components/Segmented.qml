@@ -28,6 +28,12 @@ T.TabBar {
     readonly property int _inset: Style.rhythm(Style.space2 * root._s)
     readonly property int _gap: Style.rhythm(Style.space1 * root._s)
     readonly property int _radius: Style.radiusSm
+    // The track holds its segments at a hairline inset, and the one picked
+    // segment is a pill concentric with the track's corners: highlights
+    // that reached the track's edge squared off its rounded ends.
+    readonly property int _pad: Style.spaceTight
+    readonly property int _thumbRadius: Math.max(0, root._radius - root._pad)
+    readonly property real _segmentWidth: (root.width - root._pad * 2) / Math.max(1, root.options.length)
     readonly property bool focused: root.activeFocus || root.currentItem?.activeFocus === true
 
     signal selected(int index)
@@ -139,12 +145,30 @@ T.TabBar {
         objectName: "segmentedSurface"
         enabled: root.enabled
         radius: root._radius
-        hovered: root.hovered
+
+        // One picked-segment pill that glides between segments, so the
+        // choice reads as a thing that moved rather than a box that blinked.
+        Rectangle {
+            objectName: "segmentedThumb"
+            visible: root.currentIndex >= 0
+            x: root._pad + root.currentIndex * root._segmentWidth
+            y: root._pad
+            width: root._segmentWidth
+            height: root.barHeight - root._pad * 2
+            radius: root._thumbRadius
+            color: root.enabled ? Style.overlay : Style.disabled(Style.overlay)
+
+            Behavior on x {
+                enabled: !Style.reducedMotion
+                NumberAnimation { duration: Motion.fast; easing.type: Motion.standardEasing }
+            }
+        }
     }
 
     contentItem: ListView {
         id: tabs
         anchors.fill: parent
+        anchors.margins: root._pad
         orientation: ListView.Horizontal
         spacing: 0
         interactive: false
@@ -169,10 +193,10 @@ T.TabBar {
         readonly property bool iconOnly: root._labelOf(tab.modelData).length === 0
             && String(tab.option?.icon ?? "").length > 0
         objectName: "segmentedTab" + tab.index
-        implicitWidth: root.width / Math.max(1, root.options.length)
-        implicitHeight: root.barHeight
+        implicitWidth: root._segmentWidth
+        implicitHeight: root.barHeight - root._pad * 2
         width: implicitWidth
-        height: root.barHeight
+        height: implicitHeight
         enabled: root.enabled && tab.available
         checkable: false
         hoverEnabled: enabled
@@ -185,12 +209,9 @@ T.TabBar {
         Keys.priority: Keys.BeforeItem
         Keys.onPressed: event => root.handleKey(event)
 
-        background: Rectangle {
-            anchors.fill: parent
-            radius: root._radius
-            color: Style.tone("transparent", tab.hovered, tab.pressed,
-                tab.selectedSegment, tab.enabled, Style.accent)
-        }
+        // No box per segment: the track is the body and the thumb is the
+        // choice; hover answers in the label, never as a second tint.
+        background: null
 
         contentItem: RowLayout {
             anchors.fill: parent
@@ -210,7 +231,7 @@ T.TabBar {
                 name: typeof tab.modelData === "string" ? "" : String(tab.modelData?.icon ?? "")
                 size: root._iconSize
                 color: tab.enabled
-                    ? (tab.selectedSegment ? Style.accent : Style.textMuted)
+                    ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
                     : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -219,7 +240,7 @@ T.TabBar {
                 role: "label"
                 text: root._labelOf(tab.modelData)
                 color: tab.enabled
-                    ? (tab.selectedSegment ? Style.accent : Style.textMuted)
+                    ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
                     : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
                 font.pixelSize: root._textSize
                 font.weight: tab.selectedSegment ? Style.weightBold : Style.weightMedium
@@ -246,7 +267,7 @@ T.TabBar {
             target: null
             hoverScale: 1
             pressScale: 0.98
-            focusRadius: root._radius
+            focusRadius: root._thumbRadius
             focused: tab.selectedSegment && root.focused
         }
     }

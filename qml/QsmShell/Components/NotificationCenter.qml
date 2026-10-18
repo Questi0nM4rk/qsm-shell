@@ -309,8 +309,12 @@ ColumnLayout {
     // The cue is a SIBLING of the list, never a child: a Flickable's
     // declared children go into its contentItem, so they scroll with the
     // content and feed childrenRect instead of the viewport around it.
+    // Fills what the host gives: a list that shrank to its content let the
+    // column re-centre the header, so emptying the list jumped the whole
+    // menu to the middle of the screen.
     Item {
         Layout.fillWidth: true
+        Layout.fillHeight: true
         Layout.preferredHeight: Math.max(Style.space6 * 2,
             Math.min(root.maxListHeight, historyList.contentHeight))
 
