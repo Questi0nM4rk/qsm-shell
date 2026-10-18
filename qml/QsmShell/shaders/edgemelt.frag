@@ -1,7 +1,8 @@
 #version 440
 
 // docs/12-mechanism.md is normative. One pass fills the merged silhouette
-// and paints its inner edge glow, derivative-AA'd in logical coordinates.
+// and paints its edge separation (a slight line of tint at the edge fading
+// inward), derivative-AA'd in logical coordinates.
 //
 // Uniform shape is NAMED per-slot (rect0..7 / radii0..7 / deform0..7 /
 // param0..7), not a GLSL array: QML array properties bind to GLSL array
@@ -23,21 +24,18 @@ layout(std140, binding = 0) uniform buf {
     float viewportRadius;  // viewport corner rounding (25)
     float smoothFactor;    // melt reach (20) — every join neck derives from it
     int occupied;          // occupied slot count (registry packs from 0)
-    float rimWidth;        // edge-readability rim ramp width (01-frame)
     vec4 fillColor;
-    vec4 rimColor;         // rgb = rim tint, a = strength
-    // Handles are NOT slots (12-mechanism): dedicated circle SDFs folded
+    // The handle is NOT a slot (12-mechanism): a dedicated circle SDF folded
     // with the same smin. (cx, cy, radius, blend) — radius 0 = absent.
     vec4 handle0;          // the OSD circle handle
-    vec4 dotsHandle;       // top-panel dots: (centerX, firstRowCy, r, spacing)
     // Per slot: rect = (centerX, centerY, halfW, halfH) — the UNDEFORMED
     // live item rect. radii = per-corner (see sdRoundedBox4). deform = the
     // CPU-precomputed inverse 2x2 of the goo deform matrix, row-major
     // (identity = 1,0,0,1). param.x = minEig of the deform (identity = 1);
 // param.y = blend factor [0,1] scaling smoothFactor for this slot's melt;
-// param.z = rim side mask + 16 * origin side mask.
+// param.z = seam side mask (CPU only) + 16 * origin side mask (read here).
 // param.w = outness [0,1], how far this body has emerged (a flush nested
-// host is fully OUT at blend 0, so the edge glow reads this, not blend).
+// host is fully OUT at blend 0, so the edge gate reads this, not blend).
     vec4 rect0; vec4 rect1; vec4 rect2; vec4 rect3;
     vec4 rect4; vec4 rect5; vec4 rect6; vec4 rect7;
     vec4 radii0; vec4 radii1; vec4 radii2; vec4 radii3;
@@ -46,12 +44,12 @@ layout(std140, binding = 0) uniform buf {
     vec4 deform4; vec4 deform5; vec4 deform6; vec4 deform7;
     vec4 param0; vec4 param1; vec4 param2; vec4 param3;
     vec4 param4; vec4 param5; vec4 param6; vec4 param7;
-    // EDGE GLOW (owner 2026-10-17): grain of tint thickening toward the
-    // INSIDE edge of the merged silhouette, on top of the flat fill. It is
-    // measured on the same union, so it follows every corner radius and melt
-    // neck. Names kept from the glass stroke so this block does not move.
-    vec4 strokeColor;      // rgb = glow tint, a = strength at the edge
-    float strokeWidth;     // glow width in px: the tint is gone this far in
+    // EDGE SEPARATION (owner 2026-10-18): a slight line of edge colour
+    // exactly at the merged silhouette's edge, fading smoothly inward into
+    // the fill. Measured on the same union, so it follows every corner
+    // radius and melt neck with one profile.
+    vec4 edgeColor;        // rgb = edge colour, a = line strength at the edge
+    float edgeFade;        // fade width in px: the colour is gone this far in
     int fullscreenMode;    // native fullscreen: detached capsules only
     int capsuleOccupied;
     vec4 capsule0; vec4 capsule1; vec4 capsule2; vec4 capsule3;
@@ -61,11 +59,6 @@ layout(std140, binding = 0) uniform buf {
 };
 
 // --- SDF primitives (12-mechanism, verbatim) -------------------------------
-
-float sdBox(vec2 p, vec2 center, vec2 halfSize) {
-    vec2 q = abs(p - center) - halfSize;
-    return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0);
-}
 
 float sdRoundedBox(vec2 p, vec2 center, vec2 halfSize, float r) {
     vec2 q = abs(p - center) - halfSize + vec2(r);
@@ -92,22 +85,6 @@ float smin(float a, float b, float k) {
     return max(k, min(a, b)) - length(max(vec2(k) - vec2(a, b), vec2(0.0)));
 }
 
-// smaxSharpA keeps operand a's zero-boundary sharp — used only for the
-// band's outer (screen) edge so it stays flush to the last pixel row.
-float smaxSharpA(float a, float b, float k) {
-    float sm = min(-k, max(a, b)) + length(max(vec2(a, b) + vec2(k), vec2(0.0)));
-    float blend = (sm - max(a, b)) * smoothstep(0.0, k * 0.5, -a);
-    return max(a, b) + blend;
-}
-
-// --- Edge-glow grain ---------------------------------------------------------
-// Stable per device pixel, no time. Float-only (Hoskins hash12): an integer
-// hash fails qsb for the GLSL 100es/120 targets.
-float grainAt(vec2 p) {
-    vec3 q = fract(vec3(p.xyx) * 0.1031);
-    q += dot(q, q.yzx + 33.33);
-    return fract((q.x + q.y) * q.z);
-}
 
 // --- Named-slot lookup ------------------------------------------------------
 
@@ -136,27 +113,25 @@ void capsuleAt(int i, out vec4 rect, out float radius) {
 void main() {
     vec2 pixel = qt_TexCoord0 * resolution;
 
-    // Band bounds. Outer box = the whole scene; inner box = the viewport.
-    vec2 outerHalf = resolution * 0.5;
-    vec2 outerCenter = outerHalf;
+    // Band bounds: the band is everything OUTSIDE the viewport box. It has
+    // no outer boundary — the screen edge is not a silhouette edge, and a
+    // field that measured it cut the edge profile short at every open
+    // rollout corner (12-mechanism "Band (frame) shape").
     vec2 innerHalf = vec2(resolution.x - leftEdge - edge, resolution.y - edge * 2.0) * 0.5;
     vec2 innerCenter = vec2(leftEdge, edge) + innerHalf;
 
-    // Band (frame) shape. -1 on dOuter: cover the last pixel row. The inner
-    // corner fillet must not exceed the thinnest band side. (No border sink:
-    // rollouts live UNDER the band — the merged fill erases the wall behind
-    // a bulge natively, and a sink would carve pockets around every tail.)
-    float dOuter = sdBox(pixel, outerCenter, outerHalf) - 1.0;
+    // Band (frame) shape. (No border sink: rollouts live UNDER the band —
+    // the merged fill erases the wall behind a bulge natively, and a sink
+    // would carve pockets around every tail.)
     float dInner = sdRoundedBox(pixel, innerCenter, innerHalf, viewportRadius);
     float minThickness = min(leftEdge, edge);
-    float kFrame = clamp(min(smoothFactor, minThickness - 1.0), 1.0, smoothFactor);
-    // Edge-glow gate, folded per slot below: 1 where every nearby body is
-    // fully out, → 0 where a body is still emerging. seamReach is how far
-    // from a body's own boundary the gate reaches.
-    float strokeGate = 1.0;
+    // Edge gate, folded per slot below: 1 where every nearby body is fully
+    // out, → 0 where a body is still emerging. seamReach is how far from a
+    // body's own boundary the gate reaches.
+    float edgeGate = 1.0;
     const float seamReach = 6.0;
 
-    float dFrame = smaxSharpA(dOuter, -dInner, kFrame);
+    float dFrame = -dInner;
 
     // Rollouts: evaluate each rect's SDF in its undeformed frame by
     // inverse-transforming the sample point; the min-eigenvalue factor
@@ -164,14 +139,9 @@ void main() {
     // into the frame iteratively — that IS the normative composition. The
     // blend radius is PER SLOT (param.y in [0,1], scaling smoothFactor):
     // a rollout's melt neck shrinks with its protrusion, so a body absorbed
-    // behind its band stops bridging (and lighting the rim) exactly when it
+    // behind its band stops bridging (and lighting the edge) exactly when it
     // disappears — the shader never sees things hidden behind the border.
-    // rimSdf runs alongside with a HARD min: the circular smin deepens the
-    // interior wherever two near-equal fields overlap (a rollout's tail over
-    // the band), which read as dead rim patches — the rim wants the exact
-    // union distance, the fill wants the melted one.
     float mergedSdf = fullscreenMode != 0 ? 100000.0 : dFrame;
-    float rimSdf = fullscreenMode != 0 ? 100000.0 : dFrame;
     if (fullscreenMode != 0) {
         for (int i = 0; i < 8; i++) {
             if (i >= capsuleOccupied)
@@ -205,7 +175,6 @@ void main() {
         float d = sdRoundedBox4(tp, center, halfSize, radii);
         d *= max(param.x, 0.01);
         float incomingSdf = mergedSdf;
-        float incomingRimSdf = rimSdf;
         // Blend 0 means an EXACT union, and that has to be a real min().
         //
         // The k floor was believed to deliver one ("k = max(.., 0.01) turns
@@ -217,12 +186,10 @@ void main() {
         // so at a == b it inflates the INTERIOR distance by 41% however small k
         // is. That is invisible to `alpha`, which only cares about the zero
         // crossing (at a == b == 0 the deviation is just -0.414 * k), but the
-        // edge glow measures `-mergedSdf` against strokeWidth, so along a
-        // flush seam -- where the two fields are EQUAL, the worst case -- it
-        // would believe it was 1.4x deeper inside and fade early.
-        // Measured 2026-08-25: the edge kept its outer row and lost its inner
-        // one across exactly the overlap span, which the owner read as "a dent
-        // in the glass edge, from the inside only, not going outwards".
+        // edge reads depth from `-mergedSdf`, so along a flush seam -- where
+        // the two fields are EQUAL, the worst case -- it would believe it was
+        // 1.4x deeper inside and fade early. The edge divides by the field's
+        // gradient length below, which removes that inflation.
         float blendAmount = clamp(param.y, 0.0, 1.0);
         float slotSdf = blendAmount > 0.0
             ? smin(incomingSdf, d, smoothFactor * blendAmount)
@@ -232,7 +199,7 @@ void main() {
         // no edge of its own. A barely-out rollout drives its melt radius
         // toward zero, smin degenerates to a hard min, and the union keeps a
         // full boundary where the new body meets whatever it is emerging
-        // from — which the edge glow then draws as a line. Worst on a
+        // from — which the edge then draws as a line. Worst on a
         // second-level rollout, where the line flashes BETWEEN the two bodies
         // for the length of the reveal.
         //
@@ -244,10 +211,10 @@ void main() {
         float nearThis = 1.0 - smoothstep(0.0, seamReach, abs(d));
         // The existing union's edge must never blink while a body is absorbed.
         float newBoundary = nearThis * smoothstep(0.0, seamReach, incomingSdf);
-        strokeGate = min(strokeGate, mix(1.0, outness, newBoundary));
+        edgeGate = min(edgeGate, mix(1.0, outness, newBoundary));
 
         // Only origin sides extend fill. A parent's child-facing continuation
-        // is rim paint, otherwise it would outrun a child still emerging.
+        // is seam paint, otherwise it would outrun a child still emerging.
         float originBits = floor(param.z / 16.0);
         float ext = max(leftEdge, edge) + smoothFactor;
         vec2 weldCenter = center;
@@ -265,19 +232,9 @@ void main() {
             ? (frameJoin > 0.0 ? smin(dFrame, dWeld, frameJoin) : min(dFrame, dWeld))
             : dWeld;
         slotSdf = min(slotSdf, attachedBody);
-        // Restore the whole incoming field, including glow depth and normals,
+        // Restore the whole incoming field, including edge depth and normals,
         // before removal; matching only its zero contour leaves a lighting snap.
         mergedSdf = mix(incomingSdf, slotSdf, outness);
-
-        float bits = mod(param.z, 16.0);
-        vec2 rimCenter = center;
-        vec2 rimHalf = halfSize;
-        if (mod(bits, 2.0) >= 1.0) { rimCenter.x -= ext * 0.5; rimHalf.x += ext * 0.5; }
-        if (mod(bits, 4.0) >= 2.0) { rimCenter.x += ext * 0.5; rimHalf.x += ext * 0.5; }
-        if (mod(bits, 8.0) >= 4.0) { rimCenter.y -= ext * 0.5; rimHalf.y += ext * 0.5; }
-        if (bits >= 8.0) { rimCenter.y += ext * 0.5; rimHalf.y += ext * 0.5; }
-        float dRim = sdRoundedBox4(tp, rimCenter, rimHalf, radii) * max(param.x, 0.01);
-        rimSdf = mix(incomingRimSdf, min(incomingRimSdf, dRim), outness);
     }
 
     // Handle circles (dedicated uniforms, not slots). They belong only to the
@@ -286,55 +243,29 @@ void main() {
         float dHandle = length(pixel - handle0.xy) - handle0.z;
         mergedSdf = smin(mergedSdf, dHandle,
             max(smoothFactor * clamp(handle0.w, 0.0, 1.0), 0.01));
-        rimSdf = min(rimSdf, dHandle);
-    }
-    // Top-panel dot handle: 8 dots, two rows of 4 around centerX, melted
-    // gently (k=8) so they read as dots, not one blob.
-    if (fullscreenMode == 0 && dotsHandle.z > 0.0) {
-        for (int r = 0; r < 2; r++) {
-            for (int c = 0; c < 4; c++) {
-                vec2 dotPos = vec2(dotsHandle.x + (float(c) - 1.5) * dotsHandle.w,
-                                   dotsHandle.y + float(r) * dotsHandle.w);
-                float dDot = length(pixel - dotPos) - dotsHandle.z;
-                mergedSdf = smin(mergedSdf, dDot, 8.0);
-                rimSdf = min(rimSdf, dDot);
-            }
-        }
     }
 
     // Derivative AA: equal edge weight on every axis and monitor scale.
     float fw = fwidth(mergedSdf);
     float alpha = 1.0 - smoothstep(-fw, fw, mergedSdf);
 
-    // Edge-readability rim (01-frame, formula amended 2026-08-17): the fill
-    // ramps toward rimColor as the sample nears the union's edge — but ONLY
-    // where the nearest edge is an INNER one. A pixel closer to the outer
-    // screen edge than to any inner boundary gets NO rim (a plain fade mask
-    // left a light ring around the whole screen; owner-caught twice).
-    // The rim field is max(melted, exact-union): exact alone leaves the melt
-    // neck dark (its visible edge only exists in the melted field — read as
-    // a barrier gutter between a rollout's lit corners and the band;
-    // owner-caught), melted alone kills the rim in absorbed-tail overlaps
-    // (smin deepens near-equal interiors). max keeps the shallower field.
-    float innerDist = -max(mergedSdf, rimSdf);
-    float outerDist = -dOuter;
-    float rim = (fullscreenMode != 0 ? 0.0 : (1.0 - smoothstep(0.0, rimWidth, innerDist)))
-        * smoothstep(0.0, 2.0, outerDist - innerDist);
-    vec3 rgb = mix(fillColor.rgb, rimColor.rgb, rim * rimColor.a);
-
-    // Edge glow (12-mechanism "Edge glow"): weight 1 at the union's edge, 0
-    // strokeWidth px inward. The STEP grain tints a pixel only when its
-    // random number is under the weight, so the share of tinted pixels IS
-    // the weight: dots thicken toward the edge and fuse into solid tint on it.
-    // Kept INSIDE the shape: paint, not geometry, so alpha and the input mask
-    // are untouched. The outer factor keeps it off the screen edge, which
-    // mergedSdf also measures (owner 2026-08-19: double-lined band).
-    float depth = -mergedSdf;
-    float glow = (1.0 - smoothstep(0.0, strokeWidth, depth))
-        * (fullscreenMode != 0 ? 1.0 : smoothstep(0.0, 2.0, outerDist - depth));
-    float n = grainAt(floor(gl_FragCoord.xy));
-    float m = glow * strokeColor.a * step(n, glow) * strokeGate;
-    rgb = mix(rgb, strokeColor.rgb, clamp(m, 0.0, 1.0));
+    // Edge separation (12-mechanism "Edge separation"): a slight line of the
+    // edge colour exactly at the union's edge, fading smoothly inward to the
+    // fill over edgeFade px. One curve of one distance, so every bulge, join
+    // and corner gets the same edge. Kept INSIDE the shape: paint, not
+    // geometry, so alpha and the input mask are untouched.
+    //
+    // mergedSdf is a true distance only near a single wall (smin inflates it
+    // where two fields overlap and deflates it between facing walls), so
+    // divide by its own gradient length: the first-order distance estimate.
+    // dFdx(pixel) is logical px per device px, which makes gradLen
+    // scale-free; the clamp keeps a flat spot (a neck's midline) finite.
+    float gradLen = length(vec2(dFdx(mergedSdf), dFdy(mergedSdf)))
+        / length(dFdx(pixel));
+    float dist = max(-mergedSdf, 0.0) / clamp(gradLen, 0.5, 2.0);
+    float s = clamp(dist / edgeFade, 0.0, 1.0);
+    float w = edgeColor.a * (1.0 - s) * (1.0 - s) * edgeGate;
+    vec3 rgb = mix(fillColor.rgb, edgeColor.rgb, clamp(w, 0.0, 1.0));
 
     fragColor = vec4(rgb * alpha, alpha) * qt_Opacity;
 }

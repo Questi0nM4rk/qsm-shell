@@ -17,7 +17,7 @@ QtObject {
     readonly property color colorWarning: "#d9c284"
     readonly property color colorDanger: "#f5aeb7"
     readonly property color colorShadow: "#000000"
-    readonly property color colorEdgeGlow: "#5e357f"
+    readonly property color colorEdge: "#5e357f"
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -67,7 +67,7 @@ QtObject {
     readonly property real opacityRecede: 0.45
     readonly property real opacityFloatingShadow: 0.28
     readonly property real opacityCardShadow: 0.18
-    readonly property real opacityEdgeGlowStrength: 0.35
+    readonly property real opacityEdgeStrength: 0.5
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28
@@ -111,7 +111,7 @@ QtObject {
     readonly property int geometryCardShadowOffset: 2
     readonly property int geometryCardShadowExtent: 12
     readonly property int geometrySeamOverlap: 8
-    readonly property int geometryEdgeGlowWidth: 28
+    readonly property int geometryEdgeFade: 10
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

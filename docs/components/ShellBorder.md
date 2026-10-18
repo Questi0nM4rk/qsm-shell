@@ -7,8 +7,8 @@ pointer: none; it takes no pointer itself and reads regions only through the hos
 keyboard: none; it is never a tab stop and takes no keys.
 screen reader: none; it is chrome, not content.
 size: edge thickness and viewport radius from the frame scale; regions arrive in host coordinates and slots quantize them for the shader.
-tokens: frameThickness, radius2xl, meltSmoothing, band fill, edgeGlow, edgeGlowStrength, edgeGlowWidth and the edge shader; no local colours or measurements.
-motion: none; it renders host-animated geometry. Origin sides extend fill through the weld; child-facing rim continuations are paint-only.
+tokens: frameThickness, radius2xl, meltSmoothing, band fill, edgeColor, edgeStrength, edgeFade and the edge shader; no local colours or measurements.
+motion: none; it renders host-animated geometry. Origin sides extend fill through the weld; child-facing seam continuations are paint-only.
 registration: snapping skips declared source-origin sides; other nearby edges still snap and cap their welds. Attached expansion supplies a growing aperture with identity deformation. Paint-only normalization does not change content size or viewport input.
 paint endpoint: slot outness restores incoming fill/rim distance fields; the emergence glow gate applies outside the incoming union. Removing a hidden slot must not change frame lighting.
 not designed: pointer tracking, rollout behaviour or surface content; use ScenePointer, Rollout or the host for those.

@@ -74,12 +74,13 @@ QtObject {
     // number from `opacityDisabled`, because receding says "later" and
     // disabled says "never".
     readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
-    // The edge glow of the melt silhouette (owner 2026-10-17): grain of this
-    // tint thickening toward the merged shape's inner edge, drawn by the shader
-    // on top of the flat fill. Strength is the tint's share at the very edge;
-    // the glow is gone edgeGlowWidth px inward. No line; the rim is gone.
-    readonly property color edgeGlow: backend?.edgeGlow ?? Tokens.colorEdgeGlow
-    readonly property real edgeGlowStrength: backend?.edgeGlowStrength ?? Tokens.opacityEdgeGlowStrength
+    // The edge separation of the melt silhouette (owner 2026-10-18): a slight
+    // line of this colour exactly at the merged shape's edge, fading inward
+    // into the fill, drawn by the shader on top of the flat fill. Strength is
+    // the colour's share at the very edge; it is gone edgeFade px inward.
+    // Not a glow and not a stroke: no grain, no outline.
+    readonly property color edgeColor: backend?.edgeColor ?? Tokens.colorEdge
+    readonly property real edgeStrength: backend?.edgeStrength ?? Tokens.opacityEdgeStrength
 
     // THE way a control says "unavailable", as a colour rather than as
     // `opacity`. Opacity on a control applies to each CHILD separately, so a
@@ -319,7 +320,7 @@ QtObject {
     readonly property int meltSmoothing: backend?.meltSmoothing ?? Tokens.geometryMeltSmoothing
     readonly property int edgeSnapReach: backend?.edgeSnapReach ?? Tokens.geometryEdgeSnapReach
     readonly property real seamOverlap: backend?.seamOverlap ?? Tokens.geometrySeamOverlap
-    readonly property int edgeGlowWidth: backend?.edgeGlowWidth ?? Tokens.geometryEdgeGlowWidth
+    readonly property int edgeFade: backend?.edgeFade ?? Tokens.geometryEdgeFade
 
     // The "this one" mark: the same 3x18 pill the launcher, the menu rows, the
     // notification history and the device lists all use to say which row is

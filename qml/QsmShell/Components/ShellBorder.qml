@@ -353,20 +353,18 @@ Item {
     property real seamOverlap: Style.seamOverlap
 
     // The band's fill: the one colour the melt shader paints, the frame and
-    // every rollout; and the edge glow the shader draws on top of it. There
-    // is no rim: its uniforms are fed zero below until the rim path leaves
-    // edgemelt.frag with 12-mechanism.
-    property color bandFill: Style.band
-    property color edgeGlow: Style.edgeGlow
-    property real edgeGlowStrength: Style.edgeGlowStrength
-    property real edgeGlowWidth: Style.edgeGlowWidth
+    // every rollout; and the edge separation the shader draws on top of it
+    // (12-mechanism "Edge separation").
+    property color band: Style.band
+    property color edgeColor: Style.edgeColor
+    property real edgeStrength: Style.edgeStrength
+    property real edgeFade: Style.edgeFade
 
-    // Handle circles (12-mechanism): dedicated circle SDFs the shader folds
+    // Handle circle (12-mechanism): a dedicated circle SDF the shader folds
     // in alongside the slots, (cx, cy, radius, blend) with radius 0 = absent
-    // — this type owns no OSD nub or panel dots (consumer surfaces), so a
-    // consumer that wants one sets it here; the absent default draws nothing.
+    // — this type owns no OSD nub (consumer surface), so a consumer that
+    // wants one sets it here; the absent default draws nothing.
     property vector4d handle0: Qt.vector4d(0, 0, 0, 0)
-    property vector4d dotsHandle: Qt.vector4d(0, 0, 0, 0)
 
     // Shader slot packing (12-mechanism): rect = (centerX, centerY, halfW,
     // halfH) of the UNDEFORMED live item rect.
@@ -402,20 +400,16 @@ Item {
         property real viewportRadius: root.viewportRadius
         property real smoothFactor: root.meltSmoothing
         property int occupied: Math.min(root.bulgeEntries.length, root.maxBulgeSlots)
-        property real rimWidth: 0
-        property vector4d fillColor: Qt.vector4d(root.bandFill.r, root.bandFill.g,
-            root.bandFill.b, root.bandFill.a)
-        property vector4d rimColor: Qt.vector4d(0, 0, 0, 0)
-        // The edge glow rides the same merged silhouette; the shader keeps the
-        // stroke uniform names (see edgemelt.frag).
-        property vector4d strokeColor: Qt.vector4d(root.edgeGlow.r, root.edgeGlow.g,
-            root.edgeGlow.b, root.edgeGlowStrength)
-        property real strokeWidth: root.edgeGlowWidth
+        property vector4d fillColor: Qt.vector4d(root.band.r, root.band.g,
+            root.band.b, root.band.a)
+        // The edge separation rides the same merged silhouette.
+        property vector4d edgeColor: Qt.vector4d(root.edgeColor.r, root.edgeColor.g,
+            root.edgeColor.b, root.edgeStrength)
+        property real edgeFade: root.edgeFade
         property int fullscreenMode: root.fullscreen ? 1 : 0
         property int capsuleOccupied: Math.min(root.fullscreenPaintEntries.length,
             root.maxFullscreenCapsuleSlots)
         property vector4d handle0: root.handle0
-        property vector4d dotsHandle: root.dotsHandle
         property vector4d rect0: root.rectToSlot(root.bulgeRectAt(0))
         property vector4d rect1: root.rectToSlot(root.bulgeRectAt(1))
         property vector4d rect2: root.rectToSlot(root.bulgeRectAt(2))

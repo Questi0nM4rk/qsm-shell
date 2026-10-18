@@ -14,7 +14,7 @@
     "warning": "#d9c284",
     "danger": "#f5aeb7",
     "shadow": "#000000",
-    "edgeGlow": "#5e357f"
+    "edge": "#5e357f"
   },
   "space": {
     "1": 4,
@@ -76,7 +76,7 @@
     "recede": 0.45,
     "floatingShadow": 0.28,
     "cardShadow": 0.18,
-    "edgeGlowStrength": 0.35
+    "edgeStrength": 0.5
   },
   "font": {
     "family": "sans-serif",
@@ -124,7 +124,7 @@
     "cardShadowOffset": 2,
     "cardShadowExtent": 12,
     "seamOverlap": 8,
-    "edgeGlowWidth": 28
+    "edgeFade": 10
   },
   "line": {
     "tight": 1.2,
