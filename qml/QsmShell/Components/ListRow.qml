@@ -74,7 +74,8 @@ Item {
     // Dim the rows that are not the current one. True for a list you PICK from,
     // false for a list you READ.
     property bool recede: true
-    property color markColor: root.danger ? Style.danger : Style.accent
+    // What the selected row wears: the fill's tint and the name.
+    property color selectedColor: root.danger ? Style.danger : Style.accent
 
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
@@ -98,6 +99,7 @@ Item {
     // strength; disabled rows dim; recede only applies to interactive rows.
     readonly property color proseColor: root.disabled ? Style.textMuted
         : root.danger ? Style.danger
+        : root._normal && root.selected ? root.selectedColor
         : Style.text
 
     signal activated
@@ -119,15 +121,6 @@ Item {
             root.activated()
     }
 
-    // Punch the mark. A list calls this when the selection MOVES, which the
-    // mark itself has no way to know about — without it, stepping between two
-    // rows changes only which row is lit, and on a long list that is easy to
-    // miss.
-    function pulse(): void {
-        if (root.selected)
-            pulseAnimation.restart();
-    }
-
     // The row's own horizontal inset, named once because three things need to
     // agree on it: the header rail, the body, and the width the row asks for.
     readonly property real _inset: Style.space3
@@ -139,33 +132,16 @@ Item {
     implicitWidth: body.implicitWidth + root._inset * 2
     implicitHeight: root.headingHeight + root.expansionHeight
 
-    property real _pulse: 0
-
-    SequentialAnimation {
-        id: pulseAnimation
-        NumberAnimation {
-            target: root; property: "_pulse"; to: 1
-            duration: Motion.press / 2; easing.type: Motion.emphasizedEasing
-        }
-        NumberAnimation {
-            target: root; property: "_pulse"; to: 0
-            duration: Motion.press / 2; easing.type: Motion.standardEasing
-        }
-    }
-
-    // ── the mark ────────────────────────────────────────────────────────
-    SelectionMark {
-        anchors.left: parent.left
-        y: (root._headingHeight - height) / 2
-        shown: root._normal && root.selected
-        markColor: root.markColor
-
-        transform: Scale {
-            origin.x: Style.markThickness / 2
-            origin.y: Style.markHeight / 2
-            xScale: 1 + root._pulse * 0.25
-            yScale: 1 + root._pulse * 0.25
-        }
+    // ── the selection ───────────────────────────────────────────────────
+    // The accent at `opacitySelected` over whatever the row sits on, with the
+    // name in the accent (spec 07, owner 2026-10-16): no side marker.
+    Rectangle {
+        y: 0
+        width: parent.width
+        height: root._headingHeight
+        radius: Style.radiusSm
+        visible: root._normal && root.selected
+        color: Style.selected("transparent", root.selectedColor)
     }
 
     // ── interaction ─────────────────────────────────────────────────────
