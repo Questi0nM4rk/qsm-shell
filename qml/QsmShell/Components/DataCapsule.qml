@@ -151,12 +151,11 @@ T.Control {
 
         StateLayer {
             anchors.fill: parent
-            anchors.margins: -Style.spaceTight
             host: root
             target: null
             interactive: root.acceptsInput && root.interactive
             focused: root.activeFocus
-            focusRadius: root.radius + Style.spaceTight
+            focusRadius: root.radius
         }
     }
 

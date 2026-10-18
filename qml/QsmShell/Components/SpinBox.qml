@@ -230,14 +230,12 @@ T.DoubleSpinBox {
     StateLayer {
         objectName: "spinBoxLayer"
         z: -0.5
-        x: -Style.spaceTight
-        y: -Style.spaceTight
-        width: root.width + Style.spaceTight * 2
-        height: root.height + Style.spaceTight * 2
+        width: root.width
+        height: root.height
         host: root
         target: null
         focused: root.focused
-        focusRadius: Style.radiusMd + Style.spaceTight
+        focusRadius: Style.radiusMd
         focusColor: root.failed ? Style.danger : Style.accent
     }
 

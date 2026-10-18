@@ -79,6 +79,11 @@ T.RangeSlider {
     property color fill: Style.accent
     property color trackColor: Style.overlay
     property color thumbColor: Style.text
+    // A thin cut-out around a circle thumb. The thumb straddles the fill and
+    // the track, and a light thumb on a light accent fill is 1.6:1 against it;
+    // the ring is dark against the fill and the thumb is light against the
+    // ring, so the thumb's edge reads on either side of the join.
+    property color thumbRingColor: Style.band
     // What paints INSIDE the thumb, over `thumbColor`.
     property color thumbContentColor: Style.textOnPrimary
 
@@ -386,22 +391,22 @@ T.RangeSlider {
     readonly property real _restEndStart: root._bIsThumb ? root._bOffset + root._trailInset : root._mainSpan
 
     // ── geometry across the axis ───────────────────────────────────────
-    // How far a thumb grows PER SIDE under the pointer. Reserved at rest as
-    // well: reserving it only on hover would move the track under the pointer
-    // that is hovering it. A pill grows along its length only, and twice as
-    // far because that is the only cue it has.
+    // How far a thumb grows PER SIDE under the pointer. Growth and the
+    // shadow's drop OVERFLOW into the gap around the control and are never
+    // added to its layout size, so the visible gap between two sliders is
+    // the gap the host declared. The growth is capped at what the control's
+    // own cross extent leaves around the thumb: a thumb that grew past its
+    // track would stick out of a bar that is exactly as tall as the thumb.
+    // A pill grows along its length only, and twice as far because that is
+    // the only cue it has.
     readonly property real _hoverGrowth: Style.rhythm(Style.space1 * root._s)
-    readonly property real _crossGrowth: root._hoverGrowth * (root._pill ? 2 : 1)
-    // The shadow drops along `y` in BOTH orientations -- it is gravity, not
-    // the axis -- so its slack is cross-axis on a horizontal slider and
-    // main-axis on a vertical one.
-    readonly property real _shadowDrop: root.raised && !root._pill ? Style.sliderThumbLift * 2 : 0
-    readonly property real _thumbSpan: root._thumbCross + root._crossGrowth * 2
-        + (root.vertical ? 0 : root._shadowDrop * 2)
+    readonly property real _growthRoom: Math.max(0,
+        ((root.vertical ? root.availableWidth : root.availableHeight) - root._thumbCross) / 2)
+    readonly property real _crossGrowth: Math.min(root._hoverGrowth * (root._pill ? 2 : 1), root._growthRoom)
 
     // At least a comfortable hit target across the axis, whatever the track's
     // thickness: a 4px track with a 16px thumb still has to be aimable.
-    readonly property real _crossSize: Math.max(Style.controlHeightSm, root.thickness, root._thumbSpan)
+    readonly property real _crossSize: Math.max(Style.controlHeightSm, root.thickness, root._thumbCross)
 
     // The main axis is a constant PLUS what the label takes, so the track
     // keeps its natural length whatever sits beside it.
@@ -413,14 +418,11 @@ T.RangeSlider {
         : root._crossSize + root.topPadding + root.bottomPadding
 
     // Padding is where the label sits, and the template owns the arithmetic
-    // from here: the contentItem gets exactly what is left. Both ends of the
-    // MAIN axis keep `_hoverGrowth`, because at either bound a thumb is flush
-    // with the end of the track and its growth has nowhere else to go; the
-    // bottom of a vertical one keeps the shadow's drop too.
-    leftPadding: root._labelLeft + (root.horizontal ? root._hoverGrowth : 0)
-    rightPadding: root._labelRight + (root.horizontal ? root._hoverGrowth : 0)
-    topPadding: root._labelAbove + (root.vertical ? root._hoverGrowth : 0)
-    bottomPadding: root._labelBelow + (root.vertical ? root._hoverGrowth + root._shadowDrop : 0)
+    // from here: the contentItem gets exactly what is left.
+    leftPadding: root._labelLeft
+    rightPadding: root._labelRight
+    topPadding: root._labelAbove
+    bottomPadding: root._labelBelow
 
     // The label, on the side `labelPosition` names, centred on the track
     // along the other axis. The same element `Field` puts above a text box.
@@ -581,6 +583,16 @@ T.RangeSlider {
         }
 
         Rectangle {
+            visible: !root._pill
+            width: thumb.span + Style.spaceTight * 2
+            height: width
+            x: (thumb.width - width) / 2
+            y: (thumb.height - height) / 2
+            radius: width / 2
+            color: root.thumbRingColor
+        }
+
+        Rectangle {
             objectName: thumb.thumbName
             width: root._pill && root.horizontal ? root._thumbMain : thumb.span
             height: root._pill && root.vertical ? root._thumbMain : thumb.span
@@ -673,17 +685,17 @@ T.RangeSlider {
         // measured, the control's own `activeFocus` stays false while a
         // descendant holds it, so the thumbs are read by name.
         focused: root.activeFocus || highThumb.activeFocus || lowThumb.activeFocus
-        readonly property real gap: Style.spaceTight
-        readonly property real cross: root.thickness + gap * 2
+        // The layer is the track's own box: the ring it draws stands off it
+        // by `spaceTight` itself.
         x: root.horizontal
-            ? root.leftPadding - gap
-            : root.leftPadding + (root.availableWidth - cross) / 2
+            ? root.leftPadding
+            : root.leftPadding + (root.availableWidth - root.thickness) / 2
         y: root.horizontal
-            ? root.topPadding + (root.availableHeight - cross) / 2
-            : root.topPadding - gap
-        width: root.horizontal ? root.availableWidth + gap * 2 : cross
-        height: root.horizontal ? cross : root.availableHeight + gap * 2
-        focusRadius: root.thickness / 2 + gap
+            ? root.topPadding + (root.availableHeight - root.thickness) / 2
+            : root.topPadding
+        width: root.horizontal ? root.availableWidth : root.thickness
+        height: root.horizontal ? root.thickness : root.availableHeight
+        focusRadius: root.thickness / 2
     }
 
     // The value under a point `along` the main axis, measured in the control's
