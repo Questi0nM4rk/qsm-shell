@@ -40,10 +40,10 @@ Item {
     // How far through, 0..1, drawn as a ring around the picture. Below 0 there
     // is no ring and the item is exactly `size`.
     property real progress: -1
-    property color progressColor: Style.accent
+    property color progressColor: Style.text
     // The ring's empty part: a line of content, drawn in the band so it
     // reads on the overlay picture it circles.
-    property color progressTrack: Style.band
+    property color progressTrack: Style.overlay
     property real ringWidth: Math.max(2, Math.round(size * 0.06))
     // Air between the picture and its ring, so the two read as a thing and its
     // frame rather than as one thick border.

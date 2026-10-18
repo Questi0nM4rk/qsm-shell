@@ -51,6 +51,11 @@ QtObject {
     readonly property color danger: backend?.danger ?? Tokens.colorDanger
     // The floating shadow is read by DataCapsule alone, for the one body with
     // nothing behind it but a client; nothing in the frame draws a shadow.
+    // A key's cap measured against the BAND: 0.9 above it, which is what the
+    // overlay step measures when it sits on a surface card on the band. A
+    // cap therefore reads the same on the band, on a card and on a popout,
+    // where the overlay rung itself vanished on the rung above it.
+    readonly property color keycap: backend?.keycap ?? root.lift(root.band, 0.9)
     readonly property color shadow: backend?.shadow ?? Tokens.colorShadow
     readonly property real floatingShadowOpacity: backend?.floatingShadowOpacity ?? Tokens.opacityFloatingShadow
     readonly property real floatingShadowBlur: backend?.floatingShadowBlur ?? Tokens.geometryFloatingShadowBlur

@@ -10,6 +10,11 @@ T.Control {
     property int size: Style.iconMd
     property color color: Style.text
     property string accessibleName: icon
+    // A play triangle's mass sits left of its box's centre (a triangle's
+    // centroid is a third of its width from the flat side, a half would be
+    // the box centre), so centred by box it reads as pushed left. The glyph
+    // is about half the box wide, hence a twelfth of the size.
+    property real opticalOffset: root.icon === "play" ? root.size / 12 : 0
     readonly property color paintedColor: root.enabled ? root.color : Style.disabled(root.color)
     signal clicked
 
@@ -38,6 +43,7 @@ T.Control {
         SvgIcon {
             id: glyph
             anchors.centerIn: parent
+            anchors.horizontalCenterOffset: root.opticalOffset
             name: root.icon
             size: root.size
             color: root.paintedColor

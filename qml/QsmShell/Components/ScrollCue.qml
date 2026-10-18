@@ -77,7 +77,8 @@ Item {
         color: Style.textMuted
         // Present while the list is moving, nearly gone at rest — at rest the
         // shell paints nothing it does not need to.
-        opacity: root.view.moving || root.view.flicking ? 0.6 : 0.2
+        opacity: root.view.moving || root.view.flicking
+            ? Style.scrollCueActiveOpacity : Style.scrollCueRestOpacity
 
         Behavior on opacity {
             NumberAnimation { duration: Motion.medium; easing.type: Motion.standardEasing }

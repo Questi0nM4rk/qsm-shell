@@ -85,6 +85,7 @@ T.Control {
             Prose {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "metadata"
+                font.pixelSize: Style.textSm
                 color: root._filled || root.danger ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                 text: root.shownLabel
             }

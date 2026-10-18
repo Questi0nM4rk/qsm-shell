@@ -45,7 +45,7 @@ RowLayout {
                 Layout.preferredWidth: Math.max(root.minCapWidth, cap.implicitWidth + Style.space2)
                 Layout.preferredHeight: Style.badgeHeight + Style.space1
                 radius: Style.radiusXs
-                color: Style.overlay
+                color: Style.keycap
 
                 Prose {
                     id: cap

@@ -61,6 +61,9 @@ Item {
     // without the model and the view disagreeing about how many rows there are.
     property bool header: false
     property bool separator: false
+    // A header's name wears the accent instead of the muted section colour:
+    // the group that is current (a cheat sheet's open section).
+    property bool accentHeader: false
     // Keyboard focus. Defaults to this item's own; a list that owns focus for
     // its rows binds it.
     property bool focused: root.activeFocus
@@ -76,6 +79,11 @@ Item {
     property bool recede: true
     // What the selected row wears: the fill's tint and the name.
     property color selectedColor: root.danger ? Style.danger : Style.accent
+    // How far the highlight sits from the edge of the rollout the list lives
+    // in. The highlight's corner is the rollout's radius minus this, so the
+    // two curves stay concentric (`childRadius` cannot see through a ListView).
+    property real edgeInset: Style.space3
+    readonly property real highlightRadius: Style.insetRadius(root.edgeInset)
 
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
@@ -133,15 +141,16 @@ Item {
     implicitHeight: root.headingHeight + root.expansionHeight
 
     // ── the selection ───────────────────────────────────────────────────
-    // The accent at `opacitySelected` over whatever the row sits on, with the
-    // name in the accent (spec 07, owner 2026-10-16): no side marker.
+    // The accent at `opacitySelected` over the SURFACE step, with the name in
+    // the accent (spec 07, owner 2026-10-16): no side marker. Over the band
+    // the tint read as a smudge, so it is laid over the surface it belongs on.
     Rectangle {
         y: 0
         width: parent.width
         height: root._headingHeight
-        radius: Style.radiusSm
+        radius: root.highlightRadius
         visible: root._normal && root.selected
-        color: Style.selected("transparent", root.selectedColor)
+        color: Style.selected(Style.surface, root.selectedColor)
     }
 
     // ── interaction ─────────────────────────────────────────────────────
@@ -159,9 +168,9 @@ Item {
         target: leadingBox
         interactive: root.selectable
         focused: root.focused
-        focusRadius: Style.radiusSm
-        hoverScale: 1.12
-        pressScale: 0.92
+        focusRadius: root.highlightRadius
+        hoverScale: Motion.rowHoverScale
+        pressScale: Motion.rowPressScale
         onClicked: root.activate()
         onHoveredEntered: root.hoveredEntered()
     }
@@ -180,7 +189,11 @@ Item {
         spacing: Style.space2
 
         Divider { Layout.fillWidth: true; strength: 0.5 }
-        Prose { role: "section"; text: root.primary }
+        Prose {
+            role: "section"
+            text: root.primary
+            color: root.accentHeader ? Style.accent : Style.textMuted
+        }
         Divider { Layout.fillWidth: true; strength: 0.5 }
     }
 
