@@ -106,7 +106,10 @@ T.Control {
         NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
     }
 
+    // Flat: a button's growth is its depth, not a shadow and an edge line.
     background: Card {
+        glow: false
+        shadow: false
         radius: root.radius
         surfaceColor: root.surfaceColor
         surfaceOpacity: root.surfaceOpacity

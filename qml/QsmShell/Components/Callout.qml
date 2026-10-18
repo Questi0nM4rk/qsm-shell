@@ -23,6 +23,10 @@ import qs.QsmShell.Style
 Card {
     id: root
 
+    // Flat inside the surface that holds it.
+    glow: false
+    shadow: false
+
     // info | success | warning | danger
     property string tone: "info"
     property string title: ""
