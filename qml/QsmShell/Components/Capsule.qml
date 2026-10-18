@@ -30,7 +30,9 @@ T.Control {
     property color accentColor: Style.accent
     property color surfaceColor
     property real surfaceOpacity
-    property real radius: Style.radiusPill
+    // One control radius across a row of controls (the search field and the
+    // segmented track wear radiusMd); only a glyph-only capsule is a pill.
+    property real radius: root.label.length === 0 ? Style.radiusPill : Style.radiusMd
 
     // ── the two axes ────────────────────────────────────────────────────
     // ghost | secondary | primary | destructive
@@ -57,7 +59,10 @@ T.Control {
     // Selected is identity (AGENTS.md, surface ladder): the accent tint on the
     // body AND accent content. Tint alone left an ON capsule telling only by
     // a shade of its surface.
-    readonly property color _proseBase: variant === "destructive" ? Style.danger : active ? _accent : Style.text
+    // A ghost capsule rests muted and answers the pointer in its label: its
+    // body never tints, because the capsule grows instead.
+    readonly property color _proseBase: variant === "destructive" ? Style.danger : active ? _accent
+        : variant === "ghost" && !stateLayer.hovered ? Style.textMuted : Style.text
     readonly property color _prose: root.enabled ? _proseBase : Style.disabled(_proseBase)
 
     // ONE padding value, used by BOTH the width and the content margins. They
@@ -80,15 +85,17 @@ T.Control {
     ]
 
     // The state matrix is the ladder's (`Style.tone`): ON and "asks loudly"
-    // are both the accent's identity over the surface, hover lifts a step.
+    // are both the accent's identity over the surface. Hover is not a lift
+    // here: the capsule GROWS (StateLayer), and a tint on top of growth is
+    // two answers to one event. The press lift stays for the pressed body.
     // Disabled dims each role through the state matrix; opacity would make the
     // card, glyph and text show through one another as a composite.
-    surfaceColor: Style.tone(Style.surface, layer.hovered, false,
+    surfaceColor: Style.tone(Style.surface, false, stateLayer.pressed,
         root.active || root.variant === "primary", root.enabled, root._accent)
     // A quiet variant at rest paints NOTHING. It is transparent rather than
     // surface-at-90%, which is the difference between a control that sits on
     // the surface and one that is part of it.
-    surfaceOpacity: root._quiet && !root.active && !(layer.hovered && root.enabled)
+    surfaceOpacity: root._quiet && !root.active
         ? 0
         : Style.surfaceOpacity
 
@@ -153,7 +160,7 @@ T.Control {
     // Growth and press come from the layer, which owns the one response curve.
     // A pill this wide takes a smaller step than an icon does.
     StateLayer {
-        id: layer
+        id: stateLayer
         anchors.fill: parent
         interactive: root.enabled
         focused: root.focused
