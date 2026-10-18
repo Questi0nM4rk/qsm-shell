@@ -24,22 +24,23 @@ wall, content or input as a side effect. A correct producer rect is insufficient
 if a later helper normalizes it into a different shape.
 
 The terminal comparison is almost hidden → hidden slot still present → slot
-removed. At zero outness, composition preserves the incoming fill/rim field,
+removed. At zero outness, composition preserves the incoming fill field,
 existing edge gate and lighting, and effective deformation is identity. Removing
 that neutral slot changes neither paint nor geometry; input already excludes the
-hidden body. Preserving only the zero contour is insufficient because glow
+hidden body. Preserving only the zero contour is insufficient because edge
 depth uses the field's interior values and gradient. See
-**Composition and fill**, **Edge glow** and **Reveal choreography** for formulas.
+**Composition and fill**, **Edge separation** and **Reveal choreography** for formulas.
 
 ## Silhouette shader
 
 One full-screen ShaderEffect per monitor computes the whole silhouette (band + all rollouts)
 per pixel and fills it. Single pass; no per-shape draw calls.
 
-The fill carries ONE paint on top: the edge glow, a grain of tint thickening toward the INSIDE
-edge of the merged silhouette (see "Edge glow" below). It is not a border and not a stroke
-around a shape — 01-frame still forbids those, and nothing draws its own chrome. It is the
-union's own edge, painted, and it exists only on inner boundaries.
+The fill carries ONE paint on top: the edge separation, a slight line of tint exactly at the
+merged silhouette's edge that fades smoothly inward into the fill (see "Edge separation"
+below). It is not a border and not a stroke around a shape — 01-frame still forbids those, and
+nothing draws its own chrome. It is the union's own edge, painted from the union's own
+distance, and it exists only on inner boundaries.
 
 ### Attached expansion
 
@@ -54,7 +55,7 @@ pretend to expand an absent frame.
 
 Use the same `registerBulge`, origin mask, blend and outness: one slot, one fill,
 one pass, no extra rectangle or registry. Outness reaches zero before removal,
-preserving the incoming fill/rim field and lighting. No caller-specific geometry
+preserving the incoming fill field and lighting. No caller-specific geometry
 selection is part of this contract.
 
 The render chain to follow for one body is
@@ -68,11 +69,6 @@ present at zero outness contributes nothing before it is unregistered.
 ### SDF primitives
 
 ```glsl
-float sdBox(vec2 p, vec2 center, vec2 halfSize) {
-    vec2 q = abs(p - center) - halfSize;
-    return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0);
-}
-
 float sdRoundedBox(vec2 p, vec2 center, vec2 halfSize, float r) {
     vec2 q = abs(p - center) - halfSize + vec2(r);
     return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - r;
@@ -92,31 +88,25 @@ float sdRoundedBox4(vec2 p, vec2 center, vec2 halfSize, vec4 r) {
 ### Blend family (circular — arc fillets, radius k)
 
 The blend deviates from `min(a,b)` only where BOTH inputs are < k; max blend depth at a==b is
-`(sqrt(2)-1)*k`. `smaxSharpA` keeps operand `a`'s zero-boundary sharp — used only for the
-band's outer (screen) edge so it stays flush to the last pixel row.
+`(sqrt(2)-1)*k`. The blend inflates the INTERIOR distance where both fields are inside (see
+"Edge separation": the edge reads a normalised distance for that reason).
 
 ```glsl
 float smin(float a, float b, float k) {
     return max(k, min(a, b)) - length(max(vec2(k) - vec2(a, b), vec2(0.0)));
 }
-float smax(float a, float b, float k) {
-    return min(-k, max(a, b)) + length(max(vec2(a, b) + vec2(k), vec2(0.0)));
-}
-float smaxSharpA(float a, float b, float k) {
-    float sm = min(-k, max(a, b)) + length(max(vec2(a, b) + vec2(k), vec2(0.0)));
-    float blend = (sm - max(a, b)) * smoothstep(0.0, k * 0.5, -a);
-    return max(a, b) + blend;
-}
 ```
 
 ### Band (frame) shape
 
+The band is everything OUTSIDE the viewport. It has no outer boundary: the screen edge is not
+a silhouette edge, so no field the edge reads may measure it (owner 2026-10-18: open rollout
+corners looked cut off because the old field also measured the distance to the screen edge).
+Every screen pixel is inside the band's reach, so the fill is unchanged.
+
 ```glsl
-float dOuter = sdBox(pixel, outerCenter, outerHalf) - 1.0;   // -1: cover the last pixel row
 float dInner = sdRoundedBox(pixel, innerCenter, innerHalf, viewportRounding);
-// inner corner fillet must not exceed the thinnest band side:
-float kFrame = clamp(min(smoothFactor, minThickness - 1.0), 1.0, smoothFactor);
-float dFrame = smaxSharpA(dOuter, -dInner, kFrame);
+float dFrame = -dInner;
 ```
 
 ### Fixed frame — no border sink
@@ -133,8 +123,6 @@ tails and add a second restoration motion when they disappear.
 // body and origin continuation into slotSdf with the existing union rules.
 // Outness restores the incoming distance field, not merely the zero contour:
 mergedSdf = mix(incomingSdf, slotSdf, outness);
-// The exact-union rim field follows the same endpoint.
-rimSdf = mix(incomingRimSdf, min(incomingRimSdf, dRim), outness);
 float fw = fwidth(mergedSdf);                       // derivative AA: equal weight every axis
 float alpha = 1.0 - smoothstep(-fw, fw, mergedSdf);
 fragColor = vec4(fillColor.rgb * alpha, alpha) * qt_Opacity;
@@ -145,10 +133,10 @@ Constants (ratified in 01-frame): band left 60 / others 16, smoothFactor 20, rol
 band segment is the smin's job, not a radius zeroing), viewport rounding 25. All shader
 coordinates are LOGICAL pixels; fractional monitor scale is absorbed by fwidth-based AA.
 
-`incomingSdf` and `incomingRimSdf` are saved before this slot contributes anything.
+`incomingSdf` is saved before this slot contributes anything.
 The slot's melt radius still follows blend, independently of outness. At outness
 one its established composition is unchanged; at zero the entire incoming field
-is unchanged, including its gradient and interior depth used by the glow.
+is unchanged, including its gradient and interior depth used by the edge.
 This is distance-field composition, not opacity on the painted body or its content.
 It prevents slot removal from becoming a separate border-lighting recovery.
 
@@ -175,7 +163,7 @@ d *= max(minEig, 0.01);
 Qt cannot bind QML arrays to GLSL array uniforms — use NAMED per-slot uniforms:
 `rect0..rect7` (vec4: cx, cy, halfW, halfH), `radii0..radii7` (vec4 per-corner),
 `deform0..deform7` (vec4: the inverse 2x2, row-major), `param0..param7` (vec4: x = minEig,
-y = melt-blend factor [0,1], z = packed rim/origin side masks, w = outness [0,1]).
+y = melt-blend factor [0,1], z = packed seam/origin side masks, w = outness [0,1]).
 Empty slot = zero rect (contributes nothing), and its param is `(1, 1, 0, 1)`.
 
 Before packing, automatic edge snapping applies only to sides not declared in
@@ -197,11 +185,12 @@ Non-origin edge snapping, weld caps and neighbour seam overlap remain unchanged.
 This paint registration never enlarges the separately registered input viewport.
 
 `z` packs two side masks (1 left, 2 right, 4 top, 8 bottom): the low four
-bits name rim continuations, the next four name the body's declared origin
-sides. A parent can extend its rim toward a child still emerging, but cannot
+bits name seam continuations, the next four name the body's declared origin
+sides. A parent can extend its seam toward a child still emerging, but cannot
 extend fill there. Only origin sides extend fill through the body's source.
-A rim-only extension cannot remove a glow computed from `mergedSdf`, and
-leaves a gap when deformation compresses the body away from its origin.
+The shader reads only the origin bits (z / 16). A seam-only extension cannot remove an edge
+computed from `mergedSdf`, and leaves a gap when deformation compresses the body away from
+its origin.
 
 ```glsl
 float ext = max(leftEdge, edge) + smoothFactor;
@@ -225,68 +214,70 @@ float attachedBody = param.y == 0.0
     ? (frameJoin > 0.0 ? smin(dFrame, dWeld, frameJoin) : min(dFrame, dWeld))
     : dWeld;
 slotSdf = min(slotSdf, attachedBody);
-// Rim uses mod(param.z, 16.0), its own extended box, and the SAME tp.
 ```
 
 This retains a straight full-span parent/child seam while a child touching a
 second band gets that band's concave fillet. The frame join is capped at half
 the thinnest band, the same weld-depth rule as the CPU registration. Its reach
 also goes to zero with outness. A slot with outness zero contributes no body,
-fill continuation, rim or glow gate: skip it before merging its fields. Never
+fill continuation or edge gate: skip it before merging its fields. Never
 call this circular smin with zero reach as a substitute for exact min.
 
 `w` is OUTNESS: how far this body has emerged, 0 hidden to 1 fully out. It is a different
 fact from `y` and the two must not be conflated. `y` is the melt radius, and a caller may set
 it to exactly 0 to ask for an EXACT union with a straight seam — a nested host flush against
-its parent does this deliberately, while being fully out. Only `w` may gate the edge glow.
-Handles are NOT slots: the OSD circle handle and the top dot handles are dedicated uniforms
+its parent does this deliberately, while being fully out. Only `w` may gate the edge.
+Handles are NOT slots: the OSD circle handle is a dedicated uniform
 rendered with a circle SDF — `length(p - c) - r` — folded into mergedSdf with the same smin.
 Slot budget (worst concurrent case): rail popout + OSD + notification rollout + one global
 modal + calendar = 5 of 8; peek is the band itself (no slot). Never exceeds 8.
 
-### Edge glow
+### Edge separation
 
-The edge of the merged silhouette is a GLOW, not a line (owner 2026-10-17): from the edge
-inward the fill leans toward the tint `strokeColor.rgb`, strongest at the edge
-(`strokeColor.a`) and gone `strokeWidth` px inward. The glow is grain, not a ramp: every
-device pixel draws a stable random number and paints the tint only when that number falls
-under the glow's local weight, so the dots thicken toward the edge until the very edge row is
-solid colour. The uniform names stay `strokeColor` / `strokeWidth` so the std140 block does not
-move; they mean tint + edge strength and glow width.
+Owner 2026-10-18: "to nema byt glow, to ma byt slight edge detection / separation. Aby sli edges
+videt, ale ten glow line nevypadal dobre. Takze chci slight full color on the edge, and than
+gradient for some time down so it blends with the main color." The edge of the merged silhouette
+is a slight line of the edge colour exactly at the edge, then a smooth gradient fading inward
+into the band colour over a short width. No grain, no noise, no light term.
+
+Uniforms: `edgeColor.rgb` is the edge colour, `edgeColor.a` the line strength (the share of
+edge colour at the edge, 0..1), `edgeFade` the fade width in logical px. The profile is ONE
+curve of ONE distance, so a bulge, a join, a rollout corner and a band side all get the same
+edge:
 
 ```glsl
-// Stable per DEVICE pixel (gl_FragCoord, not the logical `pixel`): the grain is 1:1 at
-// every monitor scale. Integer-free so it transpiles to GLSL 100es/120 as well.
-float grainAt(vec2 p) {
-    vec3 q = fract(vec3(p.xyx) * 0.1031);
-    q += dot(q, q.yzx + 33.33);
-    return fract((q.x + q.y) * q.z);
-}
+// Distance from the union's edge, in logical px, evenly on every side.
+// mergedSdf is the smin-blended field the fill uses. It is a true distance only
+// near a single wall: where two fields overlap, smin inflates the interior
+// (smin(a, a, k) = sqrt(2) * a + k * (1 - sqrt(2))) and between facing walls it
+// deflates it. Dividing by the field's own gradient length (first-order distance
+// estimate, exact for any monotone function of a distance) removes both.
+float gradLen = length(vec2(dFdx(mergedSdf), dFdy(mergedSdf)))
+              / length(dFdx(pixel));                      // logical px per device px
+float dist = max(-mergedSdf, 0.0) / clamp(gradLen, 0.5, 2.0);
 
-float depth = -mergedSdf;                                   // 0 at the edge, + inward
-float glow = (1.0 - smoothstep(0.0, strokeWidth, depth))
-    * (fullscreenMode != 0 ? 1.0 : smoothstep(0.0, 2.0, outerDist - depth)); // INNER only
-float n = grainAt(floor(gl_FragCoord.xy));
-float m = glow * strokeColor.a * step(n, glow) * strokeGate;
-rgb = mix(rgb, strokeColor.rgb, clamp(m, 0.0, 1.0));       // before `rgb * alpha`
+float s = clamp(dist / edgeFade, 0.0, 1.0);
+float w = edgeColor.a * (1.0 - s) * (1.0 - s) * edgeGate;  // steep first, long tail
+rgb = mix(rgb, edgeColor.rgb, w);                          // before `rgb * alpha`
 ```
 
-The grain is the STEP form, `step(n, glow)`: a pixel is either tinted at `glow * strength` or
-plain fill, and the share of tinted pixels equals `glow`. That reads as dots that thicken
-toward the edge and fuse into full colour on it. The lerp form `glow * strength * (0.5 + 0.5 *
-n)` tints every pixel and only varies how much, which reads as a dithered smooth ramp: the
-"granular to full colour" ask is a density change, and only the step form has one.
+`(1 - s)^2` is the line plus the gradient in one curve: the edge pixel carries the full
+`edgeColor.a`, the first pixels drop quickly so the edge reads as a line, and the tail eases to
+exactly zero at `edgeFade` with zero slope so it joins the band colour without a visible end.
 
-No light term: the glow never exceeds `strokeColor.a`. The centre point light the glass edge
-used multiplied it by up to 1.7, which a minimal glow cannot carry.
+Why it is even. The distance is measured to the union's own boundary only: the band has no outer
+boundary (see "Band (frame) shape"), so nothing cuts the profile where a rollout wall reaches the
+screen edge, and there is no diagonal chop at an open rollout corner. Per-corner radii and the
+melt fillets are already part of `mergedSdf`, so corners, bulges and joins use their own true
+contour. The gradient normalisation fixes the two places the blended field is not a distance.
+A bulge narrower than `2 * edgeFade` is painted entirely, which is why the fade stays short.
 
-The outer factor is not optional: `mergedSdf` measures distance to ANY boundary, so without it
-the glow also traces the outer screen edge. In a band thinner than `2 * strokeWidth` the glow
-is cut where the band's midline is nearer the screen edge than the inner edge.
+Cards use the same curve on a rounded box (`cardglow.frag`): a box's SDF is already a true
+distance, so the normalisation is omitted there and the profile is the same line.
 
 **Water law.** A body that has not come out yet has no edge of its own. A barely-out rollout
 drives its melt radius toward zero, smin degenerates to a hard min, and the union keeps a full
-boundary where the new body meets whatever it is emerging from — which the glow would then
+boundary where the new body meets whatever it is emerging from — which the edge would then
 draw as a line between them. Gate only the newly exposed boundary, never
 the existing frame/parent boundary. Read the incoming field before this slot:
 
@@ -295,7 +286,7 @@ const float seamReach = 6.0;
 float outness = clamp(param.w, 0.0, 1.0);              // param.w, NEVER param.y
 float nearThis = 1.0 - smoothstep(0.0, seamReach, abs(d));
 float newBoundary = nearThis * smoothstep(0.0, seamReach, incomingSdf);
-strokeGate = min(strokeGate, mix(1.0, outness, newBoundary));
+edgeGate = min(edgeGate, mix(1.0, outness, newBoundary));
 ```
 
 At the incoming union's edge (`incomingSdf = 0`) the slot gate is exactly one.
