@@ -318,6 +318,23 @@ QtObject {
     // zero-depth edge along the join.
     readonly property int meltSmoothing: backend?.meltSmoothing ?? Tokens.geometryMeltSmoothing
     readonly property int edgeSnapReach: backend?.edgeSnapReach ?? Tokens.geometryEdgeSnapReach
+    // How far a hover trigger reaches past the shape it opens (owner
+    // 2026-10-18: "musime to roztahnout, abych nemusel mit pixel perfect
+    // aim"). A handle is a few pixels of paint; the pointer is found inside
+    // that paint grown by this many pixels on every side, never inside the
+    // paint alone. 20 makes the 8px dots handle a 48px target.
+    readonly property int hoverReach: backend?.hoverReach ?? Tokens.geometryHoverReach
+    // The zone a pointer must be inside to open what a painted shape opens:
+    // `painted` grown by hoverReach on every side, clipped to `bounds` (the
+    // window, past whose edge there is no pointer to find). One owner so no
+    // handle grows its own zone differently.
+    function hoverZone(painted: rect, bounds: rect): rect {
+        const left = Math.max(bounds.x, painted.x - hoverReach)
+        const top = Math.max(bounds.y, painted.y - hoverReach)
+        const right = Math.min(bounds.x + bounds.width, painted.x + painted.width + hoverReach)
+        const bottom = Math.min(bounds.y + bounds.height, painted.y + painted.height + hoverReach)
+        return Qt.rect(left, top, Math.max(0, right - left), Math.max(0, bottom - top))
+    }
     readonly property real seamOverlap: backend?.seamOverlap ?? Tokens.geometrySeamOverlap
     readonly property int edgeGlowWidth: backend?.edgeGlowWidth ?? Tokens.geometryEdgeGlowWidth
 
