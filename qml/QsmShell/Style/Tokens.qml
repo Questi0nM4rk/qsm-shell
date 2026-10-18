@@ -104,6 +104,7 @@ QtObject {
     readonly property real geometryNotificationDismissFraction: 0.4
     readonly property int geometryMeltSmoothing: 20
     readonly property int geometryEdgeSnapReach: 32
+    readonly property int geometryHoverReach: 20
     readonly property real geometryFloatingShadowBlur: 0.6
     readonly property int geometryFloatingShadowOffset: 8
     readonly property int geometryFloatingShadowExtent: 24

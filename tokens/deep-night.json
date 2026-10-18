@@ -117,6 +117,7 @@
     "notificationDismissFraction": 0.4,
     "meltSmoothing": 20,
     "edgeSnapReach": 32,
+    "hoverReach": 20,
     "floatingShadowBlur": 0.6,
     "floatingShadowOffset": 8,
     "floatingShadowExtent": 24,
