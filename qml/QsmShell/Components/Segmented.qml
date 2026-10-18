@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Templates as T
 
@@ -27,12 +28,12 @@ T.TabBar {
     readonly property int _iconSize: Style.iconNear(Style.iconSm * root._s)
     readonly property int _inset: Style.rhythm(Style.space2 * root._s)
     readonly property int _gap: Style.rhythm(Style.space1 * root._s)
-    readonly property int _radius: Style.radiusSm
-    // The track holds its segments at a hairline inset, and the one picked
-    // segment is a pill concentric with the track's corners: highlights
-    // that reached the track's edge squared off its rounded ends.
-    readonly property int _pad: Style.spaceTight
-    readonly property int _thumbRadius: Math.max(0, root._radius - root._pad)
+    // The header row's one control radius: the search field shares it.
+    readonly property int _radius: Style.radiusMd
+    // The picked segment fills its segment to the track's own edge and wears
+    // the track's own corner, so the outer ends stay round and a highlight
+    // never stops short of them. No inset, so no second radius to derive.
+    readonly property int _pad: 0
     readonly property real _segmentWidth: (root.width - root._pad * 2) / Math.max(1, root.options.length)
     readonly property bool focused: root.activeFocus || root.currentItem?.activeFocus === true
 
@@ -44,6 +45,8 @@ T.TabBar {
     implicitHeight: root.barHeight
     Accessible.role: Accessible.PageTabList
 
+    // Every reader of an option goes through here, so a host that rebuilds
+    // `options` (a label that carries a count) updates the segments in place.
     function _at(index: int): var {
         const option = root.options[index];
         return option === undefined ? null : option;
@@ -74,7 +77,14 @@ T.TabBar {
         return -1;
     }
 
-    // TabBar's C++ setter preserves a host binding. Reporting is deliberately
+    // TabBar's C++ setter preserves a host binding, but the container also
+    // rewrites currentIndex itself whenever an item is removed or added. A
+    // Repeater over `options` destroys every segment when the array is
+    // replaced, the container resets the index, and the host's binding (whose
+    // inputs did not change) is never re-evaluated: the thumb stayed on a
+    // stale index. The Repeater below is therefore keyed on the COUNT, so a
+    // rebuilt array of the same length touches no segment.
+    // Reporting is deliberately
     // here, rather than on currentIndexChanged: host synchronization is state,
     // not intent.
     function select(index: int): bool {
@@ -155,8 +165,20 @@ T.TabBar {
             y: root._pad
             width: root._segmentWidth
             height: root.barHeight - root._pad * 2
-            radius: root._thumbRadius
-            color: root.enabled ? Style.overlay : Style.disabled(Style.overlay)
+            radius: root._radius
+            // The picked segment is identity: the accent over the track,
+            // opaque, lifted off it by the card's slight shadow.
+            color: root.enabled ? Style.selected(Style.surface, Style.accent)
+                : Style.disabled(Style.selected(Style.surface, Style.accent))
+            layer.enabled: !Style.reducedEffects
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: Style.shadow
+                shadowOpacity: Style.cardShadowOpacity
+                shadowBlur: Style.cardShadowBlur
+                shadowVerticalOffset: Style.cardShadowOffset
+                blurMax: Style.cardShadowExtent
+            }
 
             Behavior on x {
                 enabled: !Style.reducedMotion
@@ -178,19 +200,19 @@ T.TabBar {
     }
 
     Repeater {
-        model: root.options
+        model: root.options.length
         delegate: Segment {}
     }
 
     component Segment: T.TabButton {
         id: tab
-        required property var modelData
         required property int index
 
         readonly property bool available: root._enabled(tab.index)
         readonly property bool selectedSegment: root.currentIndex === tab.index
         readonly property var option: root._at(tab.index)
-        readonly property bool iconOnly: root._labelOf(tab.modelData).length === 0
+        readonly property string labelText: root._labelOf(tab.option)
+        readonly property bool iconOnly: tab.labelText.length === 0
             && String(tab.option?.icon ?? "").length > 0
         objectName: "segmentedTab" + tab.index
         implicitWidth: root._segmentWidth
@@ -203,7 +225,7 @@ T.TabBar {
         activeFocusOnTab: false
         Accessible.role: Accessible.PageTab
         // An icon-only option has no label; `name` then speaks for it.
-        Accessible.name: root._labelOf(tab.modelData) || String(tab.option?.name ?? "")
+        Accessible.name: tab.labelText || String(tab.option?.name ?? "")
         Accessible.selected: tab.selectedSegment
         onClicked: root.select(tab.index)
         Keys.priority: Keys.BeforeItem
@@ -213,22 +235,20 @@ T.TabBar {
         // choice; hover answers in the label, never as a second tint.
         background: null
 
+        // The icon, label and badge are ONE group centred in the segment:
+        // a spacer on each side takes the slack, and the label shrinks (and
+        // elides) only when the group no longer fits.
         contentItem: RowLayout {
             anchors.fill: parent
             anchors.leftMargin: root._inset
             anchors.rightMargin: root._inset
             spacing: root._gap
 
-            // An icon-only option centres its glyph: the label that would
-            // have filled the row is absent, so these two do.
-            Item {
-                visible: tab.iconOnly
-                Layout.fillWidth: true
-            }
+            Item { Layout.fillWidth: true }
 
             SvgIcon {
                 visible: name.length > 0
-                name: typeof tab.modelData === "string" ? "" : String(tab.modelData?.icon ?? "")
+                name: typeof tab.option === "string" ? "" : String(tab.option?.icon ?? "")
                 size: root._iconSize
                 color: tab.enabled
                     ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
@@ -238,36 +258,37 @@ T.TabBar {
             Prose {
                 visible: !tab.iconOnly
                 role: "label"
-                text: root._labelOf(tab.modelData)
+                text: tab.labelText
                 color: tab.enabled
                     ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
                     : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
                 font.pixelSize: root._textSize
                 font.weight: tab.selectedSegment ? Style.weightBold : Style.weightMedium
+                horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 Layout.fillWidth: true
+                Layout.maximumWidth: implicitWidth
                 Layout.alignment: Qt.AlignVCenter
-            }
-            Item {
-                visible: tab.iconOnly
-                Layout.fillWidth: true
             }
             Badge {
                 visible: text.length > 0
                 tone: tab.selectedSegment ? "accent" : "neutral"
-                text: typeof tab.modelData === "string" ? "" : String(tab.modelData?.badge ?? "")
+                text: typeof tab.option === "string" ? "" : String(tab.option?.badge ?? "")
                 Layout.alignment: Qt.AlignVCenter
             }
+
+            Item { Layout.fillWidth: true }
         }
 
         StateLayer {
             anchors.fill: parent
             host: tab
-            target: null
+            // The label group acknowledges a press; the body stays put.
+            target: tab.contentItem
             hoverScale: 1
-            pressScale: 0.98
-            focusRadius: root._thumbRadius
+            pressScale: Motion.pressScaleSoft
+            focusRadius: root._radius
             focused: tab.selectedSegment && root.focused
         }
     }
