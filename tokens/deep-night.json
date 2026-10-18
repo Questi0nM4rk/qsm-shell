@@ -65,6 +65,11 @@
     "rolloutDeformDamping": 28,
     "microPopScale": 0.97,
     "capsuleHoverScale": 1.04,
+    "hoverScale": 1.08,
+    "pressScale": 0.94,
+    "pressScaleSoft": 0.98,
+    "rowHoverScale": 1.12,
+    "rowPressScale": 0.92,
     "spin": 900,
     "pulse": 1400,
     "hoverGrace": 180
@@ -76,6 +81,9 @@
     "recede": 0.45,
     "floatingShadow": 0.28,
     "cardShadow": 0.28,
+    "badgeTint": 0.18,
+    "scrollCueActive": 0.6,
+    "scrollCueRest": 0.2,
     "edgeStrength": 0.5
   },
   "font": {
@@ -106,6 +114,7 @@
     "sliderLength": 260,
     "sliderLengthVertical": 180,
     "badgeHeight": 16,
+    "badgeWidth": 28,
     "trackThickness": 6,
     "ringDiameter": 150,
     "ringStroke": 8,

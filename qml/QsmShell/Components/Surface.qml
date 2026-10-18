@@ -21,10 +21,19 @@ Rectangle {
     property bool hovered: false
     property bool pressed: false
     property bool selected: false
+    // The wall this body sits flush against, "left", "right", "top" or
+    // "bottom": the two corners on that side go square and the others keep
+    // `radius`. A rail cell against the frame must not round into the wall.
+    property string snapEdge: ""
 
     readonly property color contentColor: root.enabled
         ? (root.selected ? root.accent : Style.text)
         : Style.disabled(root.selected ? root.accent : Style.text)
+
+    topLeftRadius: root.snapEdge === "left" || root.snapEdge === "top" ? 0 : -1
+    topRightRadius: root.snapEdge === "right" || root.snapEdge === "top" ? 0 : -1
+    bottomLeftRadius: root.snapEdge === "left" || root.snapEdge === "bottom" ? 0 : -1
+    bottomRightRadius: root.snapEdge === "right" || root.snapEdge === "bottom" ? 0 : -1
 
     color: Style.tone(root.base, root.hovered, root.pressed, root.selected, root.enabled, root.accent)
 

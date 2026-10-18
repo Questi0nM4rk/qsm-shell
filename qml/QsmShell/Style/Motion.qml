@@ -41,6 +41,16 @@ QtObject {
     // Capsules span a label and optional reading, so their hover response is
     // quieter than an icon target's default growth.
     readonly property real capsuleHoverScale: Tokens.motionCapsuleHoverScale
+    // The default response of an icon-sized target: it grows under the
+    // pointer and pushes in under a press.
+    readonly property real hoverScale: Tokens.motionHoverScale
+    readonly property real pressScale: Tokens.motionPressScale
+    // A press on a content group inside a wide body (a segment's label)
+    // moves barely: the body does not grow, only the content acknowledges.
+    readonly property real pressScaleSoft: Tokens.motionPressScaleSoft
+    // A row's leading box is larger than an icon target and grows more.
+    readonly property real rowHoverScale: Tokens.motionRowHoverScale
+    readonly property real rowPressScale: Tokens.motionRowPressScale
     // fast — a control changing shape, a row disclosing. The ceiling for
     // anything the pointer or the keyboard is waiting on.
     readonly property int fast: Style.reducedMotion ? 80 : Tokens.motionFast

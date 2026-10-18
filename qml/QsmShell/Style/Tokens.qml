@@ -58,6 +58,11 @@ QtObject {
     readonly property int motionRolloutDeformDamping: 28
     readonly property real motionMicroPopScale: 0.97
     readonly property real motionCapsuleHoverScale: 1.04
+    readonly property real motionHoverScale: 1.08
+    readonly property real motionPressScale: 0.94
+    readonly property real motionPressScaleSoft: 0.98
+    readonly property real motionRowHoverScale: 1.12
+    readonly property real motionRowPressScale: 0.92
     readonly property int motionSpin: 900
     readonly property int motionPulse: 1400
     readonly property int motionHoverGrace: 180
@@ -67,6 +72,9 @@ QtObject {
     readonly property real opacityRecede: 0.45
     readonly property real opacityFloatingShadow: 0.28
     readonly property real opacityCardShadow: 0.28
+    readonly property real opacityBadgeTint: 0.18
+    readonly property real opacityScrollCueActive: 0.6
+    readonly property real opacityScrollCueRest: 0.2
     readonly property real opacityEdgeStrength: 0.5
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
@@ -93,6 +101,7 @@ QtObject {
     readonly property int geometrySliderLength: 260
     readonly property int geometrySliderLengthVertical: 180
     readonly property int geometryBadgeHeight: 16
+    readonly property int geometryBadgeWidth: 28
     readonly property int geometryTrackThickness: 6
     readonly property int geometryRingDiameter: 150
     readonly property int geometryRingStroke: 8

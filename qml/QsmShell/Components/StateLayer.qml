@@ -15,8 +15,8 @@ import qs.QsmShell.Style
 //               reads as a stuck selection rather than as an answer.
 //   press       it pushes in, on its own faster curve, so a click is
 //               acknowledged even when the action it starts takes time.
-//   focus       an accent ring. This is the one state that CANNOT be growth:
-//               a keyboard user needs to know where they are without moving
+//   focus       an accent ring outside the body (see below). This is the
+//               one state that CANNOT be growth: a keyboard user needs to know where they are without moving
 //               anything, and a ring is the only mark that says "here" while
 //               the surface is otherwise still. It exists only while focused,
 //               so the resting surface stays boxless.
@@ -49,8 +49,8 @@ Item {
     property bool manualHoverOverride: false
     property bool manualPressOverride: false
     property Item target: parent
-    property real hoverScale: 1.08
-    property real pressScale: 0.94
+    property real hoverScale: Motion.hoverScale
+    property real pressScale: Motion.pressScale
 
     // Focus shows whenever it is held, however it arrived. Reading Qt's
     // `visualFocus` (keyboard reasons only) meant a click never painted the
@@ -117,13 +117,19 @@ Item {
 
     // One implementation of the focus ring, so a keyboard user meets the same
     // mark on every control instead of whatever each surface remembered to
-    // draw.
+    // draw. Outside the painted body, never inside it: a ring on the body's own
+    // edge vanishes on a full accent fill. Gap and stroke are both
+    // `spaceTight`; the outer radius is the body's plus both, the reverse of
+    // `Style.childRadius`, so the ring stays concentric.
     Rectangle {
+        readonly property real _reach: Style.spaceTight * 2
         anchors.fill: parent
+        anchors.margins: -_reach
+        z: -1
         visible: root.focused && root.enabled && root.interactive
         color: "transparent"
-        radius: root.focusRadius
-        border.width: 1
+        radius: root.focusRadius + _reach
+        border.width: Style.spaceTight
         border.color: root.focusColor
         opacity: root.focused ? 1 : 0
 

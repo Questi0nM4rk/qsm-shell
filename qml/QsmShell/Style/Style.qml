@@ -74,6 +74,11 @@ QtObject {
     // number from `opacityDisabled`, because receding says "later" and
     // disabled says "never".
     readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
+    // A badge's tinted body: its tone at this strength over the layer.
+    readonly property real badgeTintOpacity: backend?.badgeTintOpacity ?? Tokens.opacityBadgeTint
+    // A scroll mark shows while the list moves and all but disappears at rest.
+    readonly property real scrollCueActiveOpacity: backend?.scrollCueActiveOpacity ?? Tokens.opacityScrollCueActive
+    readonly property real scrollCueRestOpacity: backend?.scrollCueRestOpacity ?? Tokens.opacityScrollCueRest
     // The edge separation of the melt silhouette (owner 2026-10-18): a slight
     // line of this colour exactly at the merged shape's edge, fading inward
     // into the fill, drawn by the shader on top of the flat fill. Strength is
@@ -368,6 +373,9 @@ QtObject {
     readonly property int ringStroke: backend?.ringStroke ?? Tokens.geometryRingStroke
 
     readonly property int badgeHeight: backend?.badgeHeight ?? Tokens.geometryBadgeHeight
+    // The chip a count sits in: one width for every count up to "99+", so a
+    // ticking number never resizes it.
+    readonly property int badgeWidth: backend?.badgeWidth ?? Tokens.geometryBadgeWidth
     readonly property int trackThickness: backend?.trackThickness ?? Tokens.geometryTrackThickness
 
     readonly property int markThickness: backend?.markThickness ?? Tokens.geometryMarkThickness
@@ -393,5 +401,13 @@ QtObject {
             parent.width - (item.x + item.width),
             parent.height - (item.y + item.height));
         return Math.max(0, parent.radius - Math.max(0, inset));
+    }
+
+    // The concentric rule for a row whose parent is a ListView: there the
+    // parent's `radius` is not the surface's, so `childRadius` answers 0. A
+    // row states how far its highlight sits from the rollout's edge and the
+    // curve follows the rollout's own radius minus that inset.
+    function insetRadius(inset: real): int {
+        return Math.max(0, root.rolloutRadius - Math.max(0, inset));
     }
 }
