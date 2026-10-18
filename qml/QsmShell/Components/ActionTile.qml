@@ -18,8 +18,10 @@ import qs.QsmShell.Style
 // one answer across the set.
 //
 // Three states, each the SAME three marks changing together — fill, glyph,
-// label — so the tile never has to be read twice. Armed outranks selected:
-// what happens next matters more than what is picked.
+// label — so the tile never has to be read twice. Selected is a solid fill in
+// `accent` with `textOnPrimary` content (spec 08); armed is the same in
+// `armedColor`. Armed outranks selected: what happens next matters more than
+// what is picked.
 T.Control {
     id: root
     required property string icon
@@ -47,7 +49,8 @@ T.Control {
     Accessible.role: Accessible.Button
     Accessible.name: root.shownLabel
 
-    readonly property color _baseColor: armed ? armedColor : selected ? accent : Style.text
+    readonly property bool _filled: armed || selected
+    readonly property color _baseColor: _filled ? Style.textOnPrimary : Style.text
     // Disabled dims each painted role through the colour, never through a
     // composite opacity: opacity would dim every child separately and let a
     // translucent glyph show the translucent body through itself.
@@ -63,13 +66,12 @@ T.Control {
         T.Action { text: root.shownLabel; enabled: root.enabled; onTriggered: root.activate() }
     ]
 
-    // Armed is a selection wearing the danger colour: the same identity tint,
-    // a different accent.
+    // Selected or armed is a solid fill, not a tint; armed wears its own
+    // colour. Surface dims the fill when disabled.
     background: Surface {
         enabled: root.enabled
         radius: Style.radiusMd
-        selected: root.selected || root.armed
-        accent: root.armed ? root.armedColor : root.accent
+        base: root.armed ? root.armedColor : root.selected ? root.accent : Style.surface
     }
     contentItem: Item {
         Column {
@@ -79,7 +81,7 @@ T.Control {
             Prose {
                 anchors.horizontalCenter: parent.horizontalCenter
                 role: "metadata"
-                color: root.armed || root.selected ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+                color: root._filled ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                 text: root.shownLabel
             }
         }

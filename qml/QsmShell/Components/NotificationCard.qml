@@ -53,6 +53,9 @@ Item {
     // `surface` body with a slight shadow, so neighbours never read as one
     // run of text. The default stays boxless for the popup stack.
     property bool bodied: false
+    // The bodied card's corner radius. The menu keeps the large radius; the
+    // popup stack asks for the medium one (spec 04).
+    property real bodyRadius: Style.radiusLg
     // Hover expands a popup, which nothing scrolls. Inside a scrolled list
     // hover expansion steals the wheel under the pointer, so a list sets
     // false: the leading column then asks for expansion by click
@@ -64,8 +67,8 @@ Item {
     // `activated` when there is no primary action to run.
     property bool unread: false
     property bool activatable: false
-    // A list with its own cursor thickens this card's tick instead of
-    // drawing a second mark on top of it.
+    // A list with its own cursor marks this card current: the accent tick
+    // on a boxless card, the selected tint on a bodied one.
     property bool selected: false
     // Which of this entry's (at most 3) actions carries keyboard focus, or
     // -1 for none. A list owns one cursor for many cards and passes it down.
@@ -202,9 +205,11 @@ Item {
     readonly property string iconName: root.entry.urgency === "critical" ? "alert-triangle"
         : root.entry.urgency === "low" ? "moon"
         : "bell"
-    readonly property color tickColor: root.entry.urgency === "critical" ? Style.danger
+    // Urgency is carried by the glyph's colour alone (spec 04, owner
+    // 2026-10-16): critical danger, normal info, low textMuted.
+    readonly property color glyphColor: root.entry.urgency === "critical" ? Style.danger
         : root.entry.urgency === "low" ? Style.textMuted
-        : Style.accent
+        : Style.info
 
     Timer {
         interval: 60 * 1000
@@ -274,7 +279,7 @@ Item {
         anchors.fill: parent
         anchors.bottomMargin: root.bodied ? root.shadowRoom : 0
         visible: root.bodied
-        radius: Style.radiusLg
+        radius: root.bodyRadius
         base: Style.surface
         selected: root.selected
         enabled: root.enabled
@@ -289,19 +294,17 @@ Item {
         }
     }
 
-    // The urgency tick doubles as the list cursor when this card sits in one:
-    // always present, dimmer at rest, thickening (not brightening) on select.
+    // The list cursor: a card in a list that keeps its own cursor shows
+    // it here, thick and accent. Urgency has no tick (the glyph carries it),
+    // and a bodied card shows selection on its body instead.
     SelectionMark {
         id: tick
         anchors.left: parent.left
         anchors.leftMargin: Style.space2
         anchors.verticalCenter: headline.verticalCenter
-        // A bodied card shows selection on its body; a column of ticks read
-        // as one joined line down the list.
-        shown: !root.bodied
-        strong: root.selected
-        restOpacity: 0.75
-        markColor: root.enabled ? root.tickColor : Style.disabled(root.tickColor)
+        shown: root.selected && !root.bodied
+        strong: true
+        markColor: root.enabled ? Style.accent : Style.disabled(Style.accent)
     }
 
     RowLayout {
@@ -351,7 +354,7 @@ Item {
                 visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length === 0
                 name: root.iconName
                 size: Style.iconSm
-                color: root.enabled ? Style.text : Style.disabled(Style.text)
+                color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
             }
         }
 
@@ -562,7 +565,7 @@ Item {
         }
     }
 
-    // The leading column (tick and glyph) opens and closes the card when
+    // The leading column (cursor and glyph) opens and closes the card when
     // hover does not; above the body layer, so the rest stays the action.
     StateLayer {
         id: leadLayer

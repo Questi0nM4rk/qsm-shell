@@ -17,6 +17,14 @@ Item {
     property bool retainWhenEmpty: false
     // Bind to the host's open intent, not its eventual visibility endpoint.
     property bool inputEnabled: true
+    // Row material, forwarded to every NotificationCard without a styling
+    // policy of its own: bodied cards on `surface`, their radius, and the
+    // gap between rows. The gap is part of the column AND of the eviction
+    // extent, so a departing row takes its gap with it and the survivors
+    // land exactly where the shift stops.
+    property bool bodied: false
+    property real bodyRadius: Style.radiusLg
+    property real rowSpacing: 0
 
     signal dismissRequested(var entry)
     signal hoverChanged(var entry, bool hovered)
@@ -106,7 +114,7 @@ Item {
         for (let i = 0; i < cardRepeater.count; i++) {
             const card = cardRepeater.itemAt(i);
             if (card && card.phase === "evicting")
-                height += card.height;
+                height += card.height + root.rowSpacing;
         }
         return height;
     }
@@ -371,7 +379,7 @@ Item {
 
     Column {
         id: column
-        spacing: 0
+        spacing: root.rowSpacing
         transform: Translate { y: root.evictShift }
 
         move: Transition {
@@ -407,7 +415,9 @@ Item {
                     && defaultAction() !== null
                 draggable: inputEnabled
                 verticalDragEnabled: inputEnabled
-                showDivider: index < cardRepeater.count - 1
+                bodied: root.bodied
+                bodyRadius: root.bodyRadius
+                showDivider: !root.bodied && index < cardRepeater.count - 1
                 swatch: root.swatchFor ? root.swatchFor(payload) : payload.swatch
                 animateEntrance: animate
                 height: expansionFrozen ? frozenHeight : implicitHeight * entranceProgress

@@ -1,7 +1,7 @@
 # ActionTile
 
 A stacked icon-over-label tile for equally-weighted session choices laid out as a column or grid; the host owns selected and armed, and armed outranks selected because what happens next matters more than what is picked.
-states: rest, hover, press, focus, disabled, selected and armed; armed is danger identity and selected is accent identity over the body, focus rings the body, disabled dims every painted role through Style.disabled rather than composite opacity.
+states: rest, hover, press, focus, disabled, selected and armed; armed is a solid `armedColor` fill and selected a solid `accent` fill (primary on the session surface), both with `textOnPrimary` glyph and label (spec 08), not a tint, focus rings the body, disabled dims every painted role through Style.disabled rather than composite opacity.
 actions: pointer click, Space, Return, Enter and the actions entry call activate() and emit activated; selected and armed never change inside the component and disabled activation does nothing.
 pointer: the full tile is the target and reports a hand; wheel does nothing and propagates.
 keyboard: Tab reach, click takes focus, and Space/Return/Enter share the activate() route.
