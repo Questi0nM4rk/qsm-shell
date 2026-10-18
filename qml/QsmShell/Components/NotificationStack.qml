@@ -375,90 +375,105 @@ Item {
 
     implicitWidth: Style.notificationWidth
     implicitHeight: Math.max(0, column.implicitHeight + root.evictShift)
-    clip: true
 
-    Column {
-        id: column
-        spacing: root.rowSpacing
-        transform: Translate { y: root.evictShift }
+    // A bodied card's shadow reaches past its body, so the clip is wider than
+    // the stack on the sides and the bottom. The top stays flush: a departing
+    // row slides up and out through it, and a clip taller there would show the
+    // departing card in the host's padding.
+    readonly property real shadowReach: root.bodied && !Style.reducedEffects ? Style.cardShadowExtent : 0
 
-        move: Transition {
-            enabled: root.evicting.length === 0 && !root.finishingEviction
-                && !root.rowHeightsAnimating
-            NumberAnimation {
-                property: "y"
-                duration: Motion.revealSmall
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Motion.revealCurve
+    Item {
+        id: viewport
+        anchors.fill: parent
+        anchors.leftMargin: -root.shadowReach
+        anchors.rightMargin: -root.shadowReach
+        anchors.bottomMargin: -root.shadowReach
+        clip: true
+
+        Column {
+            id: column
+            x: root.shadowReach
+            spacing: root.rowSpacing
+            transform: Translate { y: root.evictShift }
+
+            move: Transition {
+                enabled: root.evicting.length === 0 && !root.finishingEviction
+                    && !root.rowHeightsAnimating
+                NumberAnimation {
+                    property: "y"
+                    duration: Motion.revealSmall
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Motion.revealCurve
+                }
             }
-        }
 
-        Repeater {
-            id: cardRepeater
-            model: rows
-            onItemAdded: root.syncLayout()
-            onItemRemoved: root.syncLayout()
+            Repeater {
+                id: cardRepeater
+                model: rows
+                onItemAdded: root.syncLayout()
+                onItemRemoved: root.syncLayout()
 
-            NotificationCard {
-                id: delegateCard
-                required property string key
-                required property int index
-                required property var idValue
-                required property var payload
-                required property string phase
-                required property bool inputEligible
-                required property bool animate
-                entry: payload
-                inputEnabled: root.inputEnabled && inputEligible && phase === "active"
-                showActions: false
-                primaryActionEnabled: root.inputEnabled && inputEligible && phase === "active"
-                    && defaultAction() !== null
-                draggable: inputEnabled
-                verticalDragEnabled: inputEnabled
-                bodied: root.bodied
-                bodyRadius: root.bodyRadius
-                showDivider: !root.bodied && index < cardRepeater.count - 1
-                swatch: root.swatchFor ? root.swatchFor(payload) : payload.swatch
-                animateEntrance: animate
-                height: expansionFrozen ? frozenHeight : implicitHeight * entranceProgress
-                objectName: "notification-row-" + key
+                NotificationCard {
+                    id: delegateCard
+                    required property string key
+                    required property int index
+                    required property var idValue
+                    required property var payload
+                    required property string phase
+                    required property bool inputEligible
+                    required property bool animate
+                    entry: payload
+                    inputEnabled: root.inputEnabled && inputEligible && phase === "active"
+                    showActions: false
+                    primaryActionEnabled: root.inputEnabled && inputEligible && phase === "active"
+                        && defaultAction() !== null
+                    draggable: inputEnabled
+                    verticalDragEnabled: inputEnabled
+                    bodied: root.bodied
+                    bodyRadius: root.bodyRadius
+                    showDivider: !root.bodied && index < cardRepeater.count - 1
+                    swatch: root.swatchFor ? root.swatchFor(payload) : payload.swatch
+                    animateEntrance: animate
+                    height: expansionFrozen ? frozenHeight : implicitHeight * entranceProgress
+                    objectName: "notification-row-" + key
 
-                property bool hoverWasReported: false
-                function releaseHover(): void {
-                    if (hoverWasReported) {
-                        hoverWasReported = false;
-                        root.hoverChanged(entry, false);
-                    }
-                }
-                onHoveredChanged: {
-                    if (hovered && inputEnabled) {
-                        if (!hoverWasReported) {
-                            hoverWasReported = true;
-                            root.hoverChanged(entry, true);
+                    property bool hoverWasReported: false
+                    function releaseHover(): void {
+                        if (hoverWasReported) {
+                            hoverWasReported = false;
+                            root.hoverChanged(entry, false);
                         }
-                    } else {
-                        releaseHover();
                     }
-                }
-                onDismissed: if (inputEnabled) root.dismissRequested(entry)
-                onPrimaryTriggered: requestedEntry => {
-                    const current = root.stack.find(item => item.notificationId === requestedEntry.notificationId);
-                    if (inputEnabled && current && actionsOf(current).some(
-                            action => String(action.id) === "default" && !(action.disabled ?? false)))
-                        root.primaryActionRequested(current);
-                }
-                onXChanged: root.geometryChanged()
-                onYChanged: root.geometryChanged()
-                onWidthChanged: root.geometryChanged()
-                onHeightChanged: root.syncLayout()
-                onInputEnabledChanged: {
-                    releaseHover();
-                    root.geometryChanged();
-                }
-                Component.onCompleted: root.geometryChanged()
-                Component.onDestruction: {
-                    releaseHover();
-                    root.geometryChanged();
+                    onHoveredChanged: {
+                        if (hovered && inputEnabled) {
+                            if (!hoverWasReported) {
+                                hoverWasReported = true;
+                                root.hoverChanged(entry, true);
+                            }
+                        } else {
+                            releaseHover();
+                        }
+                    }
+                    onDismissed: if (inputEnabled) root.dismissRequested(entry)
+                    onPrimaryTriggered: requestedEntry => {
+                        const current = root.stack.find(item => item.notificationId === requestedEntry.notificationId);
+                        if (inputEnabled && current && actionsOf(current).some(
+                                action => String(action.id) === "default" && !(action.disabled ?? false)))
+                            root.primaryActionRequested(current);
+                    }
+                    onXChanged: root.geometryChanged()
+                    onYChanged: root.geometryChanged()
+                    onWidthChanged: root.geometryChanged()
+                    onHeightChanged: root.syncLayout()
+                    onInputEnabledChanged: {
+                        releaseHover();
+                        root.geometryChanged();
+                    }
+                    Component.onCompleted: root.geometryChanged()
+                    Component.onDestruction: {
+                        releaseHover();
+                        root.geometryChanged();
+                    }
                 }
             }
         }
