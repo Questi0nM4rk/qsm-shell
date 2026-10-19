@@ -56,16 +56,21 @@ T.AbstractButton {
             implicitWidth: root._radio
             implicitHeight: root._radio
             radius: width / 2
-            color: !root.enabled
-                ? (root.checked ? Style.disabled(root.accentColor) : "transparent")
-                : (root.checked ? root.accentColor : "transparent")
+            // Hover and press change the colour through the one state matrix
+            // (the layer below grows the circle; a press only recolours it).
+            color: root.checked
+                ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+                : "transparent"
             border.width: root.checked ? 0 : Style.spaceTight
-            border.color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+            border.color: Style.tone(Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
 
             Behavior on color {
                 ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
             }
 
+            // The dot is 2/5 of the circle: the M3 ratio, which leaves a ring
+            // of accent wider than the dot's own radius at every size. A
+            // proportion of the circle, so it scales with it, not a token.
             Rectangle {
                 anchors.centerIn: parent
                 width: parent.width * 0.4
@@ -86,6 +91,7 @@ T.AbstractButton {
     }
 
     StateLayer {
+        id: stateLayer
         x: circle.x - Style.spaceTight
         y: circle.y - Style.spaceTight
         width: circle.width + Style.spaceTight * 2
@@ -94,6 +100,5 @@ T.AbstractButton {
         target: circle
         focusRadius: width / 2
         hoverScale: 1.15
-        pressScale: 0.88
     }
 }

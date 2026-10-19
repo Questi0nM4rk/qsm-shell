@@ -227,18 +227,6 @@ Item {
             border.color: root._paint(Style.textMuted)
         }
 
-        // Focus belongs to the face, not the target: an accent ring outside
-        // the body at the half step, concentric, under the reading.
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -Style.spaceTight
-            visible: root.focused && root.enabled
-            color: "transparent"
-            radius: Style.radiusSm + Style.spaceTight
-            border.width: 1
-            border.color: Style.accent
-        }
-
         // The selection ring is drawn LAST, over the sample.
         //
         // It used to be the root's own `border`, which a Rectangle paints behind
@@ -277,16 +265,15 @@ Item {
         }
     }
 
-    // The layer covers the whole TARGET for the pointer, but grows only the
-    // face and paints no ring of its own: indication belongs to the face.
+    // The layer covers the whole TARGET for the pointer and grows the face;
+    // the keyboard ring is the layer's, the one every control wears.
     StateLayer {
         anchors.fill: parent
         target: face
         interactive: root.enabled
-        focused: false
+        focused: root.focused
         focusRadius: Style.radiusSm
-        hoverScale: 1.08
-        pressScale: 0.94
+        hoverScale: Motion.hoverScale
         onClicked: {
             root.forceActiveFocus();
             root.activate();

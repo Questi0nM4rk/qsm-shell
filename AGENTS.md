@@ -273,8 +273,10 @@ meter), never an edge. The silhouette itself keeps its edge separation
   state matrix and `Surface` is the Rectangle that binds it; a component's
   body is one `Surface` (or one `tone` call) and never its own ternary. Four
   components each wrote their own and disagreed on the selected tint.
-- Hover grows (`StateLayer`) and never tints a container. `tone`'s hover and
-  press lifts remain for text and rows that cannot grow.
+- Hover grows slightly AND changes colour (owner: "on hover lehke zvetseni,
+  a zmena barvy"): `StateLayer` grows the target, `tone`'s hover lift is the
+  colour. A press changes colour only on a body (`pressScale` is 1); an icon
+  target with no body to recolour passes its own `pressScale`.
 - An inactive track (progress, meter, ring, slider) is `overlay`, a line of
   content on the card, never a body's step.
 - Selected is identity, not a lift: `accent` at 12 % over the layer plus
@@ -446,12 +448,11 @@ Earned, each from a specific failure. Break one and name which.
   `StateLayer`'s accent ring sat above `TextField`'s danger border, so a failed
   field stopped looking failed exactly while a person focused it to repair
   the value. The host passes the semantic colour through `focusColor`.
-- **Focus shows whenever it is held, however it arrived.** The ring read
-  Qt's `visualFocus` and a hand-kept mark of "this focus came from a click",
-  so a click never rang and a window that lost and regained focus rang out
-  of nowhere: Qt drops `activeFocus` from every item when the window goes
-  inactive and gives it back with no route attached. `activeFocus` is the one
-  fact; guessing the route is a component doing the host's thinking.
+- **The focus ring is for keyboard focus only.** Owner: "ten select line, ten
+  je jen pro keyb focused". A click focuses and does not ring: hosted layers
+  read `visualFocus`, a plain item's own tap hides the ring until focus is
+  lost, and a host whose focus lives on a descendant passes `visualFocus`
+  of that descendant. A text field's caret is its own focus mark.
 - **The focus ring sits OUTSIDE the painted body at a half-step, concentric,
   under anything that overhangs.** Gap `Style.spaceTight`, outer radius =
   the body's radius plus the gap (the reverse of `Style.childRadius`), z

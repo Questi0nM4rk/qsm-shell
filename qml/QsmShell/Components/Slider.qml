@@ -620,16 +620,16 @@ T.RangeSlider {
             Loader {
                 active: thumb.carriesContent && !root._pill && root.thumbIcon === "" && root.thumbText !== ""
                 anchors.centerIn: parent
-                width: root.thumbSize - Style.space1 * 2
+                // The whole thumb is the slot: "100" must fit at the same size
+                // as "7", so the digits never shrink as the value grows.
+                width: root.thumbSize
                 height: width
-                sourceComponent: Text {
+                sourceComponent: Prose {
+                    role: "reading"
                     text: root.thumbText
                     color: root._paintedThumbContent
-                    font.family: Style.fontFamily
-                    font.pixelSize: Style.textSm
+                    font.pixelSize: Style.textXs
                     font.weight: Style.weightBold
-                    fontSizeMode: Text.Fit
-                    minimumPixelSize: Style.textXs
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -684,7 +684,7 @@ T.RangeSlider {
         // Focus lives on a thumb, and a `T.Control` is not a focus scope:
         // measured, the control's own `activeFocus` stays false while a
         // descendant holds it, so the thumbs are read by name.
-        focused: root.activeFocus || highThumb.activeFocus || lowThumb.activeFocus
+        focused: root.visualFocus || highThumb.visualFocus || lowThumb.visualFocus
         // The layer is the track's own box: the ring it draws stands off it
         // by `spaceTight` itself.
         x: root.horizontal

@@ -13,7 +13,8 @@ T.Control {
     // A play triangle's mass sits left of its box's centre (a triangle's
     // centroid is a third of its width from the flat side, a half would be
     // the box centre), so centred by box it reads as pushed left. The glyph
-    // is about half the box wide, hence a twelfth of the size.
+    // is about half the box wide, so the centroid sits a sixth of that, a
+    // twelfth of the size, left of centre.
     property real opticalOffset: root.icon === "play" ? root.size / 12 : 0
     readonly property color paintedColor: root.enabled ? root.color : Style.disabled(root.color)
     signal clicked
@@ -50,9 +51,13 @@ T.Control {
         }
     }
 
+    // Under the glyph: the hover disc is a body, the glyph stands on it.
     StateLayer {
+        z: -1
         anchors.fill: parent
         target: glyph
+        hoverTint: true
+        pressScale: Motion.pressScale
         focusRadius: height / 2
         onClicked: {
             root.forceActiveFocus()

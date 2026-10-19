@@ -27,7 +27,7 @@ ColumnLayout {
     // A count or a state on the closed heading, so the group says something
     // about its contents without being opened.
     property string badge: ""
-    property bool focused: heading.activeFocus
+    property bool focused: heading.visualFocus
 
     default property alias content: bodyHost.data
 
