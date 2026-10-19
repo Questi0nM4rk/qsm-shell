@@ -10,16 +10,20 @@ import qs.QsmShell.Style
 // not remove it — it just means the control answers that state by accident.
 //
 //   rest        nothing. The shell paints no box around a thing at rest.
-//   hover       the affordance GROWS. Growth, never tint: a tint paints a box
-//               the design deliberately withholds, and a tint that lingers
-//               reads as a stuck selection rather than as an answer.
-//   press       it pushes in, on its own faster curve, so a click is
+//   hover       the affordance grows slightly AND changes colour (owner:
+//               "on hover lehke zvetseni, a zmena barvy"). Growth is this
+//               layer's `hoverScale`; the colour is the body's own, through
+//               `Style.tone`, or this layer's `hoverTint` for a target that
+//               has no body of its own.
+//   press       colour only on a body (`pressScale` is 1 by default); an icon
+//               target that has no body to recolour passes its own
+//               `pressScale` and pushes in on a faster curve, so a click is
 //               acknowledged even when the action it starts takes time.
-//   focus       an accent ring outside the body (see below). This is the
-//               one state that CANNOT be growth: a keyboard user needs to know where they are without moving
-//               anything, and a ring is the only mark that says "here" while
-//               the surface is otherwise still. It exists only while focused,
-//               so the resting surface stays boxless.
+//   focus       an accent ring outside the body (see below), for KEYBOARD
+//               focus only (owner: "ten select line, ten je jen pro keyb
+//               focused"). A keyboard user needs to know where they are
+//               without anything moving; a pointer user already knows. A text
+//               field's caret is its own focus mark.
 //   disabled    the host dims itself BY COLOUR -- every painted role through
 //               `Style.disabled(colour)`, never `opacity` on the composite,
 //               which would dim each child separately and let a translucent
@@ -50,16 +54,24 @@ Item {
     property bool manualPressOverride: false
     property Item target: parent
     property real hoverScale: Motion.hoverScale
-    property real pressScale: Motion.pressScale
+    // 1: a press recolours a body and never resizes it. An icon target with
+    // no body passes `Motion.pressScale` (or its own) to push in.
+    property real pressScale: 1
+    // Paints a `Style.tone` disc at `focusRadius` under the target while
+    // hovered or pressed, for a bare glyph that has no body to recolour.
+    property bool hoverTint: false
 
-    // Focus shows whenever it is held, however it arrived. Reading Qt's
-    // `visualFocus` (keyboard reasons only) meant a click never painted the
-    // ring, and a window that lost and regained focus painted one out of
-    // nowhere; one fact, `activeFocus`, has no routes to get wrong. A host
-    // whose focus lives on a DESCENDANT (a text input, a slider thumb) sets
-    // this itself: a `T.Control` is not a focus scope, so its own
-    // `activeFocus` stays false while the descendant holds the focus.
-    property bool focused: _hosted ? host.activeFocus : (root.parent?.activeFocus ?? false)
+    // Keyboard focus, which is when the ring shows. Hosted, Qt's `visualFocus`
+    // (tab, backtab, shortcut) says it; a plain item says it when its parent
+    // does. A host whose focus lives on a DESCENDANT (a text input, a slider
+    // thumb) sets this itself: a `T.Control` is not a focus scope, so its own
+    // `visualFocus` stays false while the descendant holds the focus. A host
+    // that passes `activeFocus` here gets the ring on a click too, unless the
+    // click came through this layer's own tap, which `_pointerFocus` hides
+    // until focus is lost.
+    property bool focused: _hosted ? (host.visualFocus ?? false) : ((root.parent as T.Control)?.visualFocus ?? false)
+    property bool _pointerFocus: false
+    onFocusedChanged: if (!root.focused) root._pointerFocus = false
     // The corner the ring follows. The host states it, because `parent` is a
     // plain Item as far as the type system is concerned and probing it for a
     // radius is a warning plus a guess.
@@ -100,6 +112,17 @@ Item {
     // something more apt than scale with it while still following one curve.
     property real response: pressed ? pressScale : hovered ? hoverScale : 1
 
+    Rectangle {
+        anchors.fill: parent
+        radius: root.focusRadius
+        color: Style.tone(Style.surface, root.hovered, root.pressed, false, true, Style.accent)
+        opacity: root.hoverTint && (root.hovered || root.pressed) ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
+    }
+
     Behavior on response {
         NumberAnimation {
             duration: root.pressed ? Motion.press : Motion.micro
@@ -126,12 +149,12 @@ Item {
         anchors.fill: parent
         anchors.margins: -_reach
         z: -1
-        visible: root.focused && root.enabled && root.interactive
+        visible: root.focused && !root._pointerFocus && root.enabled && root.interactive
         color: "transparent"
         radius: root.focusRadius + _reach
         border.width: Style.spaceTight
         border.color: root.focusColor
-        opacity: root.focused ? 1 : 0
+        opacity: root.focused && !root._pointerFocus ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -149,5 +172,13 @@ Item {
         enabled: root.interactive && root.clickable && !root._hosted
         gesturePolicy: root.gesturePolicy
         onTapped: root.activate()
+        // A pointer press that focuses the host must not ring it. Released
+        // without taking focus, the mark is cleared so a later Tab still rings.
+        onPressedChanged: {
+            if (pressed)
+                root._pointerFocus = true;
+            else
+                Qt.callLater(() => { if (!root.focused) root._pointerFocus = false; });
+        }
     }
 }
