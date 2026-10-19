@@ -30,10 +30,12 @@ Rectangle {
         ? (root.selected ? root.accent : Style.text)
         : Style.disabled(root.selected ? root.accent : Style.text)
 
-    topLeftRadius: root.snapEdge === "left" || root.snapEdge === "top" ? 0 : -1
-    topRightRadius: root.snapEdge === "right" || root.snapEdge === "top" ? 0 : -1
-    bottomLeftRadius: root.snapEdge === "left" || root.snapEdge === "bottom" ? 0 : -1
-    bottomRightRadius: root.snapEdge === "right" || root.snapEdge === "bottom" ? 0 : -1
+    // Each corner names its radius outright: a corner assigned -1 rendered
+    // square, so every Surface lost its rounding.
+    topLeftRadius: root.snapEdge === "left" || root.snapEdge === "top" ? 0 : root.radius
+    topRightRadius: root.snapEdge === "right" || root.snapEdge === "top" ? 0 : root.radius
+    bottomLeftRadius: root.snapEdge === "left" || root.snapEdge === "bottom" ? 0 : root.radius
+    bottomRightRadius: root.snapEdge === "right" || root.snapEdge === "bottom" ? 0 : root.radius
 
     color: Style.tone(root.base, root.hovered, root.pressed, root.selected, root.enabled, root.accent)
 

@@ -34,7 +34,9 @@ T.TabBar {
     // plus the inset between them, so the gap reads even all the way round
     // a corner. Deriving the inner from the outer instead left 40px items
     // with an 8px corner that read as square.
-    readonly property int _pad: Style.rhythm(Style.space1 * root._s)
+    // A full step of air all round, so an item never touches the track's
+    // edge, hovered and grown included.
+    readonly property int _pad: Style.rhythm(Style.space2 * root._s)
     readonly property int _itemRadius: Style.radiusMd
     readonly property int _radius: root._itemRadius + root._pad
     readonly property real _segmentWidth: (root.width - root._pad * 2
