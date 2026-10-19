@@ -1002,7 +1002,7 @@ Item {
             id: frame
             width: root.width
             label: root.stringProp("label", "")
-            sizeScale: bar.sizeScale
+            sizeScale: bar._s
 
             Segmented {
                 id: bar
