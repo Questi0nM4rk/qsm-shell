@@ -134,7 +134,7 @@
     "cardShadowOffset": 2,
     "cardShadowExtent": 12,
     "seamOverlap": 8,
-    "edgeFade": 10
+    "edgeFade": 16
   },
   "line": {
     "tight": 1.2,
