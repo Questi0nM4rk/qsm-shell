@@ -74,9 +74,10 @@ T.AbstractButton {
     background: Rectangle {
         id: track
         radius: height / 2
-        color: root.enabled
-            ? (root.checked ? root.accentColor : Style.textMuted)
-            : Style.disabled(root.checked ? root.accentColor : Style.textMuted)
+        // The track is the body: hover lifts and press deepens its colour
+        // through the one state matrix, while the knob grows.
+        color: Style.tone(root.checked ? root.accentColor : Style.textMuted,
+            root.hovered, root.pressed, false, root.enabled, root.accentColor)
 
         Behavior on color {
             ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
