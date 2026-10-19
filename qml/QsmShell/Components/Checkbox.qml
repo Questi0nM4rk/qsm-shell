@@ -67,6 +67,7 @@ T.AbstractButton {
     Accessible.onToggleAction: root.flip()
 
     readonly property real _box: root.boxSize
+    readonly property real _markRatio: 0.75
     readonly property bool _marked: root.checked || root.indeterminate
     implicitWidth: row.implicitWidth
     implicitHeight: Math.max(_box, row.implicitHeight)
@@ -92,24 +93,27 @@ T.AbstractButton {
             // same reason as the text field: the edge is the affordance.
             // Disabled dims every role BY COLOUR, never by opacity on the
             // composite, which would show the fill through the mark.
-            color: !root.enabled
-                ? (root._marked ? Style.disabled(root.accentColor) : "transparent")
-                : (root._marked ? root.accentColor : "transparent")
+            // Hover and press change the colour through the one state matrix
+            // (the layer below grows the box; a press only recolours it).
+            color: root._marked
+                ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+                : "transparent"
             border.width: root._marked ? 0 : 1
-            border.color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+            border.color: Style.tone(Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
 
             Behavior on color {
                 ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
             }
 
-            // The check rides at 3:4 of the box -- the inner eighth stays air
-            // at every size, the ratio M3 draws its mark at. Snapping it to
-            // the icon scale would land a 12px glyph inside the 12px sm box.
+            // The check rides at 3:4 of the box (`_markRatio`) -- the inner
+            // eighth stays air at every size, the ratio M3 draws its mark at.
+            // Snapping it to the icon scale would land a 12px glyph inside the
+            // 12px sm box, so it is a proportion of the box, not a token.
             SvgIcon {
                 anchors.centerIn: parent
                 visible: root.checked && !root.indeterminate
                 name: "check"
-                size: root._box * 0.75
+                size: root._box * root._markRatio
                 // Content on the accent is the background, as the Switch knob.
                 // Style.disabled(background) is the identity blend, written
                 // explicitly so every role passes through the same function.
@@ -144,6 +148,7 @@ T.AbstractButton {
     // focus indicator. Pointer clicking still covers the full T.AbstractButton
     // row via onClicked above.
     StateLayer {
+        id: stateLayer
         x: box.x - Style.spaceTight
         y: box.y - Style.spaceTight
         width: box.width + Style.spaceTight * 2
@@ -152,6 +157,5 @@ T.AbstractButton {
         target: box
         focusRadius: Style.radiusXs
         hoverScale: 1.15
-        pressScale: 0.88
     }
 }

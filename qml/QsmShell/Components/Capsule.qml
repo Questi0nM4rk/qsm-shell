@@ -85,12 +85,11 @@ T.Control {
     ]
 
     // The state matrix is the ladder's (`Style.tone`): ON and "asks loudly"
-    // are both the accent's identity over the surface. Hover is not a lift
-    // here: the capsule GROWS (StateLayer), and a tint on top of growth is
-    // two answers to one event. The press lift stays for the pressed body.
+    // are both the accent's identity over the surface. Hover grows the
+    // capsule (StateLayer) AND lifts its colour; a press only recolours it.
     // Disabled dims each role through the state matrix; opacity would make the
     // card, glyph and text show through one another as a composite.
-    surfaceColor: Style.tone(Style.surface, false, stateLayer.pressed,
+    surfaceColor: Style.tone(Style.surface, stateLayer.hovered, stateLayer.pressed,
         root.active || root.variant === "primary", root.enabled, root._accent)
     // A quiet variant at rest paints NOTHING. It is transparent rather than
     // surface-at-90%, which is the difference between a control that sits on
@@ -169,7 +168,6 @@ T.Control {
         focused: root.focused
         focusRadius: root.radius
         hoverScale: Motion.capsuleHoverScale
-        pressScale: Motion.microPopScale
         onClicked: {
             root.forceActiveFocus()
             root.activate()
