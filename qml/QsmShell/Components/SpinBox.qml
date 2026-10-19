@@ -27,6 +27,13 @@ T.DoubleSpinBox {
     readonly property bool _canDecrease: root.enabled && (root.wrap || root.value > root._minimum)
     readonly property bool _canIncrease: root.enabled && (root.wrap || root.value < root._maximum)
     readonly property bool focused: root.activeFocus || editor.activeFocus
+    // Ring for keyboard focus only; a click keeps the caret as the mark. The
+    // editor holds the focus, so Qt's `visualFocus` cannot say how it came:
+    // a press on the editor or an indicator latches `_pointerFocus` until
+    // the focus leaves.
+    property bool _pointerFocus: false
+    onFocusedChanged: if (!root.focused) root._pointerFocus = false
+    onPressedChanged: if (root.pressed) root._pointerFocus = true
     readonly property bool pressed: root.up.pressed || root.down.pressed
     readonly property bool acceptableInput: editor.acceptableInput
 
@@ -138,6 +145,11 @@ T.DoubleSpinBox {
             font.pixelSize: root.fieldTextSize
             cursorDelegate: Item {}
 
+            // Passive: sees the press that focuses the editor without taking it.
+            TapHandler {
+                onPressedChanged: if (pressed) root._pointerFocus = true
+            }
+
             Keys.onPressed: event => root._handleBoundKey(event)
         }
 
@@ -234,7 +246,7 @@ T.DoubleSpinBox {
         height: root.height
         host: root
         target: null
-        focused: root.focused
+        focused: root.focused && !root._pointerFocus
         focusRadius: Style.radiusMd
         focusColor: root.failed ? Style.danger : Style.accent
     }

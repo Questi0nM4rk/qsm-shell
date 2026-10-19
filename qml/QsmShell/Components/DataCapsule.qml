@@ -154,7 +154,6 @@ T.Control {
             host: root
             target: null
             interactive: root.acceptsInput && root.interactive
-            focused: root.activeFocus
             focusRadius: root.radius
         }
     }

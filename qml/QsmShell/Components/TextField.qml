@@ -111,6 +111,13 @@ T.Control {
     // scale owns rather than a fraction. Never keyed on the preset NAME.
     readonly property int fieldTextSize: Style.textNear(Style.textMd * root._s)
     readonly property bool focused: input.activeFocus
+    // The ring is for KEYBOARD focus (owner: "ten select line, ten je jen pro
+    // keyb focused"); a click leaves the caret as the field's own mark. The
+    // input holds the focus, never the frame, so Qt's `visualFocus` is never
+    // true here and the route is read from the pointer instead: a press on
+    // the input latches `_pointerFocus` until the focus leaves.
+    property bool _pointerFocus: false
+    onFocusedChanged: if (!root.focused) root._pointerFocus = false
 
     // ── actions: the one route for pointer, keyboard and menus ──────────
     // The one semantic accept entry point: Return/Enter, the Accept action and
@@ -289,6 +296,11 @@ T.Control {
             // focusable thing here, so the tab stop lives on it -- it is
             // skipped automatically while disabled.
             activeFocusOnTab: true
+
+            // Passive: sees the press that focuses the input without taking it.
+            TapHandler {
+                onPressedChanged: if (pressed) root._pointerFocus = true
+            }
             color: root.enabled ? Style.text : Style.disabled(Style.text)
             selectionColor: Style.accent
             selectedTextColor: Style.textOnPrimary
@@ -437,7 +449,7 @@ T.Control {
         // The focus lives on the input, and a `T.Control` is not a focus
         // scope: measured, the frame's own `activeFocus` stays false while
         // the input holds it, so the layer's hosted default would never ring.
-        focused: root.focused
+        focused: root.focused && !root._pointerFocus
         focusRadius: Style.radiusMd
         focusColor: root.failed ? Style.danger : Style.accent
     }
@@ -450,7 +462,10 @@ T.Control {
         // Tapping the padding focuses the input; slot actions sit above and
         // take their own taps first. A tap on the text never reaches here:
         // the input accepts that press itself.
-        onTapped: input.forceActiveFocus(Qt.MouseFocusReason)
+        onTapped: {
+            root._pointerFocus = true;
+            input.forceActiveFocus(Qt.MouseFocusReason);
+        }
     }
 
     // The cursor describes the region under it, not the outer component: a

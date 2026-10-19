@@ -190,6 +190,21 @@ Item {
     readonly property real _anchorCenterX: _anchorRect.x + _anchorRect.width / 2
     readonly property real _anchorCenterY: _anchorRect.y + _anchorRect.height / 2
 
+    // Half the body's height as it was when the rollout was last NOT painted,
+    // and held while it is. A side card is centred on its anchor once, at
+    // open; a list that grows or shrinks afterwards (a row expands, an inline
+    // submenu opens) then grows from a fixed top instead of re-centring, which
+    // would move the row the pointer just clicked. The anchor still carries
+    // the card when it moves, because only the half-height is held.
+    property real _pinHalf: 0
+    Binding {
+        target: root
+        property: "_pinHalf"
+        value: root.bodyHeight / 2
+        when: !root.visible
+        restoreMode: Binding.RestoreNone
+    }
+
     function _clampCross(value: real, span: real, start: real, length: real): real {
         return Math.max(start, Math.min(start + Math.max(0, length - span), value));
     }
@@ -203,7 +218,7 @@ Item {
             : (attached("left") ? placementBounds.x + edgeInsetH : placementBounds.x + placementBounds.width - edgeInsetH - width))
         : _anchorCenterX - width / 2
     readonly property real _rawPlacementY: revealHorizontal
-        ? _anchorCenterY - height / 2
+        ? _anchorCenterY - _pinHalf
         : (parentRollout
             ? (attached("top") ? _parentRect.y + _parentRect.height : _parentRect.y - height)
             : (attached("top") ? placementBounds.y + edgeInsetV : placementBounds.y + placementBounds.height - edgeInsetV - height))
