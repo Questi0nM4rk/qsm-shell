@@ -23,25 +23,22 @@ T.TabBar {
     property bool wrapNavigation: true
     property real barHeight: Style.size("Segmented", root.size)
     readonly property real _s: root.barHeight / Style.size("Segmented", "md")
-    readonly property real sizeScale: root._s
     readonly property int _textSize: Style.textNear(Style.textSm * root._s)
     readonly property int _iconSize: Style.iconNear(Style.iconSm * root._s)
     readonly property int _inset: Style.rhythm(Style.space2 * root._s)
     readonly property int _gap: Style.rhythm(Style.space1 * root._s)
-    // The items levitate on the rounded track: an inset all round and a gap
-    // between neighbours (owner 2026-10-19). Nested corners are concentric:
-    // the item keeps the control radius and the track's radius is the item's
-    // plus the inset between them, so the gap reads even all the way round
-    // a corner. Deriving the inner from the outer instead left 40px items
-    // with an 8px corner that read as square.
-    // A full step of air all round, so an item never touches the track's
-    // edge, hovered and grown included.
+    // The items levitate on the rounded track: a full step of air all round,
+    // so an item never touches the track's edge, hovered and grown included,
+    // and a gap between neighbours. Nested corners are concentric: the item
+    // keeps the control radius and the track's radius is the item's plus the
+    // inset between them, so the gap reads even all the way round a corner.
+    // Deriving the inner from the outer instead left 40px items with an 8px
+    // corner that read as square.
     readonly property int _pad: Style.rhythm(Style.space2 * root._s)
     readonly property int _itemRadius: Style.radiusMd
     readonly property int _radius: root._itemRadius + root._pad
     readonly property real _segmentWidth: (root.width - root._pad * 2
         - root._gap * Math.max(0, root.options.length - 1)) / Math.max(1, root.options.length)
-    readonly property bool focused: root.activeFocus || root.currentItem?.activeFocus === true
 
     signal selected(int index)
 
@@ -89,10 +86,9 @@ T.TabBar {
     // replaced, the container resets the index, and the host's binding (whose
     // inputs did not change) is never re-evaluated: the thumb stayed on a
     // stale index. The Repeater below is therefore keyed on the COUNT, so a
-    // rebuilt array of the same length touches no segment.
-    // Reporting is deliberately
-    // here, rather than on currentIndexChanged: host synchronization is state,
-    // not intent.
+    // rebuilt array of the same length touches no segment. Reporting is
+    // deliberately here, rather than on currentIndexChanged: host
+    // synchronization is state, not intent.
     function select(index: int): bool {
         if (!root.enabled || !root._enabled(index) || root.currentIndex === index)
             return false;
@@ -121,7 +117,7 @@ T.TabBar {
     function last(): bool { return root.select(root._lastEnabled()); }
 
     // One handler for the bar and its buttons, so a key means the same thing
-// wherever focus landed inside the group.
+    // wherever focus landed inside the group.
     function handleKey(event): void {
         if (!root.enabled)
             return;
@@ -218,6 +214,12 @@ T.TabBar {
         readonly property bool selectedSegment: root.currentIndex === tab.index
         readonly property var option: root._at(tab.index)
         readonly property string labelText: root._labelOf(tab.option)
+        // Glyph and label share one colour. The picked segment is accent and
+        // steps with the pointer through the same tone as any lift; the
+        // others rise from muted to full text.
+        readonly property color contentColor: tab.selectedSegment
+            ? Style.tone(Style.accent, tab.hovered, tab.pressed, false, tab.enabled, Style.accent)
+            : tab.enabled ? (tab.hovered ? Style.text : Style.textMuted) : Style.disabled(Style.textMuted)
         readonly property bool iconOnly: tab.labelText.length === 0
             && String(tab.option?.icon ?? "").length > 0
         objectName: "segmentedTab" + tab.index
@@ -264,20 +266,16 @@ T.TabBar {
                     visible: name.length > 0
                     name: typeof tab.option === "string" ? "" : String(tab.option?.icon ?? "")
                     size: root._iconSize
-                    color: tab.enabled
-                        ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
-                        : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
+                    color: tab.contentColor
                     Layout.alignment: Qt.AlignVCenter
                 }
                 Prose {
                     visible: !tab.iconOnly
                     role: "label"
                     text: tab.labelText
-                    color: tab.enabled
-                        ? (tab.selectedSegment ? Style.accent : tab.hovered ? Style.text : Style.textMuted)
-                        : Style.disabled(tab.selectedSegment ? Style.accent : Style.textMuted)
+                    color: tab.contentColor
                     font.pixelSize: root._textSize
-                    font.weight: tab.selectedSegment ? Style.weightBold : Style.weightMedium
+                    font.weight: Style.weightMedium
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     maximumLineCount: 1
@@ -301,15 +299,18 @@ T.TabBar {
             anchors.fill: parent
             host: tab
             // Hover lifts the item a little; a press only changes its colour
-            // and never its size. The picked item does not grow: its thumb
-            // lives on the track and would be left behind.
+            // and never its size. The picked item does not grow, because its
+            // thumb lives on the track and would be left behind; its label
+            // and glyph still change colour.
             target: tab
             hoverScale: tab.selectedSegment ? 1 : Motion.capsuleHoverScale
             pressScale: 1
             focusRadius: root._itemRadius
             // The ring marks keyboard focus only: a click selects and slides
-            // the thumb, it does not ring (owner 2026-10-19).
-            focused: tab.selectedSegment && (root.visualFocus || tab.visualFocus)
+            // the thumb, it does not ring. Focus normally sits on the bar and
+            // the ring marks the picked segment; a segment that takes focus
+            // itself rings whether or not it is picked.
+            focused: tab.visualFocus || (tab.selectedSegment && root.visualFocus)
         }
     }
 }

@@ -43,7 +43,7 @@ not represent per-option availability. Sample labels and optional glyphs name
 one coherent choice; the owner accepts the fixture and interaction before the
 next type starts.
 
-The bar has `sm` (32), `md` (40), and `lg` (52) heights. One `sizeScale` from
+The bar has `sm` (32), `md` (40), and `lg` (52) heights. One scale from
 the bar height scales text, glyphs, spacing, and insets through the Style
 helpers; radius, focus gap, and borders do not scale. Rest, hover, pressed,
 focused, selected, and disabled states are explicit. Disabled roles are dimmed
