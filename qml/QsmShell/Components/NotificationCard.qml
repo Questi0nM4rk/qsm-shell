@@ -218,6 +218,14 @@ Item {
         onTriggered: root.currentTimeMs = Date.now()
     }
 
+    // Constants no theme retunes: the preview shows two lines (its ceiling in
+    // pixels is `notificationPreviewHeight`), a divider is a quiet fraction
+    // of the text colour, and a swatch's containment border is one device
+    // pixel, which AGENTS keeps off the size scale.
+    readonly property int previewLines: 2
+    readonly property real dividerStrength: 0.25
+    readonly property int swatchBorder: 1
+
     // One format for every entry, live or archived: a list that mixed a clock
     // time with "5m ago" read as two columns of different widths. The wall
     // clock is the timestamp's accessible description.
@@ -353,7 +361,7 @@ Item {
                     visible: root.hasSwatch && !root.leadHovered
                     radius: Style.radiusSm
                     color: root.swatch ?? "transparent"
-                    border.width: 1
+                    border.width: root.swatchBorder
                     border.color: Style.textMuted
                 }
 
@@ -433,7 +441,7 @@ Item {
             lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
             lineHeightMode: Text.FixedHeight
             wrapMode: Text.WordWrap
-            maximumLineCount: 2
+            maximumLineCount: root.previewLines
             elide: Text.ElideRight
             clip: true
             Accessible.role: Accessible.StaticText
@@ -561,7 +569,7 @@ Item {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             inset: Style.notificationDividerInset
-            strength: 0.25
+            strength: root.dividerStrength
         }
     }
 

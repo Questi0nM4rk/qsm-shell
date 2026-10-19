@@ -303,7 +303,7 @@ ColumnLayout {
         id: viewBar
         Layout.fillWidth: true
         options: [
-            { label: root.unreadCount > 0 ? `Unread ${root.unreadCount}` : "Unread" },
+            { label: "Unread", badge: root.unreadCount > 0 ? String(root.unreadCount) : "" },
             { label: "All" }
         ]
         currentIndex: root.view === "unread" ? 0 : 1
