@@ -121,7 +121,7 @@ QtObject {
     readonly property int geometryCardShadowOffset: 2
     readonly property int geometryCardShadowExtent: 12
     readonly property int geometrySeamOverlap: 8
-    readonly property int geometryEdgeFade: 10
+    readonly property int geometryEdgeFade: 16
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55

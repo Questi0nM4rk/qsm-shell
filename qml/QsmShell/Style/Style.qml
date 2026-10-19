@@ -136,7 +136,7 @@ QtObject {
     // the layer. A transparent base yields a translucent accent, which is
     // what a segment sitting on its own container wants.
     function selected(base: color, accent: color): color {
-        return Qt.tint(base, Qt.rgba(accent.r, accent.g, accent.b, root.opacitySelected));
+        return _over(Qt.rgba(accent.r, accent.g, accent.b, root.opacitySelected), base);
     }
 
     // The press and hover tints `tone` stacks on a layer. `lift(c, 0.4)` is
@@ -151,22 +151,35 @@ QtObject {
         return (hi + 0.05) / (lo + 0.05);
     }
 
+    // A translucent `c` (a transparent segment, a selected tint) is measured as
+    // it appears over the band, but the lift is returned as `text` laid over
+    // `c` at the found fraction, so it keeps `c`'s own alpha and never paints
+    // an opaque box on the layer it sits on.
     function lift(c: color, by: real): color {
-        const target = contrast(c, root.band) + by;
-        const toward = root.text;
+        const seen = _over(c, root.band);
+        const target = contrast(seen, root.band) + by;
+        const t = root.text;
         let lo = 0, hi = 1;
         for (let i = 0; i < 20; i++) {
             const mid = (lo + hi) / 2;
-            if (contrast(_blend(c, toward, mid), root.band) < target)
+            if (contrast(_over(Qt.rgba(t.r, t.g, t.b, mid), seen), root.band) < target)
                 lo = mid;
             else
                 hi = mid;
         }
-        return _blend(c, toward, hi);
+        return _over(Qt.rgba(t.r, t.g, t.b, hi), c);
     }
 
-    function _blend(a: color, b: color, t: real): color {
-        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1);
+    // `top` laid over `base`, both with their own alpha. Qt.tint mixes the
+    // colour channels with the base's even when the base is transparent, which
+    // turns "accent over nothing" into a dark accent.
+    function _over(top: color, base: color): color {
+        const a = top.a + base.a * (1 - top.a);
+        if (a <= 0)
+            return Qt.rgba(0, 0, 0, 0);
+        const k = base.a * (1 - top.a);
+        return Qt.rgba((top.r * top.a + base.r * k) / a, (top.g * top.a + base.g * k) / a,
+                       (top.b * top.a + base.b * k) / a, a);
     }
 
     function _luminance(c: color): real {
