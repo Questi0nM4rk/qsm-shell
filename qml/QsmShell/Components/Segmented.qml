@@ -30,11 +30,13 @@ T.TabBar {
     readonly property int _gap: Style.rhythm(Style.space1 * root._s)
     // The header row's one control radius: the search field shares it.
     readonly property int _radius: Style.radiusMd
-    // The picked segment fills its segment to the track's own edge and wears
-    // the track's own corner, so the outer ends stay round and a highlight
-    // never stops short of them. No inset, so no second radius to derive.
-    readonly property int _pad: 0
-    readonly property real _segmentWidth: (root.width - root._pad * 2) / Math.max(1, root.options.length)
+    // The items levitate on the rounded track: an inset all round and a gap
+    // between neighbours, each item a pill concentric with the track's
+    // corners (owner 2026-10-19), so no highlight can stop short of a corner.
+    readonly property int _pad: Style.rhythm(Style.space1 * root._s)
+    readonly property int _itemRadius: Math.max(0, root._radius - root._pad)
+    readonly property real _segmentWidth: (root.width - root._pad * 2
+        - root._gap * Math.max(0, root.options.length - 1)) / Math.max(1, root.options.length)
     readonly property bool focused: root.activeFocus || root.currentItem?.activeFocus === true
 
     signal selected(int index)
@@ -161,11 +163,11 @@ T.TabBar {
         Rectangle {
             objectName: "segmentedThumb"
             visible: root.currentIndex >= 0
-            x: root._pad + root.currentIndex * root._segmentWidth
+            x: root._pad + root.currentIndex * (root._segmentWidth + root._gap)
             y: root._pad
             width: root._segmentWidth
             height: root.barHeight - root._pad * 2
-            radius: root._radius
+            radius: root._itemRadius
             // The picked segment is identity: the accent over the track,
             // opaque, lifted off it by the card's slight shadow.
             color: root.enabled ? Style.selected(Style.surface, Style.accent)
@@ -192,7 +194,7 @@ T.TabBar {
         anchors.fill: parent
         anchors.margins: root._pad
         orientation: ListView.Horizontal
-        spacing: 0
+        spacing: root._gap
         interactive: false
         clip: false
         model: root.contentModel
@@ -231,9 +233,18 @@ T.TabBar {
         Keys.priority: Keys.BeforeItem
         Keys.onPressed: event => root.handleKey(event)
 
-        // No box per segment: the track is the body and the thumb is the
-        // choice; hover answers in the label, never as a second tint.
-        background: null
+        // An item's own pill: empty at rest, a lift under the pointer and a
+        // deeper step under a press. The picked item shows the sliding
+        // thumb behind it instead, so it paints nothing of its own.
+        background: Rectangle {
+            radius: root._itemRadius
+            color: tab.selectedSegment ? "transparent"
+                : Style.tone("transparent", tab.hovered, tab.pressed, false, tab.enabled, Style.accent)
+
+            Behavior on color {
+                ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+            }
+        }
 
         // The glyph and label group sits centred and takes only its own
         // width; it shrinks (and the label elides) only when the segment is
@@ -285,12 +296,16 @@ T.TabBar {
         StateLayer {
             anchors.fill: parent
             host: tab
-            // The label group acknowledges a press; the body stays put.
-            target: tab.contentItem
-            hoverScale: 1
-            pressScale: Motion.pressScaleSoft
-            focusRadius: root._radius
-            focused: tab.selectedSegment && root.focused
+            // Hover lifts the item a little; a press only changes its colour
+            // and never its size. The picked item does not grow: its thumb
+            // lives on the track and would be left behind.
+            target: tab
+            hoverScale: tab.selectedSegment ? 1 : Motion.capsuleHoverScale
+            pressScale: 1
+            focusRadius: root._itemRadius
+            // The ring marks keyboard focus only: a click selects and slides
+            // the thumb, it does not ring (owner 2026-10-19).
+            focused: tab.selectedSegment && (root.visualFocus || tab.visualFocus)
         }
     }
 }
