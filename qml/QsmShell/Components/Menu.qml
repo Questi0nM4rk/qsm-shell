@@ -26,6 +26,8 @@ Item {
     // Layout orientation and spacing.
     property int orientation: Qt.Vertical
     property real spacing: Style.space1
+    // The band's corner. A menu on a rollout keeps the rollout's own curve.
+    property real radius: Style.childRadius(root)
 
     // ── generic activation hook (no product meaning) ─────────────────────
     signal activated(int index)
@@ -44,6 +46,44 @@ Item {
 
     focus: true
     clip: true
+
+    // The band the rows lie on, and the ONE selection thumb that slides
+    // between them. Rows report `hovered` and `selected` and paint no
+    // selection of their own here, so a cursor moving down the list reads as
+    // one marker travelling instead of a highlight snapping from row to row.
+    Surface {
+        anchors.fill: parent
+        base: Style.band
+        radius: root.radius
+    }
+
+    Surface {
+        id: thumb
+
+        readonly property var row: root.rowAt(root.currentIndex)
+        readonly property bool shown: !!row && row.selectable
+        readonly property point origin: root._originOf(row)
+
+        x: origin.x
+        y: origin.y
+        width: shown ? row.width : 0
+        height: shown ? row.selectionHeight : 0
+        radius: shown ? row.selectionRadius : 0
+        base: Style.surface
+        accent: shown ? row.selectedColor : Style.accent
+        hovered: shown && row.hovered
+        pressed: shown && row.pressed
+        selected: true
+        opacity: shown ? 1 : 0
+
+        // Slides between rows that exist; the first appearance and reduced
+        // motion jump (a position animation is removed, not shortened).
+        Behavior on x { enabled: !Style.reducedMotion && thumb.opacity > 0; NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+        Behavior on y { enabled: !Style.reducedMotion && thumb.opacity > 0; NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+        Behavior on width { enabled: !Style.reducedMotion && thumb.opacity > 0; NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+        Behavior on height { enabled: !Style.reducedMotion && thumb.opacity > 0; NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+        Behavior on opacity { NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+    }
 
     // Layout host. Direction follows `orientation`; never applies product policy.
     Grid {
@@ -72,13 +112,28 @@ Item {
         return !!o && o !== root && typeof o.selectable === 'boolean'
     }
 
-    function _collectRows() {
-        const out = []
-        for (const child of body.children) {
+    // A row may sit inside a container the consumer composed (a row plus its
+    // inline submenu); the walk descends through anything that is not itself
+    // a row, so keyboard stepping follows the document order the eye reads.
+    function _collectRows(parentItem, out) {
+        for (const child of parentItem.children) {
             if (root._isRow(child))
                 out.push(child)
+            else
+                root._collectRows(child, out)
         }
         return out
+    }
+
+    // Where `row` starts inside this menu. Summed through the parent chain
+    // rather than mapped, so the binding follows every layout move on the way.
+    function _originOf(row) {
+        let x = 0, y = 0
+        for (let it = row; it && it !== root; it = it.parent) {
+            x += it.x
+            y += it.y
+        }
+        return Qt.point(x, y)
     }
 
     // Rebuild the row registry, re-wire activation routing, and re-apply
@@ -88,12 +143,13 @@ Item {
             const row = _rows[i], h = _handlers[i]
             if (row && h) { try { row.activated.disconnect(h) } catch (e) { /* not connected */ } }
         }
-        const collected = _collectRows()
+        const collected = _collectRows(body, [])
         const handlers = []
         for (let i = 0; i < collected.length; i++) {
             const idx = i
             const h = function () { root.currentIndex = idx; root.activated(idx) }
             collected[i].activated.connect(h)
+            collected[i].paintsSelection = false
             handlers.push(h)
         }
         _rows = collected
@@ -109,11 +165,11 @@ Item {
     }
 
     function _sizeRows() {
-        for (const row of _rows) {
+        for (const child of body.children) {
             if (_vertical)
-                row.width = body.width
+                child.width = body.width
             else
-                row.height = body.height
+                child.height = body.height
         }
     }
 
@@ -158,6 +214,10 @@ Item {
     Keys.onRightPressed: root._horizontal ? root.step(1) : undefined
     Keys.onReturnPressed: event => { if (!event.isAutoRepeat) root.activateCurrent() }
     Keys.onEnterPressed: event => { if (!event.isAutoRepeat) root.activateCurrent() }
+
+    // For a consumer whose rows change below the top level (an inline submenu
+    // that opened); a model or delegate change resyncs on its own.
+    function resync() { root._resync() }
 
     onModelChanged: _resync()
     onDelegateChanged: _resync()

@@ -79,17 +79,23 @@ Item {
     property bool recede: true
     // What the selected row wears: the fill's tint and the name.
     property color selectedColor: root.danger ? Style.danger : Style.accent
-    // How far the highlight sits from the edge of the rollout the list lives
-    // in. The highlight's corner is the rollout's radius minus this, so the
-    // two curves stay concentric (`childRadius` cannot see through a ListView).
-    property real edgeInset: Style.space3
-    readonly property real highlightRadius: Style.insetRadius(root.edgeInset)
+    // Whether this row paints its own selection. A `Menu` owns one thumb that
+    // slides between rows and sets this false; a row in a plain ListView keeps
+    // the default and paints it.
+    property bool paintsSelection: true
+    // The highlight's corner is the rollout's radius minus the row's inset, so
+    // the two curves stay concentric (`childRadius` cannot see through a
+    // ListView). A `Menu` reads it for its thumb.
+    readonly property real selectionRadius: Style.insetRadius(Style.space3)
 
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
     readonly property bool _normal: !header && !separator
     readonly property bool selectable: _normal && !disabled && interactive
     readonly property bool hovered: layer.hovered
+    readonly property bool pressed: layer.pressed
+    // The row's own height without its expansion: what a selection covers.
+    readonly property real selectionHeight: root._headingHeight
     readonly property real _nativeHeadingHeight: root.separator ? Style.space3
         : root.header ? Style.space4 + Style.space2
         : (_sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight) + Style.space1
@@ -105,7 +111,10 @@ Item {
         + (leadingBox.visible ? root.leadingSize + Style.space2 : 0)
     // Report-only rows (interactive: false) are not targets but render at full
     // strength; disabled rows dim; recede only applies to interactive rows.
-    readonly property color proseColor: root.disabled ? Style.textMuted
+    // Disabled dims by colour, never by opacity on the row: the glyph and both
+    // lines are dimmed here, so a leading visual the consumer supplies is the
+    // one thing that stays at full strength.
+    readonly property color proseColor: root.disabled ? Style.disabled(Style.text)
         : root.danger ? Style.danger
         : root._normal && root.selected ? root.selectedColor
         : Style.text
@@ -140,17 +149,30 @@ Item {
     implicitWidth: body.implicitWidth + root._inset * 2
     implicitHeight: root.headingHeight + root.expansionHeight
 
-    // ── the selection ───────────────────────────────────────────────────
-    // The accent at `opacitySelected` over the SURFACE step, with the name in
-    // the accent (spec 07, owner 2026-10-16): no side marker. Over the band
-    // the tint read as a smudge, so it is laid over the surface it belongs on.
-    Rectangle {
+    // ── the body ────────────────────────────────────────────────────────
+    // One `Surface` answers hover, press and selection through `Style.tone`:
+    // the lift under the pointer, a deeper one while pressed, and the accent
+    // at `opacitySelected` over the SURFACE step with the name in the accent
+    // (spec 07, owner 2026-10-16: no side marker). Over the band the tint read
+    // as a smudge, so it is laid over the surface it belongs on. Invisible at
+    // rest: a list paints no box around a row nobody is touching.
+    Surface {
+        readonly property bool _selectedHere: root._normal && root.selected && root.paintsSelection
         y: 0
         width: parent.width
         height: root._headingHeight
-        radius: root.highlightRadius
-        visible: root._normal && root.selected
-        color: Style.selected(Style.surface, root.selectedColor)
+        radius: root.selectionRadius
+        base: Style.surface
+        accent: root.selectedColor
+        hovered: root.hovered
+        pressed: root.pressed
+        selected: _selectedHere
+        opacity: root.selectable && (root.hovered || root.pressed || _selectedHere)
+            && !(root.selected && !root.paintsSelection) ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
     }
 
     // ── interaction ─────────────────────────────────────────────────────
@@ -168,9 +190,8 @@ Item {
         target: leadingBox
         interactive: root.selectable
         focused: root.focused
-        focusRadius: root.highlightRadius
+        focusRadius: root.selectionRadius
         hoverScale: Motion.rowHoverScale
-        pressScale: Motion.rowPressScale
         onClicked: root.activate()
         onHoveredEntered: root.hoveredEntered()
     }
@@ -220,11 +241,10 @@ Item {
         anchors.leftMargin: root._inset
         anchors.rightMargin: root._inset
         spacing: Style.space2
-        // Row-level, so the leading visual and the text fall back together and
-        // the mark stays lit. A second fade inside would compound to
-        // near-invisible.
-        opacity: root.disabled ? Style.opacityDisabled
-            : (!root.interactive || root.selected) ? 1
+        // Receding is row-level, so the leading visual and the text fall back
+        // together and the mark stays lit. A second fade inside would compound
+        // to near-invisible. Disabled is not here: it is colour (`proseColor`).
+        opacity: (root.disabled || !root.interactive || root.selected) ? 1
             : root.recede ? Style.opacityRecede
             : 1
 
@@ -278,6 +298,7 @@ Item {
                 visible: root.supporting.length > 0
                     && root.supporting.toLowerCase() !== root.primary.toLowerCase()
                 role: "metadata"
+                color: root.disabled ? Style.disabled(Style.textMuted) : Style.textMuted
                 font.pixelSize: root._lg ? Style.textSm : Style.textXs
                 text: root.supporting
             }
