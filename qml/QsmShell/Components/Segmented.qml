@@ -28,13 +28,15 @@ T.TabBar {
     readonly property int _iconSize: Style.iconNear(Style.iconSm * root._s)
     readonly property int _inset: Style.rhythm(Style.space2 * root._s)
     readonly property int _gap: Style.rhythm(Style.space1 * root._s)
-    // The header row's one control radius: the search field shares it.
-    readonly property int _radius: Style.radiusMd
     // The items levitate on the rounded track: an inset all round and a gap
-    // between neighbours, each item a pill concentric with the track's
-    // corners (owner 2026-10-19), so no highlight can stop short of a corner.
+    // between neighbours (owner 2026-10-19). Nested corners are concentric:
+    // the item keeps the control radius and the track's radius is the item's
+    // plus the inset between them, so the gap reads even all the way round
+    // a corner. Deriving the inner from the outer instead left 40px items
+    // with an 8px corner that read as square.
     readonly property int _pad: Style.rhythm(Style.space1 * root._s)
-    readonly property int _itemRadius: Math.max(0, root._radius - root._pad)
+    readonly property int _itemRadius: Style.radiusMd
+    readonly property int _radius: root._itemRadius + root._pad
     readonly property real _segmentWidth: (root.width - root._pad * 2
         - root._gap * Math.max(0, root.options.length - 1)) / Math.max(1, root.options.length)
     readonly property bool focused: root.activeFocus || root.currentItem?.activeFocus === true
