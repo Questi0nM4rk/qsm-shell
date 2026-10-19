@@ -46,7 +46,9 @@ Rectangle {
         }
     }
 
-    // Indeterminate: a short band crossing an otherwise empty track.
+    // Indeterminate: a short band crossing an otherwise empty track. The band
+    // is 30% of the track: long enough to read as motion on a short bar,
+    // short enough to read as "somewhere in it" on a long one.
     Rectangle {
         id: sweep
         visible: root.indeterminate
