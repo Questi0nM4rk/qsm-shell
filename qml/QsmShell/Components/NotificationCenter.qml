@@ -34,6 +34,12 @@ ColumnLayout {
     // Unread is its own view, not only a dot, so what is new never hides
     // between what was seen. A host opening the menu picks the view.
     property string view: "unread"
+    // Entries read while the Unread view is showing stay in it until the
+    // view changes or the host starts a new visit (`beginVisit`): a row that
+    // vanished under the pointer the moment it was read was a jump.
+    property var keptUnread: ({})
+    onViewChanged: root.keptUnread = ({})
+    function beginVisit(): void { root.keptUnread = ({}); }
     readonly property int unreadCount: root.entries.filter(entry => entry.read === false).length
     property int actionFocusIndex: -1
     // The cursor itself: exposed rather than only reachable by relative
@@ -217,7 +223,7 @@ ColumnLayout {
     readonly property Item searchTarget: searchField
     readonly property var items: {
         const all = root.view === "unread"
-            ? root.entries.filter(entry => entry.read === false)
+            ? root.entries.filter(entry => entry.read === false || root.keptUnread[root.entryKey(entry)] === true)
             : root.entries.slice();
         const scored = root.query.length === 0
             ? all
@@ -385,7 +391,14 @@ ColumnLayout {
                 swatch: root.swatchFor ? root.swatchFor(modelData) : modelData.swatch
                 unread: modelData.read === false
                 activatable: modelData.read === false
-                onActivated: root.activated(modelData)
+                onActivated: {
+                    if (root.view === "unread") {
+                        const kept = Object.assign({}, root.keptUnread);
+                        kept[root.entryKey(modelData)] = true;
+                        root.keptUnread = kept;
+                    }
+                    root.activated(modelData);
+                }
                 onDismissed: root.dismissRequested(modelData)
                 onActionTriggered: id => root.actionTriggered(modelData, id)
                 onHoveredChanged: {

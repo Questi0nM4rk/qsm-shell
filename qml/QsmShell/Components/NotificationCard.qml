@@ -584,6 +584,11 @@ Item {
         clickable: root.primaryActionAvailable || root.activatable
         target: null
         onClicked: {
+            // A click on the leading column opens the card; it is not also
+            // the card's action (it marked an unread entry read while the
+            // person was only opening it to read).
+            if (root.leadHovered)
+                return;
             if (root.primaryActionAvailable)
                 root.activatePrimary();
             else if (root.activatable)
