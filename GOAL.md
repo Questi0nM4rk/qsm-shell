@@ -62,21 +62,28 @@ components. Re-derive the table when desktop use changes.
 
 ## Next, in this order
 
-0. **Keep the technical gates honest.** The last requested `npm test` passed native
+0. **Full-library UIX audit, then owner-led repairs.** The owner wants every
+   exported type reviewed against the installed qsm-uix guidance, with each
+   type's record carrying its intended behavior, its real input routes and its
+   hitbox and pointer-path mathematics. The audit lands first; repairs follow
+   one item at a time with owner acceptance; the desktop follows the library.
+   Orientation `docs/UIX-AUDIT.md`, plan
+   `openspec/changes/uix-component-audit/`, tracker `qss-9zk`.
+1. **Keep the technical gates honest.** The last requested `npm test` passed native
    interaction and unit checks, smoke and shader freshness, before the small Menu
    activation typing cleanup and glyph additions. Repeat the full gate only when
    requested. Lint warnings remain; desktop's
    isolated checks and production-only checks are separate evidence, not acceptance.
-1. **Owner review of the action menu and the panel tab group** in the live window.
+2. **Owner review of the action menu and the panel tab group** in the live window.
    Nothing below starts before that: keyboard reach, attached editors, repeated
    operations, NEIO/slash, the tab group.
-2. **Live pointer parity** — clicks, drags, wheel and focus judged in a real
+3. **Live pointer parity** — clicks, drags, wheel and focus judged in a real
    window. Isolated launcher clicks now pass after waiting for the actual reveal,
    including repeated toggles and Wi-Fi confirmation; OSD pointer/key/action mute
    also passes. That does not establish live hit testing or owner acceptance.
-3. **Real backends** — the same flows against the actual nmcli, Bluetooth and
+4. **Real backends** — the same flows against the actual nmcli, Bluetooth and
    audio services. The isolated fixtures are proven; the hardware is not.
-4. **Release readiness** — the owner's remaining backlog items, one at a time, in
+5. **Release readiness** — the owner's remaining backlog items, one at a time, in
    the order `docs/BACKLOG.md` lists them.
 
 ## Ownership
