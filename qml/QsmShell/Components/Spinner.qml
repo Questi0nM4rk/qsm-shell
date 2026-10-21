@@ -23,7 +23,8 @@ Item {
     property real sweep: 0.28
     // Stop the animation without removing the mark — for a surface that is
     // hidden but not destroyed, so an off-screen spinner is not burning a
-    // repaint every frame.
+    // repaint every frame. A stopped spinner draws only the unlit ring: a
+    // frozen arc would read as a fraction, and a spinner has none to report.
     property bool running: true
 
     implicitWidth: size
@@ -36,10 +37,8 @@ Item {
         // loses half its width to the clip and reads thinner at the top than
         // at the sides.
         // Proportional to the ring, because a fixed stroke on a 12px spinner
-        // is a disc and on a 48px one is a hairline. The ratio is the library's
-        // ring stroke against its ring diameter, so the two read as one family.
-        readonly property real thickness: Math.max(1,
-            root.size * (Style.ringStroke / Style.ringDiameter) * 3)
+        // is a disc and on a 48px one is a hairline.
+        readonly property real thickness: Math.max(1, root.size * Style.spinnerStrokeRatio)
 
         onPaint: {
             const c = getContext("2d");
@@ -49,10 +48,12 @@ Item {
             c.lineWidth = thickness;
             c.lineCap = "round";
             // The unlit remainder, so the ring is a ring rather than a comet.
-            c.strokeStyle = Qt.rgba(root.color.r, root.color.g, root.color.b, 0.18);
+            c.strokeStyle = Qt.rgba(root.color.r, root.color.g, root.color.b, Style.ringTrackOpacity);
             c.beginPath();
             c.arc(centre, centre, radius, 0, Math.PI * 2);
             c.stroke();
+            if (!root.running)
+                return;
             c.strokeStyle = root.color;
             c.beginPath();
             c.arc(centre, centre, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * root.sweep);
@@ -63,6 +64,7 @@ Item {
             target: root
             function onColorChanged() { arc.requestPaint(); }
             function onSweepChanged() { arc.requestPaint(); }
+            function onRunningChanged() { arc.requestPaint(); }
         }
     }
 
