@@ -43,6 +43,13 @@ T.Control {
     // ── consumer-owned state ────────────────────────────────────────────
     // The control is ON: a toggle engaged, a filter applied.
     property bool active: false
+    // The host marks a capsule that is a toggle, so a screen reader hears
+    // "checked" / "not checked" for `active` and not a plain button. A capsule
+    // whose `active` is a status (a scan running) stays a button.
+    property bool checkable: false
+    // The name a screen reader speaks when there is no label. A glyph-only
+    // capsule must carry one; the label wins when it exists.
+    property string accessibleName: ""
     readonly property bool focused: root.activeFocus
 
     signal clicked
@@ -50,7 +57,15 @@ T.Control {
     focusPolicy: Qt.StrongFocus
 
     Accessible.role: Accessible.Button
-    Accessible.name: root.label
+    Accessible.name: root._name
+    Accessible.checkable: root.checkable
+    Accessible.checked: root.checkable && root.active
+
+    readonly property string _name: root.label.length > 0 ? root.label : root.accessibleName
+    Component.onCompleted: {
+        if (root._name.length === 0)
+            console.warn("Capsule: no label and no accessibleName -- a screen reader hears an unnamed button")
+    }
 
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
@@ -59,11 +74,18 @@ T.Control {
     // Selected is identity (AGENTS.md, surface ladder): the accent tint on the
     // body AND accent content. Tint alone left an ON capsule telling only by
     // a shade of its surface.
-    // A ghost capsule rests muted and answers the pointer in its label: its
-    // body never tints, because the capsule grows instead.
-    readonly property color _proseBase: variant === "destructive" ? Style.danger : active ? _accent
+    // A quiet capsule paints no body at rest and shows one under the pointer
+    // (surfaceOpacity below), so hover and press are visible on every variant.
+    // A ghost also rests muted and brightens its label on hover. Primary is the
+    // one filled action: its body is `primary` and its content `textOnPrimary`.
+    readonly property bool _primary: variant === "primary"
+    readonly property color _proseBase: _primary ? Style.textOnPrimary
+        : variant === "destructive" ? Style.danger : active ? _accent
         : variant === "ghost" && !stateLayer.hovered ? Style.textMuted : Style.text
     readonly property color _prose: root.enabled ? _proseBase : Style.disabled(_proseBase)
+    // A reading is supporting information, never the accent: that is for
+    // focus, selection and the primary action.
+    readonly property color _reading: _primary ? Style.textOnPrimary : Style.textMuted
 
     // ONE padding value, used by BOTH the width and the content margins. They
     // used to disagree, and every small capsule came out narrower than its own
@@ -81,7 +103,7 @@ T.Control {
     }
 
     readonly property list<T.Action> actions: [
-        T.Action { text: root.label; enabled: root.enabled; onTriggered: root.activate() }
+        T.Action { text: root._name; enabled: root.enabled; onTriggered: root.activate() }
     ]
 
     // The state matrix is the ladder's (`Style.tone`): ON and "asks loudly"
@@ -89,12 +111,15 @@ T.Control {
     // capsule (StateLayer) AND lifts its colour; a press only recolours it.
     // Disabled dims each role through the state matrix; opacity would make the
     // card, glyph and text show through one another as a composite.
-    surfaceColor: Style.tone(Style.surface, stateLayer.hovered, stateLayer.pressed,
-        root.active || root.variant === "primary", root.enabled, root._accent)
+    surfaceColor: Style.tone(root._primary ? Style.primary : Style.surface, stateLayer.hovered,
+        stateLayer.pressed, root.active && !root._primary, root.enabled, root._accent)
     // A quiet variant at rest paints NOTHING. It is transparent rather than
     // surface-at-90%, which is the difference between a control that sits on
-    // the surface and one that is part of it.
-    surfaceOpacity: root._quiet && !root.active
+    // the surface and one that is part of it. Under the pointer it takes the
+    // lifted surface, so the colour answers hover and press as well as the
+    // growth. A filled primary is opaque.
+    surfaceOpacity: root._primary ? 1
+        : root._quiet && !root.active && !stateLayer.hovered && !stateLayer.pressed
         ? 0
         : Style.surfaceOpacity
 
@@ -154,7 +179,7 @@ T.Control {
             visible: root.detail.length > 0
             role: "reading"
             font.pixelSize: Style.textXs
-            color: root.enabled ? root._accent : Style.disabled(root._accent)
+            color: root.enabled ? root._reading : Style.disabled(root._reading)
             text: root.detail
         }
     }

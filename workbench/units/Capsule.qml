@@ -8,6 +8,10 @@ Item {
     property string variant: ""
     property var eventRecorder: null
     property bool active: variant === "active"
+    property string size: "sm"
+    property string emphasis: "secondary"
+    // label | reading | long | glyph: the same wireless toggle, composed whole.
+    property string content: variant === "active" ? "reading" : "label"
 
     implicitWidth: pill.implicitWidth
     implicitHeight: pill.implicitHeight
@@ -15,8 +19,13 @@ Item {
     Capsule {
         id: pill
         anchors.centerIn: parent
-        icon: "sparkle"
-        label: "Wireless"
+        icon: "power"
+        label: root.content === "glyph" ? "" : root.content === "long" ? "Wireless off · click to enable" : "Wireless"
+        detail: root.content === "reading" ? "2 paired" : ""
+        accessibleName: "Wireless"
+        checkable: true
+        size: root.size
+        variant: root.emphasis
         active: root.active
         onClicked: {
             root.active = !root.active
@@ -28,6 +37,27 @@ Item {
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
             { label: "disabled", set: { enabled: false } }
+        ] },
+        { label: "active", options: [
+            { label: "on", set: { active: true } },
+            { label: "off", set: { active: false } }
+        ] },
+        { label: "size", options: [
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } }
+        ] },
+        { label: "variant", options: [
+            { label: "ghost", set: { emphasis: "ghost" } },
+            { label: "secondary", set: { emphasis: "secondary" } },
+            { label: "primary", set: { emphasis: "primary" } },
+            { label: "destructive", set: { emphasis: "destructive" } }
+        ] },
+        { label: "content", options: [
+            { label: "label", set: { content: "label" } },
+            { label: "reading", set: { content: "reading" } },
+            { label: "long", set: { content: "long" } },
+            { label: "glyph-only", set: { content: "glyph" } }
         ] }
     ]
     readonly property var integration: ({
