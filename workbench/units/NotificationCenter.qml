@@ -9,6 +9,7 @@ Rectangle {
     property string variant: ""
     property var eventRecorder: null
     property bool dnd: false
+    property string view: "unread"
     property string query: ""
     property string lastAction: ""
     property string lastDismissed: ""
@@ -22,6 +23,7 @@ Rectangle {
             summary: "Build finished",
             body: "qsm-shell is ready.",
             urgency: "low",
+            read: false,
             createdAt: 0,
             actions: []
         },
@@ -31,6 +33,7 @@ Rectangle {
             summary: "Output switched",
             body: "The OSD now names the sink.",
             urgency: "normal",
+            read: false,
             createdAt: 0,
             actions: [{ id: "open", label: "Open" }]
         },
@@ -39,6 +42,7 @@ Rectangle {
             summary: "Update installed",
             body: "Restart to finish.",
             urgency: "normal",
+            read: true,
             createdAt: 0,
             archivedAt: 1,
             actions: []
@@ -47,7 +51,7 @@ Rectangle {
 
     color: Style.band
     implicitWidth: Style.controlWidth
-    implicitHeight: Style.controlWidth * 2
+    implicitHeight: Style.controlWidth
 
     NotificationCenter {
         id: center
@@ -56,6 +60,19 @@ Rectangle {
         entries: root.entries
         dnd: root.dnd
         query: root.query
+        fadeColor: Style.band
+
+        // The host owns `view`: the control strip sets it on the unit and the
+        // centre's own view switch writes it back.
+        Binding { target: center; property: "view"; value: root.view }
+        onViewChanged: root.view = center.view
+
+        onActivated: entry => {
+            root.entries = root.entries.map(candidate =>
+                center.entryKey(candidate) === center.entryKey(entry)
+                    ? Object.assign({}, candidate, { read: true }) : candidate)
+            root.eventRecorder?.("intent", "activated", {})
+        }
 
         onDismissRequested: entry => {
             root.dismissed++
@@ -92,6 +109,10 @@ Rectangle {
             { label: "off", set: { dnd: false } },
             { label: "on", set: { dnd: true } }
         ] },
+        { label: "view", options: [
+            { label: "unread", set: { view: "unread" } },
+            { label: "all", set: { view: "all" } }
+        ] },
         { label: "filter", options: [
             { label: "all", set: { query: "" } },
             { label: "none", set: { query: "zzz-no-match" } }
@@ -99,8 +120,8 @@ Rectangle {
     ]
 
     readonly property var integration: ({
-        events: ["dismiss-requested", "action-triggered", "hover-changed", "dnd-toggled", "clear-requested", "escaped", "selection-claimed", "key-pressed"],
-        actions: ["select-next", "select-previous", "toggle", "activate", "remove"],
+        events: ["activated", "dismiss-requested", "action-triggered", "hover-changed", "dnd-toggled", "clear-requested", "escaped", "selection-claimed", "key-pressed"],
+        actions: ["select-next", "select-previous", "toggle", "activate", "remove", "move-action-next", "move-action-previous", "focus-field"],
         keys: {
             "Enter": () => { center.activateSelected(); return true }
         },
@@ -124,6 +145,9 @@ Rectangle {
             if (name === "toggle") { center.toggleSelected(); return true }
             if (name === "activate") { center.activateSelected(); return true }
             if (name === "remove") { center.removeSelected(); return true }
+            if (name === "move-action-next") { center.moveAction(1); return true }
+            if (name === "move-action-previous") { center.moveAction(-1); return true }
+            if (name === "focus-field") { center.focusField(); return true }
             return false
         }
     })
