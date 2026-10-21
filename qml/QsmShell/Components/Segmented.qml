@@ -39,8 +39,19 @@ T.TabBar {
     // The segment that rings under keyboard focus: the picked one, or the
     // first available one while nothing is picked.
     readonly property int _ringIndex: root.currentIndex >= 0 ? root.currentIndex : root._firstEnabled()
-    readonly property real _segmentWidth: (root.width - root._pad * 2
+    // The segment is a whole number of device pixels: a track whose inside does
+    // not split evenly would otherwise give every pill and hover body a
+    // fractional width and soft edges. What does not split falls into the
+    // track's trailing air, less than one pixel per segment.
+    readonly property real _pixelRatio: root.Window.window?.devicePixelRatio ?? 1
+    readonly property real _segmentWidth: Math.floor((root.width - root._pad * 2
         - root._gap * Math.max(0, root.options.length - 1)) / Math.max(1, root.options.length)
+        * root._pixelRatio + 0.001) / root._pixelRatio
+
+    // The thumb glides only for a choice made with the pointer. A key, an
+    // action or a host that moves the selection answers where the choice
+    // already is: a glide there delays the state the person just asked for.
+    property bool _pointerChoice: false
 
     signal selected(int index)
 
@@ -190,7 +201,7 @@ T.TabBar {
             }
 
             Behavior on x {
-                enabled: !Style.reducedMotion
+                enabled: !Style.reducedMotion && root._pointerChoice
                 NumberAnimation { duration: Motion.fast; easing.type: Motion.standardEasing }
             }
         }
@@ -242,7 +253,11 @@ T.TabBar {
         // An icon-only option has no label; `name` then speaks for it.
         Accessible.name: tab.labelText || String(tab.option?.name ?? "")
         Accessible.selected: tab.selectedSegment
-        onClicked: root.select(tab.index)
+        onClicked: {
+            root._pointerChoice = true;
+            root.select(tab.index);
+            root._pointerChoice = false;
+        }
         Keys.priority: Keys.BeforeItem
         Keys.onPressed: event => root.handleKey(event)
 

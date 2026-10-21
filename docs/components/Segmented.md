@@ -9,8 +9,9 @@ host answers it. `options` accepts labels or objects with `label`, `icon`,
 
 Settings are `options`, `currentIndex`, `enabled`, the free-set `size`
 preset (`sm`, `md`, `lg`, or a consumer-defined name); `barHeight` remains
-the direct sizing escape hatch. Segments are equal-width, fixed-natural-width,
-single-line, and elide long labels. Empty icon and badge slots cost no space.
+the direct sizing escape hatch. Segments are equal-width, a whole number of
+device pixels wide (what does not split falls into the track's trailing air),
+fixed-natural-width, single-line, and elide long labels. Empty icon and badge slots cost no space.
 
 `tabNavigation` opts into an owner's Tab/Shift+Tab selection contract while
 focus is inside this one group; the default stays the conventional single tab
@@ -146,7 +147,8 @@ Preset values use `s = barHeight / 40`, `pad = rhythm(8 s)`, `gap = rhythm(4 s)`
 | disabled unselected label on track | 1.55 | inactive, exempt; see proposals |
 
 Motion: thumb glide `Behavior on x`, `Motion.fast` 180 ms, `Motion.standardEasing` (OutCubic),
-disabled under `Style.reducedMotion` so it snaps (`Segmented.qml` 185-188). Hover scale and colour
+only for a choice made with the pointer; a key, an action or a host moving the selection snaps it, and
+`Style.reducedMotion` snaps it too. Hover scale and colour
 use `Motion.micro` 130 ms through `StateLayer` (`response`, lines 126-131); that behaviour does not
 check `reducedMotion` (hypothesis H3 covers the reduced form).
 
