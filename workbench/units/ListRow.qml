@@ -84,6 +84,7 @@ FocusScope {
         }
 
         Loader {
+            visible: root.device
             sourceComponent: root.device ? root.readingComponent : null
         }
     }

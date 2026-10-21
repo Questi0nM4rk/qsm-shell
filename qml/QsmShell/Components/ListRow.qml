@@ -19,7 +19,9 @@ import qs.QsmShell.Style
 // left edge moves between rows, and scrolling a mixed list makes the whole
 // text column wobble. The visual keeps its own size INSIDE that box: a
 // command's glyph should not be as loud as an application's icon, it just has
-// to start the text in the same place.
+// to start the text in the same place. A row with no visual takes no box (an
+// empty slot takes no space); a list that mixes rows with and without a visual
+// sets `reserveLeading` on all of them to keep the edge put.
 //
 // ── receding ─────────────────────────────────────────────────────────────
 // A list where you want ONE thing (a launcher) recedes everything else hard,
@@ -35,6 +37,8 @@ Item {
     property alias leading: leadingSlot.data
     // The convenience glyph, for the common case.
     property string icon: ""
+    // Keep the leading box even when the row has no visual.
+    property bool reserveLeading: false
     property string primary: ""
     property string supporting: ""
     property bool expanded: false
@@ -64,9 +68,9 @@ Item {
     // A header's name wears the accent instead of the muted section colour:
     // the group that is current (a cheat sheet's open section).
     property bool accentHeader: false
-    // Keyboard focus. Defaults to this item's own; a list that owns focus for
-    // its rows binds it.
-    property bool focused: root.activeFocus
+    // Keyboard focus. The row takes none; the list that owns focus for its
+    // rows binds it.
+    property bool focused: false
 
     // ── shape ───────────────────────────────────────────────────────────
     // sm | md | lg — the row's height, its type step and its leading box, off
@@ -103,6 +107,13 @@ Item {
     readonly property real expansionHeight: expandedViewport.height
     readonly property real _headingHeight: root._hasExpandedContent
         ? root.headingHeight : root.height > 0 ? root.height : root.headingHeight
+    readonly property bool _hasTrailing: {
+        for (const c of trailingSlot.children) {
+            if (c.visible && c.implicitWidth > 0)
+                return true
+        }
+        return false
+    }
     readonly property bool _hasExpandedContent: root._normal && expandedHost.implicitHeight > 0
     readonly property real _expandedHeight: root.expanded && root._hasExpandedContent ? expandedViewport.implicitHeight : 0
     // The leading box every visual sits in.
@@ -223,7 +234,7 @@ Item {
         visible: root.separator
         anchors.left: parent.left
         anchors.right: parent.right
-        y: (root._headingHeight - height) / 2
+        y: Math.round((root._headingHeight - height) / 2)
         inset: Style.space3
         strength: 0.5
     }
@@ -244,7 +255,7 @@ Item {
         // Receding is row-level, so the leading visual and the text fall back
         // together and the mark stays lit. A second fade inside would compound
         // to near-invisible. Disabled is not here: it is colour (`proseColor`).
-        opacity: (root.disabled || !root.interactive || root.selected) ? 1
+        opacity: (root.disabled || !root.interactive || root.selected || root.hovered || root.pressed) ? 1
             : root.recede ? Style.opacityRecede
             : 1
 
@@ -256,7 +267,7 @@ Item {
             id: leadingBox
 
             Layout.alignment: Qt.AlignVCenter
-            visible: leadingSlot.children.length > 0 || root.icon.length > 0
+            visible: root.reserveLeading || leadingSlot.children.length > 0 || root.icon.length > 0
             implicitWidth: root.leadingSize
             implicitHeight: root.leadingSize
 
@@ -309,7 +320,10 @@ Item {
             objectName: "trailingSlot"
             Layout.alignment: Qt.AlignVCenter
             spacing: Style.space2
-            visible: children.length > 0
+            // A child that measures nothing (an empty Loader) is not content.
+            // Reads each child's own size, never this layout's, which is hidden
+            // while empty.
+            visible: root._hasTrailing
         }
     }
 
@@ -327,7 +341,10 @@ Item {
 
         Behavior on height {
             enabled: !Style.reducedMotion
-            NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
+            NumberAnimation {
+                duration: root.expanded ? Motion.fast : Motion.exit(Motion.fast)
+                easing.type: Motion.moveEasing
+            }
         }
 
         ColumnLayout {
