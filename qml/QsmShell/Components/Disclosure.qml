@@ -58,6 +58,20 @@ ColumnLayout {
         Keys.onReturnPressed: event => { event.accepted = true; root.toggle() }
         Keys.onEnterPressed: event => { event.accepted = true; root.toggle() }
 
+        // Declared before the row so the hover disc paints under the label.
+        StateLayer {
+            anchors.fill: parent
+            // The CHEVRON answers: it is the part that means "there is more",
+            // and growing the whole heading shoves the rows below it. The
+            // disc over the heading is the colour half of the hover law.
+            target: chevron
+            host: heading
+            focused: root.focused
+            focusRadius: Style.radiusSm
+            hoverTint: true
+            pressScale: Motion.pressScale
+        }
+
         RowLayout {
             anchors.fill: parent
             spacing: Style.space2
@@ -66,7 +80,7 @@ ColumnLayout {
                 id: chevron
                 name: "chevron-right"
                 size: Style.iconSm
-                color: Style.textMuted
+                color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                 rotation: root.expanded ? 90 : 0
 
                 Behavior on rotation {
@@ -77,29 +91,19 @@ ColumnLayout {
                 visible: root.icon.length > 0
                 name: root.icon
                 size: Style.iconSm
-                color: Style.text
+                color: root.enabled ? Style.text : Style.disabled(Style.text)
             }
             Prose {
+                id: titleLabel
                 Layout.fillWidth: true
                 role: "label"
+                color: root.enabled ? Style.text : Style.disabled(Style.text)
                 text: root.title
             }
             Badge {
                 visible: root.badge.length > 0
                 text: root.badge
             }
-        }
-
-        StateLayer {
-            anchors.fill: parent
-            // The CHEVRON answers: it is the part that means "there is more",
-            // and growing the whole heading shoves the rows below it.
-            target: chevron
-            host: heading
-            focused: root.focused
-            focusRadius: Style.radiusSm
-            hoverScale: 1.15
-            pressScale: 0.88
         }
     }
 
@@ -109,7 +113,9 @@ ColumnLayout {
     ColumnLayout {
         id: bodyHost
         Layout.fillWidth: true
-        Layout.leftMargin: Style.space5
+        // The body hangs from the title's left edge, wherever the icon puts it.
+        Layout.leftMargin: titleLabel.x
+        Layout.topMargin: Style.space2
         visible: root.expanded
         spacing: Style.space1
     }

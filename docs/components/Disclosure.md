@@ -6,9 +6,129 @@ actions: enumerated `toggle()` reports `toggled(!expanded)`; the native heading 
 pointer: the whole heading is the target with a StateLayer swell on the chevron; wheel does nothing and propagates.
 keyboard: tab reaches an enabled heading and Space and Return share the toggle route; the focus mark forwards to the StateLayer.
 screen reader: one named toggle-button heading reports checked state and an Expanded/Collapsed description; the badge is supporting information.
-size: heading at control small height with fixed row spacing; content is indented one box step; long titles elide rather than growing the heading.
-tokens: controlHeightSm, space1, space2, space5, iconSm, radiusSm, text roles and Badge; no local colours or measurements.
+size: heading at control small height with fixed row spacing; content hangs from the title's left edge (chevron, optional icon and gaps), 8 px below the heading; long titles elide rather than growing the heading.
+tokens: controlHeightSm, space1, space2, iconSm, Motion.pressScale, radiusSm, text roles and Badge; no local colours or measurements.
 motion: fast chevron rotation plus StateLayer hover and press swell; reduced motion shortens the duration.
 source: compared caelestia `ButtonBase.qml`'s StateLayer activation; rejected its internal toggle state and palette. Qt's native AbstractButton supplies heading input/focus while the host keeps expansion.
 expected: enumerated `toggle()` is the single pointer, Space, Enter and programmatic route. It reports `toggled(!expanded)` once without writing host state, refuses when unavailable, and exposes one named focusable heading with expanded accessibility state.
 not designed: selection, menu disclosure or asynchronous content; use Segmented, Menu or the host for those.
+
+## UIX audit
+
+Evidence: source-reviewed only. No preview, capture, tree dump, key or pointer driving was run, and live geometry was not read. Owner acceptance: none. Design source: the component laws and surface ladder in `AGENTS.md`, and the values in `qml/QsmShell/Style/Tokens.qml`.
+
+### Purpose and consequence
+
+Opens rare or advanced detail under a heading without that detail taking room in the closed state. A wrong heading either hides something a person needs, or shows an open group as closed.
+
+### Controls and states
+
+- Unit controls (`workbench/units/Disclosure.qml`, lines 41-58): expansion (open, closed), badge (count, none), icon (shown, none), state (enabled, disabled). All four are implemented.
+- Not in the unit: empty title, long title.
+- Implemented states: expanded and collapsed (host-owned), enabled and disabled. Disabled gates input and dims the chevron, icon and label by colour; the Badge stays at full strength, see D1.
+
+### Routes (source)
+
+| Route | Real path | Source |
+| --- | --- | --- |
+| Pointer click | heading `clicked` calls `toggle()` | Disclosure.qml:51, :37-40 |
+| Pointer hover | chevron grows through StateLayer `target: chevron` | Disclosure.qml:93-103 |
+| Space | Qt AbstractButton emits `clicked` on release, which calls `toggle()` | Disclosure.qml:44, :51 |
+| Return, Enter | `Keys.onReturnPressed` and `onEnterPressed` call `toggle()` | Disclosure.qml:58-59 |
+| Wheel | no wheel handler on the heading, so the wheel reaches the parent | Disclosure.qml:44-104 |
+| Focus | `focusPolicy: StrongFocus`; `focused` is `heading.visualFocus` | Disclosure.qml:30, :49 |
+| Programmatic | `actions` entry `toggle`; unit `runAction` | Disclosure.qml:35; unit :60-75 |
+| Accessibility | Button role, name is the title, checkable and checked, description Expanded or Collapsed | Disclosure.qml:52-57 (see hand-off) |
+
+Failure and cancellation: `toggle()` refuses when disabled (Disclosure.qml:38). No async content, so no cancellation path. An empty title has no guard and shows a bare chevron.
+
+### Sizes, empty and long content
+
+- Heading height 32 px (`controlHeightSm`, Tokens.qml:84). Width comes from the host (unit 380 px, `controlWidth`).
+- Body indent is the title's x (`titleLabel.x`): 24 px without the icon, 48 px with it, see D2.
+- Long title: the label is a Prose `label` role with `elide: ElideRight` (Prose.qml), so it truncates inside the row. Whether the natural width grows is H1.
+
+### Visual roles, motion and reduced motion
+
+- Chevron `textMuted` (Disclosure.qml:69). Icon `text` (:80). Label Prose `label` role, colour `text` (Prose.qml). Badge `neutral` tint (Badge.qml). Focus ring `Style.accent` (StateLayer default `focusColor`). Palette pairs were not measured.
+- Chevron rotation 0 to 90 degrees over `Motion.fast`, 180 ms (Tokens.qml:49), easing `Motion.moveEasing` (InOutCubic, Motion.qml:128). Measured from source only.
+- Hover response: `Motion.hoverScale` on the chevron plus a `Style.tone` disc over the heading. Press response: `Motion.pressScale`. Both from tokens, see D3 and D4.
+- Body: appears and disappears with no transition.
+- Reduced motion: `Motion.fast` becomes 80 ms (Motion.qml:56). The rotation still plays. See S1.
+
+### Pointer geometry (assumptions labelled)
+
+- Input shape: the whole heading row, host width by 32 px, no padding. Painted content: chevron 16 by 16 px at x 0-16, label, optional icon 16 px, badge at the right end. The unpainted right part is also input.
+- Painted against input: the glyph is 16 px inside a 32 px row (50 percent of the row height). The row is 32 px high, above the 24 px desktop floor in WCAG 2.5.8 (criterion from `a11y-conformance`; not measured). No touch route exists in source, so the 44 px touch floor is not applicable.
+- Width model: nominal, geometry size with no effective-width correction, because no trajectory data exists. Assumption: a stack of disclosures separated by `space1` (4 px, Disclosure.qml:42), with the pointer arriving from the centre of the previous row. This is a modelled trajectory, not a human average.
+- Vertical approach: D = 32 + 4 = 36 px, W = 32 px, ID = log2(1 + 36/32) = 1.09 bits.
+- Horizontal approach: W = 380 px (the full row), so ID is at most log2(1 + D/380), which is at most 1 bit for any D inside the row. The vertical axis is the limit.
+- Landing tolerance: plus or minus 16 px vertically from the row centre; the full row width horizontally.
+- Neighbour interference: the gap from the heading to the body is 4 px (Disclosure.qml:42 and :114). See H4.
+- Trigger-to-panel corridor and timing: not applicable, the component is not a popup and does not open on hover.
+
+### Findings
+
+| id | pass | element | evidence (source) | expected (source) | actual | severity |
+| --- | --- | --- | --- | --- | --- | --- |
+| D1 | states | heading, disabled | disabled stops hover and press (StateLayer `hovered`, `pressed` need `enabled`); chevron keeps `textMuted` (Disclosure.qml:69), icon keeps `text` (:80), Prose label keeps `text` (Prose.qml colour binding), Badge keeps its tint (Badge.qml) | AGENTS "Disabled dims by colour": `Style.disabled(colour)` on every painted role | a disabled heading is drawn at full strength and reads as active; only the missing hover shows it is off | major |
+| D2 | alignment | body indent against title | title x is chevron 16 (Disclosure.qml:68) plus `space2` 8 (:63) = 24 px without the icon, and 16 + 8 + 16 + 8 = 48 px with it (:76-81); body indent is `space5` 24 px (:112) | body and title share one left edge (ui-design rhythm) | the default unit state (icon shown, unit.qml:13) puts the title at 48 px and the body at 24 px; the match at 24 px exists only without the icon | minor |
+| D3 | hover | heading, hover colour | `hoverTint` defaults to false in StateLayer and Disclosure.qml:93-103 never sets it; the only hover change is the chevron scale | AGENTS hover law: "grows slightly AND changes colour" | hovering changes the glyph size and no colour | minor |
+| D4 | tokens | hover and press numbers | Disclosure.qml:101 `hoverScale: 1.15` and :102 `pressScale: 0.88`; the library tokens are `motionHoverScale` 1.08 (Tokens.qml:61) and `motionPressScale` 0.94 (Tokens.qml:62); the component also writes `rotation: 90` (:70) | AGENTS "every number comes from Style or Motion" | the disclosure chevron grows more and presses deeper than every other control in the library | minor |
+| D5 | focus | ring against body | StateLayer focus ring reaches `spaceTight * 2` = 4 px outside the heading with a 2 px stroke inside that, so its outer edge sits at 4 px; body starts at 4 px (Disclosure.qml:42, :114) | ring keeps a gap from neighbouring content (AGENTS focus ring law) | with focus on the heading and the group open, the ring touches the top of the body with no clearance | minor |
+
+Status, source-reviewed and load-checked (one-scenario capture exited 0), never owner-accepted:
+
+- D1: fixed for the chevron, icon and label with `Style.disabled`. Open: the Badge stays at full strength; it needs `Badge.qml` to dim when its host is disabled.
+- D2: fixed. The owner's choice was not yet given, so the body follows the title (`Layout.leftMargin: titleLabel.x`); the owner may still prefer the chevron-only indent.
+- D3: fixed with `hoverTint: true`; the StateLayer is declared before the row so the disc paints under the label.
+- D4: fixed. `hoverScale` is the StateLayer default, `pressScale: Motion.pressScale`.
+- D5: fixed with `Layout.topMargin: Style.space2` on the body.
+
+Fixes as proposed, all inside `Disclosure.qml`:
+
+- D1: colour each painted role with `root.enabled ? c : Style.disabled(c)` for the chevron, icon and the Prose `color`; the Badge fix sits in `Badge.qml`.
+- D2: the owner chooses the rule. Either the body indents to the title (chevron plus icon plus gaps), or the body stays at the chevron indent and the mismatch is recorded as intended.
+- D3: `hoverTint: true` on the StateLayer, which paints a `Style.tone` disc at `focusRadius` over the heading, or an exemption recorded in this section.
+- D4: delete the two literals, which leaves the StateLayer defaults in place, and set `pressScale: Motion.pressScale`. The `rotation: 90` literal is a right angle, so it may stay.
+- D5: `Layout.topMargin: Style.space2` on `bodyHost`, which puts 8 px of clearance beyond the ring's outer edge.
+
+Only the Badge half of D1 needs a shared file.
+
+### Hypotheses (not measured)
+
+- H1: a long title may widen the heading's natural width rather than eliding. The heading sets no `implicitWidth` (Disclosure.qml:44), and whether the AbstractButton's implicit width includes the row depends on how its children attach. Check in the tree with an 80-character title.
+- H2: wrapping body text needs the host to give it `Layout.fillWidth`. The body slot does not set it (:109-115) and the unit's body Prose has none (unit :34-38). Check with a wrapping body.
+- H3: keyboard focus inside the body is lost when the group collapses, because `visible: false` removes it from focus. Check with focus inside the body and a programmatic collapse.
+- H4: body controls within 4 px of the heading can take an overshoot below the heading. Applies only if a host puts targets in the body.
+- H5: `Style.accent` for the focus ring may be under 3:1 against the band (WCAG 1.4.11). The palette value was not read, so this needs a capture.
+
+### Source conflicts
+
+- S1: AGENTS says a one-shot position animation is removed under reduced motion, not shortened, and also says reduced motion shortens a duration (Motion.qml:56). The chevron is a rotation, not a position, so the code follows the shortening rule. review-animations standard 8 says to drop movement. The owner decides which rule governs a rotation.
+- S2: resolved by D4; the tokens line holds again.
+
+### Hand-off to review-animations (motion verdict is theirs)
+
+- The chevron animates on keyboard toggles too. The standard says keyboard-initiated actions get no animation, and `toggle()` carries no origin, so the component cannot tell the two apart.
+- The body snaps open while the chevron turns over 180 ms, so the state change and its indicator finish at different times.
+
+### Hand-off to a11y-audit (criteria are theirs)
+
+- The accessible name is the title only, so the badge count is not spoken.
+- The state is given twice, as checkable and checked and as the description Expanded or Collapsed. Verify what the tree reports.
+- An empty title leaves the button unnamed.
+
+### Needs human trial
+
+- Keyboard focus ring in each theme: Tab to the heading, expanded and collapsed, and read the ring against its neighbour.
+- Pointer feel: hover and press on the chevron and the whole row, and the 32 px target at the stack gap.
+- Screen reader: name, role and state of the heading after Space and Enter.
+
+### Not examined
+
+- No runtime: no preview, capture, tree dump, key or pointer driving.
+- Themes: only the deep-night values were read; the light theme was not.
+- Desktop: no QML reference to Disclosure exists in `qsm-desktop` (the grep returned zero matches), so no production state was checked.
+- Long title, wrapping body and empty title: not rendered.
+- Touch: no touch route in source.
