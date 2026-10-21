@@ -19,7 +19,7 @@ import qs.QsmShell.Style
 //
 // Three states, each the SAME three marks changing together — fill, glyph,
 // label — so the tile never has to be read twice. Selected is a solid fill in
-// `accent` with `textOnPrimary` content (spec 08); armed is the same in
+// `accent` with `textOnPrimary` content; armed is the same in
 // `armedColor`. Armed outranks selected: what happens next matters more than
 // what is picked.
 T.Control {

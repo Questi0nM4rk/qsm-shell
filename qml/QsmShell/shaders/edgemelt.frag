@@ -44,7 +44,7 @@ layout(std140, binding = 0) uniform buf {
     vec4 deform4; vec4 deform5; vec4 deform6; vec4 deform7;
     vec4 param0; vec4 param1; vec4 param2; vec4 param3;
     vec4 param4; vec4 param5; vec4 param6; vec4 param7;
-    // EDGE SEPARATION (owner 2026-10-18): a slight line of edge colour
+    // EDGE SEPARATION: a slight line of edge colour
     // exactly at the merged silhouette's edge, fading smoothly inward into
     // the fill. Measured on the same union, so it follows every corner
     // radius and melt neck with one profile.
@@ -68,7 +68,7 @@ float sdRoundedBox(vec2 p, vec2 center, vec2 halfSize, float r) {
 // Per-corner radii: quadrant-select the active corner's radius, then the
 // standard formula. Slot mapping in THIS y-down pixel space: r.x lands on
 // the bottom-right corner, r.y top-right, r.z bottom-left, r.w top-left —
-// EdgeScene packs radii to match (see its radiiToShaderOrder).
+// ShellBorder packs radii to match (see its radiiToShaderOrder).
 float sdRoundedBox4(vec2 p, vec2 center, vec2 halfSize, vec4 r) {
     vec2 d = p - center;
     r.xy = (d.x > 0.0) ? r.xy : r.zw;
@@ -178,7 +178,7 @@ void main() {
         // Blend 0 means an EXACT union, and that has to be a real min().
         //
         // The k floor was believed to deliver one ("k = max(.., 0.01) turns
-        // blend 0 into a hard min", spec/03) and it does not: this smin does
+        // blend 0 into a hard min") and it does not: this smin does
         // NOT converge to min as k falls. For equal inputs it reduces to
         //
         //     smin(a, a, k) = sqrt(2) * a + k * (1 - sqrt(2))
@@ -195,7 +195,7 @@ void main() {
             ? smin(incomingSdf, d, smoothFactor * blendAmount)
             : min(incomingSdf, d);
 
-        // WATER LAW (owner 2026-09-06): a body that has not come out yet has
+        // WATER LAW: a body that has not come out yet has
         // no edge of its own. A barely-out rollout drives its melt radius
         // toward zero, smin degenerates to a hard min, and the union keeps a
         // full boundary where the new body meets whatever it is emerging

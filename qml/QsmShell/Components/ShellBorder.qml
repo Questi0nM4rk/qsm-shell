@@ -2,12 +2,11 @@ import QtQuick
 import qs.QsmShell.Style
 
 // THE host: the seven-call contract a Rollout requires, the melt shader that
-// paints the merged silhouette, and nothing else. This is the mechanism half
-// of the shell-border lift (docs/design-2026-09-06-shell-border.md) — the
-// window, the layer shell, the input mask, and every specific surface stay
-// with the consumer. This type never names Wayland, a monitor, or a Region:
-// it publishes plain rectangles (`maskRects`) and paints the silhouette;
-// what a consumer does with either is its own business.
+// paints the merged silhouette, and nothing else. The window, the layer shell,
+// the input mask, and every specific surface stay with the consumer. This type
+// never names Wayland, a monitor, or a Region: it publishes plain rectangles
+// (`maskRects`) and paints the silhouette; what a consumer does with either is
+// its own business.
 Item {
     id: root
 
@@ -136,7 +135,7 @@ Item {
     // blend: [0,1] scale on the melt reach for this bulge's neck — Rollouts
     // shrink it with their protrusion so absorbed bodies stop bridging.
     // deform: inverse 2x2 of the goo matrix (row-major vec4) + its minEig.
-    // EDGE SNAP (owner 2026-08-18). A silhouette that stops just short of a
+    // EDGE SNAP. A silhouette that stops just short of a
     // screen edge leaves a sliver the shader is already half-bridging — the
     // melt reach IS the distance at which two shapes fuse, so anything inside
     // it reads as a pinched neck rather than a deliberate gap. Rather than tune
@@ -240,8 +239,7 @@ Item {
     // right bit for a parent popout's flush child made weldCap believe the
     // rect crossed the right band and visibly shrank the fillet where it joins
     // a DIFFERENT edge entirely.
-    // A flush seam has to OVERLAP, not merely touch (spec/03, amended
-    // 2026-08-25 after measuring one).
+    // A flush seam has to OVERLAP, not merely touch.
     //
     // Square corners and blend 0 give an exact union, which removes the dip and
     // the bulge -- but an exact union of two rects that share an edge leaves the
@@ -331,8 +329,8 @@ Item {
             : Qt.vector4d(1, 0, 0, 1);
     }
 
-    // Fullscreen: consumers gate their own instant-hide on this (09-input
-    // DEFAULT) and Rollout reads it directly (`fullscreenDetached &&
+    // Fullscreen: consumers gate their own instant-hide on this and Rollout
+    // reads it directly (`fullscreenDetached &&
     // host.fullscreen`). A plain settable property, not readonly: the
     // consumer is the one thing that can know whether its own monitor is
     // showing a native fullscreen client.
@@ -376,7 +374,7 @@ Item {
         return Qt.vector4d(css.z, css.y, css.w, css.x);
     }
 
-    // The silhouette shader (spec/12-mechanism.md, NORMATIVE): band + every
+    // The silhouette shader (docs/12-mechanism.md, NORMATIVE): band + every
     // rollout as one merged SDF, fill-only. Uniforms are named per-slot —
     // QML arrays bind to GLSL array uniforms as silent zeros on this stack.
     // Deform and param slots ride at identity until goo physics drives them.
