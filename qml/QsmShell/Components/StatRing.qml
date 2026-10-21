@@ -39,8 +39,10 @@ Item {
     property real sweepAngle: 360
 
     // The reading is the focal point and steps with the ring: a 150px ring and
-    // a 56px one cannot share a type size without one of them being wrong.
-    property int readingSize: Style.textXl
+    // a 56px one cannot share a type size without one of them being wrong. It
+    // is the md reading times the live box over the md diameter, snapped to
+    // the type scale; a caller that states it owns the number.
+    property int readingSize: Style.textNear(Style.textXl * root._box / Style.ringDiameter)
 
     implicitWidth: diameter
     implicitHeight: diameter
@@ -51,12 +53,29 @@ Item {
         ? root.label + ", " + root.reading
         : root.label + root.reading
 
-    // The column the centred content may take: the live ring box
-    // (min(width, height)) less the stroke on both sides and one rhythm
-    // step, so long text elides inside the circle's own box instead of
-    // enlarging or overflowing the component. It tracks the rendered box,
-    // never the diameter preference, so caller-set geometry cannot overflow.
-    readonly property int _contentWidth: Math.max(0, Math.min(root.width, root.height) - strokeWidth * 2 - Style.space2)
+    // The live ring box. It tracks the rendered size, never the diameter
+    // preference, so caller-set geometry cannot overflow.
+    readonly property real _box: Math.min(root.width, root.height)
+    // The arc's centreline sits this many strokes inside the box edge.
+    readonly property real _strokeInset: 0.75
+
+    // The column the centred content may take: the square inscribed in the
+    // hole of the ring. The painted stroke reaches _box/2 - inset x stroke +
+    // stroke/2 from the centre, so the hole's radius is
+    // _box/2 - (inset + 1/2) x stroke, and the inscribed square's side is
+    // sqrt(2) times that. Long text elides inside it instead of crossing the
+    // arc.
+    readonly property int _contentWidth: Math.max(0, Math.floor(Math.SQRT2 * (root._box / 2 - (root._strokeInset + 0.5) * root.strokeWidth)))
+    readonly property int _iconSize: Style.iconNear(root.readingSize)
+    // The text rows' own height, independent of the icon so that hiding the
+    // icon cannot resize the stack back into fitting.
+    readonly property real _textHeight: (readingText.visible ? readingText.implicitHeight : 0)
+        + (labelText.visible ? labelText.implicitHeight : 0)
+        + (readingText.visible && labelText.visible ? Style.spaceTight : 0)
+    // A glyph that would push the stack out of the hole is dropped: the reading
+    // and label carry the meaning, and a glyph across the arc carries none.
+    readonly property bool _iconFits: root.icon.length > 0
+        && root._textHeight + (root._textHeight > 0 ? Style.spaceTight : 0) + root._iconSize <= root._contentWidth
 
     Canvas {
         id: canvas
@@ -69,7 +88,7 @@ Item {
             const cy = height / 2;
             // The inset scales with the stroke, so a thinner ring on a smaller
             // card keeps the same proportion rather than the same gap.
-            const radius = Math.min(cx, cy) - root.strokeWidth * 0.75;
+            const radius = Math.min(cx, cy) - root.strokeWidth * root._strokeInset;
             const start = root.startAngle * Math.PI / 180;
             const sweep = root.sweepAngle * Math.PI / 180;
 
@@ -110,12 +129,13 @@ Item {
 
         SvgIcon {
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: root.icon.length > 0
+            visible: root._iconFits
             name: root.icon
-            size: Math.min(root.readingSize, root._contentWidth)
+            size: root._iconSize
             color: root.iconColor
         }
         Prose {
+            id: readingText
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
@@ -125,6 +145,7 @@ Item {
             text: root.reading
         }
         Prose {
+            id: labelText
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width
             horizontalAlignment: Text.AlignHCenter

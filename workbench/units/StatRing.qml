@@ -8,7 +8,8 @@ Rectangle {
 
     property string variant: ""
     property real fraction: 0.42
-    property string reading: "42%"
+    property bool measured: true
+    readonly property string reading: root.measured ? Math.round(root.fraction * 100) + "%" : ""
     property string caption: "CPU"
     property string glyph: "cpu"
     property int box: Style.ringDiameter
@@ -46,9 +47,9 @@ Rectangle {
             { label: "lg", set: { box: Style.controlWidth } }
         ] },
         { label: "content", options: [
-            { label: "full", set: { reading: "42%", caption: "CPU", glyph: "cpu" } },
-            { label: "reading-only", set: { reading: "42%", caption: "", glyph: "" } },
-            { label: "bare", set: { reading: "", caption: "", glyph: "" } }
+            { label: "full", set: { measured: true, caption: "CPU", glyph: "cpu" } },
+            { label: "reading-only", set: { measured: true, caption: "", glyph: "" } },
+            { label: "bare", set: { measured: false, caption: "", glyph: "" } }
         ] }
     ]
     readonly property var integration: ({
