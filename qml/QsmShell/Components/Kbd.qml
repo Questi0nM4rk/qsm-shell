@@ -61,7 +61,6 @@ RowLayout {
                     width: Math.max(0, Math.min(implicitWidth, parent.width - Style.space2))
                     elide: Text.ElideRight
                     role: "reading"
-                    font.pixelSize: Style.textXs
                     text: part.modelData
                 }
             }

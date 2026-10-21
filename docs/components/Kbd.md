@@ -45,9 +45,9 @@ reader to the wrong key. It labels a shortcut and takes no input.
   `Kbd.qml:45`).
 - Cap height: `badgeHeight + space1` = 16 + 4 = 20 (`Kbd.qml:46`; deep-night `geometryBadgeHeight`
   16, `space.1` 4).
-- Cap text: Prose role `reading`, size overridden to `textXs` = 10 (`Kbd.qml:54`), weight from
+- Cap text: Prose role `reading` at its own size, `textSm` = 12 (the type floor), weight from
   `Style.weightBold`, which falls back to `Font.DemiBold` (`Style.qml:216`). Separator: Prose role
-  `metadata`, `textXs`, muted.
+  `metadata`, `textSm`, muted.
 - Join spacing: `spaceTight` = 2 (`Kbd.qml:26`, `Kbd.qml:37`).
 - Empty: a `combo` of `""` or of only `+` yields no parts. Kbd renders at zero size with no
   placeholder. Not designed.
@@ -99,9 +99,6 @@ Redesign proposals (no fix committed):
 
 - P2: choose the fill. `Style.overlay` is a ladder role and sits at 1.90:1 on band, the same as
   `keycap`. Use it and drop the derived token, or keep the step as a named role. Owner's call.
-- P3: `Kbd.qml:54` overrides Prose's reading size (`textSm` by default, `Prose.qml`) with `textXs`.
-  Name the 10 px cap as Kbd's decision, or add a role. Prose's header says a role states the
-  decision once.
 - P4: malformed binds. Decide whether Kbd keeps the silent repair (`Kbd.qml:29`) or reports it. The
   library's one-path rule argues against silent repair.
 - P5: set `Accessible.name: root.combo` on the root so the host wrapper need not duplicate it.

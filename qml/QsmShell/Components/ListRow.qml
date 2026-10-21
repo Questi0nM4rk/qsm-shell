@@ -107,9 +107,22 @@ Item {
     readonly property real expansionHeight: expandedViewport.height
     readonly property real _headingHeight: root._hasExpandedContent
         ? root.headingHeight : root.height > 0 ? root.height : root.headingHeight
+    // A child that measures nothing (an empty Loader) is not content: each
+    // child's own size is read, never the layout's.
     readonly property bool _hasTrailing: {
         for (const c of trailingSlot.children) {
             if (c.visible && c.implicitWidth > 0)
+                return true
+        }
+        return false
+    }
+    // A leading child that is hidden is not content: a host whose entry has no
+    // visual hides it and the text starts at the row's inset. A child reads its
+    // EFFECTIVE visibility, so neither slot is ever hidden itself: a slot hidden
+    // because its content was hidden would never see the content come back.
+    readonly property bool _hasLeading: {
+        for (const c of leadingSlot.children) {
+            if (c.visible)
                 return true
         }
         return false
@@ -131,7 +144,7 @@ Item {
     readonly property bool receded: root.recede && root._normal && root.interactive
         && !root.disabled && !root.selected && !root.hovered && !root.pressed
     readonly property real contentInset: root._inset
-        + (leadingBox.visible ? root.leadingSize + Style.space2 : 0)
+        + (leadingBox.shown ? root.leadingSize + Style.space2 : 0)
     // Disabled and receded dim by colour, never by opacity on the row: the
     // glyph and both lines are dimmed here. A host's slotted content falls back
     // with them through `_slotOpacity`; disabled leaves it at full strength.
@@ -270,14 +283,18 @@ Item {
         height: root._headingHeight
         anchors.leftMargin: root._inset
         anchors.rightMargin: root._inset
-        spacing: Style.space2
+        spacing: 0
 
         Item {
             id: leadingBox
 
+            readonly property bool shown: root.reserveLeading || root._hasLeading || root.icon.length > 0
+
             Layout.alignment: Qt.AlignVCenter
-            visible: root.reserveLeading || leadingSlot.children.length > 0 || root.icon.length > 0
-            implicitWidth: root.leadingSize
+            // The gap after the box belongs to the box, so an empty one leaves
+            // none.
+            Layout.rightMargin: shown ? Style.space2 : 0
+            implicitWidth: shown ? root.leadingSize : 0
             implicitHeight: root.leadingSize
 
             Item {
@@ -336,12 +353,9 @@ Item {
             id: trailingSlot
             objectName: "trailingSlot"
             Layout.alignment: Qt.AlignVCenter
+            Layout.leftMargin: root._hasTrailing ? Style.space2 : 0
             spacing: Style.space2
             opacity: root._slotOpacity
-            // A child that measures nothing (an empty Loader) is not content.
-            // Reads each child's own size, never this layout's, which is hidden
-            // while empty.
-            visible: root._hasTrailing
         }
     }
 

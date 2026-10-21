@@ -83,7 +83,7 @@ slot), `selected`, `disabled`, `interactive`, `danger`, `header`, `separator`, `
   name textSm 12 at md and sm, textMd 14 at lg; supporting textSm 12 at every size (`textNear` has no step under 12).
 - Text column left edge (`contentInset`): 12 + 20 + 8 = 40 px at md with a leading visual; 12 px
   without one.
-- Empty: no leading visual hides the leading box unless `reserveLeading` is set; a supporting line
+- Empty: no leading visual (no `icon`, no visible leading child) hides the leading box unless `reserveLeading` is set; a supporting line
   equal to the name (case-insensitive) hides; a trailing slot with no visible child that measures
   wider than 0 hides.
 - Long: name and supporting elide right (Prose.qml:118). The natural width is not constant; D1 is open.
