@@ -45,9 +45,10 @@ in it. The consequence of a wrong month or a lost today marker is a wrong date r
 ### Sizes, empty and long content, failure, cancellation
 
 - Natural height is constant: header 32 px (`IconButton` 16 + 2 x 8), spacing 8, weekday row
-  (`Prose` 10 px, assumed about 12 px high), row spacing 2, six rows of 24 px with spacing 2, which
-  is 208 px with the assumed weekday height. The 42-cell model fixes it (`:50`). Passes by source.
-- Natural width follows the widest month name of the shown year.
+  (`Prose` 12 px), row spacing 4, six rows of 32 px with spacing 4, which is 256 px with the weekday
+  height. The 42-cell model fixes it. Passes by source.
+- Natural width is constant: seven 32 px cells and six 4 px gaps, 248 px, which is the rail rollout's
+  content width. A host may widen it and the cells stretch.
 - Long content: only the month title varies. Its role `title` elides (`Prose.qml:118`) when the host
   constrains the width; no empty state exists because the grid always shows 42 cells.
 - Failure: no failure path is defined for an invalid `shown` or `today`. Not examined further.
@@ -65,9 +66,8 @@ Computed from the deep-night token values against `band`, the unit AGENTS names:
 | `textOnPrimary` on `accent` (today digit) | `:68` | 8.87 |
 | `accent` on `band` (today disc) | `:61` | 8.87 |
 
-Roles used: `title` (14 px, bold), `reading` (day digits, 10 px, technical face, `:65`), `accent`
-on the today disc only. The disc is 22 px, which is `Style.space5 - Style.spaceTight`, derived from
-two tokens. The hover disc of a chevron is `Style.tone` through `IconButton`; not computed here.
+Roles used: `title` (14 px, bold), `reading` (day digits, 12 px, technical face), `accent`
+on the today disc only. The disc is 24 px, `Style.space5`, centred in its 32 px cell. The hover disc of a chevron is `Style.tone` through `IconButton`; not computed here.
 
 ### Motion
 
@@ -118,8 +118,6 @@ Defects (source-reviewed, each cited by file and line):
 
 Redesign proposals (taste, not defects):
 
-- Day digits at 10 px (`:65`) are the smallest size in the scale for the most-read numbers. A 12 px
-  digit (`textSm`) fits the 22 px disc. This is ui-design's call.
 - The month title uses role `title` (14 px, bold), the weight of a card row. Role `heading` would
   state the component's job, but it widens the header.
 - The day grid has no roles. Whether to expose it as a grid is for a11y-audit.

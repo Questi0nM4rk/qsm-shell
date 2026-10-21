@@ -54,11 +54,11 @@ Item {
         GridLayout {
             Layout.fillWidth: true
             columns: 7
-            rowSpacing: Style.spaceTight
-            columnSpacing: Style.spaceTight
+            rowSpacing: Style.space1
+            columnSpacing: Style.space1
             Repeater {
                 model: 7
-                Prose { required property int index; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; role: "reading"; font.pixelSize: Style.textXs; muted: true; text: Qt.locale().standaloneDayName(index + 1, Locale.ShortFormat) }
+                Prose { required property int index; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; role: "reading"; muted: true; text: Qt.locale().standaloneDayName(index + 1, Locale.ShortFormat) }
             }
             Repeater {
                 model: 42
@@ -71,12 +71,12 @@ Item {
                     readonly property bool inMonth: cellDate.getMonth() === root.shown.getMonth()
                     readonly property bool isToday: cellDate.getFullYear() === root.today.getFullYear() && cellDate.getMonth() === root.today.getMonth() && cellDate.getDate() === root.today.getDate()
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Style.space5
-                    Rectangle { anchors.centerIn: parent; width: Style.space5 - Style.spaceTight; height: Style.space5 - Style.spaceTight; radius: Style.radiusPill; color: parent.isToday ? Style.accent : "transparent" }
+                    Layout.preferredWidth: Style.space6
+                    Layout.preferredHeight: Style.space6
+                    Rectangle { anchors.centerIn: parent; width: Style.space5; height: Style.space5; radius: Style.radiusPill; color: parent.isToday ? Style.accent : "transparent" }
                     Prose {
                         anchors.centerIn: parent
                         role: "reading"
-                        font.pixelSize: Style.textXs
                         font.weight: parent.isToday ? Style.weightBold : Style.weightRegular
                         text: parent.cellDate.getDate()
                         color: parent.isToday ? Style.textOnPrimary : parent.inMonth ? Style.text : Style.textMuted
