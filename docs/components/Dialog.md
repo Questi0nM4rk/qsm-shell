@@ -60,9 +60,9 @@ named. Channels available: source and tokens. Channels missing: live geometry, c
 
 ### Visual roles and palette pairs
 
-- Card: `overlay` at `opacitySurface` 0.9 (Dialog.qml 126; Card.qml 9-10), over an opaque copy of
-  itself in Card.qml 26-41, so it reads as opaque. Card glow and shadow are on (defaults).
-- Scrim: `band` at strength 0.55 (Scrim.qml 21, 32). The dim is the band role, not black; the
+- Card: an opaque `overlay` body (Dialog.qml 164, Card.qml `surfaceColor`) with the card's edge
+  separation and slight shadow on (defaults).
+- Scrim: `band` at `Style.scrimOpacity` (Scrim.qml `strength`). The dim is the band role, not black; the
   shadow token is black.
 - Pairs (token arithmetic, default theme, source-reviewed):
 

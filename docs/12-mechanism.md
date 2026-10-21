@@ -1,6 +1,6 @@
 # 12 — Mechanism (normative reference code)
 
-The implementation vocabulary the spec assumes. Code below is NORMATIVE: implementers use
+The implementation vocabulary the shell assumes. Code below is NORMATIVE: implementers use
 these exact formulas/patterns; deviations require editing this file first.
 
 The attached Rollout contract is source-silhouette expansion, specified in
@@ -38,7 +38,7 @@ per pixel and fills it. Single pass; no per-shape draw calls.
 
 The fill carries ONE paint on top: the edge separation, a slight line of tint exactly at the
 merged silhouette's edge that fades smoothly inward into the fill (see "Edge separation"
-below). It is not a border and not a stroke around a shape — 01-frame still forbids those, and
+below). It is not a border and not a stroke around a shape — the shell draws neither, and
 nothing draws its own chrome. It is the union's own edge, painted from the union's own
 distance, and it exists only on inner boundaries.
 
@@ -100,12 +100,12 @@ float smin(float a, float b, float k) {
 ### Band (frame) shape
 
 The band is everything OUTSIDE the viewport. It has no outer boundary: the screen edge is not
-a silhouette edge, so no field the edge reads may measure it (owner 2026-10-18: open rollout
-corners looked cut off because the old field also measured the distance to the screen edge).
+a silhouette edge, so no field the edge reads may measure it (measuring it made open rollout
+corners look cut off).
 Every screen pixel is inside the band's reach, so the fill is unchanged.
 
 ```glsl
-float dInner = sdRoundedBox(pixel, innerCenter, innerHalf, viewportRounding);
+float dInner = sdRoundedBox(pixel, innerCenter, innerHalf, viewportRadius);
 float dFrame = -dInner;
 ```
 
@@ -128,10 +128,14 @@ float alpha = 1.0 - smoothstep(-fw, fw, mergedSdf);
 fragColor = vec4(fillColor.rgb * alpha, alpha) * qt_Opacity;
 ```
 
-Constants (ratified in 01-frame): band left 60 / others 16, smoothFactor 20, rollout radius 28
-(per-corner: 0 on the DECLARED attached edge(s) only — corner auto-join to a second nearby
-band segment is the smin's job, not a radius zeroing), viewport rounding 25. All shader
-coordinates are LOGICAL pixels; fractional monitor scale is absorbed by fwidth-based AA.
+Constants, each a `ShellBorder` property with the library default in parentheses: the band is
+`leftEdge` thick on the left and `edge` thick on the other sides (both `Style.frameThickness`
+unless the host reserves more on a side, so the band on the attached side is whatever the host
+states), `smoothFactor` is `meltSmoothing` (`Style.meltSmoothing`), the rollout radius is
+`Style.rolloutRadius` (per-corner: 0 on the DECLARED attached edge(s) only — corner auto-join to
+a second nearby band segment is the smin's job, not a radius zeroing), and the viewport rounding
+is `viewportRadius` (`Style.radius2xl`). All shader coordinates are LOGICAL pixels; fractional
+monitor scale is absorbed by fwidth-based AA.
 
 `incomingSdf` is saved before this slot contributes anything.
 The slot's melt radius still follows blend, independently of outness. At outness
@@ -227,18 +231,17 @@ call this circular smin with zero reach as a substitute for exact min.
 fact from `y` and the two must not be conflated. `y` is the melt radius, and a caller may set
 it to exactly 0 to ask for an EXACT union with a straight seam — a nested host flush against
 its parent does this deliberately, while being fully out. Only `w` may gate the edge.
-Handles are NOT slots: the OSD circle handle is a dedicated uniform
+Handles are NOT slots: a circle handle is a dedicated uniform
 rendered with a circle SDF — `length(p - c) - r` — folded into mergedSdf with the same smin.
-Slot budget (worst concurrent case): rail popout + OSD + notification rollout + one global
-modal + calendar = 5 of 8; peek is the band itself (no slot). Never exceeds 8.
+Slot budget (worst concurrent case): popout + readout + notification rollout + one global
+modal + calendar = 5 of 8; a peeked band is the band itself (no slot). Never exceeds 8.
 
 ### Edge separation
 
-Owner 2026-10-18: "to nema byt glow, to ma byt slight edge detection / separation. Aby sli edges
-videt, ale ten glow line nevypadal dobre. Takze chci slight full color on the edge, and than
-gradient for some time down so it blends with the main color." The edge of the merged silhouette
-is a slight line of the edge colour exactly at the edge, then a smooth gradient fading inward
-into the band colour over a short width. No grain, no noise, no light term.
+The edge is not a glow: it is a slight edge separation, so edges stay visible without a glow line.
+The edge of the merged silhouette is a slight line of the edge colour exactly at the edge, then a
+smooth gradient fading inward into the band colour over a short width. No grain, no noise, no
+light term.
 
 Uniforms: `edgeColor.rgb` is the edge colour, `edgeColor.a` the line strength (the share of
 edge colour at the edge, 0..1), `edgeFade` the fade width in logical px. The profile is ONE
@@ -305,7 +308,7 @@ not merely at the endpoint. An old integrator matrix cannot affect its geometry.
 The superseded velocity-driven travelling formulas are archived separately;
 remaining motion code serves detached compatibility only, not attached reveal.
 
-## Reveal choreography (ratified in 02-rollouts)
+## Reveal choreography
 
 One value per rollout: `offsetScale` (0 shown → 1 hidden), with
 `p = clamp(1 - offsetScale, 0, 1)` for bounded aperture dimensions.
@@ -348,7 +351,7 @@ full-size content is clipped out. Outness is zero and deformation identity befor
 slot removal. No parking travel, later border restoration or visibility timer is
 introduced. Detached fullscreen placement remains outside this attached contract.
 
-## Motion token (RATIFIED — see 10-motion)
+## Motion token
 
 Large reveals use 500ms, small reveals and size morphs use 250ms. Reveal
 control points are `(0.05, 0.7)`, `(0.1, 1.0)`; retract uses `(0.3, 0.0)`,
@@ -364,5 +367,6 @@ are the aperture before paint normalization. Shader welds/snapping may extend
 paint, never input. Input registration is near-settled and withdraws on semantic
 close/suppression, while the outgoing picture remains until hidden. Full-size
 clipped content must never expand input over the application. The input mask ADDITIONALLY
-always contains: the band/rail strip (60px revealed or peeked, 16px collapsed) and the two
-handle hover-zones (09-input) — these are standing regions, not registry slots.
+always contains the host's standing regions: the band strip it reserves on the attached side
+(`leftEdge` or `edge` thick, wider while the host shows or peeks content in it) and any handle
+hover-zones. These are not registry slots.

@@ -104,7 +104,7 @@ The initial capsule child is a provider-owned `sound-channel` leaf fixture based
 on the existing real Slider, reused rather than embedding a second implementation
 in the base story. Node actions/targets, level and mute state belong to that leaf.
 Level is 0..100; mute toggles without changing level; a level write unmutes, matching
-AudioService. Desktop-like glyph, inset track, reading in thumb and wheel behavior
+an audio service. Desktop-like glyph, inset track, reading in thumb and wheel behavior
 use Style and caller configuration. Pure control functions do not invoke PipeWire.
 
 `capsule-sound.json` has a mock-screen root, a named capsule and named sound child.

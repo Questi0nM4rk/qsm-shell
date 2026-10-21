@@ -38,7 +38,7 @@ code is investigated and reused, not presumed to satisfy these new requirements.
 Library component `qml/QsmShell/Components/DataCapsule.qml`, its existing
 Style/Motion/token dependencies, shell `workbench/` adapter, unit, descriptor,
 composition renderer, fixtures, JSON examples and targeted flows. No new provider:
-the product providers remain qsm-shell and qsm-desktop.
+the product providers remain this library and its consumers.
 
 Dependency: `../qsm-workbench/openspec/changes/fullscreen-preview-environment/`
 owns the generic environment contract and flow step. Shell tasks cannot silently

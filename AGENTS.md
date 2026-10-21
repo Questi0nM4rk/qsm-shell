@@ -386,10 +386,10 @@ Earned, each from a specific failure. Break one and name which.
   `Flickable`'s declared children become children of its `contentItem`, so a
   scroll indicator was both chrome and content and its height fed the content
   height fed its own height.
-- **A type whose name says where it is used is a type you have twice.**
-  `MenuRowItem`, `PopoutRow` and `ResultRow` were one row wearing three names,
-  differing in a handful of numbers and in which of the three had remembered
-  which rule. Same for `SearchField`: a search box is a text box with a glyph
+- **A type whose name says where it is used is a type you have twice.** Three
+  rows named for the three surfaces that used them were one row wearing three
+  names, differing in a handful of numbers and in which of the three had
+  remembered which rule. Same for a search box: it is a text box with a glyph
   in its leading slot.
 - **Unavailable and not-a-target are different states.** `disabled` means the
   action exists and cannot be taken now, so it dims. A row that only REPORTS
@@ -409,7 +409,7 @@ Earned, each from a specific failure. Break one and name which.
   period means — it has replaced the component, and a green flow then proves
   only that the replacement works: the Workbench adapter re-derived the
   rollout's keep-open test, so a passing dismissal flow tested the
-  re-derivation and neither `EdgeScene` nor `Rollout`. Drive what the component
+  re-derivation and neither the surface nor `Rollout`. Drive what the component
   reports; when it does not report what the host needs, the component is what
   is incomplete. A step a host cannot execute must FAIL and name itself — a
   fixture that reports success without doing the work hides every real gap
@@ -421,8 +421,8 @@ Earned, each from a specific failure. Break one and name which.
   shaped like the pointer, never for a second implementation of the geometry.
 - **A type that reports intent but offers no way to receive it forces its
   consumer to invent the missing half.** Ours can only read a host's `hovered`
-  or run its own handlers, so the rail answered "this entry is open, therefore
-  lit" with 130 lines of geometry; caelestia lets an external owner assert a
+  or run its own handlers, so a host answered "this entry is open, therefore
+  lit" with pages of geometry; caelestia lets an external owner assert a
   state into `StateLayer` with one boolean. See `docs/BACKLOG.md`.
 - **Reduced motion shortens a DURATION and lengthens a PERIOD.** A one-shot
   transition calms by getting shorter; a loop calms by getting slower.

@@ -1,13 +1,14 @@
 # Production Goal
 
-Deliver `qsm-shell` as the complete local component library for one `qsm-desktop`
-user: simple, minimal, fluid, visually coherent, judged in a real Wayland window.
-Finish what the desktop actually uses before adding speculative types. Workbench
-is the tool that hosts and proves it, not a second product.
+Deliver `qsm-shell` as a complete component library for Qt 6 and Quickshell
+desktops: simple, minimal, fluid, visually coherent, judged in a real Wayland
+window. It knows nothing about the applications that use it; they use its public
+API and nothing else. Workbench is the tool that hosts and proves it, not a
+second product.
 
 `AGENTS.md` is the binding law for how work happens. `docs/BACKLOG.md` holds every
-open item with the reason it is still open. This file says what the product is,
-what is true now, and what comes next — nothing else.
+open item with the reason it is still open. This file says what the product is
+and what comes next — nothing else.
 
 ## What "production-ready" means
 
@@ -21,44 +22,18 @@ wheel/focus behavior, every meaningful state, constant natural geometry, semanti
 - **Quiet**: whitespace and the surface ladder carry hierarchy; accent means
   selection, focus or the primary action, never decoration.
 - **Durable**: one concept has one type, content arrives in slots, no
-  surface-named duplicate and no desktop policy inside the library.
+  surface-named duplicate and no consumer policy inside the library.
 - **Local**: no compatibility layers, no versioned public API, no generic web
   abstractions, no coverage-driven tests.
 
-## The production set — 31 types
+## The component set
 
-Inventory comes from what the desktop actually declares in
-`../qsm-desktop/shell/`, plus the dependency closure inside the library.
-
-| Family | Components |
-| --- | --- |
-| Frame and reveal | `ShellBorder`, `Rollout`, `ScenePointer` |
-| Input and actions | `StateLayer`, `ArmedAction`, `ActionTile`, `Capsule`, `IconButton`, `TextField`, `Slider` |
-| Rows and scrolling | `ListRow`, `ScrollCue` |
-| Notifications and calendar | `NotificationStack`, `NotificationCenter`, `MonthCalendar` |
-| Readouts and identity | `Badge`, `Avatar`, `ColorSwatch`, `Meter`, `StatRing`, `Sparkline`, `Kbd` |
-| Visual foundations | `Card`, `Divider`, `EmptyState`, `Prose`, `SvgIcon` |
-
-Internal dependencies: `ControlLabel` (Slider), `NotificationCard`
-(NotificationCenter, NotificationStack), `SelectionMark` (ListRow,
-NotificationCard), `Surface` (ActionTile, TextField). `Style`, `Motion`,
-`Interaction`, the icons, the edge shader and `fuzzy.js` are runtime support, not
-components. Re-derive the table when desktop use changes.
-
-## True now
-
-- All 31 types have implementations, units and stories; the owner has reviewed the
-  set. New types enter this scope when the desktop needs them.
-- The desktop action menu is source-wired and exercised in isolation: audio with
-  the output Slider under its row, Wi-Fi with the list and a row-attached password editor,
-  Bluetooth through a service that owns each operation's lifetime, and repeatable
-  Keep awake / Night light toggles. Every per-kind decision is a table keyed by
-  `kind`, so a new kind adds an entry rather than another branch.
-- The panel's tab group is the shared `Segmented` with opt-in Tab/Shift+Tab,
-  clamped at its visible ends, and Down enters the tab content.
-- `scripts/check-action-menu` drives five desktop stories through simulated Qt
-  input and they pass. Production services are wired, but actual hardware success
-  and owner acceptance are separate, still-open gates.
+`qml/QsmShell/Components/qmldir` is the set, grouped in `docs/USAGE.md`. Each type
+has a record in `docs/components/<Type>.md`, a unit in `workbench/units/` and
+story keys in `workbench/stories.json`. A type enters when a shell task needs it
+and no existing type can take the role; it leaves when nothing needs it. `Style`,
+`Motion`, `Interaction`, `Fuzzy`, the icons and the edge shader are runtime
+support, not components.
 
 ## Next, in this order
 
@@ -66,24 +41,16 @@ components. Re-derive the table when desktop use changes.
    exported type reviewed against the installed qsm-uix guidance, with each
    type's record carrying its intended behavior, its real input routes and its
    hitbox and pointer-path mathematics. The audit lands first; repairs follow
-   one item at a time with owner acceptance; the desktop follows the library.
+   one item at a time with owner acceptance; consumers follow the library.
    Orientation `docs/UIX-AUDIT.md`, plan
    `openspec/changes/uix-component-audit/`, tracker `qss-9zk`.
-1. **Keep the technical gates honest.** The last requested `npm test` passed native
-   interaction and unit checks, smoke and shader freshness, before the small Menu
-   activation typing cleanup and glyph additions. Repeat the full gate only when
-   requested. Lint warnings remain; desktop's
-   isolated checks and production-only checks are separate evidence, not acceptance.
-2. **Owner review of the action menu and the panel tab group** in the live window.
-   Nothing below starts before that: keyboard reach, attached editors, repeated
-   operations, NEIO/slash, the tab group.
-3. **Live pointer parity** — clicks, drags, wheel and focus judged in a real
-   window. Isolated launcher clicks now pass after waiting for the actual reveal,
-   including repeated toggles and Wi-Fi confirmation; OSD pointer/key/action mute
-   also passes. That does not establish live hit testing or owner acceptance.
-4. **Real backends** — the same flows against the actual nmcli, Bluetooth and
-   audio services. The isolated fixtures are proven; the hardware is not.
-5. **Release readiness** — the owner's remaining backlog items, one at a time, in
+1. **Keep the technical gates honest.** Repeat the full `npm test` gate only when
+   requested; lint warnings remain. Checks run against a consumer are separate
+   evidence, never acceptance.
+2. **Live pointer parity.** Clicks, drags, wheel and focus judged in a real window,
+   after waiting for the actual reveal, including repeated toggles. A passing
+   check does not establish live hit testing or owner acceptance.
+3. **Release readiness.** The owner's remaining backlog items, one at a time, in
    the order `docs/BACKLOG.md` lists them.
 
 ## Ownership
@@ -91,14 +58,12 @@ components. Re-derive the table when desktop use changes.
 | Concern | Owner |
 | --- | --- |
 | Reusable components, intent APIs, style/motion, assets, shader | `qml/QsmShell/` |
-| Story state, fixtures, controls, desktop-shaped cases | library `workbench/` |
+| Story state, fixtures, controls, composed cases | library `workbench/` |
 | Window, inspection, native driver, flow engine | sibling `qsm-workbench` |
-| Services, persistence, compositor masks, focus policy | sibling `qsm-desktop/shell/` |
+| Services, persistence, compositor masks, focus policy | the consuming application |
 
-The provider installs its own theme; the harness never acquires desktop palette or
-service policy. Desktop operations use existing service and tool entry points and
-share logic only where a second caller needs it — never a universal backend API,
-a daemon, or a rewrite of view logic.
+A consumer installs its own theme through `Style.backend`; the harness never
+acquires a consumer's palette or service policy.
 
 ## Source hierarchy
 

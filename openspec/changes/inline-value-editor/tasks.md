@@ -107,6 +107,5 @@ catalog. The current preview's startup log has no warnings; the older fixture's
 deferred-context warnings are resolved by cancellation-owned timers. Owner
 judgement permits the bounded desktop audio segment. Actual key auto-repeat timing,
 screen-reader speech and production desktop selection retention remain unverified.
-Desktop adoption is tracked in qsm-desktop's refine-desktop-controls-and-focus
-change; it reuses existing services without changing live hardware. Only our owned shell preview sessions were replaced;
-the existing qsm-desktop OSD preview is not part of this work.
+Consumer adoption is tracked by the consumer; it reuses existing services without changing live hardware. Only our owned shell preview sessions were replaced;
+a consumer's existing preview is not part of this work.

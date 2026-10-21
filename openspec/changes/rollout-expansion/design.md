@@ -1,7 +1,7 @@
 ## Context
 
-`Rollout.qml` uses growing-contour geometry as its only attached contract. OSD,
-all rail entries and nested details, panel/session, ModalHost consumers and attached
+`Rollout.qml` uses growing-contour geometry as its only attached contract. Readouts,
+rail entries and nested details, panels, modal hosts and attached
 notifications adopt it in source without a geometry selector. The owner accepted
 the earlier live OSD's look and behaviour and requested consolidation; this is not
 evidence for the rewrite or all nested, fullscreen and input routes.
@@ -139,15 +139,15 @@ content animation or size lag.
    seam, hover, lifetime and hidden-field laws in the new contract.
 2. Keep the shared geometry/source defaults, full-size `contentItem` and existing
    sound-settings unit. Execute inline, sequentially; decisions stay with the owner.
-3. Coordinate source adoption across OSD, all rail entries and nested details,
-   panel/session, ModalHost consumers and attached notifications. Remove comparison
+3. Coordinate source adoption across readouts, rail entries and nested details,
+   panels, modal hosts and attached notifications. Remove comparison
    selectors and redundant frame constants; preserve deliberate composition insets.
    Retain the rail source until its child finishes retracting and size matching
    from full body extents rather than the reveal aperture. Retired controls disable
    on close/suppression; modal catch policy stays unchanged.
 4. Promote expansion and remove `borderExtrusion` and attached travel/goo/settle
    branches. Detached-only motion/settle knobs remain compatibility, not an attached
-   style selector. Rollout owns target-size morph; remove ModalHost's second sizing
+   style selector. Rollout owns target-size morph; remove a modal host's second sizing
    implementation. Already animated notification extents still opt out of morph.
 5. Hand over one selected Rollout item and wait for owner judgement. No automatic
    catalog sweep, check or production restart; other consumers remain unaccepted.

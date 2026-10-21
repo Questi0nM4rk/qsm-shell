@@ -1,8 +1,7 @@
 ## Context
 
 The catalog has 60 keys mapping to 52 unique units. `Components/qmldir` exports 52 types.
-The narrower production set in `GOAL.md` is not the scope of the owner's complete-library audit.
-The owner permits a full UIX redesign, with the complete audit preceding repairs and desktop work.
+The owner permits a full UIX redesign, with the complete audit preceding repairs and consumer work.
 
 ## Goals / Non-Goals
 

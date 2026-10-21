@@ -91,8 +91,7 @@ Source-backed defects:
 Redesign proposals:
 
 - The tinted weight is the default, and a host that wants a count noticed passes `filled: true`. The owner can decide whether the tinted default should exist at all; if it stays, BADGE-01 is its fix.
-- The `99+` cap is written twice: in the component (`Badge.qml:51`) and in `Rail.qml`'s text binding. One owner should remain, most naturally the component, with consumers passing the number.
-- Radius is `height / 2` (`Badge.qml:60`). The token set already has `radius.pill` 999 (`tokens/deep-night.json:35`). Using it removes a derived value from the component.
+- The `99+` cap is written twice: in the component (`Badge.qml:51`) and in a consumer's text binding. One owner should remain, most naturally the component, with consumers passing the number.
 - Keep the fixed `badgeWidth` chip for counts. The chip is a known pain beside 16 px glyphs, so any change there needs runtime judgement.
 
 Source conflicts:

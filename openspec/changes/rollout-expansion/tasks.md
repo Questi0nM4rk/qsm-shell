@@ -15,7 +15,7 @@
 
 ## 4. Coordinated migration and cleanup
 
-- [x] 4.1 Coordinate authorized desktop source adoption: OSD, rail/nested details, panel/session, ModalHost consumers and notifications; preserve detached presentation, source/content retention and desktop policy, and remove duplicate size-animation ownership.
+- [x] 4.1 Coordinate authorized consumer source adoption: readouts, rail/nested details, panels, modal hosts and notifications; preserve detached presentation, source/content retention and consumer policy, and remove duplicate size-animation ownership.
 - [x] 4.2 Make expansion the only attached default and remove public borderExtrusion selection plus obsolete attached-only travel/goo/settle branches and comparison controls; retain unrelated and detached compatibility behaviour.
 
 Execution is sequential. Shell implementation writes are Rollout.qml, its existing

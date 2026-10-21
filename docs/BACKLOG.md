@@ -9,18 +9,18 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - Menu and MonthCalendar assign host-owned selection/month directly; these writes can replace host bindings. Source-confirmed ownership mismatch, left for each type's named repair and live review (`qss-bcn`).
 - Rollout unregisters only its current host/key; changing either on a living instance can orphan the previous paint/input registration. Production reachability is unverified; settle the lifetime contract before changing the mechanism (`qss-3il`).
 - Shell readiness first: close concrete component defects and keyboard/public-action
-  parity through hosts and the existing action menu; defer host-only
-  improvements and Workbench polish unless they block the selected item (`GOAL.md`).
-- Generic Rollout variants, live pointer/drag/focus, panel tabs and real-backend
-  operation still need the owner's named review; passing checks are not acceptance.
+  parity through hosts; defer host-only improvements and Workbench polish unless
+  they block the selected item (`GOAL.md`).
+- Generic Rollout variants and live pointer/drag/focus still need the owner's
+  named review; passing checks are not acceptance.
 - Residual lint: NotificationCard sets layout-managed height and composition
   Loaders expose QObject-typed APIs; repair with each owning item.
 - ListRow's additive headingHeight/expansionHeight contract awaits a live consumer sizing review. The owner approved shell Compositions / menu-items for that adoption.
 - Rollout: generic sound-settings variants and spec completion remain open under `openspec/changes/rollout-expansion`.
 - DataCapsule: a CPU/memory readout needs a composition with persistent or
   event-driven visibility and an explicit open action, without library service policy.
-- Reconcile existing component acceptance evidence against the roadmap in `GOAL.md`
-  (R0-R5), then prepare one selected item at a time; catalog/flow presence alone is
+- Reconcile existing component acceptance evidence against the roadmap in `GOAL.md`,
+  then prepare one selected item at a time; catalog/flow presence alone is
   not acceptance.
 - R0: provider installs no `Style.backend`, so reduced motion defaults to false;
   add a provider-owned review environment, deferred to the first selected

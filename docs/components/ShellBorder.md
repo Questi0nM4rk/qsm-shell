@@ -84,10 +84,6 @@ Proposals (taste and shape, no defect a person sees):
 - Edge doubling: a Card inside a Rollout draws its own cardglow edge (Card.qml:46-58) inside the silhouette's edge line, so the rail shows two edge lines about 16 px apart. Card.qml:11-14 says a card sitting flat inside another body turns it off. Propose `glow: false` for a card in a rollout, after an owner look.
 - The trigger band is 12 px along x, below the 24 px pointer floor. Whether the consumer's hover zone is larger is not visible from this type. Propose the consumer publish its trigger zone next to the rollout, not a second hit model here.
 
-Source conflicts (the owner decides which holds):
-
-- The qss-anp tracker text (commit history of `.beads`, 2026-10-16 note) says the glass stroke stays. The 2026-10-18 owner note in 12-mechanism and commits ca68eab and 6b9ec51 replaced the hairline with edge separation, and the shader has no stroke. The code follows the later note.
-
 Hypotheses (unmeasured):
 
 - Removing a middle slot re-packs the remaining bulges (`Object.keys` order, ShellBorder.qml:45-47, 73-75), and the shader folds slots in order (edgemelt.frag:159-238), so a neighbour's melt could shift by a small amount. Suspected, not measured.

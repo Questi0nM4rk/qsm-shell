@@ -5,9 +5,9 @@ description: Use when asked to build, redesign, finish or fix one qsm-shell comp
 
 # Develop a component
 
-This library has one developer and one current proof consumer. Components
-remain reusable, rethemeable and composable for other Qt 6/Quickshell desktops;
-the consumer's policy stays outside them. Functional, beautiful native controls
+This library has one developer. Components remain reusable, rethemeable and
+composable for any Qt 6/Quickshell desktop; a consumer's policy stays outside
+them. Functional, beautiful native controls
 with dynamic, accessible UX are the product. Workbench only supports their
 development and judgement. Keep the least code and documentation that work.
 
@@ -23,8 +23,8 @@ development and judgement. Keep the least code and documentation that work.
    actual named Caelestia files in `~/Clonned/caelestia/repo/`; compare relevant
    Material, Radix or Fluent patterns without collecting every configuration
     flag. Follow the owner's last stated decision over any spec line; quote it in the
-    record and, when decisions disagree, ask one question. The two desktop wallpapers
-    inform a cosy, minimal dusk/night atmosphere, not copied decoration.
+    record and, when decisions disagree, ask one question. The two dusk wallpapers
+    named in AGENTS.md inform a cosy, minimal dusk/night atmosphere, not copied decoration.
     For geometry or motion, use **Motion and rendering changes** below before coding.
 3. **Build the component and a coherent example.** Use the template where one
    exists, `Style`/`Motion`, shared action functions and host-owned state. The
@@ -108,7 +108,7 @@ shared source's reach.
 ## Composed-surface pass
 
 Every UI change is measured where the owner meets it: the component inside
-its real desktop host, not only its unit. With `drive` (qsm-compuse) on
+a real composed shell, not only its unit. With `drive` (qsm-compuse) on
 workspace 10, input announced: capture rest, hover, press, focus and open;
 read the item tree and check the equations that must hold, each printed with
 its numbers: insets equal on all sides within 1 px, no overlap between
@@ -135,11 +135,11 @@ and inventory what is already declared. A step a host cannot execute FAILS and
 names itself; nothing returns success without having done the work.
 
 **Sibling search**: when a new type or action is introduced, search sibling
-types in the catalog, and the consumer's files, to confirm the name is not already
-in use or already copied there. A type whose
-name says where it is used is a type you have twice — `MenuRowItem`,
-`PopoutRow` and `ResultRow` were one row wearing three names. Same for
-`SearchField`: a search box is a text box with a glyph in its leading slot.
+types in the catalog, and the files of any consumer the owner names, to confirm
+the name is not already in use or already copied there. A type whose name says
+where it is used is a type you have twice — three surface-named rows were one row
+wearing three names. Same for a search box: it is a text box with a glyph in
+its leading slot.
 
 **Owner review**: the composed-surface pass is part of every UI change; an
 audit, a catalog-wide capture sweep or a skill evaluation still waits for the
@@ -154,7 +154,7 @@ owner's request.
 - No re-implementing a rule a sibling type already owns. A step a harness
   cannot execute FAILS and names itself; nothing returns success without
   having done the work.
-- No consumer (`qsm-desktop`) work and no local copy there: a control the consumer
-  needs is a library task here, and the consumer takes it from the library.
+- No consumer work and no local copy there: a control a consumer needs is a
+  library task here, and the consumer takes it from the library.
 - No self-acceptance, unattended judgement, or continuing to the next item
   because the owner is absent. No claim of acceptance from a render or green gate.
