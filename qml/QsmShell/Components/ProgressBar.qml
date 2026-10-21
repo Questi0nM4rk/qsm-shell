@@ -41,7 +41,9 @@ Rectangle {
 
         // Progress that snaps between readings reads as jitter rather than as
         // movement; it eases at both ends because neither end is an arrival.
+        // Reduced motion removes the slide rather than shortening it.
         Behavior on width {
+            enabled: !Style.reducedMotion
             NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
         }
     }
