@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQml
 
 import qs.QsmShell.Style
 
@@ -18,6 +19,19 @@ Item {
         monthShifted(delta);
     }
 
+    // The widest month title of the shown year, so the natural width does not
+    // follow the month name.
+    readonly property real titleWidth: {
+        let widest = 0;
+        for (let i = 0; i < titleRuler.count; ++i)
+            widest = Math.max(widest, titleRuler.objectAt(i).advanceWidth);
+        return Math.ceil(widest);
+    }
+
+    // 120 is the platform's own unit, not a design number: one wheel notch.
+    readonly property int _wheelNotch: 120
+    property int _wheelAccumulator: 0
+
     implicitWidth: body.implicitWidth
     implicitHeight: body.implicitHeight
     focus: true
@@ -32,9 +46,9 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: Style.space2
-            IconButton { objectName: "prevMonth"; icon: "chevron-left"; size: Style.iconSm; padding: Style.space2; color: Style.textMuted; onClicked: root.shiftMonth(-1) }
-            Prose { Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; role: "title"; text: Qt.formatDate(root.shown, "MMMM yyyy") }
-            IconButton { objectName: "nextMonth"; icon: "chevron-right"; size: Style.iconSm; padding: Style.space2; color: Style.textMuted; onClicked: root.shiftMonth(1) }
+            IconButton { objectName: "prevMonth"; icon: "chevron-left"; accessibleName: qsTr("Previous month"); size: Style.iconSm; padding: Style.space2; color: Style.textMuted; onClicked: root.shiftMonth(-1) }
+            Prose { id: title; Layout.fillWidth: true; Layout.preferredWidth: root.titleWidth; horizontalAlignment: Text.AlignHCenter; role: "title"; text: Qt.formatDate(root.shown, "MMMM yyyy") }
+            IconButton { objectName: "nextMonth"; icon: "chevron-right"; accessibleName: qsTr("Next month"); size: Style.iconSm; padding: Style.space2; color: Style.textMuted; onClicked: root.shiftMonth(1) }
         }
 
         GridLayout {
@@ -43,8 +57,8 @@ Item {
             rowSpacing: Style.spaceTight
             columnSpacing: Style.spaceTight
             Repeater {
-                model: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-                Prose { required property string modelData; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; role: "reading"; font.pixelSize: Style.textXs; muted: true; text: modelData }
+                model: 7
+                Prose { required property int index; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; role: "reading"; font.pixelSize: Style.textXs; muted: true; text: Qt.locale().standaloneDayName(index + 1, Locale.ShortFormat) }
             }
             Repeater {
                 model: 42
@@ -66,7 +80,6 @@ Item {
                         font.weight: parent.isToday ? Style.weightBold : Style.weightRegular
                         text: parent.cellDate.getDate()
                         color: parent.isToday ? Style.textOnPrimary : parent.inMonth ? Style.text : Style.textMuted
-                        opacity: parent.inMonth || parent.isToday ? 1 : 0.4
                     }
                 }
             }
@@ -84,7 +97,26 @@ Item {
                 event.accepted = false;
                 return;
             }
-            root.shiftMonth(event.angleDelta.y > 0 ? -1 : 1);
+            // Accumulated, so a touchpad swipe of many small deltas is one
+            // month per notch and not one per event.
+            if (Math.sign(event.angleDelta.y) !== Math.sign(root._wheelAccumulator))
+                root._wheelAccumulator = 0;
+            root._wheelAccumulator += event.angleDelta.y;
+            while (Math.abs(root._wheelAccumulator) >= root._wheelNotch) {
+                const up = root._wheelAccumulator > 0;
+                root._wheelAccumulator -= up ? root._wheelNotch : -root._wheelNotch;
+                root.shiftMonth(up ? -1 : 1);
+            }
+        }
+    }
+
+    Instantiator {
+        id: titleRuler
+        model: 12
+        delegate: TextMetrics {
+            required property int index
+            font: title.font
+            text: Qt.formatDate(new Date(root.shown.getFullYear(), index, 1), "MMMM yyyy")
         }
     }
 }
