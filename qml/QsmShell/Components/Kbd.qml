@@ -15,6 +15,10 @@ import qs.QsmShell.Style
 // `combo` takes the whole thing — "SUPER + SHIFT + Q" — and splits it, so a
 // consumer holding a compositor's own bind string does not have to tokenise
 // before it can render.
+//
+// The host owns the width. Left alone Kbd is as wide as its caps; a host that
+// gives it a width narrower than that (`width: column.width`) shrinks the caps
+// and elides their text, so a long combo never draws past its column.
 RowLayout {
     id: root
 
@@ -38,11 +42,15 @@ RowLayout {
 
             Prose {
                 visible: part.index > 0
+                // The join keeps its width; only caps give way.
+                Layout.minimumWidth: implicitWidth
                 role: "metadata"
                 text: "+"
             }
             Rectangle {
                 Layout.preferredWidth: Math.max(root.minCapWidth, cap.implicitWidth + Style.space2)
+                // The floor leaves room for an ellipsis and the cap's insets.
+                Layout.minimumWidth: Math.min(Layout.preferredWidth, Style.space5)
                 Layout.preferredHeight: Style.badgeHeight + Style.space1
                 radius: Style.radiusXs
                 color: Style.keycap
@@ -50,6 +58,8 @@ RowLayout {
                 Prose {
                     id: cap
                     anchors.centerIn: parent
+                    width: Math.max(0, Math.min(implicitWidth, parent.width - Style.space2))
+                    elide: Text.ElideRight
                     role: "reading"
                     font.pixelSize: Style.textXs
                     text: part.modelData

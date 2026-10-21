@@ -18,8 +18,17 @@ Rectangle {
     Kbd {
         id: caps
         anchors.centerIn: parent
+        // The host owns the width, as a keybind column does: a short combo
+        // keeps its own width, a long one shrinks and elides inside the column.
+        width: Math.min(implicitWidth, Style.controlWidth / 2)
         combo: root.combo
     }
 
-    readonly property var controls: []
+    readonly property var controls: [
+        { label: "combo", options: [
+            { label: "short", set: { variant: "SUPER + Q" } },
+            { label: "modifiers", set: { variant: "SUPER + SHIFT + Q" } },
+            { label: "long", set: { variant: "SUPER + CTRL + ALT + SHIFT + PRINTSCREEN + ENTER" } }
+        ] }
+    ]
 }
