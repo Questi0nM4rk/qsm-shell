@@ -17,7 +17,6 @@ Item {
         id: option
         anchors.centerIn: parent
         checked: root.checked
-        accessibleName: optionLabel.text
         onSelectionRequested: {
             root.checked = true
             root.eventRecorder?.("intent", "selection-requested", {})

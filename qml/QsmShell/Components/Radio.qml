@@ -15,6 +15,7 @@ T.AbstractButton {
     property real radioSize: Style.size("Radio", size)
     readonly property real _s: root.radioSize / Style.size("Radio", "md")
     readonly property real sizeScale: root._s
+    // Overrides the name read from the label slot's own text.
     property string accessibleName: ""
     default property alias label: labelSlot.data
 
@@ -35,15 +36,25 @@ T.AbstractButton {
     Accessible.role: Accessible.RadioButton
     Accessible.checkable: true
     Accessible.checked: root.checked
-    Accessible.name: root.accessibleName
+    Accessible.name: root.accessibleName !== "" ? root.accessibleName : root._labelText()
 
     readonly property real _radio: root.radioSize
     implicitWidth: row.implicitWidth
     implicitHeight: Math.max(_radio, row.implicitHeight)
     padding: 0
 
+    // First slotted item that carries text names the control.
+    function _labelText(): string {
+        for (const item of labelSlot.children) {
+            if (typeof item.text === "string" && item.text !== "")
+                return item.text;
+        }
+        return "";
+    }
+
     onClicked: root.select()
-    Keys.onReturnPressed: root.select()
+    Keys.onReturnPressed: event => { event.accepted = true; root.select() }
+    Keys.onEnterPressed: event => { event.accepted = true; root.select() }
 
     contentItem: RowLayout {
         id: row
@@ -61,10 +72,15 @@ T.AbstractButton {
             color: root.checked
                 ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
                 : "transparent"
-            border.width: root.checked ? 0 : Style.spaceTight
-            border.color: Style.tone(Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+            // The ring stays and takes the fill's colour when checked, so
+            // selecting is one cross-fade of fill, ring and dot on one clock.
+            border.width: Style.spaceTight
+            border.color: Style.tone(root.checked ? root.accentColor : Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
 
             Behavior on color {
+                ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+            }
+            Behavior on border.color {
                 ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
             }
 
@@ -73,16 +89,23 @@ T.AbstractButton {
             // proportion of the circle, so it scales with it, not a token.
             Rectangle {
                 anchors.centerIn: parent
-                width: parent.width * 0.4
+                width: Math.round(parent.width * 0.4)
                 height: width
                 radius: width / 2
-                visible: root.checked
+                visible: opacity > 0
+                opacity: root.checked ? 1 : 0
                 color: root.enabled ? Style.textOnPrimary : Style.disabled(Style.textOnPrimary)
+
+                Behavior on opacity {
+                    NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                }
             }
         }
 
         Item {
             id: labelSlot
+            // An empty slot takes no space, and no row gap.
+            visible: children.length > 0
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: childrenRect.width
@@ -92,13 +115,12 @@ T.AbstractButton {
 
     StateLayer {
         id: stateLayer
-        x: circle.x - Style.spaceTight
-        y: circle.y - Style.spaceTight
-        width: circle.width + Style.spaceTight * 2
-        height: circle.height + Style.spaceTight * 2
+        x: circle.x
+        y: circle.y
+        width: circle.width
+        height: circle.height
         host: root
         target: circle
         focusRadius: width / 2
-        hoverScale: 1.15
     }
 }
