@@ -13,6 +13,7 @@ RowLayout {
     property color valueColor: Style.text
 
     spacing: Style.space2
+    implicitWidth: Style.controlWidth
 
     SvgIcon {
         objectName: "keyValueGlyph"
@@ -24,7 +25,7 @@ RowLayout {
     Prose {
         objectName: "keyValueLabel"
         Layout.fillWidth: true
-        role: "body"
+        role: "label"
         muted: true
         text: root.label
     }

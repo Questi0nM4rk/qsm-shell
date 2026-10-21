@@ -10,6 +10,8 @@ Rectangle {
     property string glyph: root.variant === "battery" ? "battery-full" : ""
     property string reading: "87%"
     property string status: "Charging"
+    property string batteryLabel: "Battery"
+    property color readingColor: Style.text
 
     implicitWidth: Style.controlWidth
     implicitHeight: rows.implicitHeight
@@ -24,8 +26,9 @@ Rectangle {
         KeyValueRow {
             width: parent.width
             icon: root.glyph
-            label: "Battery"
+            label: root.batteryLabel
             value: root.reading
+            valueColor: root.readingColor
         }
         KeyValueRow {
             width: parent.width
@@ -34,5 +37,22 @@ Rectangle {
         }
     }
 
-    readonly property var controls: []
+    readonly property var controls: [
+        { label: "glyph", options: [
+            { label: "set", set: { glyph: "battery-full" } },
+            { label: "cleared", set: { glyph: "" } }
+        ] },
+        { label: "label", options: [
+            { label: "short", set: { batteryLabel: "Battery" } },
+            { label: "long", set: { batteryLabel: "Remaining battery charge on the internal pack" } }
+        ] },
+        { label: "value", options: [
+            { label: "short", set: { reading: "87%" } },
+            { label: "long", set: { reading: "87% (about 3 hours 42 minutes remaining)" } }
+        ] },
+        { label: "value colour", options: [
+            { label: "text", set: { readingColor: Style.text } },
+            { label: "danger", set: { readingColor: Style.danger } }
+        ] }
+    ]
 }
