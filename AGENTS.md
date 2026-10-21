@@ -43,12 +43,19 @@ follow the design sources.
   and reachable states, ask the owner to check it, then wait. Revise that same
   item from feedback until the owner accepts it before moving on. An agent's
   capture, tree dump, audit or green suite is not acceptance.
-- No automatic tests, validation, capture sweeps, input traces or skill evals.
-  Run or add checks only when explicitly requested; a request to build or
-  review a component is not permission to test it. No TDD, coverage growth,
-  JavaScript models of QML behaviour, source-shape tests, documentation gates,
-  or standalone assertions about static text, sizes, colours or pixels. If
-  requested, check real input and changing states along an integration flow.
+- Every UI or UX change is validated before it is handed over, on the live
+  composed desktop with the qsm-compuse instruments (`drive`): a capture, a
+  real-frame recording for motion, geometry equations read from the item
+  tree, rendered contrast. A change no instrument can show is blocked, and the
+  missing instrument is the first task (marketplace epic `qsm-j480`). The
+  measurement is evidence for the owner, never acceptance. Still no TDD,
+  coverage growth, JavaScript models of QML behaviour, source-shape tests or
+  documentation gates.
+- A fix ships behaviour, not a record. When the owner asks to fix, the
+  deliverable is the changed surface and its before/after numbers; a
+  component record grows by a few lines at most. Split work by the surface the
+  owner sees (rail, rollout, panel, OSD), because the visible defects live
+  where components meet.
 - Before touching a component, answer in writing (the component record):
   what does a fully working, production-ready X look like? Which settings
   does it have, how does it behave under pointer, keyboard, wheel, focus and
@@ -88,8 +95,8 @@ follow the design sources.
 - Load the project skill `develop-component` for the step loop of one type.
 - Give researchers and implementers small, bounded tasks; keep user judgement
   with the owner. Use `openai/gpt-6-luna`, medium for straightforward work and
-  runners, high for complex research or mechanics. A runner gets a testing
-  task only after the owner requests that check.
+  runners, high for complex research or mechanics. The validation of a UI
+  change is part of that change; other test runs wait for the owner's request.
 
 ## Definition of done for a component
 
@@ -164,9 +171,9 @@ follow the design sources.
 - The shader is the one non-QML thing here. `.frag` and `.qsb` are committed
   together; rebuild with `bash scripts/build-shaders`, `npm test` fails on
   drift.
-- These are available commands, not an automatic work loop. Run tests,
-  validation or captures only on the owner's explicit request. State what is
-  prepared, user-accepted and unverified accurately.
+- These are available commands, not an automatic work loop. A UI change runs
+  its own validation; other suites run on the owner's request. State what is
+  prepared, measured, user-accepted and unverified accurately.
 - For requested native recordings, capture actual frames at 25–60 fps according
   to motion complexity: roughly 25 fps is enough for simple content/fades; deep,
   difficult animation requires genuine 60 fps. A 60-fps CFR encode with

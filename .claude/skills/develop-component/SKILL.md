@@ -1,6 +1,6 @@
 ---
 name: develop-component
-description: Use when asked to build, redesign, finish or fix one qsm-shell component, including "fix this animation", "the closing snaps back" and "make this component feel right". Prepare one intentional task example and revise that same item with the owner until accepted. Tests, captures and skill evaluations require an explicit request.
+description: Use when asked to build, redesign, finish or fix one qsm-shell component, including "fix this animation", "the closing snaps back" and "make this component feel right". Prepare one intentional task example, validate it on the live composed desktop with the qsm-compuse instruments, and revise that same item with the owner until accepted.
 ---
 
 # Develop a component
@@ -43,8 +43,9 @@ development and judgement. Keep the least code and documentation that work.
    owner tests and judges. Never write "fixed", "works" or "passes" for
    pointer, drag, hover, focus or animation behaviour without a live run of the
    composed surface the owner asked for; a unit test or lint proves the unit
-   only, so say "not verified live" and list what the owner should try. Do not run an audit, a capture sweep, an input trace,
-   validation or a skill evaluation without an explicit request.
+   only, so say "not verified live" and list what the owner should try.
+   Before the hand-over, run the composed-surface pass (below) and hand over
+   its before/after numbers with the item.
 6. **Revise the same item.** When the owner rules in chat, edit the spec line
    in the same change and cite their words; an overruled spec line is out of date,
    not authority. Fix feedback in the owning component or tokens;
@@ -97,20 +98,33 @@ second motion or relighting. For SDF paint this includes interior distance and
 gradient, not only the outline; use `docs/12-mechanism.md` for the exact formulas.
 Fix a broken handoff in its owner, not with extra easing, parking travel or a timer.
 
-When recording is explicitly requested, capture the named transition through its
+When a change touches motion, record the named transition through its
 settled tail, not only opening or the final state. Load the current QML and compiled
 shader first; derive the full moving region plus fixed origin/handle from current
 live coordinates. Keep native originals and actual timestamps, not interpolated
 frames or upscaled pixels. Report the exercised item/routes separately from the
-shared source's reach. Without permission, leave this runtime evidence unverified.
+shared source's reach.
 
-## Requested checks
+## Composed-surface pass
 
-Only an explicit request authorizes creating or running a check. Choose a
-real input/integration flow with changing states and consequences, not a test
-of static text, font sizes, colours, geometry literals or source shape. Missing
-tests are not defects. A passing check is evidence of behaviour, not design
-acceptance, and does not authorize a wider sweep.
+Every UI change is measured where the owner meets it: the component inside
+its real desktop host, not only its unit. With `drive` (qsm-compuse) on
+workspace 10, input announced: capture rest, hover, press, focus and open;
+read the item tree and check the equations that must hold, each printed with
+its numbers: insets equal on all sides within 1 px, no overlap between
+neighbours after hover growth, no part of a track or fill outside its thumb,
+a rollout centred from the monitor edge and bordered only on its attached
+side, hit area at least the target floor, rendered contrast between adjacent
+surfaces. Motion is recorded at real 25 to 60 fps. A check the instruments
+cannot make yet is reported blocked with the missing instrument named
+(marketplace epic `qsm-j480`). The numbers are evidence, never acceptance.
+
+## Other checks
+
+Test suites beyond the composed-surface pass run on the owner's request.
+Choose a real input/integration flow with changing states and consequences,
+not a test of static text or source shape. Missing tests are not defects. A
+passing check is evidence of behaviour, not design acceptance.
 
 A delegated check gets the same named item, permitted operations and exclusions;
 it is not permission for extra comparisons, routes or catalog coverage.
@@ -127,15 +141,13 @@ name says where it is used is a type you have twice — `MenuRowItem`,
 `PopoutRow` and `ResultRow` were one row wearing three names. Same for
 `SearchField`: a search box is a text box with a glyph in its leading slot.
 
-**Owner review / test opt-in**: no check, capture, audit or validation runs
-without an explicit owner request. A request to build or review a component is
-not permission to test it. Tests, validation, captures and automated input run
-only when explicitly requested; a request to build or review a component is not
-permission to test it.
+**Owner review**: the composed-surface pass is part of every UI change; an
+audit, a catalog-wide capture sweep or a skill evaluation still waits for the
+owner's request.
 
 ## What is not done here
 
-- No automatic testing, validation, capture sweeps, audits or skill evals.
+- No catalog-wide sweeps, audits or skill evals without a request; no UI change without its composed-surface pass.
 - No TDD, expected-red tests, static-style assertions or coverage growth.
 - No plans, no dated documents, no CLOSED/LANDED history, no counters.
 - No working around a component defect inside its unit.
