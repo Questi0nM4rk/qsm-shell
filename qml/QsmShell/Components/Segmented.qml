@@ -37,6 +37,9 @@ T.TabBar {
     readonly property int _pad: Style.rhythm(Style.space2 * root._s)
     readonly property int _itemRadius: Style.radiusMd
     readonly property int _radius: root._itemRadius + root._pad
+    // The segment that rings under keyboard focus: the picked one, or the
+    // first available one while nothing is picked.
+    readonly property int _ringIndex: root.currentIndex >= 0 ? root.currentIndex : root._firstEnabled()
     readonly property real _segmentWidth: (root.width - root._pad * 2
         - root._gap * Math.max(0, root.options.length - 1)) / Math.max(1, root.options.length)
 
@@ -88,11 +91,13 @@ T.TabBar {
     // stale index. The Repeater below is therefore keyed on the COUNT, so a
     // rebuilt array of the same length touches no segment. Reporting is
     // deliberately here, rather than on currentIndexChanged: host
-    // synchronization is state, not intent.
+    // synchronization is state, not intent. It never writes currentIndex: the
+    // host owns it, and a host that refuses a choice (its binding's inputs do
+    // not change, so it is not re-run) keeps the thumb where it was. A host
+    // that answers late means step() reads the old index until it has.
     function select(index: int): bool {
         if (!root.enabled || !root._enabled(index) || root.currentIndex === index)
             return false;
-        root.setCurrentIndex(index);
         root.selected(index);
         return true;
     }
@@ -169,8 +174,11 @@ T.TabBar {
             height: root.barHeight - root._pad * 2
             radius: root._itemRadius
             // The picked segment is identity: the accent over the track,
-            // opaque, lifted off it by the card's slight shadow.
-            color: root.enabled ? Style.selected(Style.surface, Style.accent)
+            // opaque, lifted off it by the card's slight shadow. A picked
+            // option that is itself unavailable dims the pill as well, and
+            // its dimmed accent label (1.88:1 on it, the same dim as any
+            // unavailable label) stays a legible word in a receding pill.
+            color: root.enabled && root._enabled(root.currentIndex) ? Style.selected(Style.surface, Style.accent)
                 : Style.disabled(Style.selected(Style.surface, Style.accent))
             layer.enabled: !Style.reducedEffects
             layer.effect: MultiEffect {
@@ -289,6 +297,9 @@ T.TabBar {
                 Badge {
                     visible: text.length > 0
                     tone: tab.selectedSegment ? "accent" : "neutral"
+                    // Badge fixes its own text, so the chip scales with the
+                    // instance and keeps air inside the item (2 px at sm).
+                    Layout.preferredHeight: Style.rhythm(Style.badgeHeight * root._s)
                     text: typeof tab.option === "string" ? "" : String(tab.option?.badge ?? "")
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -308,9 +319,10 @@ T.TabBar {
             focusRadius: root._itemRadius
             // The ring marks keyboard focus only: a click selects and slides
             // the thumb, it does not ring. Focus normally sits on the bar and
-            // the ring marks the picked segment; a segment that takes focus
-            // itself rings whether or not it is picked.
-            focused: tab.visualFocus || (tab.selectedSegment && root.visualFocus)
+            // the ring marks the picked segment, or the first available one
+            // while nothing is picked; a segment that takes focus itself
+            // rings whether or not it is picked.
+            focused: tab.visualFocus || (tab.index === root._ringIndex && root.visualFocus)
         }
     }
 }

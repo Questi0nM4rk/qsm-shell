@@ -13,6 +13,8 @@ Item {
     property bool wrapNavigation: true
     property string unavailable: "none"
     property string size: "md"
+    property bool hostRefuses: false
+    property string badge: "none"
 
     implicitWidth: bar.implicitWidth
     implicitHeight: bar.implicitHeight
@@ -23,14 +25,15 @@ Item {
         options: [
             { label: "Overview", disabled: ["first", "all"].includes(root.unavailable) },
             { label: "Media", disabled: root.mediaLocked || ["middle", "all"].includes(root.unavailable) },
-            { label: "Alerts", disabled: ["last", "all"].includes(root.unavailable) }
+            { label: "Alerts", badge: root.badge === "count" ? "3" : "", disabled: ["last", "all"].includes(root.unavailable) }
         ]
         size: root.size
         tabNavigation: root.tabNavigation
         wrapNavigation: root.wrapNavigation
         currentIndex: root.currentIndex
         onSelected: index => {
-            root.currentIndex = index
+            if (!root.hostRefuses)
+                root.currentIndex = index
             root.eventRecorder?.("intent", "selected", { index })
         }
     }
@@ -55,6 +58,14 @@ Item {
         { label: "middle-option", options: [
             { label: "enabled", set: { mediaLocked: false } },
             { label: "disabled", set: { mediaLocked: true } }
+        ] },
+        { label: "badge", options: [
+            { label: "none", set: { badge: "none" } },
+            { label: "count", set: { badge: "count" } }
+        ] },
+        { label: "host", options: [
+            { label: "accepts", set: { hostRefuses: false } },
+            { label: "refuses", set: { hostRefuses: true } }
         ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
