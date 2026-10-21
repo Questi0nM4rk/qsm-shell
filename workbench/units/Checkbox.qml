@@ -10,6 +10,8 @@ Item {
     property var eventRecorder: null
     property bool checked: variant === "on"
     property bool indeterminate: variant === "some"
+    property string size: "md"
+    property string labelLength: "short"
 
     implicitWidth: box.implicitWidth
     implicitHeight: box.implicitHeight
@@ -17,6 +19,7 @@ Item {
     Checkbox {
         id: box
         anchors.centerIn: parent
+        size: root.size
         checked: root.checked
         indeterminate: root.indeterminate
         accessibleName: boxLabel.text
@@ -28,7 +31,10 @@ Item {
         Prose {
             id: boxLabel
             role: "label"
-            text: "Include hidden files"
+            width: parent.width
+            text: root.labelLength === "long"
+                ? "Include hidden files, files whose names start with a dot, and everything inside folders that are themselves hidden from the listing"
+                : "Include hidden files"
             color: box.enabled ? Style.text : Style.disabled(Style.text)
         }
     }
@@ -39,6 +45,15 @@ Item {
             { label: "on", set: { checked: true, indeterminate: false } },
             { label: "some", set: { checked: false, indeterminate: true } }
         ] },
+        { label: "size", options: [
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } }
+        ] },
+        { label: "label", options: [
+            { label: "short", set: { labelLength: "short" } },
+            { label: "long", set: { labelLength: "long" } }
+        ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
             { label: "disabled", set: { enabled: false } }
@@ -47,10 +62,7 @@ Item {
     readonly property var integration: ({
         events: ["toggle-requested"],
         actions: ["toggle"],
-        keys: {
-            "Space": () => { box.flip(); return true },
-            "Enter": () => { box.flip(); return true }
-        },
+        targets: ({ checkbox: () => box }),
         observables: {
             checked: () => root.checked,
             indeterminate: () => root.indeterminate

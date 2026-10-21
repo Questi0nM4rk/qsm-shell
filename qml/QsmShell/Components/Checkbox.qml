@@ -66,6 +66,9 @@ T.AbstractButton {
     Accessible.onPressAction: root.flip()
     Accessible.onToggleAction: root.flip()
 
+    // A constant, never content-derived: a long label elides inside it.
+    property real labelWidth: Style.rhythm(Style.controlWidth * root._s)
+    readonly property bool _hasLabel: labelSlot.children.length > 0
     readonly property real _box: root.boxSize
     readonly property real _markRatio: 0.75
     readonly property bool _marked: root.checked || root.indeterminate
@@ -73,13 +76,26 @@ T.AbstractButton {
     implicitHeight: Math.max(_box, row.implicitHeight)
     padding: 0
 
+    // The pointer hits the footprint plus a square of at least `iconLg` around
+    // the box, so a bare sm or md box is not a smaller target than the floor.
+    // The overflow is hit area only: the natural size above is untouched.
+    containmentMask: QtObject {
+        function contains(point: point): bool {
+            if (point.x >= 0 && point.y >= 0 && point.x < root.width && point.y < root.height)
+                return true;
+            const c = box.mapToItem(root, box.width / 2, box.height / 2);
+            const reach = Math.max(root._box, Style.iconLg) / 2;
+            return Math.abs(point.x - c.x) <= reach && Math.abs(point.y - c.y) <= reach;
+        }
+    }
+
     onClicked: root.flip()
     Keys.onReturnPressed: root.flip()
 
     contentItem: RowLayout {
         id: row
         anchors.fill: parent
-        spacing: Style.rhythm(root._box * 0.5)
+        spacing: root._hasLabel ? Style.rhythm(root._box * 0.5) : 0
 
         Rectangle {
             id: box
@@ -138,21 +154,23 @@ T.AbstractButton {
             id: labelSlot
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: childrenRect.width
+            // The host binds its label's width to this slot's, so a long
+            // label elides here instead of growing the control.
+            clip: true
+            implicitWidth: root._hasLabel ? root.labelWidth : 0
             implicitHeight: childrenRect.height
         }
     }
 
-    // The ring sits a half step OUTSIDE the box at Style.spaceTight, on the
-    // box alone -- not the label -- so a long label does not stretch the
-    // focus indicator. Pointer clicking still covers the full T.AbstractButton
-    // row via onClicked above.
+    // The layer is the box's own geometry: StateLayer's ring already reaches
+    // `spaceTight` clear of it, a half step, on the box alone -- not the label.
+    // Pointer clicking still covers the row and the hit square above.
     StateLayer {
         id: stateLayer
-        x: box.x - Style.spaceTight
-        y: box.y - Style.spaceTight
-        width: box.width + Style.spaceTight * 2
-        height: box.height + Style.spaceTight * 2
+        x: box.x
+        y: box.y
+        width: box.width
+        height: box.height
         host: root
         target: box
         focusRadius: Style.radiusXs
