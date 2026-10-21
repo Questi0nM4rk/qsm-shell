@@ -27,14 +27,14 @@ T.TabBar {
     readonly property int _iconSize: Style.glyphBeside(root.barHeight)
     readonly property int _inset: Style.rhythm(Style.space2 * root._s)
     readonly property int _gap: Style.rhythm(Style.space1 * root._s)
-    // The items levitate on the rounded track: a full step of air all round,
-    // so an item never touches the track's edge, hovered and grown included,
-    // and a gap between neighbours. Nested corners are concentric: the item
-    // keeps the control radius and the track's radius is the item's plus the
-    // inset between them, so the gap reads even all the way round a corner.
-    // Deriving the inner from the outer instead left 40px items with an 8px
-    // corner that read as square.
-    readonly property int _pad: root._s < 1 ? Style.space1 : Style.space2
+    // The items levitate on the rounded track: air all round, so an item never
+    // touches the track's edge, hovered and grown included, and a gap between
+    // neighbours. The air is a full step at md and scales with the bar, snapped
+    // DOWN to the rhythm so a small bar keeps items tall enough for their
+    // glyph. Nested corners are concentric: the item keeps the control radius
+    // and the track's radius is the item's plus the air between them, so the
+    // gap reads even all the way round a corner.
+    readonly property int _pad: Math.floor(Style.space2 * root._s / Style.space1) * Style.space1
     readonly property int _itemRadius: Style.radiusMd
     readonly property int _radius: root._itemRadius + root._pad
     // The segment that rings under keyboard focus: the picked one, or the

@@ -1,13 +1,13 @@
 # ListRow
 
 The row: one item a person operates repeatedly; the host owns selection, values, optional inline expansion and the action's consequence. Activating an item never means advancing selection.
-states: rest, hover, press, focus, selected (the accent at `opacitySelected` as a fill behind the row and the name in the accent, spec 07; no side marker), disabled and report-only; header and separator are structural rows a cursor steps past; disabled dims an unavailable action while a report-only row stays full-strength and simply is not a target; recede dims unpicked rows only in lists you pick from: text and glyph by colour (`Style.recede`), slotted content by `Style.opacityRecede`, reported as `receded`.
+states: rest, hover, press, focus, selected (the accent at `opacitySelected` as a fill behind the row and the name in the accent, with no side marker), disabled and report-only; header and separator are structural rows a cursor steps past; disabled dims an unavailable action while a report-only row stays full-strength and simply is not a target; recede dims unpicked rows only in lists you pick from: text and glyph by colour (`Style.recede`), slotted content by `Style.opacityRecede`, reported as `receded`.
 actions: `activate()` guards selectable and emits `activated`; StateLayer click, pointer, keyboard and programmatic routes share it; keyboard navigation and focus belong to the owning list through `focused`.
 pointer: StateLayer grows the leading box only; clickable trailing actions take their own grab, while passive readings remain part of the row target; hover reports `hoveredEntered` for the list cursor and wheel is not claimed.
 keyboard: the owning list holds focus and routes arrows and Enter; the current row shows the focus ring on the body.
 expected: the single-row unit owns focus and routes Enter through `activate()`; a physical trailing-action click reports only that action, body and passive-reading clicks activate the row, and long-content mode keeps both routes judgeable. Menu composition / Shell items hosts interaction between multiple rows and their editors; the row unit never implements a selector.
 screen reader: selectable rows announce as buttons named by the primary label with supporting text as description; structural and report-only rows are static text.
-size: sm, md and lg resolve through the ListRow size table (32, 40, 56) with the leading box at one fixed size per row and readonly `glyphSize` the glyph a host's own leading content takes; `headingHeight` is the host's absolute-height escape hatch, keeping body/input/editor origin aligned; readonly `expansionHeight` reports the actual revealed viewport for bounded surface sizing. Hosts never override total implicitHeight to set a heading. The asked width includes the inset the body gives away; long text elides and a supporting line that repeats the name hides.
+size: sm, md and lg resolve through the ListRow size table (32, 40, 56) with the glyph (`Style.glyphBeside` of the row height), the leading box (the glyph plus `space1`) and the text steps all derived from that height, and readonly `glyphSize` the glyph a host's own leading content takes; `headingHeight` is the host's absolute-height escape hatch, keeping body/input/editor origin aligned; readonly `expansionHeight` reports the actual revealed viewport for bounded surface sizing. Hosts never override total implicitHeight to set a heading. The asked width includes the inset the body gives away; long text elides and a supporting line that repeats the name hides.
 tokens: the ListRow size table, icon and type scales, space scale, `opacitySelected` fill, opacity roles, surface ladder, accent, danger, Motion and StateLayer; no local colours or measurements.
 motion: micro colour and opacity response; no position animation during a gesture; reduced motion shortens the durations.
 expansion: host-owned `expanded` and named `expandedContent`; empty/structural rows reserve no editor space. Existing leading/trailing slots and heading size remain unchanged. The expansion is not a second row activation target; unavailable or collapsed content cannot handle input. Hosts choose the open/close consequence and focus destination.
@@ -77,11 +77,12 @@ slot), `selected`, `disabled`, `interactive`, `danger`, `header`, `separator`, `
 ### Sizes, empty and long content, failure
 
 - Row height: sm 32, md 40, lg 56 (`Style.size("ListRow", size)`).
-- Leading box: sm 20 (iconMd), md 24 (iconLg), lg 24 (ListRow.qml:109).
-- Text: name textSm 12 at md and sm, textMd 14 at lg (ListRow.qml:284); supporting textXs 10 at md and
-  sm, textSm 12 at lg (ListRow.qml:302, Style.qml:194).
-- Text column left edge (`contentInset`): 12 + 24 + 8 = 44 px at md with a leading visual; 12 px
-  without one (ListRow.qml:110-111).
+- Glyph: `Style.glyphBeside(height)`, sm 16, md 16, lg 24. Leading box: glyph + `space1`, sm 20, md 20,
+  lg 28.
+- Text: grows at half the row's rate above md and never shrinks below it, snapped with `Style.textNear`:
+  name textSm 12 at md and sm, textMd 14 at lg; supporting textXs 10 at md and sm, textSm 12 at lg.
+- Text column left edge (`contentInset`): 12 + 20 + 8 = 40 px at md with a leading visual; 12 px
+  without one.
 - Empty: no leading visual hides the leading box unless `reserveLeading` is set (D1); a supporting line
   equal to the name (case-insensitive) hides; a trailing slot with no visible child that measures
   wider than 0 hides (D2).
@@ -103,8 +104,8 @@ Computed contrast (WCAG 2.x):
 | muted on band | band | 8.61 | 4.5 |
 | muted on surface | surface | 6.61 | 4.5 |
 | selected accent over 12% fill | surface composite | 5.25 | 4.5 |
-| name at recede 0.70 | band | 7.38 | 4.5 |
-| metadata at recede 0.70 | band | 4.95 | 4.5 |
+| name receded (`Style.opacityRecede`) | band | 6.65 | 4.5 |
+| metadata receded (`Style.opacityRecede`) | band | 4.51 | 4.5 |
 
 Not computed: danger on band and surface, the hover-lift colour (`Style.tone` bisection), the disabled
 colour (`Style.disabled`), and every other theme. The recede ratios assume the row sits on the band,

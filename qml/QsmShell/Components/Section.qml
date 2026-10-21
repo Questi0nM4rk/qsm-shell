@@ -21,10 +21,9 @@ ColumnLayout {
     default property alias content: bodyHost.data
     property real bodySpacing: Style.space1
 
-    // The group owns the rhythm around its own name: a section starts a step
-    // clear of whatever precedes it, and its rows hang from the heading. The
-    // first section in a column takes `Layout.topMargin: 0`.
-    Layout.topMargin: Style.space4
+    // The group owns the rhythm INSIDE it: its rows hang from the heading. The
+    // space before a section is the owning surface's business, because only it
+    // knows what precedes the group.
     spacing: Style.space1
 
     RowLayout {

@@ -6,8 +6,8 @@ actions: none of its own; the heading `action` slot and the default `content` sl
 pointer: none on the group itself; slotted controls keep their own targets and wheel passes through.
 keyboard: none on the group itself; slotted controls keep their own tab stops and keys.
 screen reader: the section title labels the group; the action and content name themselves.
-size: content-driven column; the group starts `space4` clear of what precedes it (a first section in a column takes `Layout.topMargin: 0`), its rows hang `space1` below the heading and `space1` apart; the heading row fills the width with the title taking the free space.
-tokens: space1, space4 and Prose; no local colours or measurements.
+size: content-driven column; it claims no space outside itself (the owning surface sets the gap before a section), its rows hang `space1` below the heading and `space1` apart; the heading row fills the width with the title taking the free space.
+tokens: space1 and Prose; no local colours or measurements.
 motion: none.
 not designed: collapsing, selection or scrolling; use Disclosure, Menu or ScrollArea for those.
 
@@ -51,7 +51,7 @@ group is named. It is the wrong type for a collapsible, selectable or scrolling 
 - Height: the heading row is as tall as its tallest child. Title is role `section`, 10px
   (`Tokens.qml:35`), line height 1 (Prose sets line height for body only). Action is `sm`, 32px
   (`Capsule.qml:73`, `Tokens.qml:84`).
-- Gaps: before the group 16px (`space4`); heading to body 4px and rows 4px (`space1`).
+- Gaps: none outside the group; heading to body 4px and rows 4px (`space1`).
 - Long title: NoWrap and ElideRight, so it elides only when its row is constrained. Its full width
   still counts toward the natural width. See S-2.
 - Failure and cancellation: none. `Capsule.activate` is a no-op while disabled (`Capsule.qml:78-81`).

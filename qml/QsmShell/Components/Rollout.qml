@@ -35,14 +35,14 @@ Item {
     // link, NOT by being folded in here: intent that outlives its meaning
     // cannot be told apart from intent that is still open.
     property bool shouldBeActive: false
-    // Fullscreen (09-input DEFAULT): surfaces hide INSTANTLY, no retract.
+    // While the host is fullscreen the surface hides INSTANTLY, no retract.
     property bool suppressed: false
-    // "large" = 500ms tier (top panel, launcher, session, notifications);
-    // "small" = 250ms tier (rail popouts, OSD, calendar). 02-rollouts.
+    // The reveal tier: "large" for a big panel or a modal, "small" for a
+    // popout or a readout. Motion owns each tier's duration.
     property string tier: "large"
-    // A modal that owns a bigger catch region (launcher's full-scene
-    // click-anywhere-closes) registers its OWN hit rect instead; the
-    // silhouette bulge is always registered here regardless.
+    // A modal that owns a bigger catch region (a full-scene click-anywhere-
+    // closes) registers its OWN hit rect instead; the silhouette bulge is
+    // always registered here regardless.
     property bool registerHitRect: true
     // Negative means automatic; nonnegative overrides apply to both axes.
     property real edgeInset: -1
@@ -58,7 +58,7 @@ Item {
     // detached capsule geometry. Normal rollouts never consult these values.
     property bool fullscreenDetached: false
     property bool fullscreenCapsule: true
-    property real fullscreenInset: Style.space4
+    property real fullscreenInset: Style.rolloutPadding
     property real fullscreenRadius: Style.radiusPill
     // Detached-only compatibility; attached content never travels or deforms.
     property real deformScale: Motion.rolloutDeformScale

@@ -5,11 +5,11 @@ import qs.QsmShell.Style
 
 // THE row. One line in a list of things a person picks from.
 //
-// A menu's row, a device list's row and a launcher's row are one anatomy: a
-// mark, one leading visual, a name, a supporting line, some trailing content.
-// They differ in a handful of numbers, which `size` and `recede` carry, so
-// they are one type: a type named after the SURFACE it serves is a type you
-// have twice.
+// A menu's row, a device list's row and a search result's row are one anatomy:
+// a mark, one leading visual, a name, a supporting line, some trailing
+// content. They differ in a handful of numbers, which `size` and `recede`
+// carry, so they are one type: a type named after the SURFACE it serves is a
+// type you have twice.
 //
 // ── the leading box ──────────────────────────────────────────────────────
 // Whatever sits at the leading edge — a glyph, an application icon, a
@@ -22,13 +22,13 @@ import qs.QsmShell.Style
 // sets `reserveLeading` on all of them to keep the edge put.
 //
 // ── receding ─────────────────────────────────────────────────────────────
-// A list where you want ONE thing (a launcher) recedes everything else, so
+// A list where you want ONE thing (search results) recedes everything else, so
 // the row that Enter will fire is the only thing at full strength. A list you
 // are READING (a device list, a settings list) must not: dimming every name to
-// mark one of them costs the person the other nine. That is `recede`, and it is
-// the one real difference the three old types had. A row recedes its own text
-// and glyph by colour (`Style.recede`) and the content a host slots in at
-// `Style.opacityRecede`, since a picture cannot be blended; it reports `receded`.
+// mark one of them costs the person the other nine. That is `recede`. A row
+// recedes its own text and glyph by colour (`Style.recede`) and the content a
+// host slots in at `Style.opacityRecede`, since a picture cannot be blended;
+// it reports `receded`.
 Item {
     id: root
 
@@ -73,10 +73,8 @@ Item {
     property bool focused: false
 
     // ── shape ───────────────────────────────────────────────────────────
-    // sm | md | lg: the row's height (the ListRow table), its type step and its
-    // leading box. A denser row is tighter than a proportional zoom would make
-    // it, because scaling everything by one factor reads as a zoom rather than
-    // as a different row.
+    // A ListRow preset: the row's height (the ListRow table), and through it
+    // its glyph, its leading box and its type steps.
     property string size: "md"
     // Dim the rows that are not the current one. True for a list you PICK from,
     // false for a list you READ.
@@ -92,8 +90,10 @@ Item {
     // thumb.
     readonly property real selectionRadius: Style.radiusBody
 
-    readonly property bool _sm: size === "sm"
-    readonly property bool _lg: size === "lg"
+    // The row's height from the ListRow table: the one number its glyph, its
+    // leading box and its text steps derive from.
+    readonly property real _height: Style.size("ListRow", root.size)
+    readonly property real _s: root._height / Style.size("ListRow", "md")
     readonly property bool _normal: !header && !separator
     readonly property bool selectable: _normal && !disabled && interactive
     readonly property bool hovered: layer.hovered
@@ -102,7 +102,7 @@ Item {
     readonly property real selectionHeight: root._headingHeight
     readonly property real _nativeHeadingHeight: root.separator ? Style.space3
         : root.header ? Style.space4 + Style.space2
-        : Style.size("ListRow", root.size)
+        : root._height
     property real headingHeight: root._nativeHeadingHeight
     readonly property real expansionHeight: expandedViewport.height
     readonly property real _headingHeight: root._hasExpandedContent
@@ -117,10 +117,14 @@ Item {
     readonly property bool _hasExpandedContent: root._normal && expandedHost.implicitHeight > 0
     readonly property real _expandedHeight: root.expanded && root._hasExpandedContent ? expandedViewport.implicitHeight : 0
     // The leading box every visual sits in, and the glyph that sits in it:
-    // smaller than its box on purpose, and the size a host's own leading glyph
-    // takes so it never differs from the row's.
-    readonly property int leadingSize: _sm ? Style.iconMd : Style.iconLg
-    readonly property int glyphSize: _sm ? Style.iconSm : Style.iconMd
+    // the glyph is the role for a glyph beside a name in a box of the row's
+    // height, and the box is one step wider on purpose. A host's own leading
+    // glyph takes `glyphSize` so it never differs from the row's.
+    readonly property int glyphSize: Style.glyphBeside(root._height)
+    readonly property int leadingSize: root.glyphSize + Style.space1
+    // Text grows at half the row's rate above md and never shrinks below it:
+    // a denser row keeps its reading size, a taller one grows calmly.
+    readonly property real _textScale: Math.max(1, (1 + root._s) / 2)
     // Not the current one: later in a list you pick from, not under the
     // pointer, not unavailable and not a report. Disabled and report-only rows
     // show at full strength; disabled dims by colour on its own.
@@ -179,8 +183,8 @@ Item {
     // ── the body ────────────────────────────────────────────────────────
     // One `Surface` answers hover, press and selection through `Style.tone`:
     // the lift under the pointer, a deeper one while pressed, and the accent
-    // at `opacitySelected` over the SURFACE step with the name in the accent
-    // (spec 07, owner 2026-10-16: no side marker). Over the band the tint read
+    // at `opacitySelected` over the SURFACE step with the name in the accent,
+    // with no side marker. Over the band the tint read
     // as a smudge, so it is laid over the surface it belongs on. Invisible at
     // rest: a list paints no box around a row nobody is touching.
     Surface {
@@ -301,7 +305,7 @@ Item {
             Prose {
                 Layout.fillWidth: true
                 role: "label"
-                font.pixelSize: root._lg ? Style.textMd : Style.textSm
+                font.pixelSize: Style.textNear(Style.textSm * root._textScale)
                 color: root.proseColor
                 text: root.primary
 
@@ -319,7 +323,7 @@ Item {
                     && root.supporting.toLowerCase() !== root.primary.toLowerCase()
                 role: "metadata"
                 color: root._mutedColor
-                font.pixelSize: root._lg ? Style.textSm : Style.textXs
+                font.pixelSize: Style.textNear(Style.textXs * root._textScale)
                 text: root.supporting
 
                 Behavior on color {

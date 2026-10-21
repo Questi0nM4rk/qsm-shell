@@ -65,7 +65,7 @@ Rectangle {
         fullscreenDetached: root.detached
         triggerAreas: [rollout.anchorRect]
         childRollout: childPanel
-        padding: Style.space4
+        padding: Style.rolloutPadding
         bodyWidth: root.extent === "wide" ? Style.controlWidth : Style.controlWidth - Style.space6 * 2
         bodyHeight: Style.size("Control", "md") * 3 + Style.space6 * 2
 
@@ -142,7 +142,7 @@ Rectangle {
         fullscreenDetached: root.detached
         // These extents already follow the parent's size morph.
         animateBodySize: false
-        padding: Style.space4
+        padding: Style.rolloutPadding
         bodyWidth: root.horizontal ? Style.controlWidth - Style.space6 * 2
             : root.layerMode === "full-span-child" ? rollout.bodyWidth : rollout.bodyWidth - Style.space6
         bodyHeight: !root.horizontal ? Style.size("Control", "md") * 3 + padding * 2
