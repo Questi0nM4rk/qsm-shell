@@ -143,5 +143,5 @@ QtObject {
     readonly property real lineBody: 1.55
     readonly property real trackingWide: 1.4
     readonly property real blendBadgeInk: 0.5
-    readonly property var sizes: ({"Control":{"xs":24,"sm":32,"md":40,"lg":48},"ListRow":{"sm":32,"md":40,"lg":56},"DataCapsule":{"sm":32,"md":64,"lg":96},"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"Slider":{"sm":16,"md":24,"lg":40}})
+    readonly property var sizes: ({"Control":{"xs":24,"sm":32,"md":40,"lg":48},"ListRow":{"sm":32,"md":40,"lg":56},"DataCapsule":{"sm":32,"md":64,"lg":96},"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"Slider":{"sm":16,"md":24,"lg":40},"MonthCalendar":{"sm":24,"md":32}})
 }

@@ -44,11 +44,12 @@ in it. The consequence of a wrong month or a lost today marker is a wrong date r
 
 ### Sizes, empty and long content, failure, cancellation
 
-- Natural height is constant: header 32 px (`IconButton` 16 + 2 x 8), spacing 8, weekday row
-  (`Prose` 12 px), row spacing 4, six rows of 32 px with spacing 4, which is 256 px with the weekday
-  height. The 42-cell model fixes it. Passes by source.
-- Natural width is constant: seven 32 px cells and six 4 px gaps, 248 px, which is the rail rollout's
-  content width. A host may widen it and the cells stretch.
+- Sizes: `size` names a preset of the `MonthCalendar` table, the day cell's side: md 32, sm 24. Natural
+  height is constant: header 32 px (`IconButton` 16 + 2 x 8), spacing 4, weekday row (`Prose` 12 px,
+  14 high), row spacing 4, six rows of cells with spacing 4, which is 266 px at md and 218 px at sm.
+  The 42-cell model fixes it. Passes by source.
+- Natural width is constant: seven cells and six 4 px gaps, 248 px at md (the rail rollout's content
+  width) and 192 px at sm. A host may widen it and the cells stretch.
 - Long content: only the month title varies. Its role `title` elides (`Prose.qml:118`) when the host
   constrains the width; no empty state exists because the grid always shows 42 cells.
 - Failure: no failure path is defined for an invalid `shown` or `today`. Not examined further.
@@ -67,7 +68,7 @@ Computed from the deep-night token values against `band`, the unit AGENTS names:
 | `accent` on `band` (today disc) | `:61` | 8.87 |
 
 Roles used: `title` (14 px, bold), `reading` (day digits, 12 px, technical face), `accent`
-on the today disc only. The disc is 24 px, `Style.space5`, centred in its 32 px cell. The hover disc of a chevron is `Style.tone` through `IconButton`; not computed here.
+on the today disc only. The disc is 24 px, `Style.space5` (the whole cell at sm), centred in its cell. The hover disc of a chevron is `Style.tone` through `IconButton`; not computed here.
 
 ### Motion
 

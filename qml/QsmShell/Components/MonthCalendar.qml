@@ -12,6 +12,10 @@ Item {
 
     property date shown: new Date()
     property date today: new Date()
+    // A day cell is a square of the size table's `MonthCalendar` preset: md for
+    // a rollout, sm for a card that has to share its height.
+    property string size: "md"
+    readonly property int _cell: Style.size("MonthCalendar", size)
     signal monthShifted(int delta)
 
     function shiftMonth(delta: int): void {
@@ -41,7 +45,7 @@ Item {
     ColumnLayout {
         id: body
         anchors.fill: parent
-        spacing: Style.space2
+        spacing: Style.space1
 
         RowLayout {
             Layout.fillWidth: true
@@ -71,9 +75,9 @@ Item {
                     readonly property bool inMonth: cellDate.getMonth() === root.shown.getMonth()
                     readonly property bool isToday: cellDate.getFullYear() === root.today.getFullYear() && cellDate.getMonth() === root.today.getMonth() && cellDate.getDate() === root.today.getDate()
                     Layout.fillWidth: true
-                    Layout.preferredWidth: Style.space6
-                    Layout.preferredHeight: Style.space6
-                    Rectangle { anchors.centerIn: parent; width: Style.space5; height: Style.space5; radius: Style.radiusPill; color: parent.isToday ? Style.accent : "transparent" }
+                    Layout.preferredWidth: root._cell
+                    Layout.preferredHeight: root._cell
+                    Rectangle { anchors.centerIn: parent; width: Math.min(root._cell, Style.space5); height: width; radius: Style.radiusPill; color: parent.isToday ? Style.accent : "transparent" }
                     Prose {
                         anchors.centerIn: parent
                         role: "reading"
