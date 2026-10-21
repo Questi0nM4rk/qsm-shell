@@ -135,8 +135,8 @@ Each one is source-reviewed only. Runtime was not exercised.
    offset by spaceTight, and StateLayer.qml's ring reaches a further spaceTight x 2 (`_reach`), so the
    stroke's inner edge is 4 px from the box. Checkbox.md:4 documents a half step, 2 px. On sm the gap
    is a third of the box. Fix: make the layer the box's own geometry, which gives the documented 2 px. Done.
-5. The indeterminate dash is heavier than the check (Checkbox.qml:127-128): the dash is 2 px at every
-   size. The check is `check.svg` (stroke-width 2 on a 24 grid), so its stroke is glyph x 2 / 24:
+5. The indeterminate dash is heavier than the check (Checkbox.qml:127-128): the dash is one `Style.indicatorWidth`
+   stroke (3 device rows at 1.25) at every size. The check is `check.svg` (stroke-width 2 on a 24 grid), so its stroke is glyph x 2 / 24:
    md 1.0 px, lg 1.5 px, sm 0.75 px. The dash is 2x the md check stroke and 2.7x the sm one. A person
    sees "some" read heavier than "on". The rendered weight is unmeasured: SvgIcon does not rasterise
    offscreen. Fix: derive the dash thickness from the same 2/24 ratio, or the owner accepts the

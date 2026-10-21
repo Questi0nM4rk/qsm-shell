@@ -32,7 +32,7 @@ Pointer: none. Wheel: none. Keyboard: none. Focus: none. Accessibility: the comp
 
 ### Sizes, empty, long, failure, cancellation
 
-- Horizontal: length from the host; cross size `thickness`, default `Style.trackThickness` (4, `tokens/deep-night.json`). Natural size is 0 by 4, so a host that sets no width sees nothing.
+- Horizontal: length from the host; cross size `thickness`, default `Style.stroke(Style.trackThickness, root)` (4, `tokens/deep-night.json`, snapped to whole device pixels). Natural size is 0 by 4, so a host that sets no width sees nothing.
 - Vertical: the same, rotated; natural size is `thickness` by 0.
 - Empty: value 0 gives a fill width of 0 (`Meter.qml:63`), track only. Full (value 1) is not in the unit.
 - Long content: not applicable.

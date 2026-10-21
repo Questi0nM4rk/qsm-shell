@@ -56,7 +56,7 @@ Properties: `value` (0..1, clamped at ProgressBar.qml:25), `indeterminate`, `fil
 
 ### Sizes, empty and long content, failure
 
-- Height: `Style.trackThickness`, 4 px (tokens/deep-night.json; ProgressBar.qml:23, 27).
+- Height: `Style.stroke(Style.trackThickness, root)`, 4 px at a ratio where that is whole device pixels (tokens/deep-night.json; ProgressBar.qml:23, 27).
 - Width: not set. `implicitWidth` is absent (ProgressBar.qml:27), so the natural width is 0 and the
   bar fills its host (line 9 of this record). The unit's host is 380 px (`controlWidth`, tokens:99).
 - Radius: height / 2, so 3 px at md (ProgressBar.qml:28).
