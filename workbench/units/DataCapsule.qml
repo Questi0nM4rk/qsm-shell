@@ -320,6 +320,7 @@ Item {
             present: () => capsule.present,
             "keep-open": () => capsule.keepOpen,
             "accepts-input": () => capsule.acceptsInput,
+            animating: () => capsule.animating,
             "can-activate": () => capsule.actions[0].enabled,
             "armed": () => capsule._armed,
             opened: () => root.opened,

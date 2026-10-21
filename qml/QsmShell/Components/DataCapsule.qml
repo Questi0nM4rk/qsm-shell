@@ -25,8 +25,14 @@ T.Control {
     property bool elevated: true
 
     readonly property bool pointerHovered: pointer.hovered
+    // Keyboard focus only: a click focuses without a ring and must not hold the timer.
+    readonly property bool _slotKeyboardFocus: {
+        const item = Window.window?.activeFocusItem;
+        return slot.activeFocus && item !== null && item !== undefined && item.visualFocus === true;
+    }
     readonly property bool keepOpen: (hoverStay && pointerHovered)
-        || root.activeFocus || slot.activeFocus
+        || root.visualFocus || _slotKeyboardFocus
+    readonly property bool animating: fade.running
     readonly property bool present: shown || opacity > 0
     readonly property bool acceptsInput: shown && enabled
     property real _remaining: 0
@@ -55,7 +61,8 @@ T.Control {
     focusPolicy: acceptsInput && interactive ? Qt.StrongFocus : Qt.NoFocus
 
     Accessible.role: interactive ? Accessible.Button : Accessible.Grouping
-    Accessible.name: interactive ? actionLabel : accessibleName
+    Accessible.name: accessibleName
+    Accessible.description: interactive ? actionLabel : ""
     Accessible.onPressAction: root.activate()
 
     function activate(): bool {
@@ -112,6 +119,7 @@ T.Control {
 
     Behavior on opacity {
         NumberAnimation {
+            id: fade
             duration: root.shown ? Motion.medium : Motion.micro
             easing.type: root.shown ? Motion.standardEasing : Motion.exitEasing
         }
@@ -162,7 +170,18 @@ T.Control {
         id: slot
         z: 1
         clip: true
-        enabled: root.acceptsInput
+        enabled: root.enabled
+    }
+
+    // While fading out the content keeps its enabled colours; input is refused here instead.
+    property Item _exitGuard: MouseArea {
+        parent: root
+        anchors.fill: parent
+        z: 2
+        enabled: !root.shown
+        hoverEnabled: true
+        acceptedButtons: Qt.AllButtons
+        onWheel: wheel => { wheel.accepted = true; }
     }
 
     property Item _bodyInput: MouseArea {
