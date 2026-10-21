@@ -4,9 +4,8 @@ import qs.QsmShell.Style
 // The one line: a straight rule of whole device pixels, so it paints the same
 // rows wherever it sits.
 //
-// `strength` is how loud it is. A rule inside a surface is quiet; one drawn
-// directly in the band (`inBand`) is stronger, because nothing but the rule
-// groups what sits on it.
+// One strength, `Style.dividerOpacity`: a rule is an echo of structure that
+// space has already grouped, never the thing that groups it.
 //
 // `inset` insets the DRAWN LINE rather than the item, so it works the same for
 // a fixed-width consumer and an anchored one without forcing a layout style.
@@ -16,9 +15,7 @@ Item {
     id: root
 
     property real inset: 0
-    // The rule sits directly in the band, not inside a surface.
-    property bool inBand: false
-    property real strength: root.inBand ? Style.dividerBandOpacity : Style.dividerOpacity
+    property real strength: Style.dividerOpacity
 
     readonly property real thickness: Style.stroke(Style.hairline, root)
 

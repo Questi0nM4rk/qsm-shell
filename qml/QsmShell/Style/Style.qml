@@ -102,12 +102,9 @@ QtObject {
     // share clears it on band, surface and overlay.
     readonly property real badgeInkMix: backend?.badgeInkMix ?? Tokens.blendBadgeInk
     // A tinted callout's tone over the surface, and a divider's own line: both
-    // are a quiet echo, never a fill, so each is its own number. A rule in a
-    // surface and a rule in the band are the same line at two strengths, the
-    // band's stronger because nothing but the rule groups what sits on it.
+    // are a quiet echo, never a fill, so each is its own number.
     readonly property real calloutTintOpacity: backend?.calloutTintOpacity ?? Tokens.opacityCalloutTint
     readonly property real dividerOpacity: backend?.dividerOpacity ?? Tokens.opacityDivider
-    readonly property real dividerBandOpacity: backend?.dividerBandOpacity ?? Tokens.opacityDividerBand
     // The dim a modal lays over the surface beneath it.
     readonly property real scrimOpacity: backend?.scrimOpacity ?? Tokens.opacityScrim
     // The series colour under a sparkline's line, and the unlit remainder of a

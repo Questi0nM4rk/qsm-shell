@@ -89,7 +89,6 @@ QtObject {
     readonly property real opacityScrim: 0.55
     readonly property real opacityCalloutTint: 0.1
     readonly property real opacityDivider: 0.35
-    readonly property real opacityDividerBand: 0.8
     readonly property real opacityThumbShadow: 0.45
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"

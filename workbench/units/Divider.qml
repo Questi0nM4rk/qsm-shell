@@ -11,7 +11,6 @@ Rectangle {
 
     // The rule's own properties, set by a case or by a single control.
     property real inset: Style.space3
-    property bool inBand: false
     // 0 means the rule's natural width: the card's width minus nothing.
     property real ruleWidth: 0
     // 0 means the rule's natural height; the item may claim a gap around the ink.
@@ -45,9 +44,9 @@ Rectangle {
                 width: parent.width
                 spacing: Style.space2
 
-                Divider { Layout.fillWidth: true; inBand: root.inBand }
+                Divider { Layout.fillWidth: true }
                 Prose { role: "section"; text: "Section" }
-                Divider { Layout.fillWidth: true; inBand: root.inBand }
+                Divider { Layout.fillWidth: true }
             }
 
             Item {
@@ -62,7 +61,6 @@ Rectangle {
                     height: root.gap > 0 ? root.gap : implicitHeight
                     x: root.turned ? 0 : (parent.width - width) / 2
                     inset: root.inset
-                    inBand: root.inBand
                     rotation: root.turned ? 90 : 0
                 }
             }
@@ -76,16 +74,12 @@ Rectangle {
 
     readonly property var controls: [
         { label: "case", options: [
-            { label: "surface", set: { inset: Style.space3, inBand: false, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.surface } },
-            { label: "list heading", set: { inset: 0, inBand: false, ruleWidth: 0, gap: 0, turned: false, heading: true, ground: Style.surface } },
-            { label: "card", set: { inset: Style.notificationDividerInset, inBand: false, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.surface } },
-            { label: "short", set: { inset: 0, inBand: false, ruleWidth: Style.space6 * 3, gap: 0, turned: false, heading: false, ground: Style.overlay } },
-            { label: "band", set: { inset: Style.space2, inBand: true, ruleWidth: 0, gap: Style.space2, turned: false, heading: false, ground: Style.band } },
-            { label: "band turned", set: { inset: 0, inBand: true, ruleWidth: Style.space6 * 2, gap: 0, turned: true, heading: false, ground: Style.band } }
-        ] },
-        { label: "rule", options: [
-            { label: "surface", set: { inBand: false } },
-            { label: "band", set: { inBand: true } }
+            { label: "surface", set: { inset: Style.space3, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.surface } },
+            { label: "list heading", set: { inset: 0, ruleWidth: 0, gap: 0, turned: false, heading: true, ground: Style.surface } },
+            { label: "card", set: { inset: Style.notificationDividerInset, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.surface } },
+            { label: "short", set: { inset: 0, ruleWidth: Style.space6 * 3, gap: 0, turned: false, heading: false, ground: Style.overlay } },
+            { label: "band", set: { inset: Style.space2, ruleWidth: 0, gap: Style.space2, turned: false, heading: false, ground: Style.band } },
+            { label: "band turned", set: { inset: 0, ruleWidth: Style.space6 * 2, gap: 0, turned: true, heading: false, ground: Style.band } }
         ] },
         { label: "inset", options: [
             { label: "none", set: { inset: 0 } },
