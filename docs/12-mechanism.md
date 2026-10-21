@@ -314,7 +314,7 @@ One value per rollout: `offsetScale` (0 shown → 1 hidden), with
 `p = clamp(1 - offsetScale, 0, 1)` for bounded aperture dimensions.
 
 ```qml
-property real offsetScale: shouldBeActive && !suppressed ? 0 : 1
+readonly property real _offsetTarget: shouldBeActive && !suppressed ? 0 : 1
 // Retain the item until the transition settles. Content rides opaque.
 visible: revealAnim.running || offsetScale < 1
 readonly property real revealProgress: Math.max(0, Math.min(1, 1 - offsetScale))
@@ -324,8 +324,12 @@ implicitHeight: revealHorizontal ? bodyHeight : bodyHeight * revealProgress
 // Full-size content parks inside the growing aperture; it does not travel.
 body.x: revealHorizontal && attached("right") ? width - bodyWidth : 0
 body.y: !revealHorizontal && attached("bottom") ? height - bodyHeight : 0
-Behavior on offsetScale { NumberAnimation { id: revealAnim
-    /* Motion.revealLarge / revealSmall and revealCurve / retractCurve */ } }
+// offsetScale moves from its current value to _offsetTarget by one NumberAnimation
+// (revealAnim) that is set up in the same step that starts it, so the curve and
+// the duration always belong to the direction being travelled:
+//   reveal  Motion.revealLarge / revealSmall   on revealCurve
+//   retract Motion.exit() of the same duration on retractCurve
+// `instantReveal`, `instantRetract` (per direction) and `suppressed` assign the target at once.
 ```
 
 At right, `root.x = wallX - width`, so the full body host x is

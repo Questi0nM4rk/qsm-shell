@@ -37,6 +37,12 @@ Item {
     property bool shouldBeActive: false
     // While the host is fullscreen the surface hides INSTANTLY, no retract.
     property bool suppressed: false
+    // A rollout reached by a key, or seen a hundred times a day, takes no
+    // motion in the direction named: the aperture jumps to its target in one
+    // frame. Each direction is its own fact, because a surface may appear at
+    // once and still leave at the pace of its timer.
+    property bool instantReveal: false
+    property bool instantRetract: false
     // The reveal tier: "large" for a big panel or a modal, "small" for a
     // popout or a readout. Motion owns each tier's duration.
     property string tier: "large"
@@ -145,7 +151,6 @@ Item {
     onSuppressedChanged: {
         if (suppressed) {
             closeDelayTimer.stop()
-            revealAnim.complete()
             widthMorph.complete()
             heightMorph.complete()
         }
@@ -362,7 +367,33 @@ Item {
     // instant that child hides.
     readonly property bool _sourceRetained: !shouldBeActive && !suppressed
         && childRollout?.visible === true
-    property real offsetScale: ((shouldBeActive || _sourceRetained) && !suppressed) ? 0 : 1
+
+    // 0 shown, 1 hidden. It is moved by `_moveOffset`, not by a Behavior: a
+    // Behavior copies the animation's easing when the value changes, and that
+    // is before a curve bound to the same intent has switched direction, so a
+    // retract ran the whole way on the reveal curve and was over in 100 ms.
+    property real offsetScale: 1
+    readonly property real _offsetTarget: ((shouldBeActive || _sourceRetained) && !suppressed) ? 0 : 1
+    property bool _ready: false
+    on_OffsetTargetChanged: {
+        if (_ready)
+            _moveOffset();
+    }
+    function _moveOffset(): void {
+        revealAnim.stop();
+        const revealing = _offsetTarget === 0;
+        if (suppressed || (revealing ? instantReveal : instantRetract)) {
+            offsetScale = _offsetTarget;
+            return;
+        }
+        const entry = tier === "small" ? Motion.revealSmall : Motion.revealLarge;
+        revealAnim.from = offsetScale;
+        revealAnim.to = _offsetTarget;
+        revealAnim.duration = revealing ? entry : Motion.exit(entry);
+        // Reveal decelerates hard, retract never overshoots: no springs.
+        revealAnim.easing.bezierCurve = revealing ? Motion.revealCurve : Motion.retractCurve;
+        revealAnim.start();
+    }
     // At rest means the motion is finished AND nothing is holding this source
     // open for a child. Reporting a retained source as settled tells a host
     // that is waiting for the retract that the picture it sees is finished.
@@ -379,17 +410,11 @@ Item {
     anchors.leftMargin: attached("left") ? edgeInsetH : 0
     anchors.rightMargin: attached("right") ? edgeInsetH : 0
 
-    Behavior on offsetScale {
-        // Suppression must snap (no retract animation on fullscreen).
-        enabled: !root.suppressed
-        NumberAnimation {
-            id: revealAnim
-            duration: root.tier === "small" ? Motion.revealSmall : Motion.revealLarge
-            easing.type: Easing.BezierSpline
-            // Reveal decelerates hard, retract never overshoots: no springs.
-            easing.bezierCurve: (root.shouldBeActive && !root.suppressed)
-                ? Motion.revealCurve : Motion.retractCurve
-        }
+    NumberAnimation {
+        id: revealAnim
+        target: root
+        property: "offsetScale"
+        easing.type: Easing.BezierSpline
     }
 
     // Size MORPH (10-motion popout glide, 250ms). A rollout that stays open
@@ -613,6 +638,8 @@ Item {
     }
 
     Component.onCompleted: {
+        offsetScale = _offsetTarget;
+        _ready = true;
         if (visible && !hovered && !suppressed)
             closeDelayTimer.restart();
         // 1..3 edges: edges[0] names the REVEAL axis; the rest are flush
@@ -660,7 +687,10 @@ Item {
             y: root.padding
             width: Math.max(0, root.bodyWidth - root.padding * 2)
             height: Math.max(0, root.bodyHeight - root.padding * 2)
-            enabled: root._inputReady
+            // A rollout that appears at once has no half-revealed state to
+            // keep input out of, and a body that flips enabled on the frame it
+            // appears would fade its colours in from the disabled blend.
+            enabled: root.instantReveal || root._inputReady
             scale: root._joined || !root.settleContent ? 1
                 : (root.shouldBeActive && !root.suppressed ? 1 : Motion.microPopScale)
             transformOrigin: Item.Center

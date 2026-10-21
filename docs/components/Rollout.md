@@ -150,11 +150,12 @@ look at and leaves the same way. The host owns intent; Rollout reports `triggere
 | --- | --- | --- |
 | `shouldBeActive` | host intent, the one input | 37, 343 |
 | `suppressed` | snaps hidden, no retract | 39, 147-154, 348-349 |
+| `instantReveal`, `instantRetract` | the aperture jumps to its target in that direction (a key-opened surface) | `_moveOffset` |
 | `edges` | `edges[0]` is the reveal axis, others flush | 18, 324-325; validated once, at completion (598-607) |
 | `anchorItem`, `placementBounds`, `nudgeToBounds` | free-axis placement | 22-27, 172-245 |
 | `parentRollout`, `childRollout` | nesting, squared corners | 31-32, 114-116, 261-276, 341-343 |
 | `hoverAreas`, `triggerAreas`, `closeDelay` | keep-open and open regions | 81-113, 85 |
-| `tier` | 250 ms small, 500 ms large | 42, 365-366 |
+| `tier` | reveal 250 ms small, 500 ms large; retract 200 and 400 | 42, `_moveOffset` |
 | `registerHitRect` | modal catch regions opt out | 46, 399 |
 | `padding` | inset of the full-size slot | 54, 636-639 |
 | `fullscreenDetached`, `fullscreenCapsule`, `fullscreenRadius` | detached capsule only | 59-62, 290, 331-332, 532-536 |
@@ -196,8 +197,8 @@ Routes, as the source gives them:
   edges (258-260, 281-285); the radius shrinks with the aperture by design (254-256).
 - Palette pairs: none in this file. The example's root uses `Style.band` (unit 31). Pairs for
   its content belong to Prose and Switch.
-- Motion: reveal 250 ms (small) or 500 ms (large), curve `[0.05, 0.7, 0.1, 1.0]`; retract
-  `[0.3, 0, 0.2, 1]` (Motion.qml 94, 98); morph 250 ms, `OutQuart` (Motion.qml). Goo and deform run
+- Motion: reveal 250 ms (small) or 500 ms (large), curve `[0.05, 0.7, 0.1, 1.0]`; retract 200 or
+  400 ms (`Motion.exit`), curve `[0.3, 0, 0.2, 1]` (Motion.qml 94, 98); morph 250 ms, `OutQuart` (Motion.qml). Goo and deform run
   only detached (423-427, `_joined` 290).
 - Reduced motion: reveal and morph become 120 ms (Motion.qml 72-73, 77). The hover grace does not
   change (Motion.qml 117, Tokens.qml 68). The rule behind this is in conflict, see C1.
@@ -256,11 +257,9 @@ Redesign proposals (owner or review decisions, not defects):
 - **P4, unused property.** `fullscreenInset` (61) has no reader found. Delete it.
 - **P5, edges.** `edges` is validated once (598-607), so a runtime change is silent. Validate on
   change, or document it as creation-time only.
-- **P6, interruption.** `Behavior on offsetScale` (360-372) restarts from the current value over
-  the full tier duration, so a reversal at 90% takes the whole 250 or 500 ms. For `review-animations`
-  (standard 6).
-- **P7, exit timing.** Retract uses the reveal duration (365, 369-370). For `review-animations`
-  (standard 4), together with C2.
+- **P6, interruption.** `_moveOffset` restarts from the current value over the full tier duration,
+  so a reversal at 90% takes the whole 250 or 500 ms (200 or 400 on the way out). For
+  `review-animations` (standard 6).
 
 Source conflicts (the owner rules):
 
@@ -269,14 +268,13 @@ Source conflicts (the owner rules):
   position changes, and Motion.qml 72-73 and 77 shorten them to 120 ms. This record's contract says
   "Reduced motion uses the existing reduced duration." Shared: yes (Style/Motion.qml).
 - **C2, retract curve.** Motion.qml 96-98 says retract is deliberately not an exit curve: the border
-  returns to rest. `review-animations` standard 3 wants exits on ease-out, and standard 4 wants an
-  exit about 80% of entry. Shared: yes (Style/Motion.qml).
+  returns to rest. `review-animations` standard 3 wants exits on ease-out. Shared: yes (Style/Motion.qml).
 
 Hypotheses (unmeasured):
 
 - **H1, binding loop.** In the example, `rollout.shouldBeActive` reads `childPanel.visible` (unit 64),
   `childPanel.shouldBeActive` reads `rollout.revealProgress` (unit 141), `revealProgress` reads
-  `offsetScale` (352), and `offsetScale` reads `_sourceRetained` (343), which reads
+  `offsetScale`, and `offsetScale` reads `_sourceRetained`, which reads
   `childRollout.visible` (342). The cycle is in the dependency graph while nested and open. Qt may log
   "Binding loop detected". Not runtime-exercised.
 - **H2, focus on close.** `inner.enabled` goes false (640) when `shouldBeActive` goes false, which
