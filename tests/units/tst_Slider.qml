@@ -226,8 +226,8 @@ TestCase {
     }
 
     // The value a drag reached is the value after the release: nothing else
-    // drives the thumb once the pointer lets go (the snap-back of 2026-10-17
-    // came from Qt's own handleRelease fighting a second driver).
+    // drives the thumb once the pointer lets go (a snap-back came from
+    // Qt's own handleRelease fighting a second driver).
     function test_a_release_keeps_the_dragged_value() {
         sliderGrab.value = 0.5;
         wait(Motion.fast + 100);

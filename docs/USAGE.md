@@ -45,7 +45,10 @@ Capsule {
 ```
 
 `Style` resolves every value as *your backend first, the library's generated
-token as the fallback* — so `Tokens` is the DEFAULT theme, never the theme.
+token as the fallback* — so `Tokens` is the DEFAULT theme, never the theme. The
+names a backend may answer are exactly the `backend?.<name>` reads in
+`qml/QsmShell/Style/Style.qml`; a consumer that checks its theme against them
+reads that file, which is part of the public API for this purpose.
 
 Sizes work the same way. A sized type takes a preset NAME, `size: "md"`, and
 resolves it through `Style.size("<Type>", name)` against the theme's size

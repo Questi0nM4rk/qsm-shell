@@ -4,8 +4,8 @@ import QtTest
 import qs.QsmShell.Components
 import qs.QsmShell.Style
 
-// Rollout finds its host by duck typing (docs/design-2026-09-06-shell-border,
-// "host contract"): registerBulge/unregisterBulge, registerRolloutRegion/
+// Rollout finds its host by duck typing, the host contract in ShellBorder:
+// registerBulge/unregisterBulge, registerRolloutRegion/
 // unregisterRolloutRegion, registerFullscreenCapsule/unregisterFullscreenCapsule,
 // plus one read of `fullscreen`. QML has no interfaces to hold that contract
 // honest once the host is untyped `var` — this is the test that does.
