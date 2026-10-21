@@ -37,44 +37,43 @@ Card {
     // Consumer-owned recovery controls.
     default property alias actions: actionHost.data
 
-    readonly property color _tone: {
-        switch (tone) {
-        case "success": return Style.success;
-        case "warning": return Style.warning;
-        case "danger": return Style.danger;
-        default: return Style.info;
-        }
-    }
-    readonly property string _icon: {
-        if (icon.length > 0)
-            return icon;
-        switch (tone) {
-        case "success": return "circle-check";
-        case "warning": return "alert-triangle";
-        case "danger": return "circle-alert";
-        default: return "info";
-        }
+    readonly property var _tones: ({
+        info: { color: Style.info, icon: "info" },
+        success: { color: Style.success, icon: "circle-check" },
+        warning: { color: Style.warning, icon: "alert-triangle" },
+        danger: { color: Style.danger, icon: "circle-alert" }
+    })
+    readonly property bool _toneKnown: _tones[tone] !== undefined
+    readonly property color _tone: (_tones[tone] ?? _tones.info).color
+    readonly property string _icon: icon.length > 0 ? icon : (_tones[tone] ?? _tones.info).icon
+
+    // QML cannot throw out of a binding, so an unknown tone or icon is
+    // reported on the error stream and drawn as info / nothing.
+    on_ToneKnownChanged: _checkTone()
+    Component.onCompleted: _checkTone()
+    function _checkTone() {
+        if (!_toneKnown)
+            console.error(`Callout: unknown tone "${tone}" -- expected info, success, warning or danger`);
     }
 
     implicitHeight: content.implicitHeight + Style.space3 * 2
-    implicitWidth: content.implicitWidth + Style.space3 * 2 + rule.width
+    // Constant: long copy wraps and elides inside it; a host sets `width`.
+    implicitWidth: Style.controlWidth
     radius: Style.radiusMd
-    surfaceColor: Qt.tint(Style.surface, Qt.rgba(_tone.r, _tone.g, _tone.b, 0.1))
-    // The severity rule runs the full height flush against the leading edge,
-    // and Qt clamps a rectangle's radius to half its SHORT side -- so a 3px
-    // rule cannot curve at the card's 12px corner and pokes out of it at both
-    // ends. Clipping is the honest fix; the render pass is paid only while a
-    // callout exists, which is only when something has gone wrong.
-    clip: true
-
+    surfaceColor: Qt.tint(Style.surface, Qt.rgba(_tone.r, _tone.g, _tone.b, Style.calloutTintOpacity))
     // The severity rule down the leading edge. It is the third channel — after
     // the mark and the hue — and the only one readable from the corner of an
     // eye that is looking somewhere else.
     Rectangle {
         id: rule
         anchors.left: parent.left
+        // Starts where the corner arc meets the leading edge: Item.clip only
+        // clips to the rectangle, so a full-height rule would poke out of the
+        // rounded corners.
         anchors.top: parent.top
+        anchors.topMargin: root.radius
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.radius
         width: Style.markThickness
         color: root._tone
     }
@@ -96,7 +95,7 @@ Card {
         }
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: Style.space1
+            spacing: 0
 
             Prose {
                 Layout.fillWidth: true
@@ -107,6 +106,7 @@ Card {
             Prose {
                 Layout.fillWidth: true
                 visible: root.body.length > 0
+                Layout.topMargin: root.title.length > 0 ? Style.space1 : 0
                 role: "body"
                 muted: true
                 text: root.body
@@ -114,7 +114,9 @@ Card {
             RowLayout {
                 id: actionHost
                 Layout.fillWidth: true
-                Layout.topMargin: children.length > 0 ? Style.space1 : 0
+                // One space1 gap below the copy, and none when no action shows:
+                // an empty host has zero implicit height.
+                Layout.topMargin: implicitHeight > 0 && (root.title.length > 0 || root.body.length > 0) ? Style.space1 : 0
                 spacing: Style.space2
             }
         }
