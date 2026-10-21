@@ -33,6 +33,8 @@ Rectangle {
 
     width: root.strong ? Style.markThickness + Style.spaceTight : Style.markThickness
     height: root.shown ? Style.markHeight : 0
+    implicitWidth: width
+    implicitHeight: height
     radius: width / 2
     color: root.markColor
     opacity: root.shown ? (root.strong ? 1 : root.restOpacity) : 0

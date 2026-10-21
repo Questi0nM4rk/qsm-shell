@@ -18,7 +18,8 @@ Rectangle {
 
     SelectionMark {
         id: mark
-        anchors.centerIn: parent
+        anchors.verticalCenter: parent.verticalCenter
+        x: Math.round((root.width - width) / 2)
         shown: root.shown
         strong: root.strong
         restOpacity: root.dimmed ? 0.35 : 1
