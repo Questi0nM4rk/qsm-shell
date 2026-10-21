@@ -41,20 +41,22 @@ Rectangle {
     }
 
     // Every knob here is a property of the type: a placeholder has no pointer,
-    // so a shape, a role and a width are only reachable this way.
+    // so a shape, a role and a width are only reachable this way. Role sets a
+    // line's height and a block ignores it, so the group exists only for a line.
+    readonly property var _roleGroup: ({ label: "role", options: [
+        { label: "hero", set: { role: "hero" } },
+        { label: "display", set: { role: "display" } },
+        { label: "heading", set: { role: "heading" } },
+        { label: "title", set: { role: "title" } },
+        { label: "body", set: { role: "body" } },
+        { label: "metadata", set: { role: "metadata" } }
+    ] })
     readonly property var controls: [
         { label: "shape", options: [
             { label: "block", set: { shape: "block" } },
             { label: "line", set: { shape: "line" } }
         ] },
-        { label: "role", options: [
-            { label: "hero", set: { role: "hero" } },
-            { label: "display", set: { role: "display" } },
-            { label: "heading", set: { role: "heading" } },
-            { label: "title", set: { role: "title" } },
-            { label: "body", set: { role: "body" } },
-            { label: "metadata", set: { role: "metadata" } }
-        ] },
+        ...(shape === "line" ? [_roleGroup] : []),
         { label: "width", options: [
             { label: "full", set: { fraction: 1 } },
             { label: "short", set: { fraction: 0.6 } }
