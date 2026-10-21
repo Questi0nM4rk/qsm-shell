@@ -31,7 +31,6 @@ Rectangle {
         case "display": return Style.textDisplay;
         case "heading": return Style.textXl;
         case "title": return Style.textMd;
-        case "metadata": return Style.textXs;
         default: return Style.textSm;
         }
     }

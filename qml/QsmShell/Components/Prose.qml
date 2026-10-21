@@ -21,10 +21,11 @@ import qs.QsmShell.Style
 //   title     the title of a thing inside a surface: a card, a row.
 //   body      prose that wraps. The only role that gets a body line height.
 //   label     the name of a control or a field. The default.
-//   metadata  the fine print: a timestamp, a source, a count.
-//   supporting  metadata's job one step up the scale: the line that explains
-//             the thing above it and is meant to be READ, not skimmed past.
-//             Same shape as metadata, at body size.
+//   metadata  the fine print: a timestamp, a source, a count. It sits on the
+//             type floor, 12: nothing a person reads is smaller.
+//   supporting  the line that explains the thing above it and is meant to be
+//             READ, not skimmed past. Same shape and size as metadata; a call
+//             site says which of the two it means.
 //   reading   a VALUE, in the technical face — a percentage, an address, a
 //             key combination. Tabular by intent: numbers that change must not
 //             move the text around them.
@@ -80,9 +81,9 @@ Text {
         case "title": return Style.textMd;
         case "body": return Style.textSm;
         case "supporting": return Style.textSm;
-        case "metadata": return Style.textXs;
+        case "metadata": return Style.textSm;
         case "reading": return Style.textSm;
-        case "section": return Style.textXs;
+        case "section": return Style.textSm;
         default: return Style.textSm;
         }
     }

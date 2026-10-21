@@ -350,9 +350,10 @@ QtObject {
 
     // The type-scale step nearest a wanted pixel size. A control scaled by a
     // size preset wants its reading to scale WITH it, but a glyph at 11.2px is
-    // not on the scale; the nearest step is, and one type scale stays one.
+    // not on the scale; the nearest step is, and one type scale stays one. No
+    // step is under `textSm`: text a person reads is never smaller than 12.
     function textNear(px: real): int {
-        return root._nearest(px, [root.textXs, root.textSm, root.textMd, root.textLg, root.textXl]);
+        return root._nearest(px, [root.textSm, root.textMd, root.textLg, root.textXl]);
     }
 
     // The icon-scale step nearest a wanted pixel size; same reason as

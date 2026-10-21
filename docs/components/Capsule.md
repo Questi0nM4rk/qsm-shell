@@ -53,8 +53,8 @@ shows identity.
 
 | size | height | inset | icon | label | gap |
 | --- | --- | --- | --- | --- | --- |
-| xs | 24 | 8 | 16 (iconSm) | 10 (textXs) | 8 (space2) |
-| sm | 32 | 12 (space3) | 16 (iconSm) | 10 (textXs) | 8 |
+| xs | 24 | 8 | 16 (iconSm) | 12 (textSm) | 8 (space2) |
+| sm | 32 | 12 (space3) | 16 (iconSm) | 12 (textSm) | 8 |
 | md | 40 | 16 (space4) | 16 (iconSm) | 12 (textSm) | 8 |
 | lg | 48 | 20 | 20 (iconMd) | 14 (textMd) | 8 |
 

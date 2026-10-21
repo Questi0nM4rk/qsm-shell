@@ -80,7 +80,7 @@ slot), `selected`, `disabled`, `interactive`, `danger`, `header`, `separator`, `
 - Glyph: `Style.glyphBeside(height)`, sm 16, md 16, lg 24. Leading box: glyph + `space1`, sm 20, md 20,
   lg 28.
 - Text: grows at half the row's rate above md and never shrinks below it, snapped with `Style.textNear`:
-  name textSm 12 at md and sm, textMd 14 at lg; supporting textXs 10 at md and sm, textSm 12 at lg.
+  name textSm 12 at md and sm, textMd 14 at lg; supporting textSm 12 at every size (`textNear` has no step under 12).
 - Text column left edge (`contentInset`): 12 + 20 + 8 = 40 px at md with a leading visual; 12 px
   without one.
 - Empty: no leading visual hides the leading box unless `reserveLeading` is set; a supporting line

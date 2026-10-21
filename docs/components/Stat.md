@@ -41,8 +41,7 @@ as glyph and hue, and the name, role and tree shape are unread. Handed to a11y-a
 
 Sizes: the component's rows take the constant `contentWidth`, and the unit centres it in a
 `Style.controlWidth` square (380 at `tokens/deep-night.json`, unit lines 18-19). Tokens in use:
-`textDisplay` 28 and `textHero` 44 for the value, `textXs` 10 for the label and metadata, `textSm`
-12 for the unit, `iconSm` 16 for the trend glyph, `iconXs` 12 for the label glyph, `spaceTight` 2
+`textDisplay` 28 and `textHero` 44 for the value, `textSm` 12 for the label, the metadata and the unit, `iconSm` 16 for the trend glyph, `iconXs` 12 for the label glyph, `spaceTight` 2
 and `space1` 4 for gaps (`Tokens.qml` lines 27, 35-41, 42-43; `Prose.qml` lines 65-81).
 
 Empty and long content: an empty `value` renders an empty text with no source handling. The value and
@@ -82,7 +81,7 @@ Hypotheses (unmeasured, to check on a capture or a tree):
   by zooming the unit and the value on one capture, or from the tree's text geometry.
 - H2. The trend glyph uses `AlignVCenter` (line 57) on a 28 px line box, so it centres on the box and
   not on the digits' visual centre. It may sit low against the figures. Check with a zoomed capture.
-- H3. Whether the label at 10 px (`textXs`) is legible at a glance from the distance a bar is read.
+- H3. Whether the label at 12 px (`textSm`) is legible at a glance from the distance a bar is read.
   This is a judgement for the live window, not a source fact.
 
 Not examined: capture and zoom (none run, per the brief); live geometry (none); the accessibility tree

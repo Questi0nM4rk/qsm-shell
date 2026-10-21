@@ -67,9 +67,9 @@ control, which is deliberate: the caller picks the role.
 | body | 12 | Regular | text | 1.55 | mixed, wraps | sans |
 | label | 12 | Medium | text | 1 | mixed | sans |
 | supporting | 12 | Regular | textMuted | 1 | mixed | sans |
-| metadata | 10 | Regular | textMuted | 1 | mixed | sans |
+| metadata | 12 | Regular | textMuted | 1 | mixed | sans |
 | reading | 12 | DemiBold | text | 1 | mixed | monospace (technical) |
-| section | 10 | DemiBold | textMuted | 1 | uppercase, 1.4 px tracking | sans |
+| section | 12 | DemiBold | textMuted | 1 | uppercase, 1.4 px tracking | sans |
 
 Weights: `weightBold` is DemiBold (600), `weightMedium` Medium (500), `weightRegular` Normal (400)
 (Style.qml lines 214-216).
@@ -83,7 +83,7 @@ pixels; Prose has no own background, so the ground is the caller's surface):
 | textMuted `#c5bad1` | 8.61:1 | 6.61:1 | 5.04:1 |
 
 The 4.5:1 line (WCAG 1.4.3, body text) is met everywhere. textMuted on overlay passes by 0.01,
-and it carries the 10 px metadata and section roles there.
+and it carries the 12 px metadata and section roles there.
 
 ### Motion
 
@@ -126,7 +126,7 @@ Redesign proposals (taste; owner decides):
   source conflict between the comment and the code, inside one file. The measured ratio (6.61:1 on
   surface, 5.04:1 on overlay) does not decide it; the owner does. Shared: false.
 - `Style.trackingWide` is `1.4` in `tokens/deep-night.json` (line 145, "tracking": "wide") with no
-  unit, and Prose.qml:106 applies it as pixels, so section tracking is 0.14 em at 10 px. Whether
+  unit, and Prose.qml:106 applies it as pixels, so section tracking is 0.12 em at 12 px. Whether
   1.4 is meant as px or em is not stated anywhere. Fix: state the unit in the token and in Style.qml.
   Shared: true (tokens/*).
 - Unit ladder height, `workbench/units/Prose.qml:21`: `Style.controlWidth * 2` is an unlabelled
@@ -142,7 +142,7 @@ Hypotheses (observed in source, not measured):
 - H2: `font.capitalization` (line 107) changes the rendered case only, so the accessible text of
   `section` probably stays mixed case. Confirm under a11y-audit, not here.
 - H3: Prose uses Qt's default render type; caelestia sets `NativeRendering`. Fractional glyph
-  positions could soften 10 px text. Not measured; test only when owner asks for a visual check.
+  positions could soften small text. Not measured; test only when owner asks for a visual check.
 
 Not examined: runtime rendering of any role; live geometry; pixel sampling; the story windows
 (not started, per AGENTS.md); themes other than deep-night (only that set exists in `tokens/`);
