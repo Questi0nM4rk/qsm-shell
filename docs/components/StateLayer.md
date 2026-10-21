@@ -31,15 +31,15 @@ keyboard user cannot see where focus is.
 ### Controls, states and routes
 
 Public surface: `host`, `interactive`, `clickable`, `target`, `hoverScale`, `pressScale`,
-`hoverTint`, `focused`, `focusRadius`, `focusColor`, `manualHoverOverride`, `manualPressOverride`;
+`growthCap`, `growth` (read-only), `hoverTint`, `focused`, `focusRadius`, `focusColor`, `manualHoverOverride`, `manualPressOverride`;
 signals `clicked`, `hoveredEntered`; function `activate()`. The `actions` list holds one
 "Activate" action that nothing in the component calls. No enum-driven size or variant exists.
 
 | state | implemented | source |
 | --- | --- | --- |
 | rest | `response` 1, no paint unless `hoverTint` | l. 113, 115 |
-| hover | growth to `hoverScale` (1.08) on the target; colour only through `hoverTint` (`Style.tone` lift 0.4) or a hosted body | l. 56, 113, 118 |
-| press | colour only through `hoverTint` (lift 0.8) or host; scale only if `pressScale` is set (default 1); pressed comes from the tap or the host only | l. 59, 83, 118 |
+| hover | `growth`: whole device pixels per side, the nearest to `hoverScale` (1.08) of the target's smaller side, under `growthCap`; colour only through `hoverTint` (`Style.tone` lift 0.4) or a hosted body | `growth`, `_growthTransform` |
+| press | colour only through `hoverTint` (lift 0.8) or host; a negative `growth` only if `pressScale` is set (default 1); pressed comes from the tap or the host only | `pressScale`, `growth` |
 | focus | accent ring of `Style.stroke(Style.indicatorWidth, root)` outside the layer, concentric; keyboard only | l. 72, 147-162 |
 | disabled | the layer stops answering and hides the ring; dimming is the host's (`Style.disabled`) | l. 81-83, 152 |
 
@@ -74,10 +74,12 @@ hover scale is 1 under reduced motion (`Motion.hoverScale`). The ring fades in a
 
 - Painted body (unit, action variant): 190 by 48 px, radius 12 (`Style.radiusBody`).
 - Input shape at rest: the layer sits at (-2, -2) with 194 by 52 px, a 2 px halo per side.
-- Hover: the body scales 1.08 about its centre. Painted: 205.2 by 51.8 px, so its edge moves 7.6 px
-  per side horizontally and 1.9 px vertically over 130 ms. Input: 209.5 by 56.2 px, halo 2.2 px.
-- Origin assumptions: the scale origin is the body centre (Qt default); the input origin is the
-  layer's top-left in body coordinates; the label origin is the target centre.
+- Hover: `growth` is `round(min(w, h) * (response - 1) / 2 * dpr) / dpr` logical px per side (1.9 px
+  at 48 px, 1.6 px on the device grid at 1.25), on both axes, so the edges stay on the device grid
+  when they were on it at rest. With a `target` the layer appends a per-axis `Scale` about the
+  target's centre that yields exactly that growth; with `target: null` the host applies `growth` to
+  its own body and the content inside is not resampled. A side that joins a neighbour does not grow:
+  the host leaves that margin at the join.
 - Weights: Shannon form, ID = log2(1 + D/W). No per-user weights and no human average.
 - D: assumed 190 px, an adjacent body of the same width with no gap. This is a modelled distance.
 - W: input width on the approach axis, 194 px at rest and 209.5 px on hover.

@@ -345,6 +345,13 @@ meter), never an edge. The silhouette itself keeps its edge separation
   a zmena barvy"): `StateLayer` grows the target, `tone`'s hover lift is the
   colour. A press changes colour only on a body (`pressScale` is 1); an icon
   target with no body to recolour passes its own `pressScale`.
+- Growth is a whole number of DEVICE pixels per side (`StateLayer.growth`),
+  never a fractional scale (owner: "ideálně nechceme takovýhle float
+  scaling"). A ratio puts an edge between two pixels and resamples the glyph;
+  a body grows by pixels and its content keeps its size. A host with its own
+  body (`target: null`) grows that body's margins by `growth`, and the side
+  that joins a neighbour or a rollout does not grow, so the join stays flush.
+  A neighbour gap bounds it through `growthCap` (`Motion.hoverGrowthWithin`).
 - An inactive track (progress, meter, ring, slider) is `overlay`, a line of
   content on the card, never a body's step.
 - Selected is identity, not a lift: `accent` at 12 % over the layer plus

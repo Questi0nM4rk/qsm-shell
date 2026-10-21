@@ -46,15 +46,14 @@ QtObject {
     // The default response of an icon-sized target: it grows under the
     // pointer and pushes in under a press.
     readonly property real hoverScale: Style.reducedMotion ? 1 : Tokens.motionHoverScale
-    // `hoverScale`, capped so two neighbours that are both grown (the open
-    // one holds its hover while the pointer enters the next) keep `spaceTight`
-    // between them. Each body gains extent * (s - 1) / 2 per side, so the gap
-    // left is  gap - extent * (s - 1)  and  s <= 1 + (gap - spaceTight) / extent
-    // keeps it at or above spaceTight. Growth is a pixel overhang bounded by
-    // the gap, not a ratio, so a taller or tighter stack grows by less: the
-    // bigger the instance, the calmer.
-    function hoverScaleWithin(extent: real, gap: real): real {
-        return 1 + Math.min(hoverScale - 1, Math.max(0, gap - Style.spaceTight) / extent);
+    // The most one side may grow when neighbours sit `gap` apart. The open item
+    // keeps its growth while the pointer enters the next, so two neighbours are
+    // grown at once and each gives up one side of the gap: capping a side at
+    // (gap - spaceTight) / 2 keeps `spaceTight` between them. Growth is a pixel
+    // overhang bounded by the gap, not a ratio, so a taller stack grows by the
+    // same pixels: the bigger the instance, the calmer.
+    function hoverGrowthWithin(gap: real): real {
+        return Math.max(0, gap - Style.spaceTight) / 2;
     }
     readonly property real pressScale: Tokens.motionPressScale
     // A press on a content group inside a wide body (a segment's label)

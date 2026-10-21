@@ -10,14 +10,17 @@ import qs.QsmShell.Style
 // not remove it — it just means the control answers that state by accident.
 //
 //   rest        nothing. The shell paints no box around a thing at rest.
-//   hover       the affordance grows slightly AND changes colour. Growth is this
-//               layer's `hoverScale`; the colour is the body's own, through
-//               `Style.tone`, or this layer's `hoverTint` for a target that
-//               has no body of its own.
+//   hover       the affordance grows slightly AND changes colour. Growth is a
+//               whole number of DEVICE pixels per side (`growth`), the nearest
+//               to what `hoverScale` asks, so no edge of the target lands
+//               between two device pixels. The colour is the body's own,
+//               through `Style.tone`, or this layer's `hoverTint` for a target
+//               that has no body of its own.
 //   press       colour only on a body (`pressScale` is 1 by default); an icon
 //               target that has no body to recolour passes its own
-//               `pressScale` and pushes in on a faster curve, so a click is
-//               acknowledged even when the action it starts takes time.
+//               `pressScale` and pushes in on a faster curve (a negative
+//               `growth`), so a click is acknowledged even when the action it
+//               starts takes time.
 //   focus       an accent ring outside the body (see below), for KEYBOARD
 //               focus only. A keyboard user needs to know where they are
 //               without anything moving; a pointer user already knows. A text
@@ -31,7 +34,9 @@ import qs.QsmShell.Style
 // `target` is what grows, and defaults to the layer's own parent because at
 // most call sites the parent IS the affordance. A host that expresses growth
 // some other way sets `target: null` and drives `hovered` / `pressed` /
-// `focused` / `response` itself.
+// `focused` / `growth` itself: a rail cell grows its body's margins by
+// `growth` and keeps the glyph at its size, so nothing is resampled and the
+// side that joins a neighbour stays flush with it.
 Item {
     id: root
 
@@ -51,7 +56,13 @@ Item {
     property bool manualHoverOverride: false
     property bool manualPressOverride: false
     property Item target: parent
+    // How much the target should grow, as a ratio of its smaller side; `growth`
+    // is the whole-device-pixel answer to it.
     property real hoverScale: Motion.hoverScale
+    // The most a side may grow, in logical px, for a host whose neighbours sit
+    // `gap` away (`Motion.hoverGrowthWithin`). Rounded down to whole device
+    // pixels, so the cap holds at any ratio.
+    property real growthCap: Infinity
     // 1: a press recolours a body and never resizes it. An icon target with
     // no body passes `Motion.pressScale` (or its own) to push in.
     property real pressScale: 1
@@ -130,13 +141,41 @@ Item {
         }
     }
 
-    Binding {
-        target: root.target
-        property: "scale"
-        value: root.response
-        when: root.target !== null
-        restoreMode: Binding.RestoreBindingOrValue
+    readonly property real _dpr: root.Window.window?.devicePixelRatio ?? 1
+
+    // Per side, in whole DEVICE pixels: what `response` asks of the smaller side
+    // of the target (of the layer when there is none), rounded to the pixel
+    // grid and held under `growthCap`. A fractional scale puts an edge between
+    // two pixels and resamples the glyph inside, so growth is a size change in
+    // pixels, never a ratio on the painted item. Negative while pressed in.
+    readonly property real growth: {
+        const item = root.target ?? root;
+        const wanted = Math.min(item.width, item.height) * (root.response - 1) / 2;
+        const snapped = Math.round(wanted * root._dpr) / root._dpr;
+        return Math.min(snapped, Math.floor(root.growthCap * root._dpr) / root._dpr);
     }
+
+    // The target's rect gains `growth` on every side and nothing else: x and y
+    // scale apart because a 50 x 32 target gains the same pixels on both axes,
+    // which no single ratio does. Appended to the target's own transforms.
+    readonly property Scale _growthTransform: Scale {
+        origin.x: (root.target?.width ?? 0) / 2
+        origin.y: (root.target?.height ?? 0) / 2
+        xScale: root.target?.width > 0 ? 1 + 2 * root.growth / root.target.width : 1
+        yScale: root.target?.height > 0 ? 1 + 2 * root.growth / root.target.height : 1
+    }
+    property Item _grown: null
+
+    function _retarget(): void {
+        if (root._grown !== null)
+            root._grown.transform = Array.from(root._grown.transform).filter(t => t !== root._growthTransform);
+        root._grown = root.target;
+        if (root._grown !== null)
+            root._grown.transform.push(root._growthTransform);
+    }
+
+    onTargetChanged: root._retarget()
+    Component.onCompleted: root._retarget()
 
     // One implementation of the focus ring, so a keyboard user meets the same
     // mark on every control instead of whatever each surface remembered to
