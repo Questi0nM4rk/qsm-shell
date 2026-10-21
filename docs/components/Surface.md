@@ -36,27 +36,24 @@ hover, press, selected and disabled look for one body. It has no input, no size 
 - States implemented in `Style.tone`: rest; hovered (lift 0.4, Style.qml:131); pressed (lift 0.8,
   Style.qml:129); selected (accent at `opacitySelected` 0.12 over base, Style.qml:138-140, Tokens.qml:70);
   disabled (`Style.disabled`, opacity 0.35, Style.qml:107-114, Tokens.qml:69).
-- Focus: not implemented. Surface has no focus input and no key handling. See SURF-01.
+- Focus: not implemented. Surface has no focus input and no key handling.
 - Corners: `snapEdge` "left", "right", "top" or "bottom" squares the two corners on that wall
   (Surface.qml:35-38). Any other value rounds all four, silently.
 
 ### Routes
 
-- Pointer: none on Surface. Hosts own it: RailEntry.qml:103-104 forwards `layer.hovered` and
-  `layer.pressed`.
-- Keyboard: none on Surface. Host routes: RailEntry.qml:85-87 (Return, Enter, Space).
+- Pointer: none on Surface. Hosts own it and forward `layer.hovered` and `layer.pressed`.
+- Keyboard: none on Surface. The host routes Return, Enter and Space.
 - Wheel: none.
-- Focus: none on Surface. RailAppList.qml:107-112 handles `activeFocus` by opening a popout, not by
-  changing the body. See SURF-01.
+- Focus: none on Surface; a host shows focus through its StateLayer ring.
 - Screen reader: none on Surface. The host carries role and name. Verdicts are a11y-audit's.
 - Cancellation: none on Surface. The colour `Behavior` (Surface.qml:42-44) retargets from the
   current value when the binding changes; this is Qt's default, source-only, not run.
 
 ### Sizes, empty and long content, failure
 
-- Sizes: none on Surface. The unit body is `Style.controlWidth / 2` by `Style.controlHeight`
-  (workbench/units/Surface.qml:22-23). Desktop hosts size it themselves: RailAppList.qml:118-119
-  (`Theme.railAppSlot` square), WorkspacesTab.qml:115-116 (`tileWidth` by `tileHeight`).
+- Sizes: none on Surface. The unit body is `Style.controlWidth / 2` by Control `md`
+  (workbench/units/Surface.qml:22-23). Hosts size it themselves.
 - Empty and long content: Surface has no content. A child reads `contentColor` only if it binds it.
 - Failure: an unknown `snapEdge` string is treated as no snapping (Surface.qml:35-38). A body with
   no `radius` renders square corners (Rectangle default). No error path exists.
@@ -64,18 +61,18 @@ hover, press, selected and disabled look for one body. It has no input, no size 
 ### Visual roles and palette pairs
 
 Computed in this audit from token values, not sampled from a render. Token values:
-`band` #271e30 (tokens/deep-night.json:3), `surface` #42394c (:4), `text` #f0ecf5 (:6), `accent`
+`band` #271e30 (tokens/deep-night.json:3), `surface` #3b3145 (:4), `text` #f0ecf5 (:6), `accent`
 #d9b4ea (:10). Ratios use WCAG 2.x relative luminance.
 
 | pair | ratio | requirement | note |
 | --- | --- | --- | --- |
-| text on rest body (surface) | 9.38:1 | 4.5:1 body text (1.4.3) | passes by computation |
-| accent on selected body (accent at 0.12 over surface) | 4.74:1 | 4.5:1 body text (1.4.3) | passes by computation |
-| text on selected body (surface base) | 7.31:1 | reference | |
-| accent on selected body (transparent base over band, RailEntry) | 6.84:1 | 4.5:1 body text (1.4.3) | passes by computation |
-| disabled text on surface | 1.99:1 | inactive-component exception (1.4.3) | a11y-audit confirms the exception |
-| selected body vs rest body (surface) | 1.28:1 | non-text (1.4.11) only if the tint alone carries the state | see H-02 |
-| surface vs band (ladder rest step) | 1.46:1 | 1.30:1 per AGENTS.md | see SC-01 |
+| text on rest body (surface) | 10.53:1 | 4.5:1 body text (1.4.3) | passes by computation |
+| accent on selected body (accent at 0.12 over surface) | 5.25:1 | 4.5:1 body text (1.4.3) | passes by computation |
+| text on selected body (surface base) | 8.10:1 | reference | |
+| accent on selected body (transparent base over band) | 6.85:1 | 4.5:1 body text (1.4.3) | passes by computation |
+| disabled text on surface | 2.23:1 | inactive-component exception (1.4.3) | a11y-audit confirms the exception |
+| selected body vs rest body (surface) | 1.30:1 | non-text (1.4.11) only if the tint alone carries the state | see H-02 |
+| surface vs band (ladder rest step) | 1.30:1 | 1.30:1 per AGENTS.md | holds |
 
 Motion: `Behavior on color` with `ColorAnimation` over `Motion.micro`, easing `Motion.standardEasing`
 (Surface.qml:42-44). `Motion.micro` is 130 ms (Tokens.qml:47), 60 ms under reduced motion
@@ -98,16 +95,6 @@ to review-animations and is not issued here.
 
 ### Defects
 
-- SURF-01 (medium): the doc and the host disagree about focus.
-  docs/components/Surface.md (states line) lists focus as a state of `tone`; `Style.tone` has no
-  focus parameter (Style.qml:126) and Surface.qml has none. RailAppList.qml:13-14 and :114-115 say
-  the focused row carries the accent, but RailAppList.qml:122 binds `selected: appRow.current`, and
-  `current` is `modelData.activated` (:72). A keyboard user tabbing to an app row (:107-112) gets
-  the popout, and the body tint follows activation, not focus. The focus-ring path through
-  `rowLayer` (RailAppList.qml:150) is not traced here (H-01). Fix: remove focus from the states
-  list in this doc; have RailAppList show focus through its StateLayer ring (StateLayer.qml:141-176
-  contract) and keep `selected` for activation; correct the comments at :13-14 and :114-115.
-  Shared: the fix is in qsm-desktop.
 - SURF-02 (medium) [fixed: source-reviewed, load-checked; not owner-accepted]: the unit offers pointer states as controls. workbench/units/Surface.qml:36-43
   exposes `hover` and `press` as options. AGENTS.md says hover, press and focus are never control
   options. The owner sees toggles that set the flags directly, not a pointer route, and Surface has
@@ -123,8 +110,7 @@ to review-animations and is not issued here.
   property with its own `Behavior` using the same ColorAnimation, then verify in a live window (not
   done here).
 - SURF-05 (low) [fixed: source-reviewed, load-checked; not owner-accepted]: the unit shows a square body. workbench/units/Surface.qml:15-17 sets no `radius`,
-  and every desktop call site sets one (RailEntry.qml:96, RailAppList.qml:120, WorkspacesTab.qml:117).
-  The owner judges a shape production never shows. Fix: `radius: Style.radiusMd` on the unit body.
+  and a host sets one. The owner judges a shape production never shows. Fix: `radius: Style.radiusMd` on the unit body.
 
 ### Proposals
 
@@ -135,25 +121,13 @@ to review-animations and is not issued here.
 - The selected identity is a 12 percent tint (1.28:1 against the rest body). If selection must be
   readable without colour, the host adds a non-colour carrier. The ruling belongs to a11y-audit.
 
-### Source conflicts
-
-- SC-01: AGENTS.md ("Surface ladder and borders") states the rest step is 1.30:1 on the band. The
-  token values (tokens/deep-night.json:3-4) give 1.46:1 by the WCAG formula, computed here, not
-  rendered. The owner decides which number is the design source.
-
 ### Hypotheses
 
-- H-01: whether `rowLayer` (RailAppList.qml:150) rings on keyboard focus. The source gives it no
-  focus binding; StateLayer's hosting rule was not traced.
 - H-02: a 12 percent tint with a text colour change is the only carrier of selection. Whether that
   fails 1.4.1 or 1.4.11 is a11y-audit's question, not answered here.
-- H-03: RailEntry.qml:101-102 makes danger lose its colour when the row is also selected (accent wins
-  over danger). The comment says the three states are one state read three ways, so this may be the
-  intent. Not a Surface defect; the owner decides.
 
 ### Not examined
 
 - Any rendered pixel, any live window, any keyboard or pointer run, any reduced-motion run on screen.
 - Hover, press and disabled looks against a live surface (the numbers above are source-computed).
-- Desktop call sites beyond the three found by `grep` for `Surface {` in qsm-desktop/shell.
 - Owner acceptance: none recorded.

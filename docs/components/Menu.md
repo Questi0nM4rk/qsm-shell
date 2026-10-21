@@ -16,7 +16,7 @@ expected: shell Workbench → Compositions → menu-items contains Wi-Fi secure/
 
 | layer | decision | why | token or pattern | verified by |
 | --- | --- | --- | --- | --- |
-| posture/task | transient desktop actions, reviewed together in one composition | owner wants control interactions, not another selector in a row | Menu + existing controls | owner completes value/toggle/connect routes |
+| posture/task | transient shell actions, reviewed together in one composition | owner wants control interactions, not another selector in a row | Menu + existing controls | owner completes value/toggle/connect routes |
 | ia/interaction | audio, Wi-Fi, Bluetooth groups; one cursor, one row route; up/down always navigates | owner's keyboard contract; Caelestia MenuItem separates intent; APG menu uses arrow stepping | Menu.step/activateCurrent, Slider/TextField key hook | actual repeated keys and pointer operations |
 | hierarchy/token | compact editor beneath the text column, no duplicate Volume label or extra box | owner rejected detached slider; blueprint rhythm and hierarchy | ListRow.contentInset, Style.spaceTight/space2; existing type scale | owner judges association and reveal |
 | responsive/state | one scrollable column; availability follows radios; pending/failure/retry; drafts retained until reset | hidden input must not activate; no lost work or fabricated production success | ScrollArea, Field, cancellable local fixture | keyboard into view, radio off, submit/retry/reset |
@@ -29,7 +29,7 @@ mixed-control native composition; each actual control keeps its own accessible n
 
 ## UIX audit
 
-Evidence: source-reviewed only. No capture, no live geometry dump, no Workbench session, no keyboard or pointer run. Runtime-exercised: none. Owner-accepted: none. Read: `Menu.qml`, `ListRow.qml`, `StateLayer.qml`, `Surface.qml`, `Style.qml`, `Motion.qml`, `tokens/deep-night.json` (the only token file read), `workbench/units/Menu.qml`, `workbench/compositions/MenuInteractions.qml`, the desktop consumer `qsm-desktop/shell/modules/bar/TrayMenuContent.qml`, and caelestia `components/controls/Menu.qml`. Contrast figures are computed by hand from token values, not sampled from pixels; confirm them with `qsm-uix contrast` on a capture before any acceptance.
+Evidence: source-reviewed only. No capture, no live geometry dump, no Workbench session, no keyboard or pointer run. Runtime-exercised: none. Owner-accepted: none. Read: `Menu.qml`, `ListRow.qml`, `StateLayer.qml`, `Surface.qml`, `Style.qml`, `Motion.qml`, `tokens/deep-night.json` (the only token file read), `workbench/units/Menu.qml`, `workbench/compositions/MenuInteractions.qml`, and caelestia `components/controls/Menu.qml`. Contrast figures are computed by hand from token values, not sampled from pixels; confirm them with `qsm-uix contrast` on a capture before any acceptance.
 
 ### Purpose and consequence
 
@@ -47,10 +47,10 @@ Lets a person pick one entry from a short list and sends that entry to the host'
 | `actions`: step-previous, step-next, activate-current | listed | yes | enabled follows `root.enabled` and selectability (`Menu.qml:42-44`) |
 | `enabled: false` | disabled state | keys and activation refuse; no visual state | M-4 |
 | `currentIndex: -1` | no cursor | thumb hidden (`Menu.qml:77`); no focus cue | M-3 |
-| zero rows | empty | 0 by 0, nothing drawn (`Menu.qml:37-39`); the consumer supplies the text (`TrayMenuContent.qml` shows "No menu") | P5 |
+| zero rows | empty | 0 by 0, nothing drawn (`Menu.qml:37-39`); the consumer supplies the text | P5 |
 | failure, cancel | none | none; Escape is not handled here (dismissal is the host's, per AGENTS) | |
 
-Sizes: the Menu has no `size`. Rows take `Style.controlHeight` 40, `controlHeightSm` 32 or `controlHeightLg` 52 plus `space1` 4 (`ListRow.qml:101`): md 44, sm 36, lg 56 px.
+Sizes: the Menu has no `size`. Rows take the ListRow size table (`Style.size("ListRow", size)`): sm 32, md 40, lg 56 px.
 
 ### Routes (real ones)
 
@@ -85,33 +85,32 @@ Roles: `band` is the Menu background (`Menu.qml:54-58`); `surface` is the thumb 
 | --- | --- | --- | --- |
 | label, not receded, on band | `#f0ecf5` on `#271e30` | 13.71 | pass |
 | header and supporting, on band | `#c5bad1` on `#271e30` | 8.61 | pass |
-| selected name on thumb | `#d9b4ea` on `#54485f` (accent 12 % over surface) | 4.74 | pass, 4.5 |
-| selected danger name on thumb | `#f5aeb7` on `#574759` | 4.73 | pass, 4.5 |
-| receded label (text at 0.45 over band) | `#f0ecf5` at 0.45 on `#271e30` | 3.89 | fail 4.5 (M-5) |
-| receded supporting (muted at 0.45) | `#c5bad1` at 0.45 on `#271e30` | 2.87 | fail 4.5 (M-5) |
-| receded danger name | `#f5aeb7` at 0.45 on `#271e30` | 2.91 | fail 4.5 (M-5) |
+| selected name on thumb | `#d9b4ea` on `#4e4159` (accent 12 % over surface) | 5.25 | pass, 4.5 |
+| selected danger name on thumb | `#f5aeb7` on `#514053` | 5.26 | pass, 4.5 |
+| receded label (text recede 0.70 over band) | `#f0ecf5` at 0.70 on `#271e30` | 7.38 | pass |
+| receded supporting (muted recede 0.70) | `#c5bad1` at 0.70 on `#271e30` | 4.95 | pass |
+| receded danger name | `#f5aeb7` at 0.70 on `#271e30` | 5.06 | pass |
 
 The focus colour is `accent`; its ratio against the adjacent band is not measured here.
 
 ### Motion and reduced motion
 
 - Thumb x, y, width and height slide at `Motion.micro` (130 ms, `tokens` motion.micro; 60 ms under reduced motion, `Motion.qml:26`) with `standardEasing` (`Menu.qml:81-84`). Under reduced motion or while hidden, the position and size jump (`enabled` false). The thumb's opacity fades at `micro` (`Menu.qml:85`).
-- Rows: prose colour `ColorAnimation` at `micro` (`ListRow.qml:288`); recede opacity at `micro` (`ListRow.qml:251`); expansion height at `Motion.fast` (`ListRow.qml:328`), off under reduced motion.
+- Rows: prose colour `ColorAnimation` at `micro` (`ListRow.qml:288`); recede colour at `micro`; expansion height at `Motion.fast` (`ListRow.qml:328`), off under reduced motion.
 - The verdict on these durations and curves belongs to review-animations.
 
 ### Findings: source-backed defects
 
 | id | file:line | summary | evidence | fix | shared | severity |
 | --- | --- | --- | --- | --- | --- | --- |
-| M-1 | `Menu.qml:199`, `:150` | The Menu writes the host-owned `currentIndex` on a keyboard step and on a row click, which replaces any host binding. This is the qss-bcn issue, confirmed. | `Menu.qml:24-25` declares the selection consumer-owned. `workbench/units/Menu.qml:30` binds `currentIndex: root.currentIndex`, and the unit's selection controls (`units/Menu.qml:84-88`) write through it. After the first step or click the binding is gone, so later control changes stop moving the thumb. | `step()` and the row handler emit `moved(int index)` and never assign `currentIndex`. Keep `activated(index)`. Hosts bind `currentIndex` and answer `moved`. Consumers that bind nothing lose keyboard stepping, so each host must wire it: the unit, `MenuInteractions.qml`, and desktop `TrayMenuContent.qml`. | true | major |
+| M-1 | `Menu.qml:199`, `:150` | The Menu writes the host-owned `currentIndex` on a keyboard step and on a row click, which replaces any host binding. This is the qss-bcn issue, confirmed. | `Menu.qml:24-25` declares the selection consumer-owned. `workbench/units/Menu.qml:30` binds `currentIndex: root.currentIndex`, and the unit's selection controls (`units/Menu.qml:84-88`) write through it. After the first step or click the binding is gone, so later control changes stop moving the thumb. | `step()` and the row handler emit `moved(int index)` and never assign `currentIndex`. Keep `activated(index)`. Hosts bind `currentIndex` and answer `moved`. Consumers that bind nothing lose keyboard stepping, so each host must wire it: the unit and `MenuInteractions.qml`. | true | major |
 | M-2 | `Menu.qml:163`, `:152` | The Menu writes each row's consumer-owned `selected` (`ListRow.qml:46`) and `paintsSelection` (`ListRow.qml:85`). | `_applySelection` runs on every resync and every cursor change (`Menu.qml:157, 224`). No in-repo binding to a row's `selected` was found in the files read, so the harm is latent. | The Menu drives a Menu-owned `current` property on `ListRow` for the prose tint and the thumb, leaving `selected` to the consumer. `paintsSelection` is set once by the Menu, not per change. | false | minor |
 | M-3 | `Menu.qml:47`, `:48`; `ListRow.qml:69`; `StateLayer.qml:152` | Focus inside the Menu has no visible state. The Menu keeps focus on its root, and each row's ring needs the row's own `activeFocus`. | With `currentIndex: -1` nothing shows where focus is. With a current row, the thumb is the only cue. The composition works around this with `row.forceActiveFocus()` (`MenuInteractions.qml:117`). Once rows receive focus, `clip: true` (`Menu.qml:48`) crops the ring at the flush left and right edges, because rows run to the Menu width (`Menu.qml:170`). | The Menu forwards focus to `rowAt(currentIndex)` on focus-in and on each step, so the layer draws its ring. Make room for the ring: rows inset by `spaceTight` or `clip: false`, with overflow still bounded by the owner's `ScrollArea`. | false | major |
 | M-4 | `Menu.qml:182`, `:192`; `ListRow.qml:94`, `:117-120` | A disabled Menu shows no disabled state. Only the keyboard path checks `root.enabled`. | Rows read `disabled` and `interactive`, never the Menu's `enabled`, so the rows keep full strength. Pointer input is probably cut by Qt's inherited `enabled`; this assumes that and needs a runtime check. | `ListRow.proseColor` reads the inherited `enabled` and uses `Style.disabled` when false. No write from the Menu is needed. | false | major |
-| M-5 | `ListRow.qml:247-249`; `Menu` rows default `recede: true` (`ListRow.qml:79`); `tokens/deep-night.json:81` | Receded rows fail WCAG 1.4.3 contrast for 12 px text. | Computed: label 3.89, supporting 2.87, danger name 2.91 against band, versus 4.5 (table above). Every non-current row of a pick list is receded, so most of the text is affected. Not sampled from a render. | Recede by colour toward a pair that clears 4.5 on `band`, not by body opacity, or set `opacity.recede` high enough to clear it. The value lives in `tokens/*`. | true | major |
-| M-6 | `Menu.qml:30`, `:69`, `:170`; `ListRow.qml:89`; `Style.qml:413-418`, `:428-431` | The thumb's corner radius does not follow its real inset (concentric rule). | `insetRadius(space3)` gives 16 px (`ListRow.qml:89`), but the thumb has zero horizontal inset because it spans the full row (`Menu.qml:69`, `ListRow.qml:162`). The band radius is `childRadius(root)` (`Menu.qml:30`), which is 0 in the unit (`Style.qml:413-418` returns 0 when the parent has no radius). So the unit shows a square band with 16 px rounded thumb corners. | Radius from the actual inset: `Style.childRadius(thumb)`, or inset the thumb by `space3` horizontally so the 16 px curve is concentric. | false | minor |
+| M-6 | `Menu.qml:30`, `:69`, `:170`; `ListRow.qml:89`; `Style.qml:413-418`, `:428-431` | The thumb's corner radius does not follow its real inset (concentric rule). | `radiusBody` gives 12 px (`ListRow.qml:89`), but the thumb has zero horizontal inset because it spans the full row (`Menu.qml:69`, `ListRow.qml:162`). The band radius is `childRadius(root)` (`Menu.qml:30`), which is 0 in the unit (`Style.qml:413-418` returns 0 when the parent has no radius). So the unit shows a square band with 12 px rounded thumb corners. | Radius from the actual inset: `Style.childRadius(thumb)`, or inset the thumb by `space3` horizontally so the 16 px curve is concentric. | false | minor |
 | M-7 | `Menu.qml:38` vs `:92`, `:48` | `implicitWidth` takes the maximum row width whatever the orientation. | In horizontal mode the body is the sum of columns (`Menu.qml:92`) and the root clips it (`:48`). A horizontal Menu in an implicitly sized parent shows only its widest row. No consumer uses horizontal. | A horizontal branch: sum of row `implicitWidth` plus `spacing`. | false | minor |
 | M-8 | `Menu.qml:38`; `ListRow.qml:149` | The natural width grows with the longest label. | `ListRow.implicitWidth` includes the full text width (`ListRow.qml:149`), and the Menu takes the maximum. AGENTS Definition of done 5 says natural size is a constant. `Prose.qml` was not read, so whether the label elides is unknown. | The row contributes a constant width and the label elides; the Menu's `implicitWidth` stays constant. | false | minor |
-| M-9 | `Menu.qml:141-159`, `:102-103` | The cursor is an index, not an identity, so removing an entry above it moves the thumb to the next entry. | `_resync` keeps the numeric `currentIndex` and re-points nothing. The desktop consumer calls `Qt.callLater(menu.resync)` on each structure change (`TrayMenuContent.qml`, delegate block). Source-backed; not run. | `_resync` keeps the current row's consumer key (object identity dies with the delegate), re-resolves its index, and clamps when the row is gone. | false | minor |
+| M-9 | `Menu.qml:141-159`, `:102-103` | The cursor is an index, not an identity, so removing an entry above it moves the thumb to the next entry. | `_resync` keeps the numeric `currentIndex` and re-points nothing. A host calls `Qt.callLater(menu.resync)` on each structure change. Source-backed; not run. | `_resync` keeps the current row's consumer key (object identity dies with the delegate), re-resolves its index, and clamps when the row is gone. | false | minor |
 
 ### Fix status
 
@@ -144,7 +143,7 @@ Source-reviewed and load-checked (`qmllint` clean, one-scenario `menu` capture e
 ### Hypotheses (observed in source, not measured)
 
 - H1. The 4 px dead band drops clicks: a click 2 px inside a boundary lands on nothing. Check live.
-- H2. A mixed-icon list shifts its names (C2). Check whether the desktop tray items mix icons.
+- H2. A mixed-icon list shifts its names (C2). Check whether a host's items mix icons.
 - H3. The hover double cue (P3) is visible on a live pointer.
 - H4. Long labels wrap or elide: `Prose.qml` not read.
 - H5. Hover lift and press colour of the thumb are unmeasured.
@@ -157,4 +156,4 @@ Source-reviewed and load-checked (`qmllint` clean, one-scenario `menu` capture e
 
 ### Not examined
 
-No captures, no live geometry, no Workbench session, no keyboard or pointer run, no screen reader. Only `tokens/deep-night.json` was read, so no other theme is examined. Not read: `Prose.qml` (label elision), the rest of `StateLayer.qml` ring geometry (only lines 150-157), desktop `MenuRow.qml`, and the `Item.enabled` inheritance (assumed). Horizontal orientation, `sm` and `lg` visuals, monitor parity and reserved space were not examined. Motion verdict: review-animations.
+No captures, no live geometry, no Workbench session, no keyboard or pointer run, no screen reader. Only `tokens/deep-night.json` was read, so no other theme is examined. Not read: `Prose.qml` (label elision), the rest of `StateLayer.qml` ring geometry (only lines 150-157), and the `Item.enabled` inheritance (assumed). Horizontal orientation, `sm` and `lg` visuals, monitor parity and reserved space were not examined. Motion verdict: review-animations.

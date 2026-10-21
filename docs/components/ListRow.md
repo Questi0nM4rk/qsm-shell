@@ -1,14 +1,14 @@
 # ListRow
 
 The row: one item a person operates repeatedly; the host owns selection, values, optional inline expansion and the action's consequence. Activating an item never means advancing selection.
-states: rest, hover, press, focus, selected (the accent at `opacitySelected` as a fill behind the row and the name in the accent, spec 07; no side marker), disabled and report-only; header and separator are structural rows a cursor steps past; disabled dims an unavailable action while a report-only row stays full-strength and simply is not a target; recede dims unpicked rows only in lists you pick from.
+states: rest, hover, press, focus, selected (the accent at `opacitySelected` as a fill behind the row and the name in the accent, spec 07; no side marker), disabled and report-only; header and separator are structural rows a cursor steps past; disabled dims an unavailable action while a report-only row stays full-strength and simply is not a target; recede dims unpicked rows only in lists you pick from: text and glyph by colour (`Style.recede`), slotted content by `Style.opacityRecede`, reported as `receded`.
 actions: `activate()` guards selectable and emits `activated`; StateLayer click, pointer, keyboard and programmatic routes share it; keyboard navigation and focus belong to the owning list through `focused`.
 pointer: StateLayer grows the leading box only; clickable trailing actions take their own grab, while passive readings remain part of the row target; hover reports `hoveredEntered` for the list cursor and wheel is not claimed.
 keyboard: the owning list holds focus and routes arrows and Enter; the current row shows the focus ring on the body.
 expected: the single-row unit owns focus and routes Enter through `activate()`; a physical trailing-action click reports only that action, body and passive-reading clicks activate the row, and long-content mode keeps both routes judgeable. Menu composition / Shell items hosts interaction between multiple rows and their editors; the row unit never implements a selector.
 screen reader: selectable rows announce as buttons named by the primary label with supporting text as description; structural and report-only rows are static text.
-size: sm, md and lg resolve through the control-height scale with the leading box at one fixed size per row; `headingHeight` is the host's absolute-height escape hatch, keeping body/input/editor origin aligned; readonly `expansionHeight` reports the actual revealed viewport for bounded surface sizing. Hosts never override total implicitHeight to set a heading. The asked width includes the inset the body gives away; long text elides and a supporting line that repeats the name hides.
-tokens: control-height, icon and type scales, space scale, `opacitySelected` fill, opacity roles, surface ladder, accent, danger, Motion and StateLayer; no local colours or measurements.
+size: sm, md and lg resolve through the ListRow size table (32, 40, 56) with the leading box at one fixed size per row; `headingHeight` is the host's absolute-height escape hatch, keeping body/input/editor origin aligned; readonly `expansionHeight` reports the actual revealed viewport for bounded surface sizing. Hosts never override total implicitHeight to set a heading. The asked width includes the inset the body gives away; long text elides and a supporting line that repeats the name hides.
+tokens: the ListRow size table, icon and type scales, space scale, `opacitySelected` fill, opacity roles, surface ladder, accent, danger, Motion and StateLayer; no local colours or measurements.
 motion: micro colour and opacity response; no position animation during a gesture; reduced motion shortens the durations.
 expansion: host-owned `expanded` and named `expandedContent`; empty/structural rows reserve no editor space. Existing leading/trailing slots and heading size remain unchanged. The expansion is not a second row activation target; unavailable or collapsed content cannot handle input. Hosts choose the open/close consequence and focus destination.
 alignment: readonly `contentInset` is the text column's leading edge. Expanded content starts there, directly beneath the heading, with Style.spaceTight top clearance and Style.space2 bottom clearance. No duplicate title or extra border; the same geometry hosts a slider or password form.
@@ -76,8 +76,7 @@ slot), `selected`, `disabled`, `interactive`, `danger`, `header`, `separator`, `
 
 ### Sizes, empty and long content, failure
 
-- Row height: sm 36 (controlHeightSm 32 + space1 4), md 44 (40 + 4), lg 56 (52 + 4) (ListRow.qml:101,
-  Tokens.qml:83-84, 90).
+- Row height: sm 32, md 40, lg 56 (`Style.size("ListRow", size)`).
 - Leading box: sm 20 (iconMd), md 24 (iconLg), lg 24 (ListRow.qml:109).
 - Text: name textSm 12 at md and sm, textMd 14 at lg (ListRow.qml:284); supporting textXs 10 at md and
   sm, textSm 12 at lg (ListRow.qml:302, Style.qml:194).
@@ -93,7 +92,7 @@ slot), `selected`, `disabled`, `interactive`, `danger`, `header`, `separator`, `
 
 ### Visual roles and palette pairs
 
-Source (Tokens.qml, deep-night): band `#271e30`, surface `#42394c`, text `#f0ecf5`, muted `#c5bad1`,
+Source (Tokens.qml, deep-night): band `#271e30`, surface `#3b3145`, text `#f0ecf5`, muted `#c5bad1`,
 accent `#d9b4ea`, danger `#f5aeb7`.
 
 Computed contrast (WCAG 2.x):
@@ -102,10 +101,10 @@ Computed contrast (WCAG 2.x):
 | --- | --- | --- | --- |
 | text on band | band | 13.71 | 4.5 |
 | muted on band | band | 8.61 | 4.5 |
-| muted on surface | surface | 5.89 | 4.5 |
-| selected accent over 12% fill | surface composite | 4.74 | 4.5 |
-| name at recede 0.45 | band | 3.89 | 4.5 (D4) |
-| metadata at recede 0.45 | band | 2.87 | 4.5 (D4) |
+| muted on surface | surface | 6.61 | 4.5 |
+| selected accent over 12% fill | surface composite | 5.25 | 4.5 |
+| name at recede 0.70 | band | 7.38 | 4.5 |
+| metadata at recede 0.70 | band | 4.95 | 4.5 |
 
 Not computed: danger on band and surface, the hover-lift colour (`Style.tone` bisection), the disabled
 colour (`Style.disabled`), and every other theme. The recede ratios assume the row sits on the band,
@@ -170,9 +169,6 @@ owner-accepted):
 
 Source conflicts (the owner rules):
 
-- SC1: the recede token `opacityRecede` 0.45 (Tokens.qml:72) against the 4.5:1 floor for body text
-  (ui-audit pass 4). The minimum alpha that holds 4.5:1 for the name on the band is 0.503; for the
-  metadata line it is 0.654 (computed). D4 carries the choice.
 - SC2: the leading-box comment (ListRow.qml:16-22) says the box is reserved so the name's edge does not
   move between rows; the AGENTS slot law says an empty slot takes no space. D1 carries the choice.
 

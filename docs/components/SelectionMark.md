@@ -37,7 +37,7 @@ Marks the one current row of a list. The person learns which item is current fro
 
 ### Sizes, empty and long content, failure
 
-- Sizes: one, not a preset. Thickness `Style.markThickness` 3 and height `Style.markHeight` 18 (`tokens/deep-night.json:106-107`). Strong width is 3 + `Style.spaceTight` 2 = 5 (`SelectionMark.qml:34`).
+- Sizes: one, not a preset. Thickness `Style.markThickness` 3 and height `Style.markHeight` 18 (`tokens/deep-night.json`); the width goes through `Style.stroke`, so it is a whole number of device pixels. Strong width is 3 + `Style.spaceTight` 2 = 5 before snapping.
 - Empty and long content: not applicable.
 - Failure: none.
 
@@ -71,9 +71,7 @@ Defects (source-backed):
 Redesign proposals (taste or simplification, not defects):
 
 - Remove `restOpacity` and the `rest` control unless a caller returns. Nothing uses them.
-- Delete the history in `SelectionMark.qml:5-16` (four past copies, the restated "3x18"). AGENTS.md keeps history out of source. Delete also the urgency-tick paragraph at `SelectionMark.qml:26-31`, which describes a consumer that no longer exists (see source conflicts).
 - `workbench/units/SelectionMark.qml:10` declares `eventRecorder`, which nothing in the unit reads. Delete.
-- `SelectionMark.qml:36` computes the pill radius as `width / 2`, while `tokens/deep-night.json` `radius.pill` (999) exists. The result is the same at these sizes; Qt's clamp is not verified. Polish.
 - Strong is 2 px wider and the same colour. Whether 3 px against 5 px is enough for a cursor is taste; the owner judges it in a live window.
 - A cursor moving between rows is two marks, one leaving and one arriving. Whether one mark should travel is a motion question for review-animations and the owner.
 - A catalog key for hidden and for strong would make those states reachable without the controls. `workbench/stories.json` is shared, so this waits for an owner's go.
@@ -97,5 +95,4 @@ Not examined:
 - Themes: `tokens/` holds only `deep-night.json`. Light and high-contrast have no source here.
 - Keyboard, screen reader, and the 1.4.11 ruling: a11y-audit.
 - Motion timing: review-animations.
-- qsm-desktop: a grep over `qsm-desktop/shell` found no SelectionMark use.
 - `tests/interaction/tst_library.qml:92` instantiates the mark; not run, not requested.

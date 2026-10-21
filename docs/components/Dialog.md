@@ -23,7 +23,6 @@ named. Channels available: source and tokens. Channels missing: live geometry, c
 - The task it finishes: a consequence the person cannot continue past without answering.
 - Consequence when it fails: a click on its own text closes it (D1); a destructive confirm receives
   the first Enter (D2); a long body pushes its buttons off the window (D3).
-- Consumer: none. `qsm-desktop` has no `Dialog` reference (grep, all `.qml`). BACKLOG records the same.
 
 ### Controls, states, implemented
 
@@ -69,12 +68,12 @@ named. Channels available: source and tokens. Channels missing: live geometry, c
 
   | pair | ratio | criterion |
   | --- | --- | --- |
-  | `text` #f0ecf5 on `overlay` #534a5e | 7.18:1 | 4.5 body text passes |
-  | `textMuted` #c5bad1 on `overlay` (the body is `muted`) | 4.51:1 | 4.5 passes by 0.01 (H3) |
-  | `danger` #f5aeb7 on `overlay` (mark) | 4.63:1 | 3:1 non-text passes |
-  | `warning` #d9c284 on `overlay` (mark) | 4.78:1 | 3:1 non-text passes |
-  | `accent` #d9b4ea on `overlay` (unknown tone) | 4.65:1 | 3:1 non-text passes |
-  | secondary Capsule body (surface at 0.9 over overlay, about #443b4e) with `text` | 9.1:1 | 4.5 passes |
+  | `text` #f0ecf5 on `overlay` #4c4357 | 8.02:1 | 4.5 body text passes |
+  | `textMuted` #c5bad1 on `overlay` (the body is `muted`) | 5.04:1 | 4.5 passes |
+  | `danger` #f5aeb7 on `overlay` (mark) | 5.17:1 | 3:1 non-text passes |
+  | `warning` #d9c284 on `overlay` (mark) | 5.34:1 | 3:1 non-text passes |
+  | `accent` #d9b4ea on `overlay` (unknown tone) | 5.19:1 | 3:1 non-text passes |
+  | secondary Capsule body (opaque surface #3b3145) with `text` | 10.53:1 | 4.5 passes |
 
 - Destructive Capsule at rest paints nothing (quiet variant), so its `danger` label sits on the
   overlay at 4.63:1.
@@ -218,7 +217,6 @@ Hypotheses (observed in source, not measured):
   capture the return target. Basis: Dialog.qml 97-108. Verify only on request.
 - H2: The title row (Dialog.qml 165-185) has no fill or vertical alignment, unlike Capsule. AGENTS.md
   records a half-pixel offset from baseline alignment in a RowLayout. Unmeasured.
-- H3: `textMuted` on `overlay` is 4.51:1, 0.01 above the body threshold. Rendered pixels may differ.
 
 Not examined:
 
@@ -226,7 +224,7 @@ Not examined:
 - Themes beyond deep-night (light, high contrast) and the `warning` tone: not examined.
 - Scaling of text, and icon rendering (SvgIcon does not rasterise offscreen; AGENTS.md).
 - Motion verdict: review-animations. Reduced-motion form and screen-reader behaviour: a11y-audit.
-- Consumers: none in qsm-desktop. caelestia has no Dialog control in `components/controls/`;
+- Consumers: none known. caelestia has no Dialog control in `components/controls/`;
   `components/filedialog/FileDialog.qml` is a file picker, not a sibling.
 - `design/MASTER.md` was not looked for. The design source used is AGENTS.md (component laws and
   surface ladder) and `tokens/deep-night.json`.

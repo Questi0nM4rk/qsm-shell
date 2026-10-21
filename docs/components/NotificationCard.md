@@ -6,11 +6,11 @@ A person receiving a transient notification can read its source, headline and me
 
 | layer | decision | why / source | token or pattern | owner-review evidence, when prepared |
 | --- | --- | --- | --- | --- |
-| posture | Brief, non-modal feedback; arrival never steals focus | Existing popup purpose; desktop notification spec | Existing rollout / capsule hosts | Arrival leaves the foreground application usable |
+| posture | Brief, non-modal feedback; arrival never steals focus | Existing popup purpose; notification spec | Existing rollout / capsule hosts | Arrival leaves the foreground application usable |
 | task | Read the actual notification, then optionally open its supplied destination | Production-actions spec: useful message before action | App identity + summary + body | Body is visible without hover |
 | ia | Keep app identity and summary first; show a two-line body preview beneath them | Client fields are the only trustworthy context | Existing icon slot; `Prose` roles | Missing body shows no invented copy |
 | interaction | One listed `activatePrimary()` reports intent only when the host says the current default exists; dismissal stays separate | Shared action route prevents pointer/key divergence and guessing a named action | `StateLayer`, `T.Action`, `primaryActionEnabled`, `primaryTriggered` | Body tap, Enter, Space, accessibility and caller use the same function; absent/retiring actions do nothing |
-| hierarchy | Preserve urgency and source identity; caller may opt into a surface body | Desktop owner's reference-led containment choice; reusable transparent default | `bodied`, `bodyRadius`, `Surface`; existing text roles | Body contains source, time and preview without implying a new action or read state |
+| hierarchy | Preserve urgency and source identity; caller may opt into a surface body | Owner's reference-led containment choice; reusable transparent default | `bodied`, `bodyRadius`, `Surface`; existing text roles | Body contains source, time and preview without implying a new action or read state |
 | token | Size the preview to its real lines with `notificationPreviewHeight` as the ceiling, and give the expanded body a bounded viewport | Existing 36px token is headline-only; the new composition needs room while stack growth stays bounded | `Style.notificationPreviewHeight`, `Style.notificationBodyViewportHeight`; notification width and existing spacing/type scales | A one-line message is shorter than a two-line one, and none exceeds the ceiling; full content scrolls inside the expanded bound |
 | responsive | Keep width fixed; wrap body text and scroll only the expanded long body | Popup/capsule have fixed shell width and clipped host geometry | `Style.notificationWidth`; `Flickable` viewport | Full text stays inside both host bodies |
 | state | Preserve hover, press, focus and disabled through `StateLayer`; input withdrawal preserves paint and immediately refuses actions | Component laws and stack retirement contract | `StateLayer`, `inputEnabled`, `Style.disabled` | Press is visible without changing row geometry; disabled cards dim semantic text/glyph colours, while informational no-default rows retain full strength |
@@ -19,7 +19,7 @@ A person receiving a transient notification can read its source, headline and me
 states: collapsed preview and expanded full body; hover still reports/expands, drag still arbitrates swipe, pause and frozen-retirement behavior stay host-owned. Urgency is the app glyph's colour alone (critical `danger`, normal `info`, low `textMuted`; spec 04); the accent tick is only the list cursor (`selected`) on a boxless card.
 actions: `dismiss()`, existing `activateAction(id)`, and `activatePrimary()` share their native, keyboard/accessibility and programmatic routes. Popup mode hides named actions; only exact host-enabled default is primary. The card never calls a service, mutates `entry`, or dismisses itself for primary activation.
 pointer: `StateLayer` owns the sole left-tap route and hand cursor when primary is available; its drag-threshold tap is cancelled by a swipe, middle-click dismisses, expanded vertical body scrolling does not also expand the card, horizontal dismissal remains available, and wheel not consumed by the viewport passes through. The primary summary exposes pressed feedback without scaling the card or changing fullscreen geometry.
-keyboard: the card offers a tab stop and Enter/Space route only when primary is available and its host grants keyboard focus; it never focuses itself on arrival. Production `EdgeScene` grants exclusive keyboard focus only to listed modals and otherwise uses `WlrKeyboardFocus.None`, so this passive popup has no native keyboard route; the existing notification-center shortcut is separate. No production popup key reachability is claimed. Action-row index behavior remains for center consumers.
+keyboard: the card offers a tab stop and Enter/Space route only when primary is available and its host grants keyboard focus; it never focuses itself on arrival. A host that gives a popup window no keyboard focus leaves it without a native keyboard route, and no popup key reachability is claimed. Action-row index behavior remains for center consumers.
 screen reader: button role/name only when primary is available; otherwise source, summary and body remain readable text. Body action has a clear accessible name; existing named actions retain their own names.
 size: fixed `Style.notificationWidth`; collapsed natural size uses `Style.notificationPreviewHeight`; expanded height is bounded by `Style.notificationBodyViewportHeight` plus existing details. A bodied card adds `shadowRoom` under its body and includes it before height is frozen. Body text wraps and scrolls, never grows the stack without bound. Source identity is capped to a Style-derived share of the header so summary keeps room; timestamp sits quietly in that same header. `bodied` defaults false, so existing callers keep their composition; `bodyRadius` defaults to the large radius.
 tokens: notification width, header height, preview height, body viewport height, iconSm, body radius, shadow tokens, space scale, urgency/text roles and Motion. No local colors or measurements. Material does not decide host background, lifetime or dismissal.
@@ -36,7 +36,6 @@ Channels available: source only. The capture and live-geometry channels were not
 
 - `NotificationStack.qml:416`: popup. Uses the default `expandOnHover: true`, `showActions: false`, `verticalDragEnabled: inputEnabled` (line 431).
 - `NotificationCenter.qml:372`: list. `bodied: true`, `expandOnHover: false`, `showActions` left at its default, `hostExpanded` bound to the host's expanded key.
-- qsm-desktop: no `.qml` file references `NotificationCard`. `openspec/changes/notification-production-actions/design.md` names it as the popup host's route for primary intent.
 - Caelestia sibling: `components/controls/` has no notification type. The closest is `modules/sidebar/Notif.qml`, used for the comparison in proposals.
 
 ### Expected controls and states
@@ -79,8 +78,8 @@ Public controls: `entry` (required), `alwaysExpanded`, `draggable`, `inputEnable
 | pair | ratio | target | verdict |
 | --- | --- | --- | --- |
 | body `textMuted` #c5bad1 on `band` #271e30 | 8.61 | 4.5 (1.4.3) | pass |
-| body `textMuted` on `surface` #42394c | 5.89 | 4.5 | pass |
-| title `text` #f0ecf5 on `surface` | 9.38 | 4.5 | pass |
+| body `textMuted` on `surface` #3b3145 | 6.61 | 4.5 | pass |
+| title `text` #f0ecf5 on `surface` | 10.53 | 4.5 | pass |
 | action or unread `accent` #d9b4ea on `band` | 8.87 | 4.5 | pass |
 | `info` glyph #89cff1 on `band` | 9.32 | 3 (1.4.11) | pass |
 | `danger` glyph #f5aeb7 on `band` | 8.84 | 3 | pass |
@@ -165,8 +164,7 @@ Hypotheses (not measured, never part of the table):
 - **H3.** The unread dot is not in the card's accessible name (113-115), and its child name (400) may not reach the tree. a11y-audit reads the tree.
 - **H4.** `Behavior on x` (637-639) also animates the live drag translation, so a swipe may trail the pointer by up to 180 ms. Handed to review-animations.
 - **H5.** The entrance scale runs under reduced motion (271-273, 60 ms). `AGENTS.md` removes one-shot position motion under reduced motion; a scale is not a position. Handed to review-animations.
-- **H6.** A rendered colour could differ from its token hex if the host composites the band at `Style.surfaceOpacity`. The contrast rows assume the hex.
 
-Not examined: live geometry, captures and owner review (no session under this audit). Center mode with `showActions` true, swatch, selected, unread and archived states in a live window. Real pointer swipe and drag. Keyboard in the center (`actionFocusIndex`). Reduced effects (the shadow is off). Text scaling and locale. Light or high-contrast themes (none read). Tokens other than deep-night. qsm-desktop (no QML consumer).
+Not examined: live geometry, captures and owner review (no session under this audit). Center mode with `showActions` true, swatch, selected, unread and archived states in a live window. Real pointer swipe and drag. Keyboard in the center (`actionFocusIndex`). Reduced effects (the shadow is off). Text scaling and locale. Light or high-contrast themes (none read). Tokens other than deep-night.
 
 Evidence for this section: source-reviewed. Runtime-exercised: none. Owner-accepted: none.

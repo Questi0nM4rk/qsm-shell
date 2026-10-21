@@ -53,10 +53,9 @@ while the hand is still travelling toward it. A consumer sees the popout's behav
 
 ### Pointer geometry (assumptions marked)
 
-- Input shape, native: the parent item's bounds. In the desktop, the parent is the full-screen
-  `PanelWindow` (`EdgeScene.qml:19`), clipped to its input mask (`EdgeScene.qml:365-400`). The
-  mask is built from rollout rects; whether it includes the triangular corridor is not confirmed
-  (see H2).
+- Input shape, native: the parent item's bounds. A host that places it in a full-screen window clips
+  the reader to that window's input mask; whether the mask includes a triangular corridor is the
+  host's to confirm (see H2).
 - Input shape, unit: 380 x 380 (`Style.controlWidth`, `tokens/deep-night.json:99`; unit lines 18-19).
 - Painted size, unit: the card is 190 wide (`controlWidth / 2`, unit line 28) and its height is
   body plus 2 x `space4` (unit line 29), with those values not read here. The ratio of input to
@@ -70,7 +69,7 @@ while the hand is still travelling toward it. A consumer sees the popout's behav
   here as the model). For a triangle whose apex is the entry point, W at the apex is 0, so
   ID diverges: only the apex point itself counts as inside. This is the structural fact, not a
   measurement.
-- Dead run at the corridor apex (consumer geometry, BarPopouts.qml:47-50): a pointer leaving the
+- Dead run at the corridor apex (host geometry): a pointer leaving the
   anchor at offset |dy| from its midline is outside every area until it has travelled
   r = 2 |dy| (cx - ax) / ch. With |dy| up to ah / 2, r is at most ah (cx - ax) / ch. Assumed
   values only, not from source: ah = 40, cx - ax = 100, ch = 300, so r <= 13.3 px. The 180 ms grace
@@ -106,9 +105,8 @@ Redesign proposals (taste, not defects):
 - Name: `position` reads as the current pointer, but it holds the last reading outside the area
   (`ScenePointer.qml:10`; record line 4). Rename it `lastPosition`, or return the point only while
   `inside`. See source conflict S1.
-- Consumers should listen to `onPositionChanged`, not `onPointChanged`. EdgeScene binds the
-  inherited native signal (`EdgeScene.qml:423`), which does not follow an injected `source`. No
-  production consumer reads `position` alone. The change is in qsm-desktop, outside this audit.
+- Consumers should listen to `onPositionChanged`, not `onPointChanged`: the inherited native signal does
+  not follow an injected `source`.
 
 Source conflicts (owner ruling):
 
@@ -119,16 +117,15 @@ Source conflicts (owner ruling):
 Hypotheses (not measured):
 
 - H1. The native reader sees only its parent's bounds. A consumer whose areas overhang a smaller
-  ancestor would lose hover over the overhang. The desktop's full-screen window avoids this; the
-  unit does not overhang, so it is not affected.
-- H2. The desktop input mask (`EdgeScene.qml:365-400`) may not include the triangular corridor
-  (`BarPopouts.qml:47-50`), in which case the native reader is blind in the corridor. Needs a live
-  trace in a real window.
-- H3. A `HoverHandler` declared directly under a `PanelWindow` (`EdgeScene.qml:421`) rather than
+  ancestor would lose hover over the overhang. A full-screen window avoids this; the unit does not
+  overhang, so it is not affected.
+- H2. A host's input mask may not include the triangular corridor, in which case the native reader is
+  blind in the corridor. Needs a live trace in a real window.
+- H3. A `HoverHandler` declared directly under a `PanelWindow` rather than
   under its `contentItem` may not receive window-wide hover in Qt 6. Needs a runtime check.
 - H4. The corridor dead run in the geometry section, absorbed by the 180 ms grace unless the hand
   stalls. Consumer-owned.
 
-Not examined: the desktop's runtime behaviour, any live window, any capture, the keyboard route
+Not examined: a host's runtime behaviour, any live window, any capture, the keyboard route
 through the host, and the caelestia equivalent. `~/Clonned/caelestia/repo/components/controls/`
 has no hover reader to compare with.

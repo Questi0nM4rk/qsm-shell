@@ -7,7 +7,7 @@ pointer: the whole heading is the target with a StateLayer swell on the chevron;
 keyboard: tab reaches an enabled heading and Space and Return share the toggle route; the focus mark forwards to the StateLayer.
 screen reader: one named toggle-button heading reports checked state and an Expanded/Collapsed description; the badge is supporting information.
 size: heading at control small height with fixed row spacing; content hangs from the title's left edge (chevron, optional icon and gaps), 8 px below the heading; long titles elide rather than growing the heading.
-tokens: controlHeightSm, space1, space2, iconSm, Motion.pressScale, radiusSm, text roles and Badge; no local colours or measurements.
+tokens: the Control size table, space1, space2, iconSm, Motion.pressScale, radiusSm, text roles and Badge; no local colours or measurements.
 motion: fast chevron rotation plus StateLayer hover and press swell; reduced motion shortens the duration.
 source: compared caelestia `ButtonBase.qml`'s StateLayer activation; rejected its internal toggle state and palette. Qt's native AbstractButton supplies heading input/focus while the host keeps expansion.
 expected: enumerated `toggle()` is the single pointer, Space, Enter and programmatic route. It reports `toggled(!expanded)` once without writing host state, refuses when unavailable, and exposes one named focusable heading with expanded accessibility state.
@@ -44,7 +44,7 @@ Failure and cancellation: `toggle()` refuses when disabled (Disclosure.qml:38). 
 
 ### Sizes, empty and long content
 
-- Heading height 32 px (`controlHeightSm`, Tokens.qml:84). Width comes from the host (unit 380 px, `controlWidth`).
+- Heading height 32 px (Control `sm`). Width comes from the host (unit 380 px, `controlWidth`).
 - Body indent is the title's x (`titleLabel.x`): 24 px without the icon, 48 px with it, see D2.
 - Long title: the label is a Prose `label` role with `elide: ElideRight` (Prose.qml), so it truncates inside the row. Whether the natural width grows is H1.
 
@@ -59,7 +59,7 @@ Failure and cancellation: `toggle()` refuses when disabled (Disclosure.qml:38). 
 ### Pointer geometry (assumptions labelled)
 
 - Input shape: the whole heading row, host width by 32 px, no padding. Painted content: chevron 16 by 16 px at x 0-16, label, optional icon 16 px, badge at the right end. The unpainted right part is also input.
-- Painted against input: the glyph is 16 px inside a 32 px row (50 percent of the row height). The row is 32 px high, above the 24 px desktop floor in WCAG 2.5.8 (criterion from `a11y-conformance`; not measured). No touch route exists in source, so the 44 px touch floor is not applicable.
+- Painted against input: the glyph is 16 px inside a 32 px row (50 percent of the row height). The row is 32 px high, above the 24 px pointer floor in WCAG 2.5.8 (criterion from `a11y-conformance`; not measured). No touch route exists in source, so the 44 px touch floor is not applicable.
 - Width model: nominal, geometry size with no effective-width correction, because no trajectory data exists. Assumption: a stack of disclosures separated by `space1` (4 px, Disclosure.qml:42), with the pointer arriving from the centre of the previous row. This is a modelled trajectory, not a human average.
 - Vertical approach: D = 32 + 4 = 36 px, W = 32 px, ID = log2(1 + 36/32) = 1.09 bits.
 - Horizontal approach: W = 380 px (the full row), so ID is at most log2(1 + D/380), which is at most 1 bit for any D inside the row. The vertical axis is the limit.
@@ -129,6 +129,5 @@ Only the Badge half of D1 needs a shared file.
 
 - No runtime: no preview, capture, tree dump, key or pointer driving.
 - Themes: only the deep-night values were read; the light theme was not.
-- Desktop: no QML reference to Disclosure exists in `qsm-desktop` (the grep returned zero matches), so no production state was checked.
 - Long title, wrapping body and empty title: not rendered.
 - Touch: no touch route in source.

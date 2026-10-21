@@ -15,7 +15,7 @@ Evidence: source-reviewed only. No capture, preview, live geometry dump or runti
 every number below is read from the source or is a labelled assumption. Read: `MonthCalendar.qml`,
 `IconButton.qml`, `Prose.qml`, `StateLayer.qml`, `tokens/deep-night.json` (the only token file; no
 light or high-contrast values exist), `workbench/units/MonthCalendar.qml`, the story key
-`MonthCalendar / August 2026`, and the two qsm-desktop consumers. Theme: deep-night only.
+`MonthCalendar / August 2026`. Theme: deep-night only.
 Owner acceptance: none.
 
 ### Purpose and consequence
@@ -62,7 +62,7 @@ Computed from the deep-night token values against `band`, the unit AGENTS names:
 | --- | --- | --- |
 | `text` on `band` (title, in-month days) | `:36`, `:68` | 13.71 |
 | `textMuted` on `band` (weekday labels, chevrons) | `:47`, `:35` | 8.61 |
-| `textMuted` at opacity 0.4 on `band` (out-of-month days) | `:68-69` | 2.55 (2.87 at the token `opacity.recede` 0.45) |
+| `textMuted` at opacity 0.4 on `band` (out-of-month days) | `:68-69` | 2.55 (4.95 at the token `opacity.recede` 0.70 as a colour blend) |
 | `textOnPrimary` on `accent` (today digit) | `:68` | 8.87 |
 | `accent` on `band` (today disc) | `:61` | 8.87 |
 
@@ -84,7 +84,7 @@ Assumptions are labelled. No human average is claimed.
   padding 8 set at `MonthCalendar.qml:35` and `:37`; `StateLayer` fills it, `StateLayer.qml:57`).
   Painted: a 16 px glyph and a 32 px hover disc (`StateLayer.qml:61`, `focusRadius` is height / 2).
   The square's corners, about 220 px2 of its 1024 px2, lie outside the painted disc and still hit.
-- Minimum size: 32 px is above the 24 px desktop floor (WCAG 2.5.8, as cited in ux-audit) and below
+- Minimum size: 32 px is above the 24 px pointer floor (WCAG 2.5.8, as cited in ux-audit) and below
   the 44 px touch floor. The touch floor matters only if touch is a supported input.
 - Origin (assumption): the pointer starts at the title's centre. Not a measured trajectory.
 - Width model (assumption): `W_nat = 80 + T`, where 80 = 2 x 32 + 2 x 8 and T is the rendered title
@@ -108,10 +108,10 @@ Defects (source-reviewed, each cited by file and line; the structured list carri
 
 - `qss-bcn` (confirmed, major): `MonthCalendar.qml:17` assigns the host-owned `shown`. A host that
   binds the month loses that binding on the first click, which is what `units/MonthCalendar.qml:28`
-  does. The desktop consumers (`BarPopouts.qml:261`, `DashboardTab.qml:373`) never bind `shown` and
-  rely on the component's own state. The fix changes that: `shiftMonth` reports intent only, and
-  the host sets `shown` from `monthShifted(delta)`. The desktop change is outside this type's own
-  files, so this finding is marked shared.
+  does. A host that never binds `shown` relies on the component's own
+  state. The fix changes that: `shiftMonth` reports intent only, and the host sets `shown` from
+  `monthShifted(delta)`. The change is outside this type's own files, so this finding is marked
+  shared.
 - `mc-width` (minor, fixed; source-reviewed, load-checked): the title column now takes its
   preferred width from the widest month name of the shown year, measured with `TextMetrics`; the
   note below is the finding as audited.
@@ -142,11 +142,11 @@ Defects (source-reviewed, each cited by file and line; the structured list carri
   `textMuted` alone, no opacity (8.61:1 computed). As audited: `:68-69` stacks `textMuted` (8.61:1) with a literal 0.4
   opacity, giving 2.55:1 computed, which is below the 4.5 that 1.4.3 asks of text. Whether
   out-of-month days are incidental is not decided here. The literal also breaks "no numbers in a
-  component": the token `opacity.recede` is 0.45 (2.87:1 computed). Fix: use one mechanism, the
+  component": the token `opacity.recede` is 0.70 (4.95:1 computed as a colour blend). Fix: use one mechanism, the
   colour without opacity (8.61:1), or the token.
 - `mc-today-stale` (minor, conditional): `:13` evaluates `new Date()` once, when the component is
   created, and nothing refreshes it. If the instance stays loaded past midnight, the marker stays on
-  the previous day. Whether the desktop instances live that long is not read. Fix: one `Timer` set
+  the previous day. Whether an instance lives that long depends on the host. Fix: one `Timer` set
   to the milliseconds to the next local midnight that updates `today`.
 
 Redesign proposals (taste, not defects):
@@ -168,8 +168,8 @@ Hypotheses (not measured, not in the table):
 - H1: arrow keys may reach the root only while a chevron holds focus, because the root is not a Tab
   stop (`:23`). a11y-audit runs the keyboard path.
 - H2: the vertical wheel over the calendar may stop a scroll container around it, since `MouseArea`
-  accepts it (`:79-88`). Whether `DashboardTab.qml:365-376` sits in a scroller was not read.
-- H3: a change in natural width may shift the neighbouring cards in `DashboardTab`'s row 1, because
+  accepts it (`:79-88`). Whether the host sits in a scroller was not read.
+- H3: a change in natural width may shift the neighbouring cards in a host's row, because
   the layout's implicit widths set column sizes. Not verified.
 - H4: digits centred by bounding box (`:63`) may sit a pixel off optically. Not measured.
 - H5: a 32 px target is below the 44 px touch floor. Matters only if touch is supported.
@@ -185,5 +185,5 @@ Not examined:
 - `tests/units/tst_MonthCalendar.qml`: present, not read or run (no tests requested).
 - Caelestia: `~/Clonned/caelestia/repo/components/controls/` holds 21 files and none is a calendar,
   so there is no sibling to compare.
-- qsm-desktop at run time, including whether `DashboardTab` scrolls (H2, H3).
+- A host at run time, including whether it scrolls (H2, H3).
 - Invalid `shown` or `today` values: no failure path in the source; not examined.

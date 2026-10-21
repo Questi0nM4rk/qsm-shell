@@ -35,9 +35,8 @@ reader to the wrong key. It labels a shortcut and takes no input.
 - Pointer: none. `Kbd.qml` has no MouseArea, HoverHandler, TapHandler or wheel handler, so events
   pass through.
 - Keyboard: none. Not a tab stop, no `activeFocusOnTab`.
-- Accessibility: `Kbd.qml` sets no `Accessible.*` property. The desktop host supplies the name
-  (`qsm-desktop/shell/modules/cheatsheet/CheatSheetSurface.qml:227-228`, role `StaticText`, name
-  `row.modelData.combo`). A standalone consumer gets no combined name. Criteria are a11y-audit's.
+- Accessibility: `Kbd.qml` sets no `Accessible.*` property. The host supplies the name
+  (role `StaticText`, name the combo text). A consumer that does not gets no combined name. Criteria are a11y-audit's.
 - Programmatic: none.
 
 ### Sizes, empty, long and failure
@@ -74,7 +73,7 @@ reader to the wrong key. It labels a shortcut and takes no input.
 - D, W and ID: not defined. Without a target there is no travel distance D and no landing zone W,
   so ID = log2(1 + D/W) is not computed.
 - Width model, if a cap ever becomes a target (hypothesis): W is the short side, 20 px. The
-  desktop 2.5.8 floor is 24 by 24 px (ux-audit), so a bare cap falls short on height.
+  pointer 2.5.8 floor is 24 by 24 px (ux-audit), so a bare cap falls short on height.
 - Origin assumptions: none needed.
 - Popup corridor and timing: not applicable; Kbd is not a popup.
 - Neighbouring interference: none; there is no target.
@@ -85,9 +84,9 @@ Visual and layout (ui-audit):
 
 | id | pass | element | evidence (source, computed) | expected (source) | actual | severity |
 | --- | --- | --- | --- | --- | --- | --- |
-| KBD-D1 (fixed, source-reviewed, load-checked) | layout | combo row, cheat sheet | `Kbd.qml:45` width has no maximum. Host: row margin 12 (`CheatSheetSurface.qml:216`), combo column 190 (`CheatSheetSurface.qml:225`, `Theme.qml:279`), gap 12 (`CheatSheetSurface.qml:217`). Description starts at x = 214; Kbd starts at x = 12. Overlap begins when Kbd width > 202 px | AGENTS component law DoD 5: long content scrolls or elides, never grows the control | a combo wider than 202 px draws under the description text | major |
-| KBD-D3 | token | cap fill | `Style.qml:58` `keycap = lift(band, 0.9)`, computed 1.90:1 on band; fill #524a5a. Deep-night `overlay` is #534a5e (`tokens/deep-night.json`). `Style.qml:146-147` says "No role is derived from it" | AGENTS surface ladder: three steps, nothing derived | a fourth, derived fill; this record (line 10) names `overlay`, the code uses `keycap` (`Kbd.qml:48`) | minor |
-| KBD-D2 | accessibility name | root | `Kbd.qml` has no `Accessible.*`; the host sets the name (`CheatSheetSurface.qml:227-228`) | record line 8: "the combo text is the announcement" | the type announces nothing by itself | minor (name and role are a11y-audit's to rule on) |
+| KBD-D1 (fixed, source-reviewed, load-checked) | layout | combo row, cheat sheet | `Kbd.qml:45` width has no maximum. Host example: a combo column 190 wide with a description 12 px after it; overlap begins when Kbd is wider than the column | AGENTS component law DoD 5: long content scrolls or elides, never grows the control | a combo wider than its column draws under the description text | major |
+| KBD-D3 | token | cap fill | `Style.qml:58` `keycap = lift(band, 0.9)`, computed 1.90:1 on band; fill #524a5a. Deep-night `overlay` is #4c4357 (`tokens/deep-night.json`). `Style.qml:146-147` says "No role is derived from it" | AGENTS surface ladder: three steps, nothing derived | a fourth, derived fill; this record (line 10) names `overlay`, the code uses `keycap` (`Kbd.qml:48`) | minor |
+| KBD-D2 | accessibility name | root | `Kbd.qml` has no `Accessible.*`; the host sets the name | record line 8: "the combo text is the announcement" | the type announces nothing by itself | minor (name and role are a11y-audit's to rule on) |
 | KBD-D4 (fixed, source-reviewed, load-checked) | workbench coverage | unit controls | `workbench/units/Kbd.qml:24` `controls: []`; the one `kbd` key is variant `combo` (`workbench/stories.json`, key `kbd`); `docs/BACKLOG.md:48-49` (R2/R3) | AGENTS DoD 7: the unit exposes coherent examples and supported states | no long combo, and no empty combo, is reachable in the review | minor |
 
 Source conflicts:
@@ -116,8 +115,6 @@ Redesign proposals (no fix committed):
 - P7 (done): unit controls for KBD-D4, options setting `variant` (the `combo` binding at
   `workbench/units/Kbd.qml:12` then follows): short `SUPER + Q`, modifiers `SUPER + SHIFT + Q`, long
   `SUPER + CTRL + ALT + SHIFT + PRINTSCREEN + ENTER`.
-- Remark outside Kbd: `tokens/deep-night.json` surface on band computes 1.46:1, where AGENTS states
-  1.30:1 per ladder step. Overlay on surface computes 1.31:1. Shared token, not a Kbd finding.
 
 Hypotheses (unmeasured):
 
@@ -134,10 +131,10 @@ Fix status:
 - KBD-D1: `Kbd.qml` now shrinks its caps and elides their text when the host gives it less width than
   the caps need. Source-reviewed and load-checked (qmllint clean, the `kbd` capture exits 0 and
   renders the resting combo). The long case, the shrink floor and the ellipsis are not measured in a
-  live window. The cheat sheet only gets the bound once the host sets Kbd's `width`
-  (`CheatSheetSurface.qml`, `width: parent.width` on the `Kbd`); until then it still grows to its natural width.
+  live window. The bound applies only once the host sets Kbd's `width`;
+  until then it still grows to its natural width.
 - KBD-D4: the unit offers short, modifiers and long combos, and bounds Kbd to half of
-  `Style.controlWidth` (about the desktop's combo column) so the long one shows the elision. Empty is
+  `Style.controlWidth` (about a host's combo column) so the long one shows the elision. Empty is
   not offered; it needs the owner's decision (P4).
 
 Not examined:
@@ -145,6 +142,6 @@ Not examined:
 - Runtime: no capture, tree dump, live geometry, pixel sample or window. Each needs an explicit request.
 - Themes and variants: only the deep-night token file was read. Light, high-contrast, scale factor
   and locale were not read.
-- Desktop rendering of the cheat sheet: not run.
+- A host's rendering of a cheat sheet: not run.
 - Accessibility tree, focus and keyboard routes: a11y-audit's.
 - Motion: none exists to review.

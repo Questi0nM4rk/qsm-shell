@@ -19,9 +19,8 @@ pixel and timing figure below is computed from source values, not measured. No o
 
 Sources read: `qml/QsmShell/Components/StateLayer.qml`, `workbench/units/StateLayer.qml`,
 `qml/QsmShell/Style/Tokens.qml`, `Motion.qml`, `Style.qml`, `Interaction.qml`,
-`tokens/deep-night.json`, the desktop call sites `shell/modules/bar/RailEntry.qml` and
-`shell/modules/panel/PanelHandle.qml`, and caelestia `components/StateLayer.qml`. Not read:
-`components/controls/ButtonBase.qml`, `tests/units/tst_StateLayer.qml`, the other desktop call sites.
+`tokens/deep-night.json`, and caelestia `components/StateLayer.qml`. Not read:
+`components/controls/ButtonBase.qml`, `tests/units/tst_StateLayer.qml`.
 
 ### Purpose and consequence
 
@@ -41,7 +40,7 @@ signals `clicked`, `hoveredEntered`; function `activate()`. The `actions` list h
 | rest | `response` 1, no paint unless `hoverTint` | l. 113, 115 |
 | hover | growth to `hoverScale` (1.08) on the target; colour only through `hoverTint` (`Style.tone` lift 0.4) or a hosted body | l. 56, 113, 118 |
 | press | colour only through `hoverTint` (lift 0.8) or host; scale only if `pressScale` is set (default 1); pressed comes from the tap or the host only | l. 59, 83, 118 |
-| focus | 2 px accent ring outside the layer, concentric; keyboard only | l. 72, 147-162 |
+| focus | accent ring of `Style.stroke(spaceTight)` outside the layer, concentric; keyboard only | l. 72, 147-162 |
 | disabled | the layer stops answering and hides the ring; dimming is the host's (`Style.disabled`) | l. 81-83, 152 |
 
 Routes:
@@ -57,11 +56,11 @@ Routes:
   false when disabled, unclickable or hosted (l. 93-98). No reset path.
 
 Sizes and content: the layer has no size of its own, so an unsized use has an empty input. The unit
-sets 190 by 52 px (`Style.controlWidth / 2`, `Style.controlHeightLg`), which is not a `Style.size`
+sets 190 by 48 px (`Style.controlWidth / 2`, Control `lg`), which is not a `Style.size`
 preset name. No content, so no empty or long state. No failure state applies.
 
 Visual roles and palette pairs (source values from `deep-night.json`):
-- Ring `accent` #d9b4ea on `band` #271e30: 8.87:1 computed. On `surface` #42394c: 6.07:1. The real
+- Ring `accent` #d9b4ea on `band` #271e30: 8.87:1 computed. On `surface` #3b3145: 6.82:1. The real
   neighbour is the host's ground, which this record cannot see; these are the pairs the ring can
   meet in the unit's ground.
 - Hover tint: `surface` lifted by 0.4 (hover) and 0.8 (press) in `Style.tone` (Style.qml l. 126-138).
@@ -74,10 +73,10 @@ scale itself does not depend on `reducedMotion` (see SL-C2 in the conflicts). Th
 
 ### Pointer geometry (modelled, not measured)
 
-- Painted body (unit, action variant): 190 by 52 px, radius 12 (`Style.radiusMd`).
-- Input shape at rest: the layer sits at (-2, -2) with 194 by 56 px, a 2 px halo per side.
-- Hover: the body scales 1.08 about its centre. Painted: 205.2 by 56.2 px, so its edge moves 7.6 px
-  per side horizontally and 2.1 px vertically over 130 ms. Input: 209.5 by 60.5 px, halo 2.2 px.
+- Painted body (unit, action variant): 190 by 48 px, radius 12 (`Style.radiusBody`).
+- Input shape at rest: the layer sits at (-2, -2) with 194 by 52 px, a 2 px halo per side.
+- Hover: the body scales 1.08 about its centre. Painted: 205.2 by 51.8 px, so its edge moves 7.6 px
+  per side horizontally and 1.9 px vertically over 130 ms. Input: 209.5 by 56.2 px, halo 2.2 px.
 - Origin assumptions: the scale origin is the body centre (Qt default); the input origin is the
   layer's top-left in body coordinates; the label origin is the target centre.
 - Weights: Shannon form, ID = log2(1 + D/W). No per-user weights and no human average.
@@ -100,9 +99,8 @@ Defects (source-backed; each cites its file and line):
   reads `(root.parent as T.Control)?.visualFocus`. The comment at l. 64-66 says a plain item follows
   its parent. In the unit the parent is a `Rectangle`, the cast gives null, and `focused` stays
   false while the body holds keyboard focus (`activeFocusOnTab`). What a person sees: Tab onto the
-  sample and no ring appears. qsm-desktop works around the same gap by passing `focused:
-  root.activeFocus` (`shell/modules/bar/RailEntry.qml` l. 144, `shell/modules/panel/PanelHandle.qml`
-  l. 80). Fix: `property bool focused: _hosted ? (host.visualFocus ?? false) : (root.parent?.activeFocus ?? false)`.
+  sample and no ring appears. A host works around the gap by passing `focused:
+  root.activeFocus`. Fix: `property bool focused: _hosted ? (host.visualFocus ?? false) : (root.parent?.activeFocus ?? false)`.
   Shared: yes (the component file). Untested.
 - SL-2 (major, `workbench/units/StateLayer.qml`, body `color:`; fixed, source-reviewed and load-checked, not owner-accepted). The body colour is
   `enabled ? Style.surface : Style.disabled(Style.surface)` and never reads `layer.hovered` or
@@ -147,7 +145,7 @@ Source conflicts (the owner rules):
 
 Proposals (taste and contract, not defects):
 
-- Add a size or document that an unsized layer has an empty input. Desktop call sites size it, but
+- Add a size or document that an unsized layer has an empty input. Hosts size it, but
   the component does not say so.
 - `StateLayer.qml` l. 148 uses a literal `* 2` for the ring reach (gap plus stroke). Name it from
   `Style` so the component keeps "no numbers".
@@ -166,7 +164,6 @@ Hypotheses (unmeasured, one line each):
 - No live geometry, capture, tree dump, run or test. Every figure is source arithmetic.
 - Keyboard, focus and screen-reader behaviour in a running window (a11y-audit).
 - Reduced motion, real timing and the ring's fade in a running window (review-animations).
-- The other desktop call sites and their `hosted` or `target: null` use, beyond the two read.
 - `Interaction.pointerSelects` in a list, since no list host was read.
 - The stories in `workbench/stories.json` beyond the key `state-layer`.
 

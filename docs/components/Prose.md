@@ -15,9 +15,7 @@ not designed: input, labelling controls or truncation policy beyond elision; use
 
 Evidence: source-reviewed; D1-D3 fixes load-checked by one offscreen capture of story `prose`. No live geometry, no owner acceptance.
 Read: `qml/QsmShell/Components/Prose.qml`, `workbench/units/Prose.qml`, `tokens/deep-night.json`,
-`qml/QsmShell/Style/Style.qml`, `AGENTS.md` (component laws, surface ladder), and the desktop
-callers found by grep in `/home/qs_m4rk/Projects/qsm-desktop/shell` (modules/bar, modules/panel,
-modules/launcher, modules/session, modules/clipboard, modules/cheatsheet, components/PopoutRow.qml).
+`qml/QsmShell/Style/Style.qml` and `AGENTS.md` (component laws, surface ladder).
 Caelestia sibling: `~/Clonned/caelestia/repo/components/StyledText.qml`.
 
 ### Purpose and consequence
@@ -81,8 +79,8 @@ pixels; Prose has no own background, so the ground is the caller's surface):
 
 | text on | band | surface | overlay |
 | --- | --- | --- | --- |
-| text `#f0ecf5` | 13.71:1 | 9.38:1 | 7.18:1 |
-| textMuted `#c5bad1` | 8.61:1 | 5.89:1 | 4.51:1 |
+| text `#f0ecf5` | 13.71:1 | 10.53:1 | 8.02:1 |
+| textMuted `#c5bad1` | 8.61:1 | 6.61:1 | 5.04:1 |
 
 The 4.5:1 line (WCAG 1.4.3, body text) is met everywhere. textMuted on overlay passes by 0.01,
 and it carries the 10 px metadata and section roles there.
@@ -124,11 +122,10 @@ Source-backed defects:
   option that assigns nothing (or assigns the role default), so the unit shows the component's own
   default. Shared: false.
   Severity: medium.
-- **D2** (fixed; source-reviewed, load-checked, not owner-accepted. Prose now always sets `ElideRight`, which Qt applies to a wrapping body only under `maximumLineCount` or an explicit height. The host line in `BarPopouts.qml` is now redundant and is left to the desktop.) `qml/QsmShell/Components/Prose.qml:118` (with `:114`). For `body`, `elide` is `ElideNone`
+- **D2** (fixed; source-reviewed, load-checked, not owner-accepted. Prose now always sets `ElideRight`, which Qt applies to a wrapping body only under `maximumLineCount` or an explicit height.) `qml/QsmShell/Components/Prose.qml:118` (with `:114`). For `body`, `elide` is `ElideNone`
   whatever `maximumLineCount` is. A body capped by a caller ends at the cap with no ellipsis.
-  The one caller that caps it, `qsm-desktop/shell/modules/bar/BarPopouts.qml:229-241`, re-sets
-  `elide: Text.ElideRight` and says so in its comment, so the component's policy is patched by the
-  host. A person sees the two-line app detail end mid-word unless that host line exists.
+  A host that caps it had to re-set
+  `elide: Text.ElideRight`, so the component's policy was patched by the host. A person sees the two-line app detail end mid-word unless that host line exists.
   Fix: make elide follow the line limit in Prose, `ElideRight` when `maximumLineCount` is set and
   `ElideNone` when it is not (check Qt's default for the unset value before writing the test). Then
   the host line can go. Shared: false.
@@ -154,30 +151,22 @@ Redesign proposals (taste; owner decides):
   Shared: false.
 - Colour of `supporting` (Prose.qml:65): the header (lines 26-27) says supporting is "meant to be
   READ, not skimmed past", but the rule paints it textMuted, the same colour as metadata. This is a
-  source conflict between the comment and the code, inside one file. The measured ratio (5.89:1 on
-  surface, 4.51:1 on overlay) does not decide it; the owner does. Shared: false.
-- Metadata and section on overlay: 4.51:1 at 10 px passes 4.5:1 by 0.01. A proposal, not a
-  defect: keep those roles on surface or give them text colour on overlay. Shared: false.
+  source conflict between the comment and the code, inside one file. The measured ratio (6.61:1 on
+  surface, 5.04:1 on overlay) does not decide it; the owner does. Shared: false.
 - `Style.trackingWide` is `1.4` in `tokens/deep-night.json` (line 145, "tracking": "wide") with no
   unit, and Prose.qml:106 applies it as pixels, so section tracking is 0.14 em at 10 px. Whether
   1.4 is meant as px or em is not stated anywhere. Fix: state the unit in the token and in Style.qml.
   Shared: true (tokens/*).
-- Surface ladder, side finding outside Prose: AGENTS.md says each step is 1.30:1 on the one below.
-  Measured from the token values, band to surface is 1.46:1 and surface to overlay is 1.31:1
-  (source-conflict between AGENTS.md and tokens/deep-night.json). The owner decides which is the
-  ladder. Shared: true (tokens/*, Style/*).
 - Unit ladder height, `workbench/units/Prose.qml:21`: `Style.controlWidth * 2` is an unlabelled
   ratio (760 px at controlWidth 380). The ladder's content is far smaller by estimate, which is not
   measured here. Fix: derive the height from the content (`implicitHeight` of the column). Shared:
   false.
-- Callers: `qsm-desktop/shell/modules/bar/ClockEntry.qml:116` sets `technical: true` on `role:
-  "reading"`, which the default already gives. Harmless; a desktop tidy-up, outside this library.
 
 Hypotheses (observed in source, not measured):
 
 - H1: in Qt, a Text with wrapping or `NoWrap` and no width reports its unwrapped line width as
   implicit width, so a body or title Prose placed in a Row without `fillWidth` or `width` grows its
-  parent. Not run; the desktop callers all set width, which hides it.
+  parent. Not run; a caller that sets a width hides it.
 - H2: `font.capitalization` (line 107) changes the rendered case only, so the accessible text of
   `section` probably stays mixed case. Confirm under a11y-audit, not here.
 - H3: Prose uses Qt's default render type; caelestia sets `NativeRendering`. Fractional glyph
@@ -186,6 +175,6 @@ Hypotheses (observed in source, not measured):
 Not examined: runtime rendering of any role; live geometry; pixel sampling; the story windows
 (not started, per AGENTS.md); themes other than deep-night (only that set exists in `tokens/`);
 empty-text height; keyboard, focus and screen-reader criteria (a11y-audit owns them; Prose is not
-interactive); the desktop's rendered output.
+interactive).
 
 Owner acceptance: none. The type has not been reviewed by the owner in the live window.

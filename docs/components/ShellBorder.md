@@ -32,7 +32,7 @@ The frame paints one merged silhouette (the band plus every open rollout) and pu
 
 ### Sizes, empty, long, failure and cancellation
 
-- Sizes come from Style: frame thickness 16 (tokens/deep-night.json:95), viewport radius `radius2xl` 28, melt reach `meltSmoothing` 20 (:127), snap reach `edgeSnapReach` 32 (:128), seam overlap 8 (:136), edge fade 16 (:137). The type holds no measurement of its own.
+- Sizes come from Style: frame thickness 12 (tokens/deep-night.json), viewport radius `radius2xl` 28, melt reach `meltSmoothing` 20 (:127), snap reach `edgeSnapReach` 32 (:128), seam overlap 8 (:136), edge fade 16 (:137). The type holds no measurement of its own.
 - Empty: with no registrations only the band is painted. A zero-size slot is skipped (edgemelt.frag:171-172).
 - Long: a ninth bulge or capsule is accepted and not painted (see proposals).
 - Failure: registration does not validate rects or radii, and nothing reports a rejected entry.
@@ -40,14 +40,14 @@ The frame paints one merged silhouette (the band plus every open rollout) and pu
 
 ### Visual roles and palette pairs
 
-Source values: band `#271e30`, surface `#42394c`, overlay `#534a5e`, text `#f0ecf5` (tokens/deep-night.json:3-7), edge colour `#5e357f` (Style.qml:92 via Tokens.qml:20) at edgeStrength 0.5 over edgeFade 16 px. Ratios are computed from these hex values with the WCAG 2.2 relative-luminance formula, not rendered:
+Source values: band `#271e30`, surface `#3b3145`, overlay `#4c4357`, text `#f0ecf5` (tokens/deep-night.json:3-7), edge colour `#5e357f` (Style.qml:92 via Tokens.qml:20) at edgeStrength 0.5 over edgeFade 16 px. Ratios are computed from these hex values with the WCAG 2.2 relative-luminance formula, not rendered:
 
 | pair | ratio | note |
 | --- | --- | --- |
-| band vs surface | 1.46:1 | layer separation; AGENTS states 1.30:1 per ladder step (source conflict) |
-| band vs overlay | 1.91:1 | layer separation |
+| band vs surface | 1.30:1 | layer separation; the ladder's step |
+| band vs overlay | 1.71:1 | layer separation |
 | edge pixel (50 % edge colour over band, `#432a58`) vs band | 1.30:1 | decorative separation line; it carries no information, so 1.4.11 does not apply |
-| text vs surface | 9.38:1 | the unit's Card text; 1.4.3 passes |
+| text vs surface | 10.53:1 | the unit's Card text; 1.4.3 passes |
 
 Roles used: band (the silhouette fill), edge separation (the line at the silhouette edge). No role is taken from `Tokens` directly.
 
@@ -58,12 +58,12 @@ None in this type: ShellBorder.qml has no animation. The geometry it draws is an
 ### Pointer geometry
 
 - Input shape: ShellBorder publishes no pointer target. Its input is `maskRects` (ShellBorder.qml:45-47): the Rollout viewport rects, registered only while `hitActive` (Rollout.qml:399, 542). The painted silhouette is the body rect passed to `registerBulge` (Rollout.qml:529).
-- Unit as written: the input rect is 222 by 32 px (bodyWidth 190 + 2 x 16, bodyHeight 0 + 2 x 16, unit line 48). The painted Card is taller than that (the text role is `Style.textSm` 12 px, Prose.qml:74; the card is its line height plus 32, unit line 52). The text starts at y 32, which is the bottom of the 32 px Rollout, which clips (Rollout.qml:333). Source arithmetic: no text pixel falls inside the input or the clip. Not run.
-- Trigger in the unit: the band item, 16 by 16 px (`Style.space4` by `Style.frameThickness`), top centre. Width model: one-dimensional, Shannon form, ID = log2(1 + D / W), W = target extent along the approach axis, D = centre to centre. Assumptions: D = 400 px (a pointer from the centre of an 800 px viewport; no pointer source exists to measure it), label origin at the band centre, equal weights.
-  - W = 16 px, horizontal approach: ID = log2(26) = 4.70 bits; landing tolerance +/- 8 px.
-  - W = 24 px (the desktop floor in ux-audit check 3): ID = log2(17.7) = 4.14 bits; tolerance +/- 12 px.
+- Unit as written: the input rect is 214 by 24 px (bodyWidth 190 + 2 x 12, bodyHeight 0 + 2 x 12, unit line 48). The painted Card is taller than that (the text role is `Style.textSm` 12 px, Prose.qml:74; the card is its line height plus 32, unit line 52). The text starts at y 24, which is the bottom of the 24 px Rollout, which clips (Rollout.qml:333). Source arithmetic: no text pixel falls inside the input or the clip. Not run.
+- Trigger in the unit: the band item, 16 by 12 px (`Style.space4` by `Style.frameThickness`), top centre. Width model: one-dimensional, Shannon form, ID = log2(1 + D / W), W = target extent along the approach axis, D = centre to centre. Assumptions: D = 400 px (a pointer from the centre of an 800 px viewport; no pointer source exists to measure it), label origin at the band centre, equal weights.
+  - W = 12 px, horizontal approach: ID = log2(34.3) = 5.10 bits; landing tolerance +/- 6 px.
+  - W = 24 px (the pointer floor in ux-audit check 3): ID = log2(17.7) = 4.14 bits; tolerance +/- 12 px.
   - Vertical approach from below the top edge: the screen edge stops the pointer, so the approach has no far boundary and the model gives no ID.
-- Neighbouring interference: none in the unit. In qsm-desktop the trigger's neighbours are consumer-owned and were not read.
+- Neighbouring interference: none in the unit. A host's trigger neighbours are the host's and were not read.
 - Trigger-to-panel corridor and timing: owned by Rollout (keep-open union, `hoverGrace` 180). Not measured in this record.
 
 ### Findings
@@ -82,12 +82,11 @@ Proposals (taste and shape, no defect a person sees):
 - The `?fullscreen=` query on the shader URL (ShellBorder.qml:394-395) names no variant: the shader has one program and a `fullscreenMode` uniform (edgemelt.frag:144, 409 in ShellBorder.qml). The comment's reason (a binary cached across hot reload) cites no source. Either record the reason with its source or remove the query.
 - Stale comments: ShellBorder.qml:6 cites `docs/design-2026-09-06-shell-border.md`, which is not in docs/ or docs/archive/; line 134-135 names `bulgeRadius0..7` (the shader's names are `radii0..7`, edgemelt.frag:41-42); line 378 cites `shaders/edgemelt.frag` (it is `qml/QsmShell/shaders/`); line 383 cites `spec/12-mechanism.md` (it is `docs/12-mechanism.md`).
 - Edge doubling: a Card inside a Rollout draws its own cardglow edge (Card.qml:46-58) inside the silhouette's edge line, so the rail shows two edge lines about 16 px apart. Card.qml:11-14 says a card sitting flat inside another body turns it off. Propose `glow: false` for a card in a rollout, after an owner look.
-- The trigger band is 16 px along x, below the 24 px desktop floor. Whether the consumer's hover zone is larger is not visible from this type. Propose the consumer publish its trigger zone next to the rollout, not a second hit model here.
+- The trigger band is 12 px along x, below the 24 px pointer floor. Whether the consumer's hover zone is larger is not visible from this type. Propose the consumer publish its trigger zone next to the rollout, not a second hit model here.
 
 Source conflicts (the owner decides which holds):
 
 - The qss-anp tracker text (commit history of `.beads`, 2026-10-16 note) says the glass stroke stays. The 2026-10-18 owner note in 12-mechanism and commits ca68eab and 6b9ec51 replaced the hairline with edge separation, and the shader has no stroke. The code follows the later note.
-- AGENTS.md states a 1.30:1 step per ladder level; the tokens give band to surface 1.46:1 (table above).
 
 Hypotheses (unmeasured):
 

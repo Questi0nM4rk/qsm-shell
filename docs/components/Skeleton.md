@@ -7,7 +7,7 @@ pointer: none; it claims no events and wheel passes through.
 keyboard: none; it is never a tab stop and takes no keys.
 screen reader: none; it is a placeholder with no accessible name until real content lands.
 size: width is a fraction of the control width and never content-derived; line height follows the role scale from hero to metadata.
-tokens: controlHeight, controlWidth, radiusSm, overlay and the text scale; no local colours or measurements.
+tokens: the Control size table, controlWidth, radiusSm, overlay and the text scale; no local colours or measurements.
 motion: an infinite opacity pulse while visible; reduced motion lengthens the period.
 not designed: progress values, error copy or empty explanation; use ProgressBar, Callout or EmptyState for those.
 
@@ -38,7 +38,7 @@ unknown, the record says a `Spinner` is the honest type.
 
 ### Sizes, content, failure
 
-- Block: width `Style.controlWidth` (380) times `fraction`, height `Style.controlHeight` (40), both
+- Block: width `Style.controlWidth` (380) times `fraction`, height `Style.size("Skeleton", "md")` (40), both
   fixed (`Skeleton.qml` lines 39, 45). The block does not follow the library's `sm` and `lg` control
   heights.
 - Line: height is the role's pixel size, 10 to 44 px (lines 27-36); width as for block.
@@ -50,9 +50,9 @@ unknown, the record says a `Spinner` is the honest type.
 
 - Fill: `Style.overlay` (`Skeleton.qml` line 47), no border, no shadow, no local colour.
 - Pairs computed from `tokens/deep-night.json` by WCAG relative luminance (inferred from the hex
-  values, not sampled): overlay `#534a5e` on band `#271e30` 1.91:1; on surface `#42394c` 1.31:1.
-  At the trough (opacity 0.4, blended toward the ground) 1.27:1 on band and 1.11:1 on surface.
-  Ladder steps measured: band to surface 1.46:1, surface to overlay 1.31:1.
+  values, not sampled): overlay `#4c4357` on band `#271e30` 1.71:1; on surface `#3b3145` 1.31:1.
+  At the trough (opacity 0.4, blended toward the ground) 1.22:1 on band and 1.11:1 on surface.
+  Ladder steps measured: band to surface 1.30:1, surface to overlay 1.31:1.
 - Radius: a pill (height / 2) for lines, `Style.radiusSm` (8) for blocks.
 - Motion: `SequentialAnimation` on `opacity`, 1 to 0.4 to 1, each half `Motion.pulse / 2`, period
   1400 ms (`Tokens.qml` line 67), easing `Motion.moveEasing` (InOutCubic), running while `root.visible`.
@@ -112,9 +112,6 @@ Proposals (taste, design, or consumer concerns):
   record should say so, and a consumer-level wait cap belongs to ux-audit check 9 in the host.
 - P7, accessibility: a placeholder announces nothing. Any busy signal belongs on the consumer's
   container, not on the placeholder. Criteria are a11y-audit's.
-- P8, side finding outside this file: AGENTS.md says the surface ladder steps are each 1.30:1 on the
-  one below. The deep-night token values give band to surface 1.46:1 and surface to overlay 1.31:1.
-  Source-conflict between the design sources; which one wins is the owner's ruling.
 - P9, unit width: `width` (unit lines 58-61) changes only the lead line. The two other lines keep
   their fixed fractions, so "short" shortens one bar. Intended or not is the owner's call.
 
@@ -139,6 +136,6 @@ live window and watch the breath against the surrounding surface. Not run.
 - Sizes `sm` and `lg`, since the component has no size preset (P1).
 - Reduced motion at runtime.
 - Keyboard, focus and screen reader routes: a11y-audit's method.
-- Consumers: `qsm-desktop` has no `Skeleton` use (grep of `shell/` and the whole repository). Caelestia
+- Consumers: none known. Caelestia
   has no skeleton or shimmer file; its nearest sibling is `LoadingIndicator.qml`, a spinner, so no
   comparison of the placeholder is possible.

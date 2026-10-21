@@ -70,10 +70,10 @@ so three plausible hosts are used.
 | pair | ratio | against |
 | --- | --- | --- |
 | textMuted border on band | 8.61 | 3 |
-| textMuted border on surface | 5.89 | 3 |
-| textMuted border on overlay | 4.51 | 3 |
+| textMuted border on surface | 6.61 | 3 |
+| textMuted border on overlay | 5.04 | 3 |
 | accent fill on band | 8.87 | 3 |
-| accent fill on surface | 6.07 | 3 |
+| accent fill on surface | 6.82 | 3 |
 | textOnPrimary mark on accent | 8.87 | 3 |
 
 On these numbers every pair clears 3:1. Pass or fail is a11y-audit's call on rendered pixels.
@@ -180,8 +180,7 @@ Each one is source-reviewed only. Runtime was not exercised.
   and the border colour does not fade (Checkbox.qml:102, 104, 114, 126). Whether this feels wrong is
   review-animations'.
 - Label line height at sm, which decides the labelled hit height and the sm ID values, is unmeasured.
-- Consumers: qsm-desktop has no Checkbox use in its `shell/` tree; the only match is the size table in
-  `shell/theme/Theme.qml:176`. The density at which a consumer uses it is unknown.
+- Consumer density: unknown.
 
 ### Not examined
 

@@ -39,15 +39,12 @@ window. The first trigger changes no data. A non-destructive command fires on th
 
 ### Routes
 
-- Pointer: none in this component. Real routes in consumers: a tile click reaches
-  `ActionTile` `StateLayer.onClicked` then `activate()`, then `SessionSurface.activate()` (`trigger`)
-  at `qsm-desktop/shell/modules/session/SessionSurface.qml`. A cell click calls `confirm.trigger()`
-  at `qsm-desktop/shell/modules/bar/QuickActionCell.qml:38`.
-- Leave: a consumer calls `disarm()`. `QuickActionCell.qml:42-47` on hover loss, `SessionSurface.qml:175`
-  on exit.
-- Keyboard: none in the component. `SessionSurface.qml` maps Return, Enter and Space to `activate`
-  (two presses arm then fire), Up and Down to selection, which disarms the old tile at
-  `SessionSurface.qml:173`, and Escape to `closeModal()` without disarming first (harmless, see P1).
+- Pointer: none in this component. A tile click reaches `ActionTile` `StateLayer.onClicked`, then
+  `activate()`, then the host's `trigger()`; a cell click calls `trigger()` directly.
+- Leave: a consumer calls `disarm()`, on hover loss or on exit.
+- Keyboard: none in the component. A host maps Return, Enter and Space to `activate`
+  (two presses arm then fire), Up and Down to selection, which disarms the old tile, and Escape to
+  closing without disarming first (harmless, see P1).
   The unit's `keys` map (Enter, Escape) is a harness call, not a Qt key route.
 - Wheel: none. Focus: none in the component; the ring belongs to `ActionTile` through `StateLayer`.
 - Accessibility: none in the component. `ActionTile` sets `Accessible.name` to `shownLabel`, which is
@@ -56,7 +53,7 @@ window. The first trigger changes no data. A non-destructive command fires on th
 ### Sizes, content, failure, cancellation
 
 - Size: none; a `QtObject` with no footprint. Consumer tile: library default 96 by 72 px from
-  `tokens/deep-night.json` lines 121-122 (`tileWidth`, `tileHeight`). The desktop's own values were not read.
+  `tokens/deep-night.json` lines 121-122 (`tileWidth`, `tileHeight`).
 - Empty and long content: none in the component; the label belongs to the host.
 - Cancellation: timer expiry (:70), host leave, selection change. A non-destructive trigger has no
   cancellation at all.
@@ -91,7 +88,7 @@ content column); label weight is the `metadata` role, not measured. No human ave
 - Landing tolerance: 0 px beyond the tile edge. Leaving fires `exited` and the host disarms: no
   hysteresis.
 - Neighbour interference: the 8 px gap. Drifting across it disarms the armed tile and selects the
-  neighbour (`SessionSurface` `onEntered` selects, `onSelectedChanged` disarms).
+  neighbour (a host's `onEntered` selects, `onSelectedChanged` disarms).
 - Timing: 3000 ms is a designed value (:28), unmeasured against people.
 
 ### Findings
@@ -102,17 +99,15 @@ Defects (source-backed):
   `disarmed`. The signal comment at `:37-38` says `disarmed` means "armed and then abandoned", so
   this contradicts it (the one source conflict in the file). What a person sees: nothing visual,
   since the tile reverts in the same frame either way. A consumer that listens to `disarmed` reports
-  a confirmed removal as abandoned. `QuickActionCell.qml:51` also logs "disarmed" on every armed
-  flip, so this fix alone does not clear that log (that line is in qsm-desktop, not changed here). Fix: on the armed branch clear `state.armed` and
+  a confirmed removal as abandoned. Fix: on the armed branch clear `state.armed` and
   stop the timer without emitting, and keep `disarm()` as the emitting path.
 - D2, polish, **fixed (source-reviewed, load-checked)**, `ArmedAction.qml:31-34`. `confirmLabel` is never read: `ArmedAction`'s
   `confirmLabel` is set only in `workbench/units/ArmedAction.qml:22`, which shows the hard-coded
-  text at `:37` instead. The desktop sets the same wording on the tile (`SessionSurface.qml:159`), not
-  on the arm. What a person sees: nothing; changing the wording in one place changes nothing. Fix:
+  text at `:37` instead. A host sets that wording on the tile, not on the arm. What a person sees: nothing; changing the wording in one place changes nothing. Fix:
   delete the property and its comment, and let the unit and consumers own their wording.
 - D3, polish, **fixed (source-reviewed, load-checked)**, `ArmedAction.qml:51-53`. The comment says "Leaving the control abandons the intent",
   as if the component did it. It has no pointer and must not manage dismissal (AGENTS.md). Consumers
-  do it (`QuickActionCell.qml:42-47`, `SessionSurface.qml:175`). A host written from this comment
+  do it. A host written from this comment
   without exit wiring keeps an armed tile until the 3000 ms timer. Fix: say the host calls `disarm()`
   on leave.
 - D4, minor, **fixed (source-reviewed, load-checked)**, `ArmedAction.qml:25`. Changing `destructive` to false while armed does not disarm. The
@@ -122,10 +117,8 @@ Defects (source-backed):
 
 Proposals (design, not defects):
 
-- P1: Escape in `SessionSurface` closes the modal and leaves the armed tile armed until its timer
-  runs out. Reopening resets selection, which disarms it, so the effect is nil today. A `guard.disarm()`
-  before `closeModal()` would make the intent end where the user ended the surface. Desktop change,
-  not made here.
+- P1: a host that closes its surface on Escape leaves an armed tile armed until its timer runs out.
+  Calling `disarm()` before closing would end the intent where the user ended the surface. Host change.
 - P2: The unit cannot show leave-to-disarm because it has no pointer route. Give it an exit hook in
   the harness, not in the component.
 
@@ -137,11 +130,9 @@ Hypotheses (unmeasured):
   second click, so each click re-arms. No caller sets 0 and nothing validates it. Unrun.
 - H2: a 3000 ms window the user cannot extend may meet WCAG 2.2.1 (Timing Adjustable, A). Whether the
   window counts as a time limit is for a11y-conformance; not decided here.
-- H3: the armed accessible name is the bare "Confirm" (desktop wording at `SessionSurface.qml:159`),
-  so a screen reader hears no object name. This is `ActionTile`'s naming, not this component's; a11y-audit.
+- H3: a host that names the armed tile with the bare "Confirm" gives a screen reader no object name. This is `ActionTile`'s naming, not this component's; a11y-audit.
 - H4: the armed change is not announced: no live region exists in the source. a11y-audit.
 
-Not examined: any runtime route, the armed tile's contrast, reduced motion, the `RailEntry` keyboard
-path, the `Rollout` corridor, the desktop's own tile sizes, and a `fired` handler that throws. No
+Not examined: any runtime route, the armed tile's contrast, reduced motion, the `Rollout` corridor, a host's own tile sizes, and a `fired` handler that throws. No
 caelestia sibling exists: a grep of `~/Clonned/caelestia/repo/components/controls/` for armed or
 confirm found nothing.

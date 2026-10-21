@@ -42,7 +42,7 @@ The component finishes one task: a small glyph beside text names the kind of a r
 
 ### Consumers
 
-About 25 call sites in the library's own components and 17 files in `qsm-desktop` `shell/` use the component. The 41 literal `icon:` names in `qsm-desktop` each resolve to a file in `qml/QsmShell/assets/icons/` today. Names that arrive as bindings (for example `root.icon`, `root.badgeIcon`, `root.thumbIcon`, `root.iconName`) were not checked.
+About 25 call sites in the library's own components use the component. Names that arrive as bindings (for example `root.icon`, `root.badgeIcon`, `root.thumbIcon`, `root.iconName`) were not checked.
 
 ### Visual roles and palette pairs
 
@@ -55,8 +55,8 @@ All 94 shipped assets draw strokes in `#ffffff` (92 stroke attributes, 4 white f
 | `accent` on `band` | 8.87 | same |
 | `accent` on selected layer (`accent` at 0.12 over `band`) | 6.84 | `opacity.selected` 0.12 |
 | `danger` on `band` | 8.84 | same |
-| `text` on `surface` | 9.38 | same |
-| `accent` on `surface` | 6.07 | same |
+| `text` on `surface` | 10.53 | same |
+| `accent` on `surface` | 6.82 | same |
 | disabled `text` on `band` (`Style.disabled`, k 0.35) | 2.90 | `opacity.disabled` 0.35 |
 
 The disabled pair is an inactive control, which WCAG 1.4.3 exempts from the text threshold. Whether a disabled glyph still needs 1.4.11's 3:1 is a11y-audit's call, not this record's.
@@ -71,7 +71,7 @@ None in the file. The asynchronous load is not animated, so reduced motion has n
 - Painted box: `size` by `size` (xs 12, sm 16, md 20, lg 24 px).
 - Ink inside the box (assumption, not measured): the shipped assets are lucide glyphs (the header of `activity.svg` names lucide-static, ISC; other files were not opened) on a 24-unit grid with a 2-unit stroke. If the keyline padding is 2 units, the ink sits about 1 unit (4.2 % of the box) inside each edge.
 - D, W, ID: not applicable to the glyph, because no pointer task targets it. The reference case, if the glyph alone were a target at distance D = 100 px (illustrative assumption): width model W = box edge, ID = log2(1 + D / W). At xs, W = 12, ID = 3.22 bits, landing tolerance ±6 px (half-width, effective-width assumption). At lg, W = 24, ID = 2.37 bits, tolerance ±12 px.
-- Target floor: a glyph alone is below the 24 × 24 px desktop floor at xs, sm and md. AGENTS.md gives the owning control the minimum: its state layer is at least `Style.iconLg` each way, centred. The parent must provide that floor.
+- Target floor: a glyph alone is below the 24 × 24 px pointer floor at xs, sm and md. AGENTS.md gives the owning control the minimum: its state layer is at least `Style.iconLg` each way, centred. The parent must provide that floor.
 - Label origins and weights: not applicable; the component has no label.
 
 ### Findings
@@ -87,7 +87,7 @@ None in the file. The asynchronous load is not animated, so reduced motion has n
 - P2: `size` is `property int` (`SvgIcon.qml:21`). `Checkbox.qml:116` passes `_box * _markRatio`, a fraction, which the int property converts silently. The 3:4 ratio in `Checkbox.qml:108-110` is therefore approximate.
 - P3: the stroke grows with size (size / 12 px). Two of the four steps (sm, md) are non-integer at scale 1, which is the stroke-smear case in ui-audit pass 3. Measure at zoom before any change (H1).
 - P4: stroke weight has no token. A fixed weight per scale is a design choice, not a fix.
-- P5: each glyph adds one MultiEffect node. Desktop lists (ResultRow, ListRow, RailAppList) multiply it per row. Cost is unmeasured.
+- P5: each glyph adds one MultiEffect node. Long lists of rows multiply it per row. Cost is unmeasured.
 
 **Source conflicts (owner ruling)**
 

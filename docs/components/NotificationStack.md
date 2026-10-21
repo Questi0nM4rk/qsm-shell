@@ -5,7 +5,7 @@ The ephemeral notification window lets the person read a new result and, when it
 states: input is newest-first, rendered oldest-first from top to bottom; active cards, overflow-evicting snapshots, retained last body and fully empty. Retiring rows are paint, not input targets; replacement refreshes default availability in place.
 actions: cards report dismiss, hover and `primaryTriggered(entry)` upward; the stack forwards `primaryActionRequested(entry)` only for an active eligible row. It never resolves an action ID or applies a consequence.
 pointer: cards keep one `StateLayer` body-tap route, swipe and middle-click arbitration; expanded vertical body scrolling does not also trigger vertical expansion, horizontal dismissal remains available, and the stack claims no events or unconsumed wheel input.
-keyboard: cards expose a primary tab stop only while host availability and row input eligibility are both true, and only a focus-capable host can deliver it. Production `EdgeScene` assigns `WlrKeyboardFocus.None` unless a listed modal is active, so the passive popup has no native keyboard route and arrival does not steal focus; the notification-center shortcut remains a separate route. Native popup key reachability is unverified and not claimed.
+keyboard: cards expose a primary tab stop only while host availability and row input eligibility are both true, and only a focus-capable host can deliver it. A host that gives the popup window no keyboard focus leaves it without a native keyboard route, and arrival does not steal focus. Native popup key reachability is unverified and not claimed.
 screen reader: available primary cards expose a named button; unavailable cards remain readable text. Stack adds no role beyond ordering.
 size: width follows the column and height follows actual empty/preview/expanded row sizes minus the evicting share; `rowSpacing` (default zero) is the column's gap and is added once per departing row to the eviction shift, so survivors land where the shift stops. The stack forwards `bodied` and `bodyRadius` to every card (and drops the divider when bodied) without acquiring a styling policy. A new row's gap appears with its first frame; the host's body does not animate its size.
 tokens: notificationWidth, notificationPreviewHeight, notificationBodyViewportHeight and the reveal Motion set; cards bring their own roles.
@@ -26,13 +26,13 @@ input at retract start while preserving the current presentation.
 
 | layer | decision | why / source | token or pattern | owner-review evidence, when prepared |
 | --- | --- | --- | --- | --- |
-| posture | Transient feedback for the desktop owner; no focus steal or task modal | Existing popup purpose, desktop spec 04 | Non-modal notification window | Arrival leaves the current application usable |
+| posture | Transient feedback; no focus steal or task modal | Existing popup purpose | Non-modal notification window | Arrival leaves the current application usable |
 | task | Read one notification and optionally activate its current default, then dismiss it | Same-ID updates are new content, not new notifications | Stable notification identity | Replacement updates content/action availability in place, without a new entrance |
 | ia | Keep the host's newest-first window; render oldest above newest | Existing stream choreography | Keyed rows by `notificationId` | Arrival at the cap moves the oldest out above |
 | interaction | Separate source lifetime, display record and row eligibility; forward primary intent only from an eligible live row | Service destroys sources; Card reports intent without protocol policy | Owned value snapshot + current-ID intent routing | Retired row cannot emit; replacement uses its latest availability; production current-default callback resolves through the lexical stack ID |
 | hierarchy | Preserve urgency, expansion and readable message content; forward row material (`bodied`, `bodyRadius`) and gap without deciding them | Card anatomy plus caller-owned presentation | `NotificationCard`, `showActions: false`, `bodied`, gap | Replacement keeps the same expanded card; gaps do not create extra removal motion |
 | token | Use fixed preview natural size, a bounded expanded body viewport, and existing movement tiers | Headline-only 36px composition cannot hold the requested preview | `Style.notificationWidth`, `Style.notificationPreviewHeight`, `Style.notificationBodyViewportHeight`, `Motion.revealSmall` | Short/long messages do not change collapsed size; stack growth remains bounded |
-| responsive | Keep local row bounds distinct from mapped scene/input bounds | `cardGeometry()` → desktop wrapper → ShellBorder | Local clipped geometry + host mapping | A clipped/retiring row opens no fullscreen input hole |
+| responsive | Keep local row bounds distinct from mapped scene/input bounds | `cardGeometry()` → host wrapper → ShellBorder | Local clipped geometry + host mapping | A clipped/retiring row opens no fullscreen input hole |
 | state | Last removal freezes content and actual body dimensions until host retreat ends | Shared terminal-handoff law in `docs/12-mechanism.md` | Explicit host retention, neutral hidden endpoint | Expanded last card retracts intact; fully hidden releases its record |
 | polish | Same-ID updates preserve delegate state; removal cannot replay entrance | Snapshot changes must not recreate the presentation | Keyed model reconciliation | No repeat micro-pop, expansion reset or post-close recovery |
 
@@ -49,9 +49,9 @@ input at retract start while preserving the current presentation.
   state; ordering still follows the host's current window.
   Evicting rows keep their departure snapshot. A returning ID reclaims its row;
   a stale animation completion must not delete that newly active row.
-- **Desktop publication:** expose a reactive, plain presentation record from each
-  `NotificationEntry` and a popup-record projection from `NotificationService`.
-  Publish coherent content after each `sync()`/`post()` update, and pause changes,
+- **Host publication:** expose a reactive, plain presentation record from each
+  entry and a popup-record projection from the host's service.
+  Publish coherent content after each update, and pause changes,
   even when the live entry array stays unchanged. Keep `live` objects for service
   ownership and current-ID operations;
   this projection is derived data, not a second notification store.
@@ -75,7 +75,7 @@ input at retract start while preserving the current presentation.
   mapping, border registration and compositor masks; the stack sees no screen.
 
 Rendered path: service record → keyed row/Card → stack clip → Rollout full body
-and exposed viewport → ShellBorder registry/shader → desktop input region →
+and exposed viewport → ShellBorder registry/shader → host input region →
 host-hidden release. Card and stack coordinates are local; the Rollout maps its
 selected paint contour into the host for registration. The attached notification
 wrapper uses expansion without changing the stack's own row motion or lifetime.
@@ -87,13 +87,12 @@ last-row retention follows the selected host's visible/fading lifetime.
 The previously reviewed capsule composition predates the resting body preview
 and default-action affordance. Its visual acceptance does not cover this revised
 composition; owner review remains pending.
-One animated row extent drives the column, stack viewport and body: the desktop wrapper disables the
+One animated row extent drives the column, stack viewport and body: the host wrapper disables the
 Rollout's additional size morph. Expanded text cannot precede its painted body.
 Overflow removes the departing row's actual height progressively with the shift,
 not a collapsed-height estimate removed at arrival. Survivors are laid out before
 the completed shift is cleared. The shader formulas and origin-wall endpoint
-remain unchanged. Current desktop runtime evidence is recorded in spec 04; it
-does not establish visual acceptance.
+remain unchanged. Runtime evidence does not establish visual acceptance.
 
 ### One review example
 
@@ -109,22 +108,9 @@ geometry through the existing backend contract, not a new harness API.
 The unit uses a genuine `Rollout`, `ShellBorder` and `ScenePointer`; its
 scenario controls mutate the host model and answer dismiss/hover intent. Native
 targets expose the actual cards for replacement, hover, swipe and dismissal.
-Expiry remains a host removal here; timer policy is checked in the desktop provider.
+Expiry remains a host removal here; timer policy is the host's.
 Focused
 QML integration coverage lives in `tests/units/tst_NotificationStack.qml`.
-
-The desktop now publishes plain records from its shared `NotificationStore` and
-hosts this production stack through `NotificationPopupStack`. Its
-`NotificationService.notify(summary, options)` API and the store remain desktop
-policy; notification creation and importance stay outside this library. The
-isolated desktop story instantiates the same store and production wrapper, with
-focused flows for replacement, expiry, overflow, retention, fullscreen masks
-and reset cancellation. Its expanded-dismiss readiness check compares actual
-card, stack, rollout and registry geometry rather than only the card's local
-expansion flag. Production compositor-fullscreen flows exercised hover/expand,
-same-ID replacement, middle-dismiss, hover expiry pause/resume, keyboard and
-outside-click delivery with popup containment. The native content/fade capture
-averaged about 25 fps, sufficient for this simple motion; it is not 60 fps.
 
 References: Caelestia `services/NotifData.qml` (`lock`/`unlock`/`close`) and
 `modules/notifications/Content.qml` (`NotifWrapper`, delayed removal and input
@@ -137,11 +123,9 @@ Source conflicts: live-reference rendering violated this stack's existing
 snapshot promise; popup input used service liveness instead of rendered
 eligibility; the expanded-dismiss flow treated a settled card as proof that its
 Rollout body and registered silhouette were settled too. The component addresses
-the first two; the desktop flow observes the full geometry handoff. No new
+the first two; a host flow observes the full geometry handoff. No new
 visual direction, type scale, responsive layout or tokens are proposed; those
-design steps retain the current component decisions. Existing production runtime
-flows cover earlier desktop lifetime and fullscreen input paths; they do not
-verify this revised content/action composition. Owner review remains pending.
+design steps retain the current component decisions. Owner review remains pending.
 expected: same-ID replacement keeps one card current; destroyed sources leave no
 render references; last content and dimensions survive retreat, then release;
 retiring rows accept no input or hover retention; removing a hidden presentation
@@ -150,7 +134,7 @@ not source review alone.
 
 ## UIX audit
 
-Evidence here is source-reviewed only. Channels used: the source files named below and the desktop host that configures the stack. Not used: captures, live geometry, pointer or key driving, and any Workbench session, which the audit brief forbids. Themes: `tokens/deep-night.json` is the only theme file, so light and high-contrast parity is not examined. The card-level defects sit in `NotificationCard.qml` because the stack renders only rows; they are listed here because they decide what this component shows.
+Evidence here is source-reviewed only. Channels used: the source files named below. Not used: captures, live geometry, pointer or key driving, and any Workbench session, which the audit brief forbids. Themes: `tokens/deep-night.json` is the only theme file, so light and high-contrast parity is not examined. The card-level defects sit in `NotificationCard.qml` because the stack renders only rows; they are listed here because they decide what this component shows.
 
 ### Purpose and consequence
 
@@ -194,13 +178,13 @@ The stack adds no role beyond ordering, oldest first from top to bottom.
 | four lines | 80 | 128 | `:470-472` |
 | five or more lines | 80 | 144, body scrolls in a 96 px viewport | `:470-472` |
 
-Derived values: line height 20 px, because `Style.rhythm(12 x 1.55 = 18.6)` rounds to the 4 px grid (`Style.qml`, `rhythm`). Text is 12 px (`type.sm`). Card width is 380 (`geometry.notificationWidth`). The library's default row gap is 0; the desktop host sets 8 px (`rowSpacing: Theme.space2`). An empty stack is 0 px tall. Long summaries are not elided in the card; `Prose` elision is not examined.
+Derived values: line height 20 px, because `Style.rhythm(12 x 1.55 = 18.6)` rounds to the 4 px grid (`Style.qml`, `rhythm`). Text is 12 px (`type.sm`). Card width is 380 (`geometry.notificationWidth`). The library's default row gap is 0; a host sets its own (`rowSpacing`). An empty stack is 0 px tall. Long summaries are not elided in the card; `Prose` elision is not examined.
 
 ### Visual roles and palette pairs (source values, not measured)
 
 | element | role | token value | on |
 | --- | --- | --- | --- |
-| card body (bodied) | surface | `#42394c` | band `#271e30` |
+| card body (bodied) | surface | `#3b3145` | band `#271e30` |
 | title | text | `#f0ecf5` | surface |
 | body, metadata, app name | textMuted | `#c5bad1` | surface |
 | normal glyph | info | `#89cff1` | surface |
@@ -243,7 +227,7 @@ Read against review-animations, from source: exit runs 250 ms against an entry o
 
 - Landing tolerance: plus or minus W/2 vertically, that is 18, 34 and 40 px for the three rest heights, before the pointer leaves the card.
 - Neighbour interference: expanding a row with a body grows it by delta within 180 ms and moves every row below by delta. Delta is 0, 8, 28, 48 and 64 px for one through five or more lines (D5). The Column move transition is off while heights animate (`NotificationStack.qml:399-401`), so rows below follow the growth frame by frame: a moving target.
-- Corridor and timing: this component has no trigger. The Rollout hitbox and corridor belong to `Rollout.qml` and were not measured. Hover expansion starts without delay. The desktop host pauses expiry on hover (`NotificationPopupStack.qml`, `onHoverChanged`).
+- Corridor and timing: this component has no trigger. The Rollout hitbox and corridor belong to `Rollout.qml` and were not measured. Hover expansion starts without delay. A host pauses expiry on hover.
 
 ### Findings
 
@@ -266,7 +250,7 @@ Hypotheses (unmeasured, need channel 1 or 2):
 
 - H1: The card's 12 px shadow may be clipped at the layer bounds. `NotificationCard.qml:303-311` sets no layer padding, and the wider viewport (`NotificationStack.qml:379-391`) helps only if the layer paints beyond its item.
 - H2: The top-flush clip cuts the side shadow at the stack's top edge, a hard horizontal line 12 px wide at each top corner (`NotificationStack.qml:379-383`).
-- H3: The 12 px shadow reach is larger than the host's 8 px inner padding (`NotificationPopupStack.qml`, `padding: Theme.space2`, comment at line 138), so up to 4 px of shadow may sit outside the painted body on the outer sides.
+- H3: The 12 px shadow reach is larger than an 8 px host inner padding, so up to 4 px of shadow may sit outside the painted body on the outer sides.
 - H4: A pointer crossing the 8 px dead zone during a 180 ms collapse may land on a different row.
 - H5: `evictHeight` (`NotificationStack.qml:112-120`) reads cards through `itemAt` inside a binding, so its updates depend on the cards it tracked last. A stale value is possible; not reproduced.
 - H6: The unread dot (`NotificationCard.qml:394-401`) has a name but no role; it may expose an unnamed node or none. Not tested.
@@ -283,7 +267,7 @@ Accessibility conformance (a11y-audit method, source only; criteria from WCAG 2.
 | 1.4.13 content on hover | pass (source) | expanded body stays while hovered (`NotificationCard.qml:580-585`) and leaves when the pointer leaves | card |
 | 2.1.1 keyboard | fail (source) | dismissal and the expanded body have no key route (D2; `:616-624`, `:626-630`) | card |
 | 2.1.2 no keyboard trap | pass (source) | no focus scope | stack |
-| 2.2.1 timing adjustable | not tested | expiry is host policy; the desktop hover pause was not read in full | host |
+| 2.2.1 timing adjustable | not tested | expiry is host policy; the host's hover pause was not read in full | host |
 | 2.4.3 focus order | pass (source) | tab stops follow column order, top to bottom | stack |
 | 2.4.7 focus visible | fail (source) | no ring rendered (D1) | card |
 | 2.4.11 focus not obscured (AA, WCAG 2.2) | not tested | needs live geometry | host |

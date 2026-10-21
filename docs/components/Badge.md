@@ -73,7 +73,7 @@ The dot on band is 8.6 to 9.4 against the layer. On overlay the lowest, info, is
 
 ### Pointer geometry
 
-Not applicable. The component has no input shape, so there is no D, no W and no ID to state. The painted body is 16 px tall and 16 to 28 px wide. A host that makes a badge clickable must add its own input area. The desktop floor is 24 by 24 px (WCAG 2.5.8, as used in ux-audit check 3), and a 16 px badge alone misses it. Fitts ID = log2(1 + D/W) needs D from a real host layout; the width model would be W as the smaller side of the input (assumed). No value is claimed here. Label origins and weights: not applicable.
+Not applicable. The component has no input shape, so there is no D, no W and no ID to state. The painted body is 16 px tall and 16 to 28 px wide. A host that makes a badge clickable must add its own input area. The pointer floor is 24 by 24 px (WCAG 2.5.8, as used in ux-audit check 3), and a 16 px badge alone misses it. Fitts ID = log2(1 + D/W) needs D from a real host layout; the width model would be W as the smaller side of the input (assumed). No value is claimed here. Label origins and weights: not applicable.
 
 ### Findings
 
@@ -90,10 +90,10 @@ Source-backed defects:
 
 Redesign proposals:
 
-- The tinted weight has no caller in the desktop. `shell/modules/bar/Rail.qml` (Badge at line 70), `shell/modules/notifications/NotificationBell.qml` (line 128) and `shell/modules/bar/WorkspaceStrip.qml` (line 131) all pass `filled: true` with tone accent. The owner can decide whether the tinted default should exist at all; if it stays, BADGE-01 is its fix.
+- The tinted weight is the default, and a host that wants a count noticed passes `filled: true`. The owner can decide whether the tinted default should exist at all; if it stays, BADGE-01 is its fix.
 - The `99+` cap is written twice: in the component (`Badge.qml:51`) and in `Rail.qml`'s text binding. One owner should remain, most naturally the component, with consumers passing the number.
 - Radius is `height / 2` (`Badge.qml:60`). The token set already has `radius.pill` 999 (`tokens/deep-night.json:35`). Using it removes a derived value from the component.
-- Keep the fixed `badgeWidth` chip for counts. The desktop bell comment (`NotificationBell.qml`, above line 128) shows the chip is already a known pain at 16 px glyphs, so any change there needs runtime judgement.
+- Keep the fixed `badgeWidth` chip for counts. The chip is a known pain beside 16 px glyphs, so any change there needs runtime judgement.
 
 Source conflicts:
 
@@ -109,6 +109,6 @@ Hypotheses (not measured):
 - H4: `Prose` text may be reported as static text by the platform tree without any `Accessible.*` on Badge. Unknown until read by a11y-audit.
 - H5: contrast over layers other than band, surface and overlay (for example the primary or a 0.4 lifted hover per the surface ladder) is not computed.
 
-Not examined: live window, captures, glyph rendering (offscreen capture does not rasterise `SvgIcon`; the `check` glyph exists at `qml/QsmShell/assets/icons/check.svg`), accessibility tree, reduced-motion runtime, text scaling, colour-vision simulation, desktop surfaces in place. Caelestia has no badge sibling in `~/Clonned/caelestia/repo/components/controls/`, so no comparison was made.
+Not examined: live window, captures, glyph rendering (offscreen capture does not rasterise `SvgIcon`; the `check` glyph exists at `qml/QsmShell/assets/icons/check.svg`), accessibility tree, reduced-motion runtime, text scaling, colour-vision simulation, surfaces in place. Caelestia has no badge sibling in `~/Clonned/caelestia/repo/components/controls/`, so no comparison was made.
 
 Evidence: source-reviewed. Runtime-exercised: none. Owner-accepted: none.

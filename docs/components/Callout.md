@@ -17,7 +17,7 @@ Fix status: C-01, C-02, C-03 and C-05 are fixed (source-reviewed, qmllint-checke
 
 Evidence: source-reviewed only. No Workbench session, capture, item-tree dump or accessibility tree was taken, so every geometry value below is derived from the source and `tokens/deep-night.json` and marked *derived*. Runtime-exercised: none. Owner-accepted: none.
 
-Read: `Callout.qml`, `Card.qml`, `Prose.qml`, `SvgIcon.qml`, `Capsule.qml` (lines 25-85 and 160-185), `workbench/units/Callout.qml`, the `callout` story in `workbench/stories.json`, `tokens/deep-night.json`. Consumers: none; a search of the qsm-desktop checkout finds no `Callout` reference.
+Read: `Callout.qml`, `Card.qml`, `Prose.qml`, `SvgIcon.qml`, `Capsule.qml` (lines 25-85 and 160-185), `workbench/units/Callout.qml`, the `callout` story in `workbench/stories.json`, `tokens/deep-night.json`. Consumers: none.
 
 ### Purpose and consequence
 
@@ -46,7 +46,7 @@ A persistent inline message for a condition of the surface it sits in that is st
 
 ### Visual roles and palette pairs
 
-Computed from token values, not sampled. Body = tone at 0.1 over `surface`, then the card at `surfaceOpacity` 0.9 (`opacity.surface`) over `band`. Backdrop assumed to be `band` (`workbench/units/Callout.qml:21`).
+Computed from token values, not sampled. Body = tone at 0.1 over `surface`, painted opaque. Backdrop assumed to be `band` (`workbench/units/Callout.qml:21`).
 
 | pair | ratio | expected | 
 | --- | --- | --- |
@@ -65,7 +65,7 @@ None. `Callout.qml`, `Card.qml`, `Prose.qml` and `SvgIcon.qml` declare no animat
 
 ### Pointer geometry (modelled, not measured)
 
-- Input shape: the card has none. Retry's input is its painted capsule, 32 px high (`Capsule.qml:73`, `geometry.controlHeightSm` 32). Width is `contentInset` 12 on each side plus the label. The label width is not measured; 57 px for "Retry" is an assumption, so the capsule is 57 px wide.
+- Input shape: the card has none. Retry's input is its painted capsule, 32 px high (`Capsule.qml:73`, Control `sm` 32). Width is `contentInset` 12 on each side plus the label. The label width is not measured; 57 px for "Retry" is an assumption, so the capsule is 57 px wide.
 - Origin assumption: the pointer rests at the card's centre. The card is 380 x 119 px (*derived*: title 14 + gap 4 + body 37 (two lines at 12 x 1.55, assumed wrap) + gap 4 + action 36 (4 margin + 32) + padding 24 = 119), centred in the unit's 380 x 380 frame, so its centre is (190, 190).
 - Target centre: (76, 221.5) in the same frame (*derived*).
 - D = 118 px.
@@ -138,7 +138,6 @@ No defect in: spacing (all gaps from tokens, `Callout.qml:59`, `:85-89`), radius
 - P1: expose severity to assistive technology, for example an `Accessible.name` built from tone and title. Shape of the change is for a11y-audit.
 - P2: name recovery actions as verb plus object ("Retry connecting the dock"). A bare "Retry" repeats across callouts.
 - P3: three channels (glyph, rule, 10 percent hue) say the same thing. Consider dropping one to keep the quiet direction (hierarchy from whitespace and the surface ladder; accent reserved for focus and primary action).
-- P4: make the body opaque (`surfaceOpacity` 1) for a message whose legibility matters. Removes H-03.
 - P5: a danger message with no action is a dead end. Decide whether the record allows that.
 - P6: unit coverage: add a long title, a long body and a narrow width to the copy controls (`workbench/units/Callout.qml:52-56`), per AGENTS.md "long where valid".
 
@@ -148,7 +147,7 @@ No defect in: spacing (all gaps from tokens, `Callout.qml:59`, `:85-89`), radius
 - Themes: `deep-night` only. The source has no light or high-contrast token set, so theme parity was not examined.
 - Long copy: no unit option; wrap beyond two lines and title elision were not run.
 - Retry key path, focus ring, press, hover: inherited from Capsule and not driven here.
-- Consumers: no use in qsm-desktop. Real placement, backdrop and width were not examined.
+- Consumers: none. Real placement, backdrop and width were not examined.
 - 200 percent text, narrow reflow: not examined.
 - Motion: none exists in the component; `review-animations` not run.
 - Passes 4 (sampled colour) and 9 (press state) of ui-audit: not run.

@@ -50,7 +50,7 @@ staying open after the pointer has gone.
 ### Sizes, empty, long, failure, cancellation
 
 - Size: content size, `implicitWidth` and `implicitHeight` from `contentHost.childrenRect`
-  (Popover.qml:186-187). Unit: anchor 64 by 32 px (space6 times 2, controlHeightSm 32), panel Card 190 px
+  (Popover.qml:186-187). Unit: anchor 64 by 32 px (space6 times 2, Control `sm` 32), panel Card 190 px
   wide (controlWidth 380 halved).
 - Empty: zero-size content gives a zero-size popover with no guard (H3).
 - Long: no maximum. When the panel is taller than the bounds, the clamp pins its top to the bounds
@@ -186,6 +186,5 @@ Needs human trial (a live hand, not run):
 - Touch: a press trigger opens and closes by tap.
 
 Not examined: runtime behaviour of any route; captures; the wheel path at runtime; outside-click
-dismissal, which is the surface's policy; qsm-desktop uses none (no Popover reference in the repo, and
-BACKLOG lists it as having no consumer); the design-source tooltip delay (ui-design was not loaded for
+dismissal, which is the surface's policy; the design-source tooltip delay (ui-design was not loaded for
 this pass); accessibility criteria (a11y-audit was not run for this surface).

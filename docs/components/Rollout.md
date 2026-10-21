@@ -15,19 +15,14 @@ follow contour, radius, weld and transform changes, not just item dimensions.
 The shader and its compiled artifact are unchanged.
 
 Source implementation: expansion is the only attached geometry, with no `borderExtrusion`
-selector. Coordinated callers are OSD, all rail entries and nested details,
-panel/session, ModalHost and notifications. Detached-only motion remains separate;
-OSD still uses DataCapsule in fullscreen. Rail retains its source through outgoing
-child paint, and matched detail sizes follow the full parent body. Rollout owns
-target-size morph; already animated extents opt out. No service policy changes.
+selector. Detached-only motion remains separate. A rollout retains its source through
+outgoing child paint, and matched detail sizes follow the full parent body. Rollout
+owns target-size morph; already animated extents opt out. No service policy changes.
 
-The owner accepts the rewritten attached production surfaces' appearance and smooth
-motion across the desktop, not only Network. This is visual/motion acceptance;
-service, keyboard and input-mask correctness are not inferred from it.
-The sound-settings example remains the selected library review item. Production
-desktop startup is owner-requested; its imports resolve directly to this shell.
-Startup alone is not interaction verification; generic library variants remain
-separate from the desktop surfaces the owner reviewed.
+Appearance and smooth motion of the attached surfaces are accepted; service,
+keyboard and input-mask correctness are not inferred from that. The sound-settings
+example remains the selected library review item. Startup alone is not interaction
+verification.
 
 ## Contract
 
@@ -86,7 +81,7 @@ separate from the desktop surfaces the owner reviewed.
 
 Current review task: temporarily mute notification sounds, see the immediate
 on/off verdict, and optionally keep alarms audible in a nested detail. The unit
-owns only these example settings; it connects no desktop service. A compact/wide
+owns only these example settings; it connects no service. A compact/wide
 composition changes requested width, never text size or reveal scaling. Empty
 and long copy elides inside the same slot. Content actions disable during close;
 native Switch pointer, Space/Return, focus and accessible names remain intact.
@@ -109,7 +104,7 @@ purposeful motion govern the example; existing tokens suffice.
 | layer | decision | why | token or pattern | verified by |
 | --- | --- | --- | --- | --- |
 | posture / task | An auxiliary shell surface exposes a task and returns attention to the application | Owner selected the OSD's quieter growing contour | host intent; Rollout | one live owner-selected task |
-| structure / interaction | One source, full-size content and host-owned consequences | A generic container must not acquire desktop policy | frame/parent source; shared keep-open | source placement, traversal, dismissal and content actions |
+| structure / interaction | One source, full-size content and host-owned consequences | A generic container must not acquire consumer policy | frame/parent source; shared keep-open | source placement, traversal, dismissal and content actions |
 | hierarchy / system | Source and expansion are one fill; no Card backdrop or independent rim | A travelling panel reads as another object | ShellBorder merged SDF | contour and stationary-content comparison |
 | responsive | One reveal axis on all sides, settled source extent for nesting | Animated apertures must not become another item's origin | host coordinates; anchor/nudge | selected edge, source resize and nested seam review |
 | states / access | Native content states remain; retired input withdraws before paint | A disappearing picture is not still an action target | near-settled input; retained identity | focus, disable/close, interruption and reset |
@@ -184,7 +179,7 @@ Routes, as the source gives them:
 ### Sizes, empty and long content, failure, cancellation
 
 - Example compact body: 316 x 184 px (`controlWidth` 380 minus 2 x `space6` 32; height is
-  3 x `controlHeight` 40 plus 2 x 32). Wide body: 380 x 184 (unit 70-71). Child sizes are the
+  3 x Control `md` 40 plus 2 x 32). Wide body: 380 x 184 (unit 70-71). Child sizes are the
   unit's arithmetic, not Rollout's.
 - Long content does not grow the component: implicit size is body times progress (329-330) and
   `clip: true` (333) cuts it. Scrolling or eliding is the content's job. The unit's long copy wraps
@@ -216,21 +211,21 @@ is outside the ID.
 
 Measured from tokens and code:
 
-- Trigger input: the band item, 40 x 16 px (unit 47-53, 67; `ShellBorder.edge` defaults to
-  `frameThickness` 16). Rollout does not paint it.
+- Trigger input: the band item, 40 x 12 px (unit 47-53, 67; `ShellBorder.edge` defaults to
+  `frameThickness` 12). Rollout does not paint it.
 - Painted body when open: 316 x 184 px, centred on the trigger (placement 215-245, nudge 231).
 - Keep-open region with empty `hoverAreas`: trigger union viewport (110-113). It equals the painted
   silhouette: no halo.
-- Corridor from trigger to panel: trigger bottom at y = 16, body top at `edgeInsetV` = 16
+- Corridor from trigger to panel: trigger bottom at y = 12, body top at `edgeInsetV` = 12
   (52-53): gap 0 px, length 0 px.
 - Timing: open on entry at 0 ms; reveal 250 ms; close 180 ms after the pointer leaves the union
   (Tokens.qml 68).
-- Fitts, strict model: D = 532 px (origin to trigger centre), W = 16 px, so
-  ID = log2(1 + 532 / 16) = log2(34.25) = 5.10 bits.
+- Fitts, strict model: D = 532 px (origin to trigger centre), W = 12 px, so
+  ID = log2(1 + 532 / 12) = log2(45.33) = 5.50 bits.
 - Edge overshoot: the pointer stops at the screen edge, so the far side of W is unbounded. The
-  5.10 bits is an upper bound, not a time. Aim tolerance across the 40 px width is +/-20 px and
+  5.50 bits is an upper bound, not a time. Aim tolerance across the 40 px width is +/-20 px and
   is not in the ID.
-- Landing tolerance: 16 px depth, 40 px width, zero halo, then 180 ms of grace.
+- Landing tolerance: 12 px depth, 40 px width, zero halo, then 180 ms of grace.
 - Child (alarms): no pointer trigger. It opens by click on the "Alarm settings" Capsule (unit 109-120),
   so its geometry belongs to Capsule's record. Not examined here.
 
@@ -242,7 +237,7 @@ Defects (source-backed):
   `onDestruction` address only the current `host` and `rolloutId`. No handler covers a change of
   either (547-561). A person sees a stale silhouette bump painted on the old frame and an input
   region still registered on the old host after a host or key change on a living instance. Severity
-  minor: the consumer sites read (EdgeScene 877, ModalHost 64, unit 56-58) do not change host or key.
+  minor: the sites read (unit 56-58) do not change host or key.
   Fix: remember the last host and id, unregister them before registering when either changes, and
   do the same in `onDestruction`. Shared: no.
 - **D2, content takes input before the aperture settles. Fixed (source-reviewed, load-checked), not owner-accepted.**
@@ -262,7 +257,7 @@ Redesign proposals (owner or review decisions, not defects):
 - **P1, keep-open halo.** The default keep-open region is the painted silhouette (110-113), so the
   180 ms grace is the only forgiveness. A pointer that slips 1 px off the body and returns after
   181 ms closes it. Owner: a default inset corridor, or require `hoverAreas` from consumers.
-- **P2, trigger depth.** The example trigger is 40 x 16 px, below the 24 px desktop-pointer floor
+- **P2, trigger depth.** The example trigger is 40 x 12 px, below the 24 px pointer floor
   on the depth axis; the screen edge is the only mitigation, unmeasured. Consumer decision: extend
   the trigger into the band, or add a trigger inset property.
 - **P3, dead guard.** `onPointerChanged` (156-159) runs when the `pointer` reference changes, not
@@ -300,11 +295,10 @@ Hypotheses (unmeasured):
   this file. Criteria are `a11y-audit`'s.
 - **H3, morph cost.** `Behavior` on `bodyWidth` and `bodyHeight` (381-396) relayouts the slot on each
   frame of the 250 ms morph. Not measured.
-- **H4, Fitts model.** If the one-sided edge model is wrong, the 5.10-bit figure is wrong. Only a
+- **H4, Fitts model.** If the one-sided edge model is wrong, the 5.50-bit figure is wrong. Only a
   measured run settles it.
 
 Not examined: runtime and capture (no Workbench session, per instruction); live geometry; the
-trigger geometry of EdgeScene and ModalHost beyond their call sites; Capsule and Switch targets; the
-wheel routes of content; focus rings; palette pairs; reduced motion at runtime; 2x text scale. The
-desktop reads `contentCenterOffsetX/Y` (EdgeScene 893-923); that use is noted, not measured.
+trigger geometry of a host; Capsule and Switch targets; the
+wheel routes of content; focus rings; palette pairs; reduced motion at runtime; 2x text scale.
 Fullscreen capsules (`ShellBorder` 102-127) were read as source only.

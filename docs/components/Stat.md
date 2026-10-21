@@ -55,10 +55,10 @@ Visual roles and palette pairs, computed from tokens:
 | Ground | text 1:1 | textMuted | success | warning |
 | --- | --- | --- | --- | --- |
 | band `#271e30` | 13.71 | 8.61 | 9.41 | 9.13 |
-| surface `#42394c` | 9.38 | 5.89 | 6.44 | 6.25 |
-| overlay `#534a5e` | 7.18 | 4.51 | 4.93 | 4.78 |
+| surface `#3b3145` | 10.53 | 6.61 | 7.23 | 7.01 |
+| overlay `#4c4357` | 8.02 | 5.04 | 5.51 | 5.34 |
 
-Every text pair clears 4.5 on all three grounds, the overlay `textMuted` pair narrowly. The two trend
+Every text pair clears 4.5 on all three grounds. The two trend
 hues sit at 1.03:1 against each other, so their luminance gives no cue (stat-4). Roles: the value
 takes `display` or `hero`, the unit takes `reading` in muted colour (`Stat.qml` 48-54), the label
 takes `metadata` in muted colour (78-81).
@@ -132,8 +132,7 @@ Hypotheses (unmeasured, to check on a capture or a tree):
 Not examined: capture and zoom (none run, per the brief); live geometry (none); the accessibility tree
 and keyboard (a11y-audit owns these, and `Stat.qml` sets no `Accessible.*`); the light or high-contrast
 theme (only `tokens/deep-night.json` was read); every surface a host might place the Stat on, which
-only fixes its ground; motion (none exists). Desktop: no QML in `qsm-desktop` references `Stat`
-(a word search finds zero files). Sibling: caelestia's `components/controls/` has no stat or trend
+only fixes its ground; motion (none exists). Sibling: caelestia's `components/controls/` has no stat or trend
 component, so no comparison was possible.
 
 Proposals (taste, not defects):

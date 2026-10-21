@@ -43,7 +43,7 @@ not represent per-option availability. Sample labels and optional glyphs name
 one coherent choice; the owner accepts the fixture and interaction before the
 next type starts.
 
-The bar has `sm` (32), `md` (40), and `lg` (52) heights. One scale from
+The bar takes the Control presets: `xs` (24), `sm` (32), `md` (40) and `lg` (48). One scale from
 the bar height scales text, glyphs, spacing, and insets through the Style
 helpers; radius, focus gap, and borders do not scale. Rest, hover, pressed,
 focused, selected, and disabled states are explicit. Disabled roles are dimmed
@@ -77,7 +77,7 @@ a screen reader.
 ### Purpose and consequence
 
 Choose one of N visible options, by pointer or keyboard, and let the host act on the choice: a
-panel section switch (`PanelSurface.qml`) or a power profile (`BatteryPopoutContent.qml`). It is a
+panel section switch or a power profile. It is a
 glanceable selector; the thumb marks the current choice.
 
 ### Controls and states
@@ -133,21 +133,21 @@ Preset values use `s = barHeight / 40`, `pad = rhythm(8 s)`, `gap = rhythm(4 s)`
 - Empty: no options means an empty track with no thumb (`visible` needs `currentIndex >= 0`,
   line 165). Nothing says the group is empty.
 - Failure: a host that refuses a choice leaves the thumb on the clicked option (defect 3).
-- Badge: `Badge` is a fixed 16 px high and 10 px text (`Badge.qml` 53, 85). At sm it fills the
-  whole 16 px item (defect 5).
+- Badge: the chip is `rhythm(badgeHeight * s)` high (12, 16, 20 at sm, md, lg) with `Badge`'s fixed 10 px
+  text (defect 5).
 
 ### Visual roles and palette pairs (computed from tokens)
 
 | Pair | Ratio | Verdict |
 | --- | --- | --- |
-| muted label on track (`textMuted` on `surface`) | 5.89 | passes 4.5 |
-| hovered label on track (`text` on `surface`) | 9.38 | passes |
-| selected label on thumb (`accent` on accent 12 % over `surface`) | 4.73 | passes 4.5 at 12 px |
-| selected thumb against track | 1.29 | fails 3:1 for a state indicator (defect 7) |
+| muted label on track (`textMuted` on `surface`) | 6.61 | passes 4.5 |
+| hovered label on track (`text` on `surface`) | 10.53 | passes |
+| selected label on thumb (`accent` on accent 12 % over `surface`) | 5.25 | passes 4.5 at 12 px |
+| selected thumb against track | 1.30 | fails 3:1 for a state indicator (defect 6) |
 | selected label against unselected label (`accent` vs `textMuted`) | 1.03 | selection rests on the thumb |
-| focus ring (`accent`) against track | 6.07 | passes 3:1 |
-| neutral badge text on its tint | 4.09 | fails 4.5 at 10 px (defect 6) |
-| selected badge text on its tint | 3.43 | fails 4.5 at 10 px (defect 6) |
+| focus ring (`accent`) against track | 6.82 | passes 3:1 |
+| neutral badge text on its tint | 6.56 | passes 4.5 at 10 px |
+| selected badge text on its tint | 5.18 | passes 4.5 at 10 px |
 | disabled selected label on thumb | 1.21 | defect 2 |
 | disabled unselected label on track | 1.55 | inactive, exempt; see proposals |
 
@@ -188,8 +188,7 @@ Defects (source-reviewed, file and line cited):
    shared: false). `Segmented.qml` 124-130: `step()` returns false at an end without wrapping, but
    the handler still sets `event.accepted = true` and refocuses. Person sees: Tab on the last
    option does nothing, and focus never leaves the group. The workbench unit `panel-tabs` has no
-   exit; the desktop `PanelSurface.qml` exits only through Escape (its `FocusScope`) or Down, which
-   this library does not provide. Fix: when `step()` returns false at an end, leave the event
+   exit; a host leaves only through its own keys, which this library does not provide. Fix: when `step()` returns false at an end, leave the event
    unaccepted so focus moves on, or name one exit key in the contract. The owner decides which,
    since the contract asks for focus to stay in the group.
 2. **A selected, unavailable option loses its label in its own pill** (major, shared: false; fixed,
@@ -205,30 +204,26 @@ Defects (source-reviewed, file and line cited):
    the record's own line 6, shared: false; fixed, source-reviewed, load-checked: `select()` no
    longer writes `currentIndex`; the unit's `host: refuses` control reaches it). `Segmented.qml` 92-98: `select()` calls
    `setCurrentIndex(index)` before `selected(index)`. The comment at 83-91 says a host binding is
-   kept but not re-run, so a binding whose inputs did not change stays stale. Desktop
-   `BatteryPopoutContent.qml` 213-227 binds `currentIndex` to `profiles.indexOf(root.profile)` and
-   calls `setProfile` on `selected`. If the profile does not change, the binding never runs again,
+   kept but not re-run, so a binding whose inputs did not change stays stale. A host that
+   binds `currentIndex` to `profiles.indexOf(root.profile)` and calls `setProfile` on `selected`
+   hits it: if the profile does not change, the binding never runs again,
    and the thumb stays on the clicked profile while the old one remains active. Fix: remove the
    local write; the host's answer moves the thumb. The cost is that `step()` then reads a stale
    index when a host answers late; state that trade-off with the owner.
 4. **No visible focus when nothing is selected** (medium, shared: false; fixed, source-reviewed,
    load-checked: the ring goes to the first available segment while nothing is picked). `Segmented.qml` 313: the
    ring is drawn only on the selected segment; line 165 hides the thumb at `currentIndex < 0`.
-   `BatteryPopoutContent.qml` 213 can return -1 when the service reports a profile name outside the
-   three. Person sees: Tab into the bar, and nothing marks where focus is. Fix: when nothing is
+   A host's binding can return -1 when its model reports a value outside the options. Person sees: Tab into the bar, and nothing marks where focus is. Fix: when nothing is
    selected, ring the first enabled segment, as `Segmented.md` line 37 already promises.
 5. **The badge fills a sm segment and does not scale** (minor, shared: false; fixed in the chip
    height only, source-reviewed, load-checked: the chip is `rhythm(badgeHeight * s)`, 12, 16, 20 px
    at sm, md, lg, leaving 2, 4, 4 px of air; the 10 px text is `Badge`'s and still fixed; the unit's
    `badge: count` control reaches it). `Segmented.qml` 227
-   gives a sm item 16 px; `Badge.qml` 53 fixes the badge at 16 px, so its tinted pill touches the
+   gives a sm item 24 px; `Badge.qml` 53 fixes the badge at 16 px, so its tinted pill touches the
    thumb's top and bottom edges. At lg the badge stays 16 px with 10 px text while the label grows
    to 14 px. This breaks the component law that connected parts scale with the instance. Fix: pass
    a size into `Badge`, and give sm a dot or a clear inset.
-6. **Badge text below 4.5:1** (minor, shared: true, tokens). Ratios 4.09 (neutral) and 3.43
-   (selected) at 10 px, from `Badge.qml` 61 and `Style.badgeTintOpacity` 0.18. Fix: the tint
-   opacity or the badge reading size, in `tokens/deep-night.json`.
-7. **The selected thumb is 1.29:1 against the track** (medium, source-conflict, shared: true). The
+6. **The selected thumb is 1.30:1 against the track** (medium, source-conflict, shared: true). The
    thumb at 12 percent accent is the only strong cue of the chosen option, because the label colour
    differs from its neighbours by 1.03:1. Non-text 1.4.11 asks 3:1 for a state indicator. The owner
    accepted the look ("No new motion or colour"), so this is the owner's ruling. Fix options are
@@ -240,9 +235,6 @@ Redesign proposals (taste, not defects):
   actions get no animation. Skip the `Behavior` when the change came from `handleKey`.
 - The thumb glide uses OutCubic. review-animations standard 3 asks for ease-in-out on screen
   movement. The change belongs to `Motion.standardEasing` (`Motion.qml` 120, shared).
-- The sm preset is 16 px tall with 10 px text. Lowering the inset at sm to 4 px makes the target
-  24 px without the spacing exception, but breaks the "full step of air" rule in the component
-  record. Owner decision.
 - `Style.disabled` blends toward `band` (the frame), while a disabled label on the track sits on
   `surface`. Blending toward the layer it sits on is a shared change in `Style`.
 - The unit: add empty, long, icon-only and badge fixtures; delete `middle-option`, which duplicates
@@ -256,12 +248,9 @@ Redesign proposals (taste, not defects):
 Source conflicts:
 
 - Line 6 says the host owns `currentIndex`; `select()` writes it (defect 3).
-- Line 56 says the type is not designed for scrolling many options; `PanelSurface.qml` wraps it in
-  a `ScrollArea` with a width of `max(navigation.width, panelNavigationWidth)`. The desktop uses it
-  outside its design.
 - Lines 9-10 say the type serves panel tabs and value choices; the roles are tab roles
   (criterion 4.1.2, a11y-audit).
-- Owner-accepted look against the 1.4.11 cue (defect 7).
+- Owner-accepted look against the 1.4.11 cue (defect 6).
 
 Hypotheses (not measured, not in the table):
 
@@ -275,7 +264,7 @@ Hypotheses (not measured, not in the table):
 - H6: a mouse focus may hide the ring (Qt focus reason) as the component assumes. Not verified.
 - H7: 10 px labels at sm may be hard to read at a distance.
 
-Not examined: runtime and capture; live geometry; the workbench unit; the desktop render; light and
+Not examined: runtime and capture; live geometry; the workbench unit; a host's render; light and
 high-contrast themes (only deep-night tokens read); RTL; scale factor; reduced motion at runtime;
 screen reader and touch. Sibling: no `Segmented` in caelestia `components/controls/`. The nearest
 is `modules/dashboard/Tabs.qml` (text tabs with a 3 px underline). It is a different pattern, so

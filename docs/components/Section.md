@@ -6,8 +6,8 @@ actions: none of its own; the heading `action` slot and the default `content` sl
 pointer: none on the group itself; slotted controls keep their own targets and wheel passes through.
 keyboard: none on the group itself; slotted controls keep their own tab stops and keys.
 screen reader: the section title labels the group; the action and content name themselves.
-size: content-driven column with fixed outer and body spacing; the heading row fills the width with the title taking the free space.
-tokens: space1, space2 and Prose; no local colours or measurements.
+size: content-driven column; the group starts `space4` clear of what precedes it (a first section in a column takes `Layout.topMargin: 0`), its rows hang `space1` below the heading and `space1` apart; the heading row fills the width with the title taking the free space.
+tokens: space1, space4 and Prose; no local colours or measurements.
 motion: none.
 not designed: collapsing, selection or scrolling; use Disclosure, Menu or ScrollArea for those.
 
@@ -51,7 +51,7 @@ group is named. It is the wrong type for a collapsible, selectable or scrolling 
 - Height: the heading row is as tall as its tallest child. Title is role `section`, 10px
   (`Tokens.qml:35`), line height 1 (Prose sets line height for body only). Action is `sm`, 32px
   (`Capsule.qml:73`, `Tokens.qml:84`).
-- Gaps: heading to body 8px (`space2`, `Section.qml:26`); rows 4px (`space1`, `Section.qml:24`).
+- Gaps: before the group 16px (`space4`); heading to body 4px and rows 4px (`space1`).
 - Long title: NoWrap and ElideRight, so it elides only when its row is constrained. Its full width
   still counts toward the natural width. See S-2.
 - Failure and cancellation: none. `Capsule.activate` is a no-op while disabled (`Capsule.qml:78-81`).
@@ -98,8 +98,8 @@ shape's extent along the approach axis.
 - Horizontal approach (W = 64): ID = log2(1 + 158/64) = 1.79 bits. Landing tolerance +/-32px.
 - Neighbouring interference: no other target inside Section. A second slotted action sits 4px
   away (`Section.qml:41`): an overshoot of more than 4px past the first target's edge lands on it.
-- Floors: 32px high and about 64px wide clear the 24px desktop-pointer floor from ux-audit check 3.
-  They are under the 44px touch floor, which this desktop shell does not need. The 2.5.8 verdict is
+- Floors: 32px high and about 64px wide clear the 24px pointer floor from ux-audit check 3.
+  They are under the 44px touch floor, which a pointer shell does not need. The 2.5.8 verdict is
   a11y-audit's.
 - Popup corridor and timing: not applicable.
 
@@ -120,26 +120,15 @@ title takes only the free space. S-3 (fixed: the history comment is deleted, the
 
 Proposals (taste and design, no defect claimed):
 
-- P-1: qsm-desktop has no use of Section. `grep -rn Section shell` finds only a comment at
-  `shell/modules/launcher/LauncherSurface.qml:81`. The owner should name a consumer or delete the
-  type, because the desktop is blocked on this library.
 - P-2: the fixture's action name "Refresh" (unit line 19) names no group. With several groups on
   one screen, each reads as "Refresh". Consider the group in the label ("Refresh devices") or
   exposing the title as the action's description.
 - P-3: two heading actions sit 4px apart (`Section.qml:41`), two 32px-high targets. Consider 8px
   for multi-action headings. No design-source threshold exists to cite.
-- P-4: Section owns heading-to-body (8px) and row (4px) gaps, but not the gap between groups, so
-  each consumer picks its own. Either the record says so or the type owns a gap token.
 - P-5: the title is 10px, uppercase, bold, tracked 1.4px (`Tokens.qml:35`, `:128`). It is the
   smallest text in the shell; the owner should judge legibility at 1x.
 - P-6: an elided title has no full-text path (no tooltip, no wrap). A long group name loses its end
   without notice.
-
-Source conflicts:
-
-- C-1: `AGENTS.md`, "Surface ladder", says each step is 1.30:1 on the one below. The defaults
-  `colorBand #271e30` and `colorSurface #42394c` (`Tokens.qml:6-7`) give 1.46:1 by WCAG luminance.
-  Outside this file set (`tokens/*`). The owner rules which value stands.
 
 Hypotheses (unmeasured, never mixed into the table):
 

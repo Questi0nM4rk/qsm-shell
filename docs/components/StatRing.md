@@ -4,7 +4,7 @@ A passive output: one fraction bent into a circle, with its reading held in the 
 states: none interactive. Rest is the only state; there is no hover, press, focus, selected or disabled. Value clamps to 0..1 and a fraction at or below 0.005 paints no fill arc, so zero reads as none rather than a round-capped dot.
 pointer: claims nothing. No MouseArea, HoverHandler, WheelHandler, Keys handler or focus policy; wheel and keyboard pass through to whatever lies beneath.
 screen reader: Accessible.StaticText names "label, reading" as one readout (whichever half is set when only one is).
-size: natural size is the diameter square; diameter defaults to Style.ringDiameter, stroke to Style.ringStroke, the reading is Style.textXl scaled by the live box over Style.ringDiameter and snapped with Style.textNear. A caller that needs another size states diameter and readingSize; the icon is Style.iconNear of the reading size.
+size: natural size is the diameter square; diameter defaults to Style.ringDiameter, stroke to `Style.stroke(box * Style.ringStrokeRatio)` in whole device pixels, the reading is Style.textXl scaled by the live box over Style.ringDiameter and snapped with Style.textNear. A caller that needs another size states diameter and readingSize; the icon is Style.iconNear of the reading size.
 content: icon, reading and label stack centred in a column as wide as the square inscribed in the ring's hole; long reading/label text elides on one line and never enlarges the component. The icon is dropped when it would push the stack taller than that square. Formatting is the caller's: "72%" and "3.4 GB" are the same ring.
 shape: startAngle/sweepAngle make the form. Open (-225/270, gap at the bottom) holds its label inside the circle; closed (-90/360) is the full ring Avatar draws its progress on.
 tokens: accent fill, overlay track, text icon, Prose reading/metadata roles; no local colors or measurements.
@@ -17,7 +17,7 @@ Evidence: source-reviewed. No capture, no runtime, no accessibility tree was rea
 
 ### Purpose and consequence
 
-The task is a glanceable reading of one fraction: the arc's length and the number in its middle, for the performance cards (`PerformanceTab.qml`) and the dashboard's resource card (`DashboardTab.qml`). The arc colour only tints a reading that is already there (`Theme.loadTone`, `Theme.qml:96-98`).
+The task is a glanceable reading of one fraction: the arc's length and the number in its middle, for a performance card or a resource card. The arc colour only tints a reading that is already there.
 
 ### Controls, valid states, implementation
 
@@ -26,7 +26,7 @@ The task is a glanceable reading of one fraction: the arc's length and the numbe
 | form | open `-225/270`, closed `-90/360` | yes, `startAngle` and `sweepAngle` (`StatRing.qml:38-39`) |
 | value | 0..1, clamped | yes (`StatRing.qml:83`); `value < 0` is not a state (see SR-5) |
 | diameter | any number | yes, default `Style.ringDiameter`; no `size` preset (see SR-2) |
-| stroke and reading size | any number | yes, default `Style.ringStroke`, `Style.textXl`; they do not follow the diameter (see SR-1, SR-2) |
+| stroke and reading size | any number | yes; the stroke defaults to a proportion of the box (`Style.ringStrokeRatio`) and the reading to `Style.textXl` scaled by the box (see SR-1, SR-2) |
 | content | icon, reading, label | yes, as strings; the label is always the metadata role |
 | interaction states | rest only | by design (`StatRing.md` line 4); no hover, press, focus, selected or disabled |
 
@@ -54,12 +54,12 @@ Contrast is computed from the token hex values, not sampled from pixels. The rea
 | Element | Role | On | Ratio | Requirement | Result |
 | --- | --- | --- | --- | --- | --- |
 | reading | `Style.text` `#f0ecf5` | band `#271e30` | 13.71 | 3 (large) | pass |
-| reading | `Style.text` | surface `#42394c` | 9.38 | 3 (large) | pass |
+| reading | `Style.text` | surface `#3b3145` | 10.53 | 3 (large) | pass |
 | label | `textMuted` `#c5bad1` (10 px) | band | 8.61 | 4.5 | pass |
-| label | `textMuted` | surface | 5.89 | 4.5 | pass |
-| arc fill | `accent` `#d9b4ea` | overlay track `#534a5e` | 4.65 | 3 (1.4.11) | pass |
-| loadTone fills | warning 4.78, danger 4.63, success 4.93 | overlay track | | 3 | pass |
-| track | `overlay` `#534a5e` | band | 1.91 | 3 if the track is data | see S2 |
+| label | `textMuted` | surface | 6.61 | 4.5 | pass |
+| arc fill | `accent` `#d9b4ea` | overlay track `#4c4357` | 5.19 | 3 (1.4.11) | pass |
+| status fills | warning 5.34, danger 5.17, success 5.51 | overlay track | | 3 | pass |
+| track | `overlay` `#4c4357` | band | 1.71 | 3 if the track is data | see S2 |
 | track | `overlay` | surface | 1.31 | 3 if the track is data | see S2 |
 
 ### Motion and its reduced-motion form
@@ -86,9 +86,9 @@ Defects are source-backed and each cites the file and line. Proposals are redesi
 - Fix: in `StatRing.qml`, derive the icon and reading from `D` times the md ratio (22/150) and snap them with `Style.textNear` and `Style.iconNear`. Take the column width from the inscribed square of the inner circle, `sqrt(2) x (D/2 - 1.25 x stroke)`, not from `D - 2 x stroke - space2`.
 
 **SR-2 (major, shared=true): no size preset, so the `lg` ring is hollow with tiny text.**
-- Evidence: `StatRing.qml:35-36` takes the diameter and stroke from `Style.ringDiameter` and `Style.ringStroke`, and `:43` fixes the reading at `Style.textXl`. `tokens/deep-night.json` has `sizes.*` for eight types and none for `StatRing`. `AGENTS.md` requires every sized type to resolve a preset through `Style.size`. `workbench/units/StatRing.qml:43-47` takes `lg` to 380, which leaves stroke 8 and reading 22 px: the reading is 5.8 percent of `D`, against 14.7 percent at 150. Its sibling `Avatar.qml` derives its own ring stroke as a proportion of the picture (`ringWidth`), so the pattern exists in the library.
+- Evidence: `StatRing.qml` takes the diameter from `Style.ringDiameter`, derives the stroke from the box (`Style.ringStrokeRatio`) and scales the reading with it, but `tokens/deep-night.json` has no `sizes.StatRing` and `AGENTS.md` requires every sized type to resolve a preset through `Style.size`. `workbench/units/StatRing.qml` takes `lg` to 380 by stating the diameter.
 - Expected: one scale per instance, with a `size` preset and a stroke and reading that scale with it.
-- Actual: `DashboardTab.qml:394-404` sets three numbers by hand (diameter, stroke, reading) and `PerformanceTab.qml:142-244` takes the defaults.
+- Actual: a host states `diameter` by hand; there is no preset name.
 - Fix: add `sizes.StatRing` to `tokens/deep-night.json`, add a `size` property resolved by `Style.size("StatRing", size)`, and keep `diameter` as the escape hatch. Reaching 380 needs the display and hero steps, because `Style.textNear` stops at `textXl`, so a `Style` change is needed too.
 
 **SR-3 (minor, shared=false): the icon is sized from the type scale, not the icon scale.**
@@ -107,8 +107,8 @@ Defects are source-backed and each cites the file and line. Proposals are redesi
 
 **SR-5 (minor, shared=false): an unknown reading is painted as zero.**
 - Status: SR-5 open: the no-data look is the owner's ruling (P1), so no form was invented; the host change stays outside qsm-shell.
-- Evidence: `StatRing.qml:83` clamps the value to 0..1. `PerformanceTab.qml:144-149` and `DashboardTab.qml:399-404` pass `Math.max(0, usage)`, so before the second sample the ring receives 0 and shows "—" as the reading.
-- Expected: unmeasured is distinct from zero, which the host's own comment says (`PerformanceTab.qml:139-141`).
+- Evidence: `StatRing.qml:83` clamps the value to 0..1, so a host that passes `Math.max(0, usage)` before the first reading shows an empty ring with "—" as the reading.
+- Expected: unmeasured is distinct from zero.
 - Actual: the arc is an empty track, the same drawing a measured 0 produces. Only the dash tells them apart.
 - Fix: the library gets an explicit no-data form (P1). The host passes `-1` unclamped. The host change is outside qsm-shell.
 
@@ -120,12 +120,12 @@ Defects are source-backed and each cites the file and line. Proposals are redesi
 - P4: the proof for the `0.75` inset (`:72`) and the `0.005` threshold (`:86`). `AGENTS.md` asks for the derivation in the comment. The inset puts the painted edge `stroke/4` inside the box, which is 2 px at defaults.
 - P5: `caelestia` (`components/controls/CircularProgress.qml`) draws the remainder with a gap sized from stroke and spacing, and an optional end dot. StatRing draws the track under the fill. The zero threshold stays: caelestia clamps to `1/360` and paints a dot at zero, which the comment at `StatRing.qml:83-86` rejects. Whether to add an end dot is taste.
 - P6: the label's role is fixed at metadata (10 px). A consumer cannot raise the label with the reading. Consider a role property or a slot.
-- P7: the unit's `sm` option is named for 52 px, which is `controlHeightLg`. Rename it when SR-2 adds the presets.
+- P7: the unit's `sm` option is a 48 px diameter (Control `lg`). Rename it when SR-2 adds the presets.
 
 ### Source conflicts
 
-- S1: `StatRing.qml:13-16` says a closed ring "pushes its label outside the circle". `DashboardTab.qml:394-404` keeps the label inside a closed 64 px ring (default `-90/360`). The owner decides which holds.
-- S2: `AGENTS.md`, surface ladder, says an inactive track is `overlay`, which is 1.91:1 on band and 1.31:1 on surface. `ui-audit` pass 4 says data marks need 3:1 against what they sit on (WCAG 1.4.11). The owner decides whether the track is a data mark, that is, whether a reader must see the full extent to read the arc.
+- S1: `StatRing.qml:13-16` says a closed ring "pushes its label outside the circle". A host keeps the label inside a closed 64 px ring (default `-90/360`). The owner decides which holds.
+- S2: `AGENTS.md`, surface ladder, says an inactive track is `overlay`, which is 1.71:1 on band and 1.31:1 on surface. `ui-audit` pass 4 says data marks need 3:1 against what they sit on (WCAG 1.4.11). The owner decides whether the track is a data mark, that is, whether a reader must see the full extent to read the arc.
 
 ### Hypotheses
 

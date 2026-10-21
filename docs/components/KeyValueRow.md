@@ -101,7 +101,7 @@ Defects (source-backed):
   which is an owner decision. Not shared. Now `role: "label"`.
 - **D2, minor. Fixed (source-reviewed, load-checked; not owner-accepted).** KeyValueRow.qml:7-15 sets no `implicitWidth` or `implicitHeight`. qml-ui requires
   both on a reusable component. Natural width therefore grows with the label and the value text, so
-  a host that sizes by content widens with the text. No consumer in qsm-desktop was found, and the
+  a host that sizes by content widens with the text. The
   unit hides the effect with `width: parent.width`, so nothing visible breaks today. Fix: set
   `implicitWidth` to `Style.controlWidth` and derive `implicitHeight` from the layout. Not shared. Now `implicitWidth: Style.controlWidth`; `implicitHeight` stays the RowLayout's own.
 - **D3, minor. Fixed (source-reviewed, load-checked; not owner-accepted).** workbench/units/KeyValueRow.qml:37 declares no controls. The owner cannot reach
@@ -151,7 +151,5 @@ Not examined:
 - Themes and variants other than deep-night. Only `tokens/deep-night.json` exists. Scale factor and
   high contrast were not reviewed.
 - Reduced motion: no motion exists, so the question is not applicable.
-- qsm-desktop: a QML search over the whole checkout found no `KeyValueRow` use. The desktop's
-  `openspec/changes/consume-qsm-shell-components/inventory.md:71` agrees: no consumer.
 - caelestia: only `components/controls/` was listed, and it holds no passive label/value row. Other
   caelestia directories were not searched.

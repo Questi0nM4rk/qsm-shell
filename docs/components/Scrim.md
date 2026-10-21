@@ -18,7 +18,7 @@ Evidence: source-reviewed only. Runtime-exercised: none. Owner-accepted: none. R
 
 **Purpose and consequence.** The ground behind a modal goes quiet and stops taking clicks. If the catch fails, a click meant for the modal reaches the shell behind it while the dim says the shell is modal.
 
-**Consumers.** qsm-desktop references no Scrim (grep of the whole repo: no match). The only library consumer is Dialog.qml:114. Every finding below is latent until a production surface uses it.
+**Consumers.** The only known consumer is Dialog.qml:114. Every finding below is latent until a production surface uses it.
 
 **Controls and states.** Properties: `shown` (bool, false), `strength` (real, 0.55, Scrim.qml:21), inherited `enabled`, signal `dismissed`. Functions: `dismiss()`, and an `actions` list with one `T.Action` "Dismiss" (Scrim.qml:24). Implemented: shown, hidden, enabled, and disabled-while-shown (the dim paints but the catch is off, see D2). Not implemented: hover, pressed, focus (see P2).
 
@@ -26,7 +26,7 @@ Evidence: source-reviewed only. Runtime-exercised: none. Owner-accepted: none. R
 
 **Sizes, empty, failure, cancellation.** Fills its parent (Scrim.qml:31, 46), no implicit size, no content. Dismiss while hidden or disabled reports nothing (Scrim.qml:27). The Dismiss action is enabled only while shown and enabled (Scrim.qml:24). `dismiss()` never writes `shown`; the host closes the modal (Dialog.qml:116 passes `dismissRequested` upward).
 
-**Visual roles and palette.** Dim colour is `band` (Tokens.qml:6, #271e30) at `strength` 0.55 (Scrim.qml:32), composed with `opacity`. No text sits on the scrim. Dialog's card is `Style.overlay` (Tokens.qml:8, #534a5e, Dialog.qml:119 onward). Computed from the token hex values with the WCAG formula, not rendered: overlay on band 1.91:1, surface (#42394c) on band 1.46:1, overlay on surface 1.31:1.
+**Visual roles and palette.** Dim colour is `band` (Tokens.qml:6, #271e30) at `strength` 0.55 (Scrim.qml:32), composed with `opacity`. No text sits on the scrim. Dialog's card is `Style.overlay` (Tokens.qml:8, #4c4357, Dialog.qml:119 onward). Computed from the token hex values with the WCAG formula, not rendered: overlay on band 1.71:1, surface (#3b3145) on band 1.30:1, overlay on surface 1.31:1.
 
 **Motion and reduced motion.** One `Behavior on opacity` (Scrim.qml:38-43), duration `Motion.medium` = 260 ms (Tokens.qml:50), 100 ms under reduced motion (Motion.qml). Enter uses `Motion.standardEasing` (OutCubic), exit `Motion.exitEasing` (InCubic). Opacity only, no transform. The Behavior retargets from the current value.
 Verdict under review-animations: enter, interruption and reduced motion pass (the fade is kept and shortened). Exit is Block: ease-in on UI is on the escalate list (C1), and exit runs the same 260 ms as entry (D4).
@@ -66,6 +66,5 @@ Verdict under review-animations: enter, interruption and reduced motion pass (th
 - P1. The dim colour is band at 0.55. A dedicated scrim role may read better than the frame colour. For comparison only, from memory and unverified against the current M3 spec: Material 3 documents a modal scrim at about 32 percent. Owner decision.
 - P2. Five-state law: Scrim has an interactive Dismiss action and a press route but defines no hover, press or focus state (AGENTS definition of done, item 2). Decide whether Scrim is a background, where Dismiss is a host route and the law does not apply, or an interactive target. Recommended: background, since a ground should show no affordance.
 - P3. Right-click on the ground dismisses (Scrim.qml:50, `Qt.AllButtons`). That is one more route for a dialog holding unsaved work; the host can refuse it. Keep it, but say so in Scrim.md.
-- Side finding, outside this component: AGENTS states that each neutral ladder step is 1.30:1. From the token values, surface on band is 1.46:1 and overlay on surface is 1.31:1 (Tokens.qml:5-8). The owner should check which claim holds.
 
 **Not examined.** Captures and tree dumps (none requested); runtime interaction, wheel and focus; the reduced-motion form at runtime; themes other than the deep-night tokens read here; real wallpapers; keyboard and screen-reader behaviour (a11y-audit's); Dialog's own states beyond its scrim (a separate Dialog audit).

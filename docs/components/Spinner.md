@@ -7,7 +7,7 @@ pointer: none; it claims no events and wheel passes through.
 keyboard: none; it is never a tab stop and takes no keys.
 screen reader: no role of its own; the surface owning the task announces progress.
 size: one `size` square from the icon scale; stroke follows the ring proportion with a one-pixel floor; radius insets half the stroke.
-tokens: iconMd, ringStroke, ringDiameter and accent; no local colours or measurements.
+tokens: iconMd, spinnerStrokeRatio and accent; no local colours or measurements.
 motion: infinite rotation on the sweep arc over a faint full ring with round caps; reduced motion lengthens the period.
 not designed: fractions, metering a level or labelling; use ProgressBar, Meter or Prose for those.
 
@@ -32,12 +32,12 @@ It finishes one task: telling a person that work with no knowable end is still r
 - Wheel: none; it passes through for the same reason.
 - Keyboard: none. It is not a tab stop and takes no keys.
 - Focus: none. It is a non-interactive mark with no focus state.
-- Screen reader: no role and no name. Accessibility criteria belong to a11y-audit. The one caller, `qsm-desktop/shell/modules/bar/TrayMenuContent.qml:47`, places the mark beside the text `Loading…`, which carries the status.
+- Screen reader: no role and no name. Accessibility criteria belong to a11y-audit. A host places the mark beside text such as `Loading…`, which carries the status.
 
 ### Sizes, empty, long, failure, cancellation
 
 - Icon scale from `Tokens.qml:42-45`: iconXs 12, iconSm 16, iconMd 20 (default), iconLg 24 (the unit's default).
-- Stroke, computed from `Spinner.qml:41-42` as `max(1, size × (ringStroke / ringDiameter) × 3)` with ringStroke 8 and ringDiameter 150 (`deep-night.json:119-120`): 12 → 1.92 px, 16 → 2.56 px, 20 → 3.20 px, 24 → 3.84 px. None is an integer. For a curve this is expected antialiasing, so it is not a finding.
+- Stroke, computed from `Spinner.qml:41-42` as `max(1, size × spinnerStrokeRatio)` with a ratio of 0.16 (`deep-night.json`): 12 → 1.92 px, 16 → 2.56 px, 20 → 3.20 px, 24 → 3.84 px. None is an integer. For a curve this is expected antialiasing, so it is not a finding.
 - Round caps fit the box. The radius is `centre − thickness/2` (line 48), so the outer edge of a round-capped stroke lands exactly on the box edge. Nothing clips, by arithmetic from lines 47-50.
 - Cancellation: `running: false` stops the rotation and repaints the unlit ring only (D1, fixed).
 
@@ -71,7 +71,7 @@ The track is deliberately dim, and the active arc is measured above it. Whether 
 
 - **D1, medium. Fixed (source-reviewed, load-checked; not owner-accepted). Stopped reads as a fixed 28% progress arc.** `Spinner.qml:23`, `:27`, `:71-78`. A stopped spinner keeps the angle it reached, so the arc sits wherever the turn stopped and reads as a steady fraction of about 28%. This record says "not designed: fractions", and AGENTS says a spinner in front of a known quantity misleads. Fixed by drawing the unlit track only when stopped (`onPaint` skips the arc, `onRunningChanged` repaints), so the stopped image carries no fraction. The owner may still prefer hiding the mark (P1).
 - **D2, low. Literal numbers in the component.** `Spinner.qml:42` (`* 3`), `:52` (`0.18`), `:23` (`0.28`). AGENTS says every number comes from Style or Motion. The line "no local colours or measurements" in the existing record above is wrong for this file. Fix: name the track alpha and the stroke factor as Style tokens.
-- **D3, low. Default size is a raw token, not a preset.** `Spinner.qml:19` (`size: Style.iconMd`). AGENTS says a sized type takes a preset from `Style.size("<Type>", …)`, and a raw px is only the escape hatch. The one caller passes px: `TrayMenuContent.qml:47`, `size: Theme.iconSm`. Fix: default to `Style.size("Spinner", "md")` and add a `Spinner` row to `sizes` in the token file.
+- **D3, low. Default size is a raw token, not a preset.** `Spinner.qml:19` (`size: Style.iconMd`). AGENTS says a sized type takes a preset from `Style.size("<Type>", …)`, and a raw px is only the escape hatch. A caller that needs another size passes px. Fix: default to `Style.size("Spinner", "md")` and add a `Spinner` row to `sizes` in the token file.
 - **D4, low. Default colour is the accent.** `Spinner.qml:20` (`Style.accent`). `Style.qml:44-48` reserves the accent for what is current and says "a passive readout never spends the accent", with the status set beneath it. AGENTS says the accent belongs to focus, selection and primary action. Fix: default to a status token, such as `Style.info`. The owner names the colour.
 
 **Proposals (owner's judgement, not defects)**
@@ -89,13 +89,13 @@ None between the component, this record and AGENTS, apart from the record-versus
 - H1: Easing is unset. `Spinner.qml:71-78` sets no `easing.type`. caelestia's `LoadingIndicator.qml:108` sets `Easing.Linear` explicitly. If the QtQuick default differs from Linear, each turn speeds up and slows down. Check the installed Qt default, then set Linear.
 - H2: Repaint on resize. `onPaint` reads `width` and the `thickness` derived from `root.size`. It depends on Canvas repainting on resize, which is unverified here. A stale stroke after a size change would show that.
 - H3: "A short arc reads as faster at the same period" (`Spinner.qml:21-22`) is an unmeasured perception claim.
-- H4: The caller shows the spinner the moment `_loading` turns true (`TrayMenuContent.qml`, the `RowLayout` `visible: root._loading`). A fast load flashes the mark. The library has no show-delay, and whether ui-design's wait value calls for one is unchecked.
+- H4: A host that shows the spinner the moment loading starts flashes the mark on a fast load. The library has no show-delay, and whether ui-design's wait value calls for one is unchecked.
 - H5: The 1.50:1 unlit track against band. Whether 1.4.11 needs the ring's shape at 3:1 is a11y-audit's call.
 
 **Not examined**
 
 - A live window, any capture, reduced motion on a live window, frame timing, and Canvas quality at each size.
 - Light and high-contrast themes. The only token file read is `deep-night.json`, so theme parity is not checked.
-- Row alignment of the 16 px ring beside the metadata text in `TrayMenuContent.qml`.
+- Row alignment of the 16 px ring beside text.
 - Accessibility criteria, which belong to a11y-audit.
 - Owner acceptance: none.

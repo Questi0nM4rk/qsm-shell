@@ -143,8 +143,7 @@ armed after layout, only if the text overflows. None is owner-accepted.
 - Under reduced motion the overflow is never readable on screen (`Marquee.qml:32-33`). AGENTS
   requires that the one-shot position change is removed. The remaining question is a non-moving
   reveal (a fade or a wrap). Owner ruling.
-- qsm-desktop has no consumer of this type (grep of its QML returns no `Marquee`). The component
-  has no real use case yet; keep or remove is the owner's call.
+- The component has no known consumer yet; keep or remove is the owner's call.
 
 ### Hypotheses (observed nowhere, measured nowhere)
 

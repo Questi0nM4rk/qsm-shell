@@ -45,11 +45,9 @@ empty box that looks like a broken graph makes the host card look faulty.
 
 ### Sizes, empty, long, failure
 
-- Natural size: 104 x 32 at md (`Style.controlHeightLg` 52 x 2 by `Style.controlHeightSm` 32; `Tokens.qml`
-  83-90; `Sparkline.qml` 39-40). No size preset; the desktop sets the size from its layout
-  (`PerformanceTab.qml` 296, 315-325).
-- Empty: baseline at the floor. One point: a dot at the end (spk-1 fixed). Long: no cap in the library; the desktop caps at 60
-  samples (`PerformanceService.qml` 60).
+- Natural size: 96 x 32 (`Style.size("Sparkline", "lg")` 48 x 2 by `Style.size("Sparkline", "sm")` 32;
+  `Sparkline.qml` 39-40). No size preset; a host sets the size from its layout.
+- Empty: baseline at the floor. One point: a dot at the end (spk-1 fixed). Long: no cap in the library; a host caps its own history.
 - Failure: `NaN` in values propagates silently through `Math.min`/`Math.max` and `yOf`; no guard
   (hypothesis H1). Maximum below minimum inverts the line with no signal (proposal P3).
 - Cancellation: none; no asynchronous work.
@@ -58,8 +56,7 @@ empty box that looks like a broken graph makes the host card look faulty.
 
 - Line: accent `#d9b4ea` on band `#271e30` is 8.87:1, computed from token hex values (not sampled from
   pixels). The line is the data mark, so it needs 3:1 (WCAG 2.2, 1.4.11); it passes on the source values.
-- Second series as the desktop uses it: `Theme.info` `#89cff1` on band is 9.32:1 (`desktop Theme.qml` band
-  `#271E30`, `PerformanceTab.qml` 327-333).
+- A second series in `Style.info` `#89cff1` on band is 9.32:1.
 - Area fill: accent at alpha 0.18 over band composites to `#473951`; accent over that is 5.92:1. The
   alpha is a literal (spk-2).
 - Component reads only `Style`; a retheme changes the line through `Style.accent`.
@@ -73,8 +70,8 @@ review-animations was not run because there is no motion.
 ### Pointer geometry
 
 - Input shape: none. The item claims no pointer events; hit area equals nothing.
-- Painted size: 104 x 32 at md (`Tokens.qml` 83-90). In the desktop the box fills its layout cell,
-  minimum height 56 (`PerformanceTab.qml` 296).
+- Painted size: 96 x 32 by default (Control `lg` x 2 by Control `sm`). A host's box usually fills its
+  layout cell.
 - Label origins and weights: no label on this type; no origin assumption is needed.
 - D, W and ID: not defined, because no target exists. If a host makes the box a target, the width model is
   the short side of the painted box (32 px at md), D is the host's trigger-to-box distance (not in source),
@@ -88,7 +85,7 @@ review-animations was not run because there is no motion.
 | --- | --- | --- | --- | --- | --- | --- |
 | spk-1 (fixed) | 2 and 9, states | Sparkline body | `Sparkline.qml` 46-47 returns before any stroke for `values.length < 2` | AGENTS.md: every state designed; BACKLOG R4 | startup and one-sample box is blank | major |
 | spk-2 | 6 and 4, tokens | area fill | `Sparkline.qml` 69 literal `0.18` | `docs/components/Sparkline.md` line 10: accent only, no local measurements | fill alpha not in the token set | minor |
-| spk-3 (fixed) | 3, geometry | line ends | `Sparkline.qml` 55-63 with round caps (78) at x=0 and x=width | ends sit on the box edge | caps protrude by thickness/2 each side: 0.75 px desktop (1.5), 1.33 px at md default (2.67) | polish |
+| spk-3 (fixed) | 3, geometry | line ends | `Sparkline.qml` 55-63 with round caps (78) at x=0 and x=width | ends sit on the box edge | caps protrude by thickness/2 each side: 0.75 px at a 1.5 stroke, 1.33 px at the default (2.67) | polish |
 | spk-4 (fixed) | 2, data | pinned extent | `Sparkline.qml` 56-58, no clamp, Canvas not clipped | value stays inside the pinned box | value above `maximum` draws above the box, over the row above | minor |
 | spk-5 (fixed) | 5, unit | story controls | `workbench/units/Sparkline.qml` 30-35 | AGENTS.md: controls include empty and long where valid | the harness cannot reach empty or one point | minor |
 
@@ -97,10 +94,9 @@ spk-2 is open and needs a shared token change. Line numbers below describe the a
 
 Defects in detail (file, line, what a person sees, fix):
 
-- spk-1 (major, shared false): `Sparkline.qml` 46-47. At startup the Network card's first sample is one
-  value and the history is empty, so the box stays blank until the second sample. The desktop hides it with a
-  host-drawn zero line (`PerformanceTab.qml` 293-303) that the comment says exists so idle "reads as quiet
-  rather than as a graph that failed to load". That is a host standing in for the component. Fix: with no
+- spk-1 (major, shared false): `Sparkline.qml` 46-47. At startup a host's first sample is one
+  value and the history is empty, so the box stays blank until the second sample; a host that draws its own
+  zero line is standing in for the component. Fix: with no
   values, paint a baseline at the floor; with one value, paint a zero-length stroke at the end (a dot under
   round caps). Then the host's zero line can go.
 - spk-2 (minor, shared true): `Sparkline.qml` 69. The 0.18 alpha is not a token, so a token change cannot
@@ -120,8 +116,7 @@ Defects in detail (file, line, what a person sees, fix):
 
 Source conflicts (the owner decides which wins):
 
-- SC1: `Sparkline.qml` 49-51 and the doc's "a flat series centres" (line 4) vs `PerformanceTab.qml` 293-295,
-  which says idle must read as quiet. A flat zero series is drawn at mid height, which reads as a steady
+- SC1: `Sparkline.qml` 49-51 and the doc's "a flat series centres" (line 4) vs a host's wish that idle read as quiet. A flat zero series is drawn at mid height, which reads as a steady
   middle value, the opposite of quiet. A rule for floor-valued flats would resolve it.
 
 Proposals (taste and redesign; no defect):
@@ -133,10 +128,9 @@ Proposals (taste and redesign; no defect):
 - P3: a maximum below the minimum should fail loud, not invert the line silently (no guard, lines 36-37 and 56).
 - P4: a derived stroke of height/12 gives 2.67 px at md, a fraction that antialiases unevenly. Round to whole
   pixels, if a zoomed capture confirms it.
-- P5: the desktop uses a 1.5 px stroke on a 56 px box (`Theme.qml` 107). The owner judges whether the line
-  is too faint next to the zero line.
-- P6: `values` triggers only on reassignment, not mutation. The desktop reassigns (`PerformanceService.qml`
-  84-87), so it is correct today; the doc should say "assign a new array".
+- P5: a host may set a 1.5 px stroke on a 56 px box. The owner judges whether such a line is too faint.
+- P6: `values` triggers only on reassignment, not mutation. A host that reassigns is correct; the doc
+  should say "assign a new array".
 - P7: no text alternative sits inside the component; the owning surface carries the number. a11y-audit
   decides what the criteria require.
 
@@ -144,7 +138,7 @@ Hypotheses (unmeasured, not in the table):
 
 - H1: `NaN` in values (for example from a first rate sample) yields no line and no error.
 - H2: `Math.min(...values)` throws past the engine's argument limit for very long arrays; not reachable with
-  the desktop's 60-sample cap.
+  short histories.
 - H3: a 2.67 px stroke at md may show uneven antialiasing (P4).
 
 Not examined: live geometry (no session was started, by request); screenshots and zoom crops; every theme

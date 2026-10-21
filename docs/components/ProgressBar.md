@@ -25,7 +25,7 @@ are a11y-audit's; run it for this surface.
 
 It shows how far a known process has got, or that unknown work is running, and takes no input. A
 determinate bar's length is trusted, so an indeterminate one must not look like a slow determinate one
-(ProgressBar.qml:9-14). Callers: none in qsm-desktop (no QML file there references `ProgressBar`).
+(ProgressBar.qml:9-14).
 `Spinner.qml:10` and `Meter.qml:8` name it as the sibling they defer to.
 
 ### Expected controls and states
@@ -39,7 +39,6 @@ Properties: `value` (0..1, clamped at ProgressBar.qml:25), `indeterminate`, `fil
 | determinate, value 0, 0.5, 1 | lead width fraction, ProgressBar.qml:37 | implemented |
 | indeterminate | sweep, ProgressBar.qml:52-72 | implemented |
 | disabled | `Style.disabled` on track (:29) and fill (:40, :59) | implemented |
-| thin weight | the unit passes `thickness` (workbench/units/ProgressBar.qml:38) | unit only |
 | completing (finish the cycle, then stop) | no finish phase; the sweep is dropped at once | absent, see proposals |
 | rest, hover, press, focus | not applicable: no pointer, no focus | n/a |
 | empty, long content, error | not applicable: no content, no failed state | n/a |
@@ -57,8 +56,7 @@ Properties: `value` (0..1, clamped at ProgressBar.qml:25), `indeterminate`, `fil
 
 ### Sizes, empty and long content, failure
 
-- Height: `Style.trackThickness`, 6 px at md (tokens/deep-night.json:118; ProgressBar.qml:23, 27). The
-  unit's `thin` weight is `Style.sliderTrackThickness`, 4 px (tokens:108; unit:38).
+- Height: `Style.trackThickness`, 4 px (tokens/deep-night.json; ProgressBar.qml:23, 27).
 - Width: not set. `implicitWidth` is absent (ProgressBar.qml:27), so the natural width is 0 and the
   bar fills its host (line 9 of this record). The unit's host is 380 px (`controlWidth`, tokens:99).
 - Radius: height / 2, so 3 px at md (ProgressBar.qml:28).
@@ -74,9 +72,9 @@ Computed WCAG 2.x ratios, deep-night hex values:
 
 | Pair | Ratio | Needed | Result |
 | --- | --- | --- | --- |
-| fill `#d9b4ea` on track `#534a5e` | 4.65 | 3 (1.4.11) | pass |
-| track `#534a5e` on band `#271e30` | 1.91 | 3 (1.4.11), if the empty track is needed to read progress | SC1 |
-| track `#534a5e` on surface `#42394c` | 1.31 | as above | SC1 |
+| fill `#d9b4ea` on track `#4c4357` | 5.19 | 3 (1.4.11) | pass |
+| track `#4c4357` on band `#271e30` | 1.71 | 3 (1.4.11), if the empty track is needed to read progress | SC1 |
+| track `#4c4357` on surface `#3b3145` | 1.31 | as above | SC1 |
 | disabled fill on disabled track | 1.87 | exempt (inactive component) | n/a |
 | disabled track on band | 1.23 | exempt | n/a |
 
@@ -141,7 +139,7 @@ Defects, source-backed:
 
 Source conflicts:
 
-- **SC1** AGENTS.md surface ladder makes an inactive track an `overlay` line of content (1.91:1 on band,
+- **SC1** AGENTS.md surface ladder makes an inactive track an `overlay` line of content (1.71:1 on band,
   1.31:1 on surface, computed above). WCAG 1.4.11 asks 3:1 for graphical parts needed to understand
   content. Whether an empty track is needed to read progress is the owner's ruling, not a fix.
 
@@ -157,16 +155,14 @@ Redesign proposals (taste, not defects):
    reusable component sets both implicit sizes; today a host that omits width gets a 0 px bar. shared=true.
 4. A size preset: AGENTS asks sized types to take `Style.size("<Type>", size)`. This type reads
    `Style.trackThickness` directly (ProgressBar.qml:23). shared=true.
-5. The unit's `thin` weight borrows `Style.sliderTrackThickness` (unit:38), so progress thickness
-   moves with the slider token. Give progress its own token. shared=true.
-6. In indeterminate mode the unit's value controls (unit:32-36) change nothing, as the component
+5. In indeterminate mode the unit's value controls (unit:32-36) change nothing, as the component
    ignores `value` (ProgressBar.qml:18). Disable that group while `unknown`, or label it. shared=false.
-7. The lead width is unrounded (ProgressBar.qml:37); qml-ui's integer-geometry rule would round it.
+6. The lead width is unrounded (ProgressBar.qml:37); qml-ui's integer-geometry rule would round it.
    Rounding steps the fill by 1 px, 0.26% of 380 px, and the rounded end is anti-aliased anyway, so the
    gain is doubtful.
-8. The lead animates `width` (ProgressBar.qml:45), which review-animations standard 7 names. No cheap
+7. The lead animates `width` (ProgressBar.qml:45), which review-animations standard 7 names. No cheap
    transform keeps the rounded end, so keep it and record.
-9. If a host ever uses this bar as a seek target, the host must own a 24 px or larger input shape
+8. If a host ever uses this bar as a seek target, the host must own a 24 px or larger input shape
    (1.42 bits against 2.94 at 6 px, the assumed 40 px approach above).
 
 Hypotheses (unmeasured):

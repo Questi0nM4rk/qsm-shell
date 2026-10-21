@@ -84,7 +84,7 @@ Fitting content shows neither fade nor mark (`ScrollCue.qml:71`, `:104`, `:117`)
   no pointer.
 - Story viewport: 800 by 500 (`workbench/stories.json`), less the `Style.space4` margin (16 px) on
   each side, which gives 768 by 468 (assumption: the story viewport as given).
-- Row step: `Style.controlHeight` (40 px, `tokens/deep-night.json:96`). Sixteen rows give 640 px of
+- Row step: Control `md` (40 px, `tokens/deep-night.json`). Sixteen rows give 640 px of
   content, so the visible ratio is 468 / 640 = 0.73, and the mark is at its 64 px cap.
 - No task that the component offers has a target. The mark has zero hit area. ID is not defined.
 - Worked consumer case (assumed values, not a human average): a pointer lands on a row at the far
@@ -123,12 +123,8 @@ Defects, each cited to a line and to the person's experience:
   a `Motion` token, or record the snap as deliberate under P-5.
 - **SA-4**, minor, FIXED (source-reviewed, load-checked; not owner-accepted), `workbench/units/ScrollArea.qml:15` against `qml/QsmShell/Components/ScrollArea.qml:27`,
   shared: false. The unit paints the band ground but does not pass `fadeColor`, so the default
-  surface fades paint 19 px opaque surface bars at each edge of the preview. Every desktop caller
-  passes `fadeColor: Theme.band` (`qsm-desktop/shell/modules/panel/PanelSurface.qml:112`,
-  `bar/RailAppList.qml:170`, `bar/ColorPickContent.qml:315`,
-  `launcher/LauncherSurface.qml:1356`, `clipboard/ClipboardSurface.qml:268`,
-  `cheatsheet/CheatSheetSurface.qml:270`, `panel/WorkspacesTab.qml:221`,
-  `notifications/NotificationCenterSurface.qml:23`). The unit should match that. Fix: pass
+  surface fades paint 19 px opaque surface bars at each edge of the preview. A host scrolling over the
+  band passes `fadeColor: Style.band`. The unit should match that. Fix: pass
   `fadeColor: Style.band` in the unit, per AGENTS ("a consumer scrolling over a different ground
   states its own").
 - **SA-5**, minor, FIXED (source-reviewed, load-checked; not owner-accepted), `qml/QsmShell/Components/ScrollArea.qml:44-45` and `:52-53`, shared: false.
@@ -142,9 +138,9 @@ Defects, each cited to a line and to the person's experience:
 Proposals (taste and owner decisions, not defects):
 
 - **P-1**: give `ScrollArea` a natural size from the `Style` size table, such as the unit's
-  `controlWidth` and `controlHeight`, so a Layout child does not collapse to 0; or record the zero
+  `controlWidth` and Control `md`, so a Layout child does not collapse to 0; or record the zero
   as deliberate. Owner decision, see C-2.
-- **P-2**: change the default `fadeColor` to `Style.band`, the ground of every desktop caller, or
+- **P-2**: change the default `fadeColor` to `Style.band`, the ground most hosts scroll over, or
   make the consumer state it. The surface default is right for a card and wrong for a band.
 - **P-3**: a pointer route to the position. Caelestia's `StyledScrollBar.qml` has a draggable thumb
   that is 0 at rest, 0.6 while moving and 0.8 on hover, and a 600 ms hide delay (`Timer`
@@ -176,9 +172,6 @@ Hypotheses (unmeasured, not in the table):
 - **H-4**: the viewport has no Accessible role or name, so a screen reader may announce no scroll
   region. Needs the accessibility tree.
 
-Desktop use: `ScrollArea` has one direct caller in qsm-desktop (`panel/PanelSurface.qml:107`).
-Eight modules use `ScrollCue` directly on their own list or view. Nothing else in the desktop
-sets `fadeColor` on a `ScrollArea`.
 
 Caelestia comparison: `StyledScrollBar.qml` is a sibling control, not an equivalent. It is
 interactive and hides after a delay, where this cue is not interactive and dims at once.

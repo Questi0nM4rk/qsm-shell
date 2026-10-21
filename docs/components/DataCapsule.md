@@ -2,7 +2,7 @@
 
 An auxiliary data container for a quick reading without leaving the application.
 It is not the Capsule button or a Rollout: no edge joins, translation, deformation,
-services or window policy. The desktop hosts it above fullscreen when appropriate.
+services or window policy. A host places it above fullscreen when appropriate.
 
 | layer | decision | why | token or pattern | verified by |
 | --- | --- | --- | --- | --- |
@@ -65,7 +65,7 @@ The owner authorized progression from the neutral base to Compose.
 
 After base acceptance, a separate `capsule-sound` Compose must use actual nested
 nodes and the real Slider: reading in its thumb, mute as its label action, stored
-level independent of mute, and a level write unmutes as in the desktop service.
+level independent of mute, and a level write unmutes, as a host's audio service typically does.
 Fresh child events route to the container's open/restart action; one host lifetime
 handles expiry. Screen placement belongs to the shared provider fixture, never
 the library. No production audio service is invoked.
@@ -109,7 +109,7 @@ Workbench simulation. The recorded native content/fade capture averaged about
 
 ## UIX audit
 
-Evidence: source-reviewed only. Read: `qml/QsmShell/Components/DataCapsule.qml`, `workbench/units/DataCapsule.qml`, `Surface.qml`, `StateLayer.qml`, `Prose.qml`, `Style/Style.qml`, `Style/Motion.qml`, `Style/Tokens.qml`, the two desktop hosts (`shell/modules/notifications/NotificationPopupStack.qml`, `shell/modules/osd/OsdSurface.qml`) and caelestia `modules/osd/Wrapper.qml`. No Workbench session, preview, capture, test or tree dump was run. Runtime and acceptance statements above are not re-verified here. Numbers are computed from `Tokens.qml`; they describe a model, not a render.
+Evidence: source-reviewed only. Read: `qml/QsmShell/Components/DataCapsule.qml`, `workbench/units/DataCapsule.qml`, `Surface.qml`, `StateLayer.qml`, `Prose.qml`, `Style/Style.qml`, `Style/Motion.qml`, `Style/Tokens.qml`, and caelestia `modules/osd/Wrapper.qml`. No Workbench session, preview, capture, test or tree dump was run. Runtime and acceptance statements above are not re-verified here. Numbers are computed from `Tokens.qml`; they describe a model, not a render.
 
 ### Purpose and consequence
 
@@ -121,7 +121,6 @@ A transient, non-modal reading that finishes one task: the reading is glanceable
 - Actions (line 40 to 46): Open (`activate`), Restart timeout, Cancel timeout (`reset`).
 - Facts: `pointerHovered`, `keepOpen`, `present`, `animating`, `acceptsInput`, `remainingTime()`.
 - Valid states: shown x interactive x enabled x timeout x hoverStay x orientation x size x content (empty, short, long). All are implemented in source. The unit exposes presentation, lifetime, retention, elevation and availability (`controls`); edge and alignment belong to `MockScreen`.
-- Consumers: `OsdSurface.qml` (timeout 0, interactive default false, hoverStay true) and `NotificationPopupStack.qml` (timeout 0, interactive false, `enabled` bound to `popupActive`).
 
 ### Routes
 
@@ -186,7 +185,7 @@ Source-backed defects (cited, with what a person sees):
 - **DC-1, major. FIXED (source-reviewed, load-checked; not owner-accepted): the name is `accessibleName`, `actionLabel` is the description.** Screen reader hears only the action label when interactive.** `DataCapsule.qml:58` sets `Accessible.name: interactive ? actionLabel : accessibleName`. The unit sets `actionLabel: "Open details"` and `accessibleName: root.singleLineText` (`workbench/units/DataCapsule.qml` 77 to 78). In the default openable state a screen-reader user hears "Open details, button" and never the workspace reading. The Expected section says the whole task is "announced once through `accessibleName` whichever way it is painted", so the record and the code disagree. Fix (not shared): name = `accessibleName`, the action label as the action or description.
 - **DC-2, major. FIXED (source-reviewed, load-checked; not owner-accepted): `keepOpen` holds on `visualFocus` or a slot descendant whose own `visualFocus` is true, never on a click's focus.** A click makes a timed capsule permanent.** `DataCapsule.qml:175` calls `root.forceActiveFocus()` before `activate()`. `keepOpen` counts `root.activeFocus || slot.activeFocus` (line 29), and `forceActiveFocus()` defaults to a non-visual focus reason (Qt documentation). The focus ring stays hidden, but the timer stays paused after the pointer leaves for as long as focus stays on the capsule. In the unit's timed openable state, one click on "Open details" leaves the capsule shown with no timer until focus moves. This breaks the record's own contract that a positive timeout requests dismissal once, and it applies the keyboard-only ring law to lifetime. Fix (not shared): hold lifetime on keyboard focus (`visualFocus` or a descendant's keyboard focus), not on `activeFocus`.
 - **DC-3, minor. FIXED (source-reviewed, load-checked; not owner-accepted): slot `enabled` follows `enabled`; a guard MouseArea refuses pointer input while `shown` is false.** The exit starts with the content already disabled.** `DataCapsule.qml:165` binds the slot to `enabled: root.acceptsInput`, and `acceptsInput` includes `shown` (line 31). Descendants read `enabled` (`Surface.qml` 29 to 31 and 40). On the first frame of hide, any Surface in the slot (a notification card, for example) switches to its disabled colour and then fades over 130 ms, so a card visibly greys as it leaves. Fix (not shared): bind slot `enabled` to `enabled` and gate input separately.
-- **DC-4, minor. FIXED library side (source-reviewed, load-checked; not owner-accepted): `animating` is published from the opacity fade. The desktop stack switches to it after acceptance.** Host re-derives a fact the component does not publish.** `shell/modules/notifications/NotificationPopupStack.qml` 46 to 47: `presentationSettling: capsule.present && capsule.opacity !== (capsule.shown ? 1 : 0)`, and its comment at 39 to 41 says "DataCapsule has no `animating`". The record's own Definition of done says a host must not re-compute a fact the component does not report. What goes wrong: if the fade's easing or end value changes, the notification stack decides it has settled at the wrong moment. Fix (not shared): publish `readonly property bool animating` from the opacity Behavior; the desktop consumer changes after library acceptance.
+- **DC-4, minor. FIXED library side (source-reviewed, load-checked; not owner-accepted): `animating` is published from the opacity fade.** A host that re-derives the fact itself (`capsule.present && capsule.opacity !== (capsule.shown ? 1 : 0)`) is computing something the component did not publish. The record's own Definition of done says a host must not re-compute a fact the component does not report. What goes wrong: if the fade's easing or end value changes, the notification stack decides it has settled at the wrong moment. Fix (not shared): publish `readonly property bool animating` from the opacity Behavior; a host then reads it.
 
 Source conflicts (owner decides which wins):
 

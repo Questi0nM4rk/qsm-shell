@@ -41,14 +41,14 @@ Finishes one single-choice pick inside a set the host owns. The consequence is t
 
 ### Visual roles and palette pairs
 
-Computed from token values (WCAG 2.2 relative luminance), not sampled from pixels. Band `#271e30`, surface `#42394c`.
+Computed from token values (WCAG 2.2 relative luminance), not sampled from pixels. Band `#271e30`, surface `#3b3145`.
 
 | Role in source | Foreground | Background | Ratio | Required |
 | --- | --- | --- | --- | --- |
 | unchecked ring (`textMuted`, `Radio.qml:65`) | `#c5bad1` | band | 8.6:1 | 3:1 (1.4.11) |
-| unchecked ring | `#c5bad1` | surface | 5.9:1 | 3:1 |
+| unchecked ring | `#c5bad1` | surface | 6.6:1 | 3:1 |
 | checked fill (`accent`, `Radio.qml:62`) | `#d9b4ea` | band | 8.9:1 | 3:1 |
-| checked fill | `#d9b4ea` | surface | 6.1:1 | 3:1 |
+| checked fill | `#d9b4ea` | surface | 6.8:1 | 3:1 |
 | dot (`textOnPrimary`, `Radio.qml:80`) | `#271e30` | `#d9b4ea` | 8.9:1 | 3:1 |
 | keyboard ring (`accent`, `StateLayer.qml:79`) | `#d9b4ea` | band | 8.9:1 | 3:1 |
 
@@ -106,7 +106,6 @@ Not examined:
 
 - No capture, no live tree, no Workbench session, per the audit instructions. Nothing was run.
 - Light, high-contrast and scale-factor variants (one theme in the token source).
-- Consumer use: `qsm-desktop` does not use `Radio` yet. Its only reference is the size table at `shell/theme/Theme.qml:177`.
 - Hover lift colour (`Style.lift`) and label typography (`Prose` role `label`), which were assumed.
 
 Channels: source only. Themes: deep-night only.

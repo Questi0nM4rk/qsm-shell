@@ -14,7 +14,7 @@ not designed: labels, policy, indeterminate, interactive states; use ProgressBar
 
 Evidence: source-reviewed only. No Workbench session, capture, zoom or pixel sample was taken; live geometry was not read. Contrast figures are WCAG ratios computed from the token hex values in `tokens/deep-night.json`, not from rendered pixels. No owner acceptance is claimed.
 
-Read: `qml/QsmShell/Components/Meter.qml`, `workbench/units/Meter.qml`, the one story key `meter` (variant low) in `workbench/stories.json`, `docs/components/Meter.md`, and the consumers in `qsm-desktop`: `shell/modules/bar/BatteryPopoutContent.qml:183-193` and `shell/modules/panel/PerformanceTab.qml:61-67, 449-455`. Caelestia has no level sibling in `components/controls/`; its `StyledProgressBar.qml` is a process bar with an indeterminate state, so it is not a comparison for a meter.
+Read: `qml/QsmShell/Components/Meter.qml`, `workbench/units/Meter.qml`, the one story key `meter` (variant low) in `workbench/stories.json`, `docs/components/Meter.md`. Caelestia has no level sibling in `components/controls/`; its `StyledProgressBar.qml` is a process bar with an indeterminate state, so it is not a comparison for a meter.
 
 ### Purpose and consequence
 
@@ -24,7 +24,7 @@ Shows how full or how hot a quantity is (battery, temperature, load), so a perso
 
 - Properties: `value` (clamped to 0..1, `Meter.qml:39`), `low` and `high` (-1 means no threshold, `Meter.qml:31-32`), `fill`, `trackColor`, `thickness`, `orientation`. All implemented.
 - States: rest, breached (`Meter.qml:40, 44`), disabled by colour (`Meter.qml:48-49`). The five interactive states do not apply: there is no interaction.
-- Unit controls (`workbench/units/Meter.qml:32-55`): value empty, low, high (no full, no middle); threshold none, low, high (no both-sides case); axis; weight; enabled. The weight control does nothing (finding M-1).
+- Unit controls (`workbench/units/Meter.qml`): value empty, low, high (no full, no middle); threshold none, low, high (no both-sides case); axis; enabled.
 
 ### Routes
 
@@ -32,9 +32,8 @@ Pointer: none. Wheel: none. Keyboard: none. Focus: none. Accessibility: the comp
 
 ### Sizes, empty, long, failure, cancellation
 
-- Horizontal: length from the host; cross size `thickness`, default `Style.trackThickness` (6, `tokens/deep-night.json:118`). Natural size is 0 by 6 (`Meter.qml:51-52`), so a host that sets no width sees nothing.
+- Horizontal: length from the host; cross size `thickness`, default `Style.trackThickness` (4, `tokens/deep-night.json`). Natural size is 0 by 4, so a host that sets no width sees nothing.
 - Vertical: the same, rotated; natural size is `thickness` by 0.
-- Thin weight: `Style.sliderTrackThickness` (4, `deep-night.json:108`), reused from the slider.
 - Empty: value 0 gives a fill width of 0 (`Meter.qml:63`), track only. Full (value 1) is not in the unit.
 - Long content: not applicable.
 - Failure: `undefined` or NaN value is not guarded (`Meter.qml:39`, hypothesis H3). Out-of-range values clamp.
@@ -46,8 +45,8 @@ Token values, WCAG contrast (source-reviewed, not sampled):
 
 | Pair | Ratio | Note |
 | --- | --- | --- |
-| track `overlay` #534a5e on `band` #271e30 | 1.91:1 | 1.4.11 asks 3:1 for meaningful parts; ruling is a11y-audit's |
-| fill `accent` #d9b4ea on `overlay` | 4.65:1 | passes 3:1 |
+| track `overlay` #4c4357 on `band` #271e30 | 1.71:1 | 1.4.11 asks 3:1 for meaningful parts; ruling is a11y-audit's |
+| fill `accent` #d9b4ea on `overlay` | 5.19:1 | passes 3:1 |
 | breached fill `warning` #d9c284 on `overlay` | 4.78:1 | passes 3:1 |
 | fill `accent` on `band` | 8.87:1 | |
 | breached fill `warning` on `band` | 9.13:1 | |
@@ -63,13 +62,12 @@ Track is `overlay`, which matches AGENTS. The fill is `accent`, which does not (
 
 ### Pointer geometry
 
-Not applicable. The component has no input shape: no `MouseArea`, no handler, nothing to hit. So D, W, ID, landing tolerance, neighbour interference and any popup corridor have no subject. Modelled for reference only, if a host made the track seekable with the painted band as its grab zone: the width model is Shannon, ID = log2(1 + D/W). With W = 6 px (the cross size the unit paints, `workbench/units/Meter.qml:24`) and D = 100 px (assumed approach, not measured), ID = log2(1 + 100/6) = 4.14 bits. With W = 4 px (thin), ID = 4.70 bits. Label origin: none, the host owns any label. Weights: none assumed.
+Not applicable. The component has no input shape: no `MouseArea`, no handler, nothing to hit. So D, W, ID, landing tolerance, neighbour interference and any popup corridor have no subject. Modelled for reference only, if a host made the track seekable with the painted band as its grab zone: the width model is Shannon, ID = log2(1 + D/W). With W = 4 px (the cross size the unit paints) and D = 100 px (assumed approach, not measured), ID = log2(1 + 100/4) = 4.70 bits. Label origin: none, the host owns any label. Weights: none assumed.
 
 ### Fix status
 
 All fixed: source-reviewed and load-checked, not owner-accepted.
 
-- M-1 fixed: the unit sets only the length axis; `weight` governs the cross axis, so thin paints 4 px in both orientations.
 - M-2 fixed: default `fill` is `Style.primary`. Owner to confirm the role.
 - M-3 fixed: the Behavior is on the private `_shown` fraction, not on width and height; a host resize moves the fill with the track.
 - M-4 fixed by removal, following the AGENTS law "a one-shot position animation is REMOVED under reduced motion": the value Behavior is disabled under `Style.reducedMotion`, the colour Behavior stays. `Motion.qml` still says it shortens; owner rules whether the law or that comment wins.
@@ -79,7 +77,6 @@ All fixed: source-reviewed and load-checked, not owner-accepted.
 
 | id | pass | element | evidence (source) | expected | actual | severity |
 | --- | --- | --- | --- | --- | --- | --- |
-| M-1 | 6 unit controls | `workbench/units/Meter.qml:23-24` and `47-50`; `Meter.qml:35, 51-52` | the unit sets `width` and `height` explicitly, so `thickness` never reaches the painted size | weight option changes the painted cross size | thin and regular both paint 6 px in horizontal; vertical paints 52 px wide in both | high |
 | M-2 | 4 colour roles | `Meter.qml:33`; `docs/components/Meter.md:4` | AGENTS: accent "never passive metrics"; `Style.qml:38-42` makes `primary` the active part of a track; `Style.qml:47` "a passive readout never spends the accent" | fill `primary` (source-conflict: Meter.md also says accent, and it records the code, not AGENTS) | fill is `accent`, lilac, on every default reading | medium |
 | M-3 | 9 polish (motion) | `Meter.qml:70-75` on `width` and `height` | a `Behavior` fires on any change of the property value, including a binding re-evaluated by a host resize (mechanism from Qt semantics, not run) | only a value change animates | a host that resizes the meter makes the fill glide for 180 ms while the track snaps | low |
 | M-4 | motion, reduced motion | `Meter.qml:70-72`; `Motion.qml:56` | AGENTS: "Reduced motion shortens a DURATION" and "A one-shot position animation is REMOVED under reduced motion, not shortened"; `Motion.qml:22-23` "shortens every duration rather than removing the animation"; review-animations standard 8: drop movement | owner rules which one applies (source-conflict) | 80 ms fill slide under reduced motion | medium |
@@ -87,13 +84,12 @@ All fixed: source-reviewed and load-checked, not owner-accepted.
 
 ### Proposals (not defects)
 
-- Thresholds have no production consumer. The three desktop uses never set `low` or `high`: `PerformanceTab.qml:57-60` leaves `high` unset on purpose, and `BatteryPopoutContent.qml:188-190` avoids `low` because it would paint amber where danger is meant. The breached state, the `warning` token and the threshold unit control serve the workbench only. Owner decides: keep, or delete (prime directive).
+- Thresholds are exercised only by the workbench: the breached state, the `warning` token and the threshold unit control have no other use, and a host may avoid `low` because it paints amber where danger is meant. Owner decides: keep, or delete (prime directive).
 - A threshold is invisible. A person sees the fill turn amber at 20 percent with no mark where 20 percent is. A short tick at the threshold position would show where the line is (AGENTS allows "a line inside is content, a track, a meter").
 - Standard 7 (review-animations): the fill animates `width`/`height`. The cost is one childless Rectangle repaint with no parent layout. A `transform: scale` would squash the rounded cap during the move, so no cheaper property keeps this shape. Kept, with the reason recorded.
 - Add a "full" (value 1) option and a both-thresholds option to the unit (`workbench/units/Meter.qml:32-42`), so the edges are seen.
 - Natural width 0 (`Meter.qml:51`) is not a constant; AGENTS asks for one. Give the horizontal natural width a `Style` size or document that the host must set the length.
 - `Motion.moveEasing` and `Motion.standardEasing` are Qt cubic built-ins (`Motion.qml:120, 128`). The animate skill names the custom curves `0.77, 0, 0.175, 1` (ease-in-out) and `0.23, 1, 0.32, 1` (ease-out), and QML can carry them through `Easing.BezierSpline` (`easing.bezierCurve`). This is a `Motion.qml` change, so it is shared and affects every component.
-- The thin weight borrows `Style.sliderTrackThickness`, a slider token. A meter weight should name its own token or read `Style.size`.
 - The -1 sentinel for "no threshold" is a number inside a component (AGENTS: no numbers in a component). A `NaN` or an explicit boolean would avoid it. Taste, low priority.
 
 ### Source conflicts
@@ -107,7 +103,6 @@ All fixed: source-reviewed and load-checked, not owner-accepted.
 - H2: no `Accessible` role, name or value on the component. The reading is pixels only unless the host names it. a11y-audit's.
 - H3: a NaN or undefined value propagates: `Math.min` and `Math.max` return NaN, which reaches `width`. Battery guards with `?? 0`; the performance tab does not guard `tempC` in the read source. Unverified.
 - H4: the doc says "fills from the start edge"; the code anchors `left` (`Meter.qml:59`). Qt does not mirror anchors, so a right-to-left layout would fill from the wrong end. No RTL consumer seen.
-- H5: the surface ladder states 1.30:1 per step. Overlay on band measures 1.91:1 here, which two steps of 1.30 would not give (about 1.69). The surface token was not read, so the ladder or the token is off by an unknown amount.
 - H6: the vertical path (`Meter.qml:59-64` with `width` undefined) has no workbench proof in the unit read; it is source-reviewed only.
 
 ### Not examined

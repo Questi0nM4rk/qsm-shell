@@ -13,7 +13,7 @@ not designed: scrolling input, dragging, ticks, or a gauge
 
 Evidence: source-reviewed only. No capture, no live geometry, no runtime run, no owner acceptance.
 Channels used: source (file:line below), tokens (`tokens/deep-night.json`, `qml/QsmShell/Style/Tokens.qml`),
-the qsm-desktop consumers (`/home/qs_m4rk/Projects/qsm-desktop/shell`), and the caelestia sibling
+and the caelestia sibling
 (`~/Clonned/caelestia/repo/components/controls/StyledScrollBar.qml`). Contrast and pointer numbers are
 computed from token values, not from rendered pixels.
 
@@ -43,10 +43,9 @@ content that fits, where the interface claims more than it has.
 
 ### Sizes, content, failure, cancellation
 
-- Mark length clamps to [`space5` = 24, `space6` x 2 = 64] (ScrollCue.qml:66-67). Thickness `markThickness` = 3
-  (Style.qml:399). Inset `spaceTight` = 2 (:72-73).
-- Fade depth defaults to `space6` x 2 = 64 (:39). WorkspacesTab passes `Theme.space5` = 24
-  (qsm-desktop WorkspacesTab.qml:222).
+- Mark length clamps to [`space5` = 24, `space6` x 2 = 64] (ScrollCue.qml:66-67). Thickness `Style.stroke(markThickness)`: 3, snapped
+  to whole device pixels. Inset `spaceTight` = 2 (:72-73).
+- Fade depth defaults to `space6` x 2 = 64 (:39).
 - Mark travel: offset = clamp(at / (1 - ratio), 0, 1) x (span - length) (:68-69). This maps the scroll
   fraction across the track; checked by hand, not run.
 - Fitting or empty content: the mark is hidden by `overflows` (:71); the bottom fade by
@@ -60,7 +59,7 @@ content that fits, where the interface claims more than it has.
 - Fade: `fadeColor` to transparent, fully opaque over the first 30 % (:107-109, :120-122). Default
   `Style.surface` (:33).
 - Computed from tokens, WCAG relative luminance, alpha blended over the unit ground `band` #271e30:
-  mark at rest 1.56:1; mark when moving 4.02:1; `textMuted` on `band` 8.61:1; `surface` on `band` 1.46:1 (S1).
+  mark at rest 1.56:1; mark when moving 4.02:1; `textMuted` on `band` 8.61:1; `surface` on `band` 1.30:1.
 
 ### Motion and reduced motion
 
@@ -85,7 +84,7 @@ content that fits, where the interface claims more than it has.
 - Distance D = 221.9 px (horizontal part alone 170.5 px).
 - Width model: Shannon ID = log2(1 + D / W).
   - W = 3 px, painted width: ID = 6.23 bits.
-  - W = 24 px, the desktop floor from ux-audit check 3: ID = 3.36 bits.
+  - W = 24 px, the pointer floor from ux-audit check 3: ID = 3.36 bits.
 - Landing tolerance: plus or minus 1.5 px on the painted width; plus or minus 12 px at the 24 px floor.
 - Neighbour interference: the mark sits over the host's rows at the right edge (:72). Because the cue takes no
   input, the row targets beneath remain the only targets. None recorded.
@@ -100,7 +99,7 @@ content that fits, where the interface claims more than it has.
     unit still has the gap; it is another type's file.
   - Evidence: the unit's ground is `Style.band` (workbench/units/ScrollCue.qml:17) and it sets no `fadeColor`.
     The default is `Style.surface` (qml/QsmShell/Components/ScrollCue.qml:33). Token contrast surface/band is
-    1.46:1 (S1).
+    1.30:1.
   - Person sees: a lighter 64 px strip at the top and bottom of the list, opaque at the clipped edge, inside a
     16 px band margin (units:24). The list reads as a box inside the band.
   - Fix: set `fadeColor: Style.band` in the unit. The sibling ScrollArea unit has the same gap (it sets `band`
@@ -110,9 +109,8 @@ content that fits, where the interface claims more than it has.
   - Evidence: the unit's `ListView` is vertical only and has no orientation property (workbench/units/ScrollCue.qml:21-27).
     Its controls have no axis group (:45-58). The sibling ScrollArea unit has an `axis` control and an
     `orientation` property. stories.json holds one key, with no horizontal and no fitting key
-    (workbench/stories.json:1080-1095). The horizontal cue is in use at qsm-desktop WorkspacesTab.qml:218-222
-    and PanelSurface.qml:194.
-  - Person sees: in the catalog, the axis that two desktop surfaces use cannot be looked at, and the fitting
+    (workbench/stories.json:1080-1095). A host with a horizontal list uses the horizontal cue.
+  - Person sees: in the catalog, the horizontal axis cannot be looked at, and the fitting
     case has no story key, so a regression there passes unseen.
   - Fix: give the unit an `orientation` and a horizontal scroll host, as the ScrollArea unit does; add an `axis`
     control; add story keys for horizontal and fitting. shared = true (stories.json).
@@ -123,15 +121,12 @@ content that fits, where the interface claims more than it has.
     overlap composes to 0.6 + 0.6 x 0.4 = 0.84. This applies only if the view overflows on both axes, which
     the consumer's content extent was not read to confirm.
   - Person sees: a small darker square in the bottom-right corner of the panel at full scroll on both axes.
-  - Fix: in qsm-desktop PanelSurface.qml:188-199, hide the vertical cue's indicator while the horizontal one is
-    overflowing. shared = true (outside this type's own files).
+  - Fix: a host with both cues hides the vertical cue's indicator while the horizontal one is overflowing.
 
 #### Proposals
 
-- P1, default ground: all seven qsm-desktop consumer files pass `fadeColor: Theme.band` (RailAppList.qml:168,
-  LauncherSurface.qml:1354, ColorPickContent.qml:313, PanelSurface.qml:188 and :194, WorkspacesTab.qml:218,
-  ClipboardSurface.qml:266, CheatSheetSurface.qml:268). The library default (ScrollCue.qml:33, and the same
-  default in ScrollArea) is a ground no consumer uses. Options: default to `Style.band`, or make `fadeColor`
+- P1, default ground: the library default (ScrollCue.qml:33, and the same default in ScrollArea) is
+  `Style.surface`, the ground of a card rather than of the band most lists sit on. Options: default to `Style.band`, or make `fadeColor`
   required so each host names its ground, which the comment at ScrollCue.qml:30-32 argues for. Owner decision.
 - P2, hold before the dim: the caelestia StyledScrollBar keeps itself up for a 600 ms hold after movement stops
   (`hideDelay` interval 600) and uses the same 0.6 active opacity. ScrollCue.qml:80-81 drops to 0.2 as soon as
@@ -140,23 +135,14 @@ content that fits, where the interface claims more than it has.
   gone" deliberate, and the fade is then the only rest affordance. Owner decision whether to keep it; do not
   raise the value without that decision.
 
-#### Source conflicts
-
-- S1: AGENTS.md's surface ladder says each step is 1.30:1 on the one below. The deep-night tokens (`surface`
-  #42394c on `band` #271e30) compute to 1.46:1. The owner rules which one holds. It affects D1.
-- S2: docs/components/ScrollCue.md line 9 says motion is the mark's opacity only, and the code does exactly that
-  (the fades snap, ScrollCue.qml:104 and :117). qsm-desktop WorkspacesTab.qml:214-217 says the cue fades where
-  the old rectangles snapped. The owner decides whether the boundary should fade.
-
 #### Hypotheses
 
 - H1: the top fade gate is `_at > 0.0001` (ScrollCue.qml:104) with no `overflows` check, unlike the mark
   (:71). Fitting content stays fitting only if Flickable reports `yPosition` 0 for it. Unmeasured.
 - H2: a zero-height host with content. `_ratio` is 0, so `overflows` is true, and the bottom fade at
   y = height - fadeDepth = -64 (:116) paints 64 px above the viewport. The cue is a sibling of the view (:58), so
-  the view's clip does not contain it. Consumers mirror visibility by hand (RailAppList.qml:171
-  `visible: appList.visible`; PanelSurface.qml:191), which suggests the cue does not follow its view. No consumer
-  read reached height 0 with content.
+  the view's clip does not contain it. A host that mirrors visibility by hand suggests the cue
+  does not follow its view.
 - H3: a viewport shorter than 24 px. The minimum mark length exceeds the track, so the offset goes negative
   (:68-69) and the mark leaves the viewport by the difference.
 - H4: row text spans the full view width (workbench/units/ScrollCue.qml:31), so the 5 px strip at the right edge
@@ -172,7 +158,6 @@ content that fits, where the interface claims more than it has.
 - Accessibility: names, focus and the 1.4.11 status of the rest mark are a11y-audit's. Not tested.
 - Right-to-left: the horizontal leading and trailing edges use physical left and right (ScrollCue.qml:115,
   :121-122). Not examined for right-to-left layouts.
-- Desktop consumers: read as code only, not rendered.
 - Caelestia: one file compared (StyledScrollBar.qml). Caelestia has no edge fade, so the fade has no sibling to compare against.
 
 ### Evidence
