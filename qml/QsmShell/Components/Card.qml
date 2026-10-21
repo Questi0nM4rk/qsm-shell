@@ -7,6 +7,8 @@ Rectangle {
     id: root
 
     property color surfaceColor: Style.surface
+    // Translucency applies only with `shadow: false`; a card that casts its
+    // shadow is opaque (the copy beneath keeps the fill from showing it).
     property real surfaceOpacity: Style.surfaceOpacity
     // The silhouette's edge separation (a slight line at the edge fading
     // inward), painted inside this card's rounded edge so the card reads as an
@@ -21,8 +23,9 @@ Rectangle {
     radius: Style.radiusLg
 
     // Beneath the card (negative z paints under the parent's own fill): an
-    // opaque copy of the body in the card's colour, so the 90 % fill above
-    // it changes nothing, and only the shadow it casts shows past the edge.
+    // opaque copy of the body in the card's colour, so the translucent fill
+    // above it changes nothing and only the shadow it casts shows past the
+    // edge. This is why a shadowed card is opaque.
     Rectangle {
         anchors.fill: parent
         z: -1

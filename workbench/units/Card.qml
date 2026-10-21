@@ -9,6 +9,8 @@ Rectangle {
     property string variant: ""
     property color surfaceColor: Style.surface
     property real surfaceOpacity: Style.surfaceOpacity
+    property bool glow: true
+    property bool shadow: true
 
     implicitWidth: card.width
     implicitHeight: card.height
@@ -21,6 +23,8 @@ Rectangle {
         height: body.implicitHeight + Style.space2 * 2
         surfaceColor: root.surfaceColor
         surfaceOpacity: root.surfaceOpacity
+        glow: root.glow
+        shadow: root.shadow
 
         Column {
             id: body
@@ -41,11 +45,20 @@ Rectangle {
         }
     }
 
+    // Translucency shows only with shadow off (Card paints an opaque body under its shadow).
     readonly property var controls: [
         { label: "surface", options: [
             { label: "resting", set: { surfaceColor: Style.surface, surfaceOpacity: Style.surfaceOpacity } },
-            { label: "raised", set: { surfaceColor: Style.surface, surfaceOpacity: Style.surfaceOpacity } },
+            { label: "raised", set: { surfaceColor: Style.overlay, surfaceOpacity: Style.surfaceOpacity } },
             { label: "opaque", set: { surfaceColor: Style.surface, surfaceOpacity: 1 } }
+        ] },
+        { label: "glow", options: [
+            { label: "on", set: { glow: true } },
+            { label: "off", set: { glow: false } }
+        ] },
+        { label: "shadow", options: [
+            { label: "on", set: { shadow: true } },
+            { label: "off", set: { shadow: false } }
         ] }
     ]
 }
