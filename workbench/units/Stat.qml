@@ -12,7 +12,7 @@ Rectangle {
     property string suffix: "%"
     property string glyph: "cpu"
     property string direction: ""
-    property string welcome: "up"
+    property string welcome: "none"
     property string weight: "display"
 
     implicitWidth: Style.controlWidth
@@ -32,6 +32,11 @@ Rectangle {
     }
 
     readonly property var controls: [
+        { label: "value", options: [
+            { label: "72", set: { reading: "72" } },
+            { label: "empty", set: { reading: "" } },
+            { label: "long", set: { reading: "123456789012345678" } }
+        ] },
         { label: "trend", options: [
             { label: "none", set: { direction: "" } },
             { label: "up", set: { direction: "up" } },
@@ -39,9 +44,9 @@ Rectangle {
             { label: "flat", set: { direction: "flat" } }
         ] },
         { label: "good", options: [
+            { label: "none", set: { welcome: "none" } },
             { label: "up", set: { welcome: "up" } },
-            { label: "down", set: { welcome: "down" } },
-            { label: "none", set: { welcome: "none" } }
+            { label: "down", set: { welcome: "down" } }
         ] },
         { label: "emphasis", options: [
             { label: "display", set: { weight: "display" } },
@@ -49,6 +54,7 @@ Rectangle {
         ] },
         { label: "label", options: [
             { label: "named", set: { caption: "CPU", glyph: "cpu" } },
+            { label: "long", set: { caption: "Package manager transactions per second", glyph: "cpu" } },
             { label: "bare", set: { caption: "", glyph: "" } }
         ] }
     ]
