@@ -119,8 +119,6 @@
     "spinBoxWidth": 140,
     "markThickness": 3,
     "markHeight": 18,
-    "sliderTrackThickness": 4,
-    "sliderThumbSize": 12,
     "sliderThumbLift": 2,
     "sliderStep": 0.01,
     "sliderKeyboardUnits": 5,

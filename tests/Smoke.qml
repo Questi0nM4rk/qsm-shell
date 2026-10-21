@@ -27,8 +27,6 @@ Item {
         property string technicalFontFamily: "Test Mono"
         property real surfaceOpacity: 0.9
         property real opacityDisabled: 0.23
-        property int sliderThumbSize: 19
-        property int sliderTrackThickness: 7
         property int controlHeight: 53
         property int controlHeightSm: 29
         property int textDisplay: 37

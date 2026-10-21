@@ -383,11 +383,8 @@ QtObject {
     // The Blueprint's pointer-target floor. A swatch paints a compact face
     // but answers on this square, so palette siblings never share a hit zone.
     readonly property int swatchTarget: backend?.swatchTarget ?? Tokens.geometrySwatchTarget
-    // The slider, in one thickness and one thumb. A control that needs a
-    // fatter track states it at the call site; the library keeps one default.
-    readonly property int sliderTrackThickness: backend?.sliderTrackThickness
-        ?? Tokens.geometrySliderTrackThickness
-    readonly property int sliderThumbSize: backend?.sliderThumbSize ?? Tokens.geometrySliderThumbSize
+    // The slider's own numbers: the thumb and the track come from its size
+    // table, and the lift is how far the raised thumb stands off the track.
     readonly property int sliderThumbLift: backend?.sliderThumbLift ?? Tokens.geometrySliderThumbLift
     // The unit every non-pointer route walks in. It is never 0: at 0 Qt's own
     // arrow keys fall back to 0.1 VALUE units (not 10% of the range) and the

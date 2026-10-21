@@ -105,8 +105,6 @@ QtObject {
     readonly property int geometrySpinBoxWidth: 140
     readonly property int geometryMarkThickness: 3
     readonly property int geometryMarkHeight: 18
-    readonly property int geometrySliderTrackThickness: 4
-    readonly property int geometrySliderThumbSize: 12
     readonly property int geometrySliderThumbLift: 2
     readonly property real geometrySliderStep: 0.01
     readonly property int geometrySliderKeyboardUnits: 5
