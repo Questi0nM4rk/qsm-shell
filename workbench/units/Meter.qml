@@ -20,8 +20,8 @@ Rectangle {
     Meter {
         id: level
         anchors.centerIn: parent
-        width: root.tall ? Style.controlHeightLg : Style.controlWidth
-        height: root.tall ? Style.controlWidth : Style.trackThickness
+        width: root.tall ? root.weight : Style.controlWidth
+        height: root.tall ? Style.controlWidth : root.weight
         orientation: root.tall ? Qt.Vertical : Qt.Horizontal
         value: root.reading
         low: root.floor

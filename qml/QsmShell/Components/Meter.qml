@@ -30,13 +30,21 @@ Rectangle {
     // of range (the default) means no threshold on that side.
     property real low: -1
     property real high: -1
-    property color fill: Style.accent
+    property color fill: Style.primary
     property color trackColor: Style.overlay
     property real thickness: Style.trackThickness
     property int orientation: Qt.Horizontal
 
     readonly property bool vertical: orientation === Qt.Vertical
     readonly property real _fraction: Math.max(0, Math.min(1, value))
+    // The eased fraction the fill is drawn from. Easing the fraction and not
+    // the pixel size means a host resize moves the fill with the track and
+    // only a change of value glides. Reduced motion removes the glide.
+    property real _shown: _fraction
+    Behavior on _shown {
+        enabled: !Style.reducedMotion
+        NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
+    }
     readonly property bool _breached: (low >= 0 && _fraction <= low) || (high >= 0 && _fraction >= high)
     // Breaching a threshold is a WARNING, not a failure: the level is doing
     // exactly what it should, it is the reading that is unwelcome. Danger is
@@ -60,19 +68,13 @@ Rectangle {
         anchors.right: root.vertical ? parent.right : undefined
         anchors.bottom: root.vertical ? parent.bottom : undefined
         anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
-        width: root.vertical ? undefined : parent.width * root._fraction
-        height: root.vertical ? parent.height * root._fraction : parent.height
+        width: root.vertical ? undefined : Math.round(parent.width * root._shown)
+        height: root.vertical ? Math.round(parent.height * root._shown) : parent.height
         radius: parent.radius
         color: root._paintedFill
 
-        // A level that snaps between readings reads as jitter. Both ends of
-        // the move already exist, so it eases at both.
-        Behavior on width {
-            NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
-        }
-        Behavior on height {
-            NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
-        }
+        // A level that snaps between readings reads as jitter, so the value
+        // eases (see `_shown`); the colour change stays under reduced motion.
         Behavior on color {
             ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
         }
