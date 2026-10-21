@@ -34,6 +34,11 @@ Rectangle {
     // The glyph has no pointer and no state of its own: its colour is the
     // owner's decision and its size is the owner's call, so both arrive here.
     readonly property var controls: [
+        { label: "name", options: [
+            { label: "battery", set: { name: "battery-full" } },
+            { label: "wifi", set: { name: "wifi" } },
+            { label: "empty", set: { name: "" } }
+        ] },
         { label: "foreground", options: [
             { label: "rest", set: { variant: "rest" } },
             { label: "selected", set: { variant: "selected" } },
