@@ -13,8 +13,28 @@ HoverHandler {
         return ({ type: "triangle", a: a, b: b, c: c })
     }
 
+    function _isPoint(v): bool {
+        return !!v && Number.isFinite(v.x) && Number.isFinite(v.y)
+    }
+
+    // A malformed area fails at the call site: a typo such as `w` for `width`
+    // would otherwise compare against undefined and read as "never inside".
+    function _checkArea(area) {
+        const isTriangle = !!area && area.type === "triangle"
+        const valid = isTriangle
+            ? _isPoint(area.a) && _isPoint(area.b) && _isPoint(area.c)
+            : !!area && Number.isFinite(area.x) && Number.isFinite(area.y)
+                && Number.isFinite(area.width) && Number.isFinite(area.height)
+        if (!valid) {
+            const error = new Error(`ScenePointer.contains: area must be Qt.rect or triangleArea(), got ${JSON.stringify(area)}`)
+            error.name = "ScenePointerAreaError"
+            throw error
+        }
+    }
+
     function contains(area): bool {
-        if (!root.inside || !area)
+        root._checkArea(area)
+        if (!root.inside)
             return false
         const p = root.position
         if (area.type !== "triangle")
