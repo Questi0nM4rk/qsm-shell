@@ -47,13 +47,18 @@ Item {
     // The ring is 6% of the diameter, at least 2px: thick enough to read as
     // progress at every size, thin enough that the picture stays the subject.
     // A proportion of the picture, so it scales with it, not a token.
-    property real ringWidth: Math.max(2, Math.round(size * 0.06))
+    property real ringWidth: Math.max(Style.spaceTight, Math.round(size * 0.06))
     // Air between the picture and its ring, so the two read as a thing and its
     // frame rather than as one thick border.
     property real ringGap: Style.spaceTight
 
     readonly property bool _ringed: progress >= 0
-    readonly property real _ringRoom: _ringed ? (ringGap + ringWidth) * 2 : 0
+    // Both sides of the ring: the gap, then the stroke measured from the arc's
+    // inner edge. StatRing centres the arc `_strokeInset` strokes inside its box
+    // and the stroke reaches half a stroke either side of that, so the inner
+    // edge sits (inset + 1/2) strokes in. Each side rounds to a whole pixel so
+    // the room stays even and the picture stays on the pixel grid.
+    readonly property real _ringRoom: _ringed ? 2 * Math.round(ringGap + (ring._strokeInset + 0.5) * ringWidth) : 0
     // The stand-in for a thing rather than a person. Set this OR `name`.
     property string icon: ""
     // How big the stand-in is drawn. Two-fifths of the diameter is the rule
@@ -86,6 +91,7 @@ Item {
     implicitHeight: size + _ringRoom
 
     StatRing {
+        id: ring
         anchors.fill: parent
         visible: root._ringed
         diameter: root.width
@@ -107,7 +113,7 @@ Item {
             anchors.centerIn: parent
             visible: portrait.status !== Image.Ready && root.icon.length > 0
             name: root.icon
-            size: root.glyphSize
+            size: Style.iconNear(root.glyphSize)
             color: Style.textMuted
         }
 
@@ -115,7 +121,7 @@ Item {
             anchors.centerIn: parent
             visible: portrait.status !== Image.Ready && root.icon.length === 0
             role: "title"
-            font.pixelSize: root.glyphSize
+            font.pixelSize: Style.textNear(root.glyphSize)
             muted: true
             text: root.initials
         }
@@ -154,9 +160,19 @@ Item {
         maskSource: circleMask
     }
 
+    // The dot is a fifth of the picture on the rhythm, centred on the rim at
+    // 45 degrees so it straddles the edge at every size. The corner of a
+    // rounded box is an arc of radius `_arc` whose centre is `size / 2 - _arc`
+    // from the middle; on a circle that is the centre itself, on a square it
+    // is the box corner.
     Badge {
-        anchors.right: ground.right
-        anchors.bottom: ground.bottom
+        readonly property real _arc: Math.min(root.radius, root.size / 2)
+        readonly property real _offset: root.size / 2 - _arc + _arc * Math.SQRT1_2
+
+        width: height
+        height: Style.rhythm(root.size * 0.2)
+        x: Math.round(root.width / 2 + _offset - width / 2)
+        y: Math.round(root.height / 2 + _offset - height / 2)
         visible: root.status.length > 0
         tone: root.status
         dot: true
