@@ -16,6 +16,10 @@ Item {
     // a rollout, sm for a card that has to share its height.
     property string size: "md"
     readonly property int _cell: Style.size("MonthCalendar", size)
+    // The month title of the shown month. Below the md cell the full month name
+    // plus its chevrons is wider than the seven cells, so it is abbreviated and
+    // the calendar's natural width stays the grid's.
+    property string titleFormat: root._cell < Style.size("MonthCalendar", "md") ? "MMM yyyy" : "MMMM yyyy"
     signal monthShifted(int delta)
 
     function shiftMonth(delta: int): void {
@@ -51,7 +55,7 @@ Item {
             Layout.fillWidth: true
             spacing: Style.space2
             IconButton { objectName: "prevMonth"; icon: "chevron-left"; accessibleName: qsTr("Previous month"); size: "sm"; color: Style.textMuted; onClicked: root.shiftMonth(-1) }
-            Prose { id: title; Layout.fillWidth: true; Layout.preferredWidth: root.titleWidth; horizontalAlignment: Text.AlignHCenter; role: "title"; text: Qt.formatDate(root.shown, "MMMM yyyy") }
+            Prose { id: title; Layout.fillWidth: true; Layout.preferredWidth: root.titleWidth; horizontalAlignment: Text.AlignHCenter; role: "title"; text: Qt.formatDate(root.shown, root.titleFormat) }
             IconButton { objectName: "nextMonth"; icon: "chevron-right"; accessibleName: qsTr("Next month"); size: "sm"; color: Style.textMuted; onClicked: root.shiftMonth(1) }
         }
 
@@ -62,7 +66,7 @@ Item {
             columnSpacing: Style.space1
             Repeater {
                 model: 7
-                Prose { required property int index; Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter; role: "reading"; muted: true; text: Qt.locale().standaloneDayName(index + 1, Locale.ShortFormat) }
+                Prose { required property int index; Layout.fillWidth: true; Layout.preferredHeight: Style.rhythm(implicitHeight); horizontalAlignment: Text.AlignHCenter; role: "reading"; muted: true; text: Qt.locale().standaloneDayName(index + 1, Locale.ShortFormat) }
             }
             Repeater {
                 model: 42
@@ -120,7 +124,7 @@ Item {
         delegate: TextMetrics {
             required property int index
             font: title.font
-            text: Qt.formatDate(new Date(root.shown.getFullYear(), index, 1), "MMMM yyyy")
+            text: Qt.formatDate(new Date(root.shown.getFullYear(), index, 1), root.titleFormat)
         }
     }
 }

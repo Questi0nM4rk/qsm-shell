@@ -46,10 +46,12 @@ in it. The consequence of a wrong month or a lost today marker is a wrong date r
 
 - Sizes: `size` names a preset of the `MonthCalendar` table, the day cell's side: md 32, sm 24. Natural
   height is constant: header 32 px (`IconButton` 16 + 2 x 8), spacing 4, weekday row (`Prose` 12 px,
-  14 high), row spacing 4, six rows of cells with spacing 4, which is 266 px at md and 218 px at sm.
-  The 42-cell model fixes it. Passes by source.
+  snapped to the rhythm: 16 high), row spacing 4, six rows of cells with spacing 4, which is 268 px at md
+  and 220 px at sm, so every row starts on a multiple of 4. The 42-cell model fixes it. Passes by source.
 - Natural width is constant: seven cells and six 4 px gaps, 248 px at md (the rail rollout's content
-  width) and 192 px at sm. A host may widen it and the cells stretch.
+  width) and 192 px at sm. The month title is abbreviated (`titleFormat`, "Sep 2026") below the md cell so the header
+  fits that width. A host may widen the calendar and the cells stretch; a width that is not seven cells
+  plus six gaps puts cells between device pixels.
 - Long content: only the month title varies. Its role `title` elides (`Prose.qml:118`) when the host
   constrains the width; no empty state exists because the grid always shows 42 cells.
 - Failure: no failure path is defined for an invalid `shown` or `today`. Not examined further.
