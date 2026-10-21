@@ -92,22 +92,34 @@ Rectangle {
 
     RowLayout {
         id: content
-        anchors.centerIn: parent
+        // A reading with no glyph beside it fills the badge and centres inside
+        // it: its box then spans whole device pixels, where a row centred
+        // around a fractional text width would not. A glyph and a reading
+        // centre as one row.
+        readonly property bool _alone: root.icon.length === 0
+        x: _alone ? 0 : (root.width - width) / 2
+        width: _alone ? root.width : implicitWidth
+        height: root.height
         visible: !root.dot
         spacing: Style.spaceTight
 
         SvgIcon {
+            Layout.alignment: Qt.AlignVCenter
             visible: root.icon.length > 0
             name: root.icon
             size: Style.iconXs
             color: root._ink
         }
         Prose {
+            Layout.fillWidth: content._alone
+            Layout.fillHeight: true
+            horizontalAlignment: content._alone ? Text.AlignHCenter : Text.AlignLeft
+            verticalAlignment: Text.AlignVCenter
             visible: root.text.length > 0
             // The technical face has tabular digits, so a ticking number does
             // not shift the text inside the chip either.
             role: "reading"
-            font.pixelSize: Style.textXs
+            font.pixelSize: Style.textSm
             color: root._ink
             text: root._shown
         }

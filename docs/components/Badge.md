@@ -7,7 +7,7 @@ pointer: none; it never claims hover, press or wheel.
 keyboard: none; it is never a tab stop and takes no keys.
 screen reader: static text named from `accessibleName`, else `text`; a dot or icon-only badge needs `accessibleName`; tone is a hue and hues alone are invisible to many readers.
 size: fixed `badgeHeight` pill; a single character stays circular and longer text grows into a pill; the dot is a fixed small circle.
-tokens: badgeHeight, spaceTight, space1, space2, iconXs, textXs, the semantic tone set, textOnPrimary and textMuted; no local colours or measurements.
+tokens: badgeHeight, spaceTight, space1, space2, iconXs, textSm, the semantic tone set, textOnPrimary and textMuted; no local colours or measurements.
 motion: micro colour settling of fill and reading together on tone change or fill toggle; reduced motion shortens the duration.
 not designed: interaction, dismissal, progress or a large banner; use Capsule, Callout or the host for those.
 
@@ -38,7 +38,7 @@ Unit controls (`workbench/units/Badge.qml`): tone (six values), weight (tinted, 
 ### Sizes, empty, long, failure
 
 - Height: `badgeHeight` 16 px (`tokens/deep-night.json:116`).
-- Count chip: `badgeWidth` 28 px for any numeric text (`Badge.qml:58`).
+- Count chip: `badgeWidth` 32 px for any numeric text (`Badge.qml:58`), which holds `99+` at the 12 px reading.
 - Dot: `2 * spaceTight + space1`, which is 8 px (`Badge.qml:53`; `space.tight` 2, `space.1` 4).
 - Empty: hidden (`Badge.qml:62`). Whitespace-only text shows an empty pill (H3).
 - Long: width follows content (BADGE-02).
@@ -50,7 +50,7 @@ Unit controls (`workbench/units/Badge.qml`): tone (six values), weight (tinted, 
 - Fill: the tone colour. Tinted fill is the tone at `badgeTint` 0.18 over the layer (`Badge.qml:61`, `Style.qml:83`, `tokens/deep-night.json:84`).
 - Text on tinted: the tone itself. Text on filled: `textOnPrimary` (`Badge.qml:45`).
 - Neutral tone: `textMuted` (`Badge.qml:39`).
-- Reading size: `textXs`, which is 10 px (`Badge.qml:85`, `type.xs` 10). Body-text rule applies: 4.5 needed.
+- Reading size: `textSm`, which is 12 px (`Badge.qml:85`, `type.sm` 12), the smallest text the library sets. Body-text rule applies: 4.5 needed.
 
 Contrast, computed from token values (WCAG 2.2, 1.4.3 text 4.5, 1.4.11 non-text 3):
 
@@ -73,13 +73,13 @@ The dot on band is 8.6 to 9.4 against the layer. On overlay the lowest, info, is
 
 ### Pointer geometry
 
-Not applicable. The component has no input shape, so there is no D, no W and no ID to state. The painted body is 16 px tall and 16 to 28 px wide. A host that makes a badge clickable must add its own input area. The pointer floor is 24 by 24 px (WCAG 2.5.8, as used in ux-audit check 3), and a 16 px badge alone misses it. Fitts ID = log2(1 + D/W) needs D from a real host layout; the width model would be W as the smaller side of the input (assumed). No value is claimed here. Label origins and weights: not applicable.
+Not applicable. The component has no input shape, so there is no D, no W and no ID to state. The painted body is 16 px tall and 16 to 32 px wide. A host that makes a badge clickable must add its own input area. The pointer floor is 24 by 24 px (WCAG 2.5.8, as used in ux-audit check 3), and a 16 px badge alone misses it. Fitts ID = log2(1 + D/W) needs D from a real host layout; the width model would be W as the smaller side of the input (assumed). No value is claimed here. Label origins and weights: not applicable.
 
 ### Findings
 
 Source-backed defects:
 
-- BADGE-01, medium, shared. The tinted weight fails 4.5 on `surface` for all six tones (4.09 to 4.39) and on `overlay` (3.29 to 3.53). Evidence: contrast table above, `Badge.qml:61`, `Badge.qml:85`, `tokens/deep-night.json:84`. A person on a card sees a faint 10 px tinted label. Fix: a per-tone tinted text colour mixed toward `text` until 4.5 holds on `overlay`, or a lower tint, both as tokens.
+- BADGE-01, medium, shared. The tinted weight fails 4.5 on `surface` for all six tones (4.09 to 4.39) and on `overlay` (3.29 to 3.53). Evidence: contrast table above, `Badge.qml:61`, `Badge.qml:85`, `tokens/deep-night.json:84`. A person on a card sees a faint 12 px tinted label. Fix: a per-tone tinted text colour mixed toward `text` until 4.5 holds on `overlay`, or a lower tint, both as tokens.
 - BADGE-02, medium, shared. Width follows content with no ceiling (`Badge.qml:56-59`), so the `Prose` ElideRight (`Prose.qml:118`) never fires. A long reading stretches the chip across its row and moves its siblings. This breaks AGENTS.md definition of done item 5. Fix: a maximum width from a token, with the text elided inside it.
 - BADGE-03, low, shared. A literal `2` in the dot size (`Badge.qml:53`) is a measurement typed in a component. Fix: a dot-size token in the `Style` set.
 
@@ -91,14 +91,14 @@ Redesign proposals:
 
 Source conflicts:
 
-- This record says "a single character stays circular" (line 9). `Badge.qml:58` gives any numeric text the 28 px chip, and the comment at `Badge.qml:47-49` says so on purpose. The code's own intent contradicts this record; the owner decides, and the record should follow the decision.
+- This record says "a single character stays circular" (line 9). `Badge.qml:58` gives any numeric text the 32 px chip, and the comment at `Badge.qml:47-49` says so on purpose. The code's own intent contradicts this record; the owner decides, and the record should follow the decision.
 - This record says "longer text grows into a pill" (line 9). AGENTS.md definition of done item 5 says natural size is a constant, which BADGE-02 contradicts. AGENTS.md is binding; the record should change unless the owner rules otherwise.
 - This record says motion is "micro colour settling on tone change" (line 11). The same behaviour also runs on the filled toggle (`Badge.qml:61`, `64-66`).
 
 Hypotheses (not measured):
 
 - H1: the reading sits on the optical centre of the 16 px body. The content row is centred by `anchors.centerIn` (`Badge.qml:70`), with default child alignment; the vertical position of the glyph against the digits is unmeasured.
-- H2: `99+` in 10 px tabular text fits the 28 px chip. Not measured.
+- H2: `99+` in 12 px tabular text fits the 32 px chip. Not measured.
 - H3: whitespace-only text (`" "`) passes `text.length > 0` (`Badge.qml:62`) and shows an empty pill.
 - H4: `Prose` text may be reported as static text by the platform tree without any `Accessible.*` on Badge. Unknown until read by a11y-audit.
 - H5: contrast over layers other than band, surface and overlay (for example the primary or a 0.4 lifted hover per the surface ladder) is not computed.
