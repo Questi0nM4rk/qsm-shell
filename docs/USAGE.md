@@ -69,6 +69,14 @@ changing those.
 `Interaction` is the one place you state a fact components cannot see for
 themselves (whether a hover may claim a selection).
 
+`Fuzzy.score(query, text, maxSpan)` is the one fuzzy subsequence scorer (-1 for
+no match, `maxSpan` optional) for any list that filters by typing. A theme
+generator derives colours with `scripts/ladder.mjs`: `ladder(band, step)` gives
+the surface and overlay steps from the band alone, and its primitives
+(`contrast`, `toLch`, `fromLch`, `maxChroma`, `stepAbove`, ...) measure any
+other colour on the shipped 8-bit value. `tokens/deep-night.json` is the
+default theme and the list of names a backend may override.
+
 Public types are listed in `qml/QsmShell/Components/qmldir`.
 
 ## Links

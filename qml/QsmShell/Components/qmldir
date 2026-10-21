@@ -51,3 +51,4 @@ ShellBorder 1.0 ShellBorder.qml
 Rollout 1.0 Rollout.qml
 ScenePointer 1.0 ScenePointer.qml
 Surface 1.0 Surface.qml
+singleton Fuzzy 1.0 Fuzzy.qml

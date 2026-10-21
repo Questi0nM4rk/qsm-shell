@@ -265,8 +265,8 @@ window, and does every pixel of it follow the design sources.
 
 Three neutral steps, each 1.30:1 on the one below, and nothing is derived:
 a theme types the band only and `ladder()` in `scripts/ladder.mjs` is the one
-owner of the two steps above it (a consumer's theme calls the same function),
-and a component reads a role.
+owner of the two steps above it (a consumer's generator imports the same
+function and its colour primitives), and a component reads a role.
 Lightness is the only separation between containers: no hairline, no card
 border, no rim, no shadow does that job. A line inside is content (a track, a
 meter), never an edge. The silhouette itself keeps its edge separation

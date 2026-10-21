@@ -62,7 +62,9 @@ The application owns state and passes it in through slots and actions.
 
 ## Public API
 
-`Style`, `Motion`, the components in `qmldir` and the `Style.backend` object a theme installs. Nothing else is imported.
+`Style`, `Motion`, `Fuzzy` (the one fuzzy scorer, `Fuzzy.score(query, text)`), the components in `qmldir` and the `Style.backend` object a theme installs.
+For a theme generator, `scripts/ladder.mjs` (`ladder(band, step)` and the colour primitives it stands on) and `tokens/deep-night.json`, the default theme and the list of names a backend may override.
+Nothing else is imported.
 
 Look is a set of roles, not numbers a call site picks: three surface steps (`band`, `surface`, `overlay`, each 1.30:1 on the one below, generated from the band alone),
 `Style.glyphAlone(box)` and `glyphBeside(box)` for icons, `Style.stroke(n, item)` for whole-device-pixel lines,
@@ -90,7 +92,7 @@ Commits include agent-authored work under my identity; design, orchestration and
 - Known gaps: `qmllint` prints warnings (for example `id-shadows-member` in `Capsule.qml`), so it is
   not warning-free. Open items are in [docs/BACKLOG.md](docs/BACKLOG.md).
 - Experimental: `npm run preview` and `npm run capture` need `qsm-workbench`, which is not published yet.
-- Consumers use the public API only (`Style`, `Motion`, the components and `Style.backend`); the library knows nothing about any one of them.
+- Consumers use the public API only; the library knows nothing about any one of them.
 - No stability promise for the API.
 
 ## License

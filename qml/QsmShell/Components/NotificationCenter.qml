@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import QtQml.Models
 
 import qs.QsmShell.Style
-import "fuzzy.js" as Fuzzy
 
 // The notification history: a search field, the full list GROUPED BY APP
 // (live entries first within a group, most-recently-touched group first),
