@@ -73,8 +73,12 @@ Item {
     // Which of this entry's (at most 3) actions carries keyboard focus, or
     // -1 for none. A list owns one cursor for many cards and passes it down.
     property int actionFocusIndex: -1
-    // Toggled by a vertical drag past the threshold; additive to hover.
-    property bool dragExpanded: false
+    // The host's own expansion (the list's open row), separate from the
+    // drag state below so a drag never replaces the host's binding.
+    property bool hostExpanded: false
+    // Toggled by a vertical drag past the threshold; additive to hover. Card
+    // state only: a host asks for expansion through `hostExpanded`.
+    property bool _dragExpanded: false
     property bool swipeDismissPending: false
     property double currentTimeMs: Date.now()
     // Defaults from the entry shape; a consumer whose entry does not carry a
@@ -88,7 +92,7 @@ Item {
     readonly property bool primaryPressed: layer.pressed
     readonly property bool expansionAnimating: expansionAnimation.running
     readonly property bool expanded: root.expansionFrozen ? root.frozenExpanded
-        : root.alwaysExpanded || (root.expandOnHover && root.hovered) || root.dragExpanded || (root.entry.paused ?? false)
+        : root.alwaysExpanded || (root.expandOnHover && root.hovered) || root.hostExpanded || root._dragExpanded || (root.entry.paused ?? false)
     readonly property bool archived: root.entry.archivedAt !== undefined && root.entry.archivedAt !== null
     readonly property bool hasSwatch: root.swatch !== undefined && root.swatch !== null
     readonly property bool primaryActionAvailable: root.primaryActionEnabled
@@ -202,6 +206,10 @@ Item {
     }
 
     readonly property string iconSource: root.entry.imagePath ?? ""
+    // A missing or undecodable file never claims the slot; the glyph stays.
+    readonly property bool showsImage: !root.hasSwatch && iconImage.status === Image.Ready
+    readonly property bool urgencyBadged: (root.hasSwatch || root.showsImage)
+        && (root.entry.urgency === "critical" || root.entry.urgency === "low")
     readonly property string iconName: root.entry.urgency === "critical" ? "alert-triangle"
         : root.entry.urgency === "low" ? "moon"
         : "bell"
@@ -212,7 +220,7 @@ Item {
         : Style.info
 
     Timer {
-        interval: 60 * 1000
+        interval: Motion.clockRefresh
         repeat: true
         running: root.hasStamp
         onTriggered: root.currentTimeMs = Date.now()
@@ -366,8 +374,9 @@ Item {
                 }
 
                 Image {
+                    id: iconImage
                     anchors.fill: parent
-                    visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length > 0
+                    visible: !root.leadHovered && root.showsImage
                     source: root.iconSource
                     asynchronous: true
                     fillMode: Image.PreserveAspectFit
@@ -375,9 +384,22 @@ Item {
 
                 SvgIcon {
                     anchors.fill: parent
-                    visible: !root.leadHovered && !root.hasSwatch && root.iconSource.length === 0
+                    visible: !root.leadHovered && !root.hasSwatch && !root.showsImage
                     name: root.iconName
                     size: Style.iconSm
+                    color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+                }
+
+                // An image or swatch carries no urgency, so a critical or low
+                // entry keeps its glyph as a badge on the slot's corner.
+                SvgIcon {
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.rightMargin: -Style.spaceTight
+                    anchors.bottomMargin: -Style.spaceTight
+                    visible: !root.leadHovered && root.urgencyBadged
+                    name: root.iconName
+                    size: Style.iconXs
                     color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
                 }
             }
@@ -470,7 +492,6 @@ Item {
                 implicitHeight: root.expandOnHover
                     ? Math.min(expandedContent.implicitHeight, Style.notificationBodyViewportHeight)
                     : expandedContent.implicitHeight
-                height: implicitHeight
 
                 Flickable {
                     id: bodyViewport
@@ -583,6 +604,9 @@ Item {
         interactive: root.enabled && root.inputEnabled
         clickable: root.primaryActionAvailable || root.activatable
         target: null
+        // The card is the focus holder (Tab stop); the layer only paints the ring.
+        focused: root.activeFocus
+        focusRadius: root.bodied ? root.bodyRadius : 0
         onClicked: {
             // A click on the leading column opens the card; it is not also
             // the card's action (it marked an unread entry read while the
@@ -644,7 +668,7 @@ Item {
         enabled: root.draggable && root.inputEnabled
         target: null
         xAxis.enabled: true
-        yAxis.enabled: root.verticalDragEnabled && !root.expanded
+        yAxis.enabled: root.verticalDragEnabled
         // Remember a completed horizontal swipe while the grab is active, so
         // dismissal does not depend only on the handler's terminal translation.
         onTranslationChanged: {
@@ -663,7 +687,7 @@ Item {
             }
             if (Math.abs(translation.y) > Math.abs(translation.x)) {
                 if (Math.abs(translation.y) > Style.notificationExpandDragPx)
-                    root.dragExpanded = translation.y > 0;
+                    root._dragExpanded = translation.y > 0;
             } else if (root.swipeDismissPending
                     || Math.abs(translation.x) > root.width * Style.notificationDismissFraction) {
                 root.dismiss();

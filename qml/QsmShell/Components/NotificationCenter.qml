@@ -47,15 +47,13 @@ ColumnLayout {
     // row directly — landing on the entry that just arrived, say.
     property alias currentIndex: historyList.currentIndex
 
-    // What the scroll cue's fade fades TO, and it MUST come from the consumer.
-    // This list draws no ground of its own: it sits on whatever surface hosts
-    // it, and only the host knows what that is. Hardcoding `Style.surface`
-    // here was wrong in the one place it shipped -- the panel's feed scrolls
-    // directly on a shader silhouette, so the fade washed a card colour over
-    // a much darker ground and read as a grey smear rather than as a fade.
-    // ScrollCue's own comment says it: a gradient toward the wrong colour is
-    // more visible than no gradient at all.
-    property color fadeColor: Style.surface
+    // What the scroll cue's fade fades TO. This list draws no ground of its
+    // own: it sits on whatever surface hosts it, and only the host knows what
+    // that is, so there is no default. A card colour over a darker ground
+    // reads as a grey smear rather than as a fade; ScrollCue's own comment
+    // says it: a gradient toward the wrong colour is more visible than no
+    // gradient at all.
+    required property color fadeColor
 
     signal dismissRequested(var entry)
     // A plain click on an unread row: the host decides what "seen" means.
@@ -227,7 +225,7 @@ ColumnLayout {
             : root.entries.slice();
         const scored = root.query.length === 0
             ? all
-            : all.filter(entry => Fuzzy.score(root.query, `${entry.appName} ${entry.summary} ${entry.body}`) >= 0);
+            : all.filter(entry => Fuzzy.score(root.query, `${entry.appName} ${entry.summary} ${entry.body ?? ""}`) >= 0);
         // App groups ordered by most-recent notification: newest-first
         // within groups; the list's own section adjacency needs it sorted.
         const groups = new Map();
@@ -297,27 +295,48 @@ ColumnLayout {
             onClicked: root.dndToggled()
         }
 
-        IconButton {
-            icon: "trash-2"
-            accessibleName: "Clear history"
-            padding: (Style.controlHeight - Style.iconMd) / 2
-            onClicked: root.clearRequested()
-        }
     }
 
-    Segmented {
-        id: viewBar
+    RowLayout {
         Layout.fillWidth: true
-        options: [
-            { label: "Unread", badge: root.unreadCount > 0 ? String(root.unreadCount) : "" },
-            { label: "All" }
-        ]
-        currentIndex: root.view === "unread" ? 0 : 1
-        Accessible.name: "Notification views"
-        onSelected: index => {
-            root.view = index === 0 ? "unread" : "all";
-            root.expandedKey = "";
-            root.clearActionFocus();
+        spacing: Style.space2
+
+        Segmented {
+            id: viewBar
+            Layout.fillWidth: true
+            options: [
+                { label: "Unread", badge: root.unreadCount > 0 ? String(root.unreadCount) : "" },
+                { label: "All" }
+            ]
+            currentIndex: root.view === "unread" ? 0 : 1
+            Accessible.name: "Notification views"
+            onSelected: index => {
+                root.view = index === 0 ? "unread" : "all";
+                root.expandedKey = "";
+                root.clearActionFocus();
+            }
+        }
+
+        // Irreversible, so it sits apart from the reversible DND toggle and
+        // asks twice: the first press arms (danger colour, the name says
+        // confirm), the second reports `clearRequested`. Timeout, a lost
+        // focus or the pointer leaving disarm it.
+        IconButton {
+            id: clearButton
+            Layout.alignment: Qt.AlignVCenter
+            icon: "trash-2"
+            accessibleName: clearAction.armed ? "Confirm clear history" : "Clear history"
+            color: clearAction.armed ? Style.danger : Style.text
+            padding: (Style.controlHeight - Style.iconMd) / 2
+            hoverEnabled: true
+            onClicked: clearAction.trigger()
+            onHoveredChanged: if (!hovered) clearAction.disarm()
+            onActiveFocusChanged: if (!activeFocus) clearAction.disarm()
+
+            ArmedAction {
+                id: clearAction
+                onFired: root.clearRequested()
+            }
         }
     }
 
@@ -330,7 +349,7 @@ ColumnLayout {
     Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredHeight: Math.max(Style.space6 * 2,
+        Layout.preferredHeight: Math.max(Style.notificationCollapsedHeight * 2 + Style.space2,
             Math.min(root.maxListHeight, historyList.contentHeight))
 
         ListView {
@@ -359,14 +378,24 @@ ColumnLayout {
             }
 
             section.property: "appName"
-            section.delegate: Prose {
+            section.delegate: Item {
+                id: sectionHeader
                 required property string section
-                // The card's own text column: past its cursor, gap and glyph.
-                leftPadding: Style.space2 + Style.markThickness + Style.spaceTight
-                    + Style.space2 + Style.iconSm + Style.space2
-                topPadding: Style.space2
-                role: "section"
-                text: section
+                width: historyList.width - root.shadowReach * 2
+                implicitHeight: sectionLabel.implicitHeight + Style.space2
+
+                // Prose is a Text and has no padding, so the card's own text
+                // column (past its cursor, gap and glyph) is the label's x.
+                Prose {
+                    id: sectionLabel
+                    x: Style.space2 + Style.markThickness + Style.spaceTight
+                        + Style.space2 + Style.iconSm + Style.space2
+                    y: Style.space2
+                    width: parent.width - x
+                    elide: Text.ElideRight
+                    role: "section"
+                    text: sectionHeader.section
+                }
             }
 
             delegate: NotificationCard {
@@ -377,7 +406,7 @@ ColumnLayout {
                 width: ListView.view.width - root.shadowReach * 2
                 entry: modelData
                 selected: ListView.isCurrentItem
-                dragExpanded: root.expandedKey === root.entryKey(modelData)
+                hostExpanded: root.expandedKey === root.entryKey(modelData)
                 actionFocusIndex: ListView.isCurrentItem ? root.actionFocusIndex : -1
                 animateEntrance: false
                 bodied: true
