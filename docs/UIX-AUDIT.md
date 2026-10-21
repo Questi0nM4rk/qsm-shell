@@ -1,14 +1,13 @@
 # UIX audit handoff
 
-The library is audited before the desktop. This file tells the next agent what the work is, what
+The library is audited as a standalone product. This file tells the next agent what the work is, what
 is already true, and what the owner decided. The authoritative plan is
 `openspec/changes/uix-component-audit/` (proposal, design, spec, tasks); the tracker holds the
 state. This file is the orientation, not a second plan.
 
 ## What the owner asked for
 
-A complete review of every qsm-shell component against the installed qsm-uix guidance, then a
-real redesign of the desktop. Every component needs a deliberate task, its controls, its
+A complete review of every qsm-shell component against the installed qsm-uix guidance. Every component needs a deliberate task, its controls, its
 interaction contract, its visual hierarchy and its motion. A working story is not enough.
 
 The owner approved a full redesign, including changing the shared silhouette. That is permission
@@ -17,7 +16,6 @@ to change the visual identity, not acceptance of a particular replacement.
 ## What is true now
 
 - The library exports 52 types; the catalog holds 60 story keys, several aliasing one type.
-- The desktop provider holds 13 stories of composed surfaces.
 - `qsm-uix` is installed and its skills are the method: `ui-design`, `ui-audit`, `ux-audit`,
   `a11y-audit`, `review-animations`, `desktop-ui`, `qml-ui`.
 - The Workbench can capture the current state of an explicitly selected session, in preview scope
@@ -31,9 +29,8 @@ to change the visual identity, not acceptance of a particular replacement.
 
 | Decision | Consequence |
 | --- | --- |
-| Audit the whole library first, not only the desktop's subset | 52 types, one record each |
+| Audit the whole library, not a consumer's subset | 52 types, one record each |
 | Repairs happen one item at a time, with owner acceptance | No batch of component changes |
-| Desktop integration follows library acceptance | Desktop work stays blocked |
 | Full redesign is allowed, including the silhouette | Old project rules are not a defence against a finding |
 | Minimum tooling: only what blocks this audit | No general Workbench rebuild, no evals, no review loops |
 | Hitbox mathematics belongs in every component record | Each record carries geometry and pointer paths |
@@ -73,11 +70,9 @@ evidence that a click, a key press or a focus ring works.
 | `docs/USAGE.md` | The shared method and the coverage index |
 | `docs/BACKLOG.md` | Open findings only, one line each |
 | `../qsm-workbench` | Session capture and native input mechanics |
-| `../qsm-desktop` | Production surfaces, services, policy; blocked until the library lands |
 
 ## What not to do
 
-Do not start component repairs during the audit. Do not edit the desktop. Do not restart the
-production shell. Do not record a check as owner acceptance. Do not invent a spacing, contrast
+Do not start component repairs during the audit. Do not record a check as owner acceptance. Do not invent a spacing, contrast
 or size threshold and call it a standard: cite the source, or state the design source's own
 value.

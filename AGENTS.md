@@ -1,9 +1,9 @@
 # qsm-shell
 
-Reusable QML components for Qt 6 and Quickshell desktops. One developer and
-one current proof consumer (`qsm-desktop`); the API must remain usable by other
-desktops without inheriting that consumer's policy. Everything is judged by one
-question: does the feature work in a live window, and does every pixel of it
+Reusable QML components for Qt 6 and Quickshell desktops, a standalone library
+with its own owner: it knows nothing about the applications that consume it,
+and the API stays usable by any of them without inheriting one consumer's
+policy. Everything is judged by one question: does the feature work in a live window, and does every pixel of it
 follow the design sources.
 
 ## Direction
@@ -16,7 +16,7 @@ follow the design sources.
   The default deep-night theme uses quiet raised surfaces, luminous text and a
   restrained lilac accent; it is rethemeable through `Style`. Aim for cosy,
   minimal dusk/night: deep quiet grounds and diffuse lilac light, inspired by
-  the desktop's `dark-rain-world.png` and `light-forest-dark-winter.jpg` wallpapers.
+  two dusk wallpapers (`dark-rain-world.png`, `light-forest-dark-winter.jpg`).
   Borrow their atmosphere, not their artwork or decorative noise.
 - Build auxiliary and transient shell primitives, not a web dashboard: bar and
   rail status, panel popouts, launcher, OSD, notifications, session actions,
@@ -44,7 +44,7 @@ follow the design sources.
   item from feedback until the owner accepts it before moving on. An agent's
   capture, tree dump, audit or green suite is not acceptance.
 - Every UI or UX change is validated before it is handed over, on the live
-  composed desktop with the qsm-compuse instruments (`drive`): a capture, a
+  composed shell with the qsm-compuse instruments (`drive`): a capture, a
   real-frame recording for motion, geometry equations read from the item
   tree, rendered contrast. A change no instrument can show is blocked, and the
   missing instrument is the first task (marketplace epic `qsm-j480`). The
@@ -90,8 +90,11 @@ follow the design sources.
   means editing that file first.
 - Comments explain non-obvious mechanics only. History and restatements of
   code do not belong in source.
-- `qsm-desktop` policy, services, persistence and compositor integration stay
-  out of this library.
+- A consumer's policy, services, persistence and compositor integration stay
+  out of this library. It exposes roles through `Style` and the size tables and
+  is rethemed only through `Style.backend` (colours, fonts, size-table entries
+  a consumer adds by name); a consumer uses the public API only and never
+  re-types a library value.
 - Load the project skill `develop-component` for the step loop of one type.
 - Give researchers and implementers small, bounded tasks; keep user judgement
   with the owner. Use `openai/gpt-6-luna`, medium for straightforward work and
@@ -156,8 +159,8 @@ follow the design sources.
 - Preview and requested captures use installed `qsm-workbench` on `PATH`, never
   sibling checkout scripts. Session control uses `qsm-workbench session`; attach
   by explicit PID and confirm provider plus the required story through `describe`.
-  `qsm-shell` and `qsm-desktop` are different catalogs; Notification Layer belongs
-  to the desktop provider. Do not reuse an old session file blindly.
+  A consumer's catalog is a different catalog from this library's. Do not reuse
+  an old session file blindly.
 
 - `npm run preview` opens the storybook catalog in one real wayland window.
   Every story is reachable, the catalog is a browser, and a story window holds
@@ -275,7 +278,7 @@ meter), never an edge. The silhouette itself keeps its edge separation
 | `overlay` | a popout, a menu, a hover container over a card; an inactive track | text, glyphs, controls only |
 | `primary` / `textOnPrimary` | the one filled action per surface, the active part of a track | its text |
 | `accent` | what is current: the selected row at `opacitySelected`, its text and glyph | |
-| `focus` | the keyboard ring, 2px outside the control at `spaceTight` | |
+| `focus` | the keyboard ring, a `spaceTight` stroke outside the control | |
 
 - `Style.tone(base, hovered, pressed, selected, enabled, accent)` is THE
   state matrix and `Surface` is the Rectangle that binds it; a component's
@@ -293,7 +296,8 @@ meter), never an edge. The silhouette itself keeps its edge separation
 - A border encodes a fact colour cannot, and there are four: a failed
   value (`danger`), the shape of an empty toggle (`textMuted`), containment
   of a foreign colour (a swatch may equal the ground), and the focus ring.
-  Layers are separated by a step, never by a line.
+  Each is a `Style.stroke(spaceTight)` line. Layers are separated by a step,
+  never by a line.
 
 ## Component laws
 
@@ -321,7 +325,7 @@ Earned, each from a specific failure. Break one and name which.
   `md` and warns once. The
   number stays settable directly as the escape hatch. Never an enum with
   token mapping inside the component: this is a general library, not one
-  desktop's kit.
+  product's kit.
 - **One scale per instance, and everything connected to the component
   scales with it.** `s = Style.size(Type, size) / Style.size(Type, "md")`.
   A component is designed in `md`; every other measurement is its md value
@@ -330,7 +334,7 @@ Earned, each from a specific failure. Break one and name which.
   `Style.glyphBeside(box)` (the box decides, never the call site) and
   otherwise `Style.iconNear`, spacing and insets through `Style.rhythm`. The label, the glyph in a thumb, a
   slot action, the gap to the label: all of it. Radius, the focus gap and a
-  1px border do not scale (M3 keeps radius per component, not per size).
+  stroke do not scale (M3 keeps radius per component, not per size).
   Sizes that grew only the area left a huge control with a tiny glyph and a
   tiny label, which read as two components.
 - **The bigger the instance, the calmer it is: overhangs, growth and joins
@@ -473,11 +477,11 @@ Earned, each from a specific failure. Break one and name which.
   accent track (WCAG 2.4.13 wants 3:1 against the adjacent colour, and M3,
   Radix and Fluent all keep the indicator outside with a gap for that
   reason). A ring around the track, not the handle: the handle moves.
-- **A resting surface reads at 1.2:1 against the shell background; hover
-  and any highlight sit 0.4 above the rest.** The text box surface sat at
-  1.05:1 and an empty field was invisible; 3:1 (the rubric's line) shouted.
-  The ladder now fixes the rest at one step (`surface`, 1.30:1 on `band`)
-  and the hover lift at 0.4 above it. WCAG contrast ratios, computed
+- **A resting surface reads at 1.30:1 against the shell background; hover
+  and any highlight sit 0.4 above the rest.** A text box surface at 1.05:1
+  left an empty field invisible; 3:1 (the rubric's line) shouted. The ladder
+  fixes the rest at one step (`surface`, 1.30:1 on `band`) and the hover
+  lift at 0.4 above it. WCAG contrast ratios, computed
   against `band`, are the unit.
 - **The cursor describes the region under it, not the outer component.** The
   editable body stays I-beam, a trailing action is a hand, and a leading

@@ -5,55 +5,39 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 
 ## Next
 
-- Full-library UIX audit and redesign: the owner wants every one of the 52 exported types reviewed against the installed qsm-uix guidance, with per-type records carrying hitbox and pointer-path mathematics, then repairs one item at a time with owner acceptance, then the desktop. Orientation `docs/UIX-AUDIT.md`, plan `openspec/changes/uix-component-audit/`, tracker `qss-9zk`.
+- Full-library UIX audit and redesign: every one of the 52 exported types reviewed against the installed qsm-uix guidance, with per-type records carrying hitbox and pointer-path mathematics, then repairs one item at a time with owner acceptance. Orientation `docs/UIX-AUDIT.md`, plan `openspec/changes/uix-component-audit/`, tracker `qss-9zk`.
 - Menu and MonthCalendar assign host-owned selection/month directly; these writes can replace host bindings. Source-confirmed ownership mismatch, left for each type's named repair and live review (`qss-bcn`).
 - Rollout unregisters only its current host/key; changing either on a living instance can orphan the previous paint/input registration. Production reachability is unverified; settle the lifetime contract before changing the mechanism (`qss-3il`).
 - Shell readiness first: close concrete component defects and keyboard/public-action
-  parity through desktop hosts and the existing action menu; defer desktop-only
+  parity through hosts and the existing action menu; defer host-only
   improvements and Workbench polish unless they block the selected item (`GOAL.md`).
-- Release verification: the last requested `npm test` passed smoke, 51 interaction
-  and 261 unit checks plus shader freshness; it predates the Menu activation typing
-  cleanup and added glyphs. Those edits are source-reviewed, not fresh whole-suite
-  proof. Lint warnings remain, so this is not a warning-free claim.
-  Desktop menu clicks and OSD pointer/key/action routes pass isolated flows;
-  generic Rollout variants, live pointer/drag/focus, panel tabs and real-backend
+- Generic Rollout variants, live pointer/drag/focus, panel tabs and real-backend
   operation still need the owner's named review; passing checks are not acceptance.
 - Residual lint: NotificationCard sets layout-managed height and composition
-  Loaders expose QObject-typed APIs;
-  repair with each owning item. Current release evidence is in the desktop backlog.
-
-- ListRow's additive headingHeight/expansionHeight contract is source-prepared for desktop inline audio; live consumer sizing awaits the current desktop item review. The owner approved shell Compositions / menu-items for that adoption.
-
-- Rollout: all attached desktop callers' appearance and smooth motion are owner-accepted; generic sound-settings variants and spec completion remain open under `openspec/changes/rollout-expansion`.
-
-- DataCapsule's watched appearance is owner-accepted; production compositor-
-  fullscreen notification/OSD geometry and input are exercised. Audio/brightness
-  mutation routes and unrelated capsule compositions are outside that evidence.
-- Desktop CPU/memory readings need a DataCapsule composition with persistent or
+  Loaders expose QObject-typed APIs; repair with each owning item.
+- ListRow's additive headingHeight/expansionHeight contract awaits a live consumer sizing review. The owner approved shell Compositions / menu-items for that adoption.
+- Rollout: generic sound-settings variants and spec completion remain open under `openspec/changes/rollout-expansion`.
+- DataCapsule: a CPU/memory readout needs a composition with persistent or
   event-driven visibility and an explicit open action, without library service policy.
-
-- Personal production scope is the 27 directly used desktop components plus four
-  internal dependencies listed in `GOAL.md` (31 types). Reconcile existing component
-  acceptance evidence against its R0-R5 roadmap, then prepare one selected item at a
-  time; catalog/flow presence alone is not acceptance.
+- Reconcile existing component acceptance evidence against the roadmap in `GOAL.md`
+  (R0-R5), then prepare one selected item at a time; catalog/flow presence alone is
+  not acceptance.
 - R0: provider installs no `Style.backend`, so reduced motion defaults to false;
-  add a provider-owned review
-  environment, deferred to the first selected implementation item.
-- R1: NotificationStack lifetime and production fullscreen input are exercised;
-  the watched capsule appearance is owner-accepted. Recording cadence guidance
-  distinguishes actual capture rate from CFR encoding in `AGENTS.md`.
-- NotificationCenter's snapshot sorting, same-count identity and hover/pause
-  preservation are exercised by focused checks and the desktop history flow;
-  live notification action targets, spoken output and appearance await owner review.
-- R2/R3: Slider's unit does not answer label clicks; compact Capsule/IconButton,
-  horizontal ScrollCue and long Kbd cases are missing from their review controls.
-  Extend existing units with their owning milestone, not a new catalog or flow suite.
-- R4: include startup empty/one-point Sparkline data and real desktop Divider cases;
+  add a provider-owned review environment, deferred to the first selected
+  implementation item.
+- R1: recording cadence guidance distinguishes actual capture rate from CFR
+  encoding in `AGENTS.md`.
+- NotificationCenter: live notification action targets, spoken output and
+  appearance await owner review.
+- R2/R3: Slider's unit does not answer label clicks; horizontal ScrollCue and long
+  Kbd cases are missing from their review controls. Extend existing units with
+  their owning milestone, not a new catalog or flow suite.
+- R4: include startup empty/one-point Sparkline data and Divider cases;
   align Surface's focus wording with host composition. Deferred to those view reviews;
   lack of a flow for a static component is not itself a defect.
 - Sibling workbench `BRIEF.md` retains mandatory tests/commits inconsistent with current
   rules. Deferred to harness docs; library roadmap and brief use the owner-led contract.
-- Native simulated input is currently wired in the desktop provider, not this library's
+- Native simulated input is wired in a consumer's provider, not this library's
   `workbench/Adapter.qml` (no `inputDriver`/native targets). Live component demos and
   semantic actions are separate capabilities. Defer native target exposure until a
   selected library story needs it; it is not a prerequisite for a manual animation demo.
@@ -64,11 +48,11 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - `ActionTile`, `Segmented` and `ColorSwatch` fixtures need owner review of
   purpose, glyph/copy consistency and reachable supported cases before continuing.
 - Provider migration and native inspection are available, but component-wide
-  owner acceptance is still open; a desktop rollout trace does not establish it.
+  owner acceptance is still open; a rollout trace does not establish it.
 - Popup family (`Menu`, `Popover`, `Dialog`, `ToolTip`) stays hand-rolled:
   `T.Popup` inside a `PanelWindow` paints only inside the window rect.
-- From the consumer: equal-recency NotificationCenter groups now retain feed order;
-   an alphabetical preference would need an owner decision. `Segmented`
+- Equal-recency NotificationCenter groups retain feed order;
+  an alphabetical preference would need an owner decision. `Segmented`
   may want one gliding indicator instead of a fill per cell (`ui-design` and
   live judgement first); a compact CPU/memory readout is composed from
   `Stat`, `Meter` and `Prose`, never a new type.
@@ -181,10 +165,7 @@ task in this group.
 
 ## Owner rulings the type audit left open
 
-- **Recede contrast** — `opacity.recede` 0.45 leaves unselected `ListRow` and
-  `Menu` text at 3.89:1 (name) and 2.87:1 (metadata) on the band. Raise it to
-  0.50 / 0.65, recede by colour toward the band, or accept the dim.
-- **Segmented thumb** — the selected thumb is 1.29:1 on its track
+- **Segmented thumb** — the selected thumb is 1.30:1 on its track
   (`opacity.selected` 0.12); raise it or add a non-colour cue.
 - **Label width ceiling** — `Capsule`, `Badge`, `ControlLabel` (so `Slider` and
   `Field`) widen without limit. One width token is needed; pick the number
@@ -193,7 +174,6 @@ task in this group.
   the library default is 1.08.
 - **Host-owned state written by the component** — `Menu.currentIndex`,
   `Menu` writing row `selected`, `MonthCalendar.shown`: report `moved` /
-  `monthShifted` and let the host assign; every host (units, qsm-desktop) wires
-  it in the same change.
-- **Size presets still missing** — `Capsule`, `IconButton`, `ActionTile`,
-  `StatRing`, `ColorSwatch`, `Avatar`, `Spinner`, `Skeleton` line box.
+  `monthShifted` and let the host assign; every host wires it in the same change.
+- **Size presets still missing** — `ActionTile`, `StatRing`, `ColorSwatch`,
+  `Avatar`, `Spinner`, `Skeleton` line box.

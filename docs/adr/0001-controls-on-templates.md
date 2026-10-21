@@ -28,10 +28,10 @@ working under quickshell.
    `Style.*`; M3 palette roles and the C++ plugin types are not ported.
    qsm-shell is GPL-3.0 as a consequence.
 6. Project tokens win over the design-system blueprint where they disagree.
-   `icon.lg` is 24 to sit on the 4px rhythm; `controlHeight` stays 40.
+   `icon.lg` is 24 to sit on the 4px rhythm; Control `md` stays 40.
 
 ## Consequences
 
-- Public API breaks. `qsm-desktop` is updated after the controls land, not
+- Public API breaks. Consumers update after the controls land, not
   in lockstep.
 - The definition of done for a component lives in `AGENTS.md`.

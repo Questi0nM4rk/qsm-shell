@@ -28,8 +28,8 @@ pointer facts must therefore participate in the same library implementation.
 
 ## Consequences
 
-`EdgeScene` and the Workbench adapter provide rail, anchor and corridor areas
-to their real `BarPopouts`; both read the inherited Rollout `keepOpen` fact.
+A host and the Workbench adapter provide rail, anchor and corridor areas;
+both read the inherited Rollout `keepOpen` fact.
 The component owns the grace timer, including a newly shown body outside all
 areas. Keyboard retention remains host policy; release re-evaluates the
 component fact immediately. A shared source must preserve hover on descendants.
@@ -45,5 +45,5 @@ component fact immediately. A shared source must preserve hover on descendants.
   teardown stop pending grace.
 - Manual StateLayer state never triggers an action; real pointer entry still
   reports selection intent even while a host holds visual hover.
-- Native events, desktop flows and a live nested trace verify these facts;
+- Native events, host flows and a live nested trace verify these facts;
   no fake pointer position or pixel assertion substitutes for them.

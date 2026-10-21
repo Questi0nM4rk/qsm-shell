@@ -83,7 +83,7 @@ Commits include agent-authored work under my identity; design, orchestration and
 - Known gaps: `qmllint` prints warnings (for example `id-shadows-member` in `Capsule.qml`), so it is
   not warning-free. Open items are in [docs/BACKLOG.md](docs/BACKLOG.md).
 - Experimental: `npm run preview` and `npm run capture` need `qsm-workbench`, which is not published yet.
-- The desktop that uses this library, `qsm-desktop`, is a separate private project.
+- Consumers use the public API only (`Style`, `Motion`, the components and `Style.backend`); the library knows nothing about any one of them.
 - Written for one person and one setup. No stability promise for the API.
 
 ## License
