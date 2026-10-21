@@ -34,19 +34,28 @@ ColumnLayout {
     property string error: ""
     // Marks the field as needed, in a channel that is not colour.
     property bool required: false
-    // Forwarded to the label: a caller composing a scaled control (a
-    // TextField/Slider/Switch's own `sizeScale`) binds this to it so the
-    // name above stays in step with the control it names.
+    // A caller composing a scaled control (a TextField/Slider/Switch's own
+    // `sizeScale`) binds this to it so the label, message, glyph and gaps stay
+    // in step with the control they frame.
     property real sizeScale: 1
 
-    readonly property bool failed: error.length > 0
+    // A blank message says nothing, so it is neither a failure nor a hint.
+    readonly property bool failed: error.trim().length > 0
+    readonly property bool hinted: hint.trim().length > 0
     readonly property string accessibleName: label
-    readonly property string accessibleDescription: [failed ? error : hint, required ? "Required" : ""].filter(value => value.length > 0).join(" ")
+    readonly property string accessibleDescription: [failed ? error : hint, required && label !== "" ? "Required" : ""].filter(value => value.length > 0).join(" ")
 
     // The control this frames.
     default property alias content: contentHost.data
 
-    spacing: Style.space1
+    spacing: Style.rhythm(Style.space1 * root.sizeScale)
+
+    // The mark lives on the label row, which an empty label hides; a required
+    // field with no name would be announced but never shown.
+    Component.onCompleted: {
+        if (required && label === "")
+            console.error("Field: `required` needs a `label`; the required mark has nowhere to show")
+    }
 
     // The same label element a slider wears; one style for naming a control.
     ControlLabel {
@@ -66,13 +75,15 @@ ColumnLayout {
     // when it fails. The error wins while it stands.
     RowLayout {
         Layout.fillWidth: true
-        visible: root.failed || root.hint.length > 0
-        spacing: Style.spaceTight
+        visible: root.failed || root.hinted
+        spacing: Style.rhythm(Style.spaceTight * root.sizeScale)
 
+        // The slot stays while a hint shows, so the message does not shift
+        // right when the error arrives.
         SvgIcon {
-            visible: root.failed
+            opacity: root.failed ? 1 : 0
             name: "circle-alert"
-            size: Style.iconXs
+            size: Style.iconNear(Style.iconXs * root.sizeScale)
             color: Style.danger
         }
         Prose {
@@ -80,6 +91,7 @@ ColumnLayout {
             role: "metadata"
             color: root.failed ? Style.danger : Style.textMuted
             text: root.failed ? root.error : root.hint
+            font.pixelSize: Style.textNear(Style.textXs * root.sizeScale)
         }
     }
 }
