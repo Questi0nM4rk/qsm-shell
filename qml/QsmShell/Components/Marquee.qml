@@ -21,18 +21,26 @@ Item {
     // once | always | hover | never
     property string mode: "once"
     property string role: "label"
-    property color color: Style.text
+    // Forwarded to Prose, so the role decides the colour; `metadata` and
+    // `supporting` are already muted.
+    property bool muted: false
     // How long it holds still at each end. Without a pause the text arrives
     // and leaves in the same movement and neither end can be read.
-    property int dwell: Motion.large * 2
+    property int dwell: Motion.readingDwell
 
     readonly property bool overflows: label.implicitWidth > width
     readonly property real _travel: Math.max(0, label.implicitWidth - width)
+    readonly property var _modes: ["once", "always", "hover", "never"]
+    // Reduced motion rests every mode as an ellipsis: a loop calms by getting
+    // slower, and a scrolling title has no slower form that is still readable.
     readonly property bool _wanted: root.overflows && root.mode !== "never"
-        && (root.mode === "always" || (!Style.reducedMotion
-            && ((root.mode === "hover" && hover.hovered) || run.pending)))
+        && !Style.reducedMotion
+        && (root.mode === "always"
+            || (root.mode === "hover" && hover.hovered) || run.pending)
 
-    implicitWidth: label.implicitWidth
+    // A constant: a long title scrolls inside the clip and never widens the
+    // control; the host sets `width` for any other room.
+    implicitWidth: Style.controlWidth
     implicitHeight: label.implicitHeight
     clip: true
 
@@ -40,18 +48,37 @@ Item {
         id: run
         // `once` arms on every text change and disarms when the pass ends.
         property bool pending: false
+        // Text that fits never plays a pass, so nothing would clear the flag
+        // and a later resize would play a pass nobody asked for. The label has
+        // its new width by the time this runs.
+        function arm(): void {
+            pending = root.mode === "once" && root.overflows
+        }
     }
 
-    onTextChanged: {
-        label.x = 0
-        if (root.mode === "once") run.pending = true
+    // QML cannot throw out of a binding, so an unknown mode says so loudly
+    // instead of passing for a deliberate `never`.
+    function _checkMode(): void {
+        if (_modes.indexOf(mode) < 0)
+            console.error(`Marquee: unknown mode "${mode}" -- expected once, always, hover or never`)
     }
-    onModeChanged: label.x = 0
+    Component.onCompleted: _checkMode()
+
+    onTextChanged: {
+        settle.stop()
+        label.x = 0
+        Qt.callLater(run.arm)
+    }
+    onModeChanged: {
+        _checkMode()
+        settle.stop()
+        label.x = 0
+    }
 
     Prose {
         id: label
         role: root.role
-        color: root.color
+        muted: root.muted
         text: root.text
         width: root.width
         // While it is travelling the text must be whole; at rest an ellipsis
@@ -61,11 +88,27 @@ Item {
 
     HoverHandler { id: hover }
 
+    NumberAnimation {
+        id: settle
+        target: label
+        property: "x"
+        to: 0
+        duration: Motion.medium
+        easing.type: Motion.moveEasing
+    }
+
     SequentialAnimation {
         running: root._wanted && root._travel > 0
         loops: root.mode === "always" ? Animation.Infinite : 1
         onFinished: run.pending = false
-        onRunningChanged: if (!running) label.x = 0
+        onRunningChanged: {
+            if (running || label.x === 0) return
+            // Stopped mid-pass (the pointer left, the text began to fit):
+            // come back from where it is. Under reduced motion no position
+            // animation runs, so it is placed.
+            if (Style.reducedMotion) label.x = 0
+            else settle.restart()
+        }
 
         PauseAnimation { duration: root.dwell }
         NumberAnimation {
@@ -75,7 +118,7 @@ Item {
             to: -root._travel
             // The pace is the text's length, not a fixed duration: a long
             // title and a short one must scroll at the same READING speed.
-            duration: Math.max(Motion.large, root._travel * 16)
+            duration: Math.max(Motion.large, root._travel * Motion.readingPace)
             easing.type: Motion.moveEasing
         }
         PauseAnimation { duration: root.dwell }
@@ -83,7 +126,9 @@ Item {
             target: label
             property: "x"
             to: 0
-            duration: Motion.medium
+            // Back at the pace it came: a rewind far faster than the reading
+            // pass is the text being yanked home.
+            duration: Math.max(Motion.medium, root._travel * Motion.readingPace)
             easing.type: Motion.moveEasing
         }
     }
