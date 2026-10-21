@@ -85,8 +85,9 @@ Item {
         }
     }
 
-    // Each fade is visible only while there is content past that edge, so the
-    // cue and the truth never disagree. They sit still while the content moves
+    // Each fade is present only while there is content past that edge, so the
+    // cue and the truth never disagree; it fades in and out rather than
+    // snapping. They sit still while the content moves
     // under them, which is what makes them read as the boundary rather than as
     // part of the list.
     //
@@ -101,7 +102,11 @@ Item {
     Rectangle {
         width: root.vertical ? root.width : root.fadeDepth
         height: root.vertical ? root.fadeDepth : root.height
-        visible: root.fade && root._at > 0.0001
+        visible: root.fade && opacity > 0
+        opacity: root._at > 0.0001 ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation { duration: Motion.medium; easing.type: Motion.standardEasing }
+        }
         gradient: Gradient {
             orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
             GradientStop { position: 0; color: root.fadeColor }
@@ -114,7 +119,11 @@ Item {
         height: root.vertical ? root.fadeDepth : root.height
         x: root.vertical ? 0 : root.width - root.fadeDepth
         y: root.vertical ? root.height - root.fadeDepth : 0
-        visible: root.fade && root._at + root._ratio < 0.9999
+        visible: root.fade && opacity > 0
+        opacity: root._at + root._ratio < 0.9999 ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation { duration: Motion.medium; easing.type: Motion.standardEasing }
+        }
         gradient: Gradient {
             orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
             GradientStop { position: 0; color: "transparent" }

@@ -57,6 +57,11 @@ QtObject {
     // where the overlay rung itself vanished on the rung above it.
     readonly property color keycap: backend?.keycap ?? root.lift(root.band, 0.9)
     readonly property color shadow: backend?.shadow ?? Tokens.colorShadow
+    // A pair, like the rest: a transparency checker is two greys, and a swatch
+    // lays its colour over them so an alpha reads as alpha rather than as a
+    // dimmer colour.
+    readonly property color checkerLight: backend?.checkerLight ?? Tokens.colorCheckerLight
+    readonly property color checkerDark: backend?.checkerDark ?? Tokens.colorCheckerDark
     readonly property real floatingShadowOpacity: backend?.floatingShadowOpacity ?? Tokens.opacityFloatingShadow
     readonly property real floatingShadowBlur: backend?.floatingShadowBlur ?? Tokens.geometryFloatingShadowBlur
     readonly property real floatingShadowOffset: backend?.floatingShadowOffset ?? Tokens.geometryFloatingShadowOffset
@@ -81,6 +86,22 @@ QtObject {
     readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
     // A badge's tinted body: its tone at this strength over the layer.
     readonly property real badgeTintOpacity: backend?.badgeTintOpacity ?? Tokens.opacityBadgeTint
+    // How far a tinted badge's reading is pulled from its tone toward `text`.
+    // The tone alone on its own tint is below 4.5:1 at the badge's size; this
+    // share clears it on band, surface and overlay.
+    readonly property real badgeInkMix: backend?.badgeInkMix ?? Tokens.blendBadgeInk
+    // A tinted callout's tone over the surface, and a divider's own line: both
+    // are a quiet echo, never a fill, so each is its own number.
+    readonly property real calloutTintOpacity: backend?.calloutTintOpacity ?? Tokens.opacityCalloutTint
+    readonly property real dividerOpacity: backend?.dividerOpacity ?? Tokens.opacityDivider
+    // The dim a modal lays over the surface beneath it.
+    readonly property real scrimOpacity: backend?.scrimOpacity ?? Tokens.opacityScrim
+    // The series colour under a sparkline's line, and the unlit remainder of a
+    // spinner's ring.
+    readonly property real areaFillOpacity: backend?.areaFillOpacity ?? Tokens.opacityAreaFill
+    readonly property real ringTrackOpacity: backend?.ringTrackOpacity ?? Tokens.opacityRingTrack
+    // A raised thumb's own shadow, under the thumb and over its track.
+    readonly property real thumbShadowOpacity: backend?.thumbShadowOpacity ?? Tokens.opacityThumbShadow
     // A scroll mark shows while the list moves and all but disappears at rest.
     readonly property real scrollCueActiveOpacity: backend?.scrollCueActiveOpacity ?? Tokens.opacityScrollCueActive
     readonly property real scrollCueRestOpacity: backend?.scrollCueRestOpacity ?? Tokens.opacityScrollCueRest
@@ -327,6 +348,7 @@ QtObject {
     // The natural width of a text-shaped control. Constant, never content-derived.
     readonly property int controlWidth: backend?.controlWidth ?? Tokens.geometryControlWidth
     readonly property int spinBoxWidth: backend?.spinBoxWidth ?? Tokens.geometrySpinBoxWidth
+    readonly property int statWidth: backend?.statWidth ?? Tokens.geometryStatWidth
     readonly property int notificationCollapsedHeight: backend?.notificationCollapsedHeight
         ?? Tokens.geometryNotificationCollapsedHeight
     // Full compact message composition: headline plus two readable body lines.
@@ -389,8 +411,12 @@ QtObject {
 
     readonly property int ringDiameter: backend?.ringDiameter ?? Tokens.geometryRingDiameter
     readonly property int ringStroke: backend?.ringStroke ?? Tokens.geometryRingStroke
+    // A spinner's stroke as a share of its diameter: a fixed stroke is a disc
+    // on a small one and a hairline on a large one.
+    readonly property real spinnerStrokeRatio: backend?.spinnerStrokeRatio ?? Tokens.geometrySpinnerStrokeRatio
 
     readonly property int badgeHeight: backend?.badgeHeight ?? Tokens.geometryBadgeHeight
+    readonly property int badgeDot: backend?.badgeDot ?? Tokens.geometryBadgeDot
     // The chip a count sits in: one width for every count up to "99+", so a
     // ticking number never resizes it.
     readonly property int badgeWidth: backend?.badgeWidth ?? Tokens.geometryBadgeWidth

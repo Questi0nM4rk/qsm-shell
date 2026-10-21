@@ -16,7 +16,7 @@ Rectangle {
     id: root
 
     property real inset: 0
-    property real strength: .35
+    property real strength: Style.dividerOpacity
     property color lineColor: Style.textMuted
     property real thickness: 1
 

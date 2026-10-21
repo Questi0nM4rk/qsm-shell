@@ -178,3 +178,22 @@ task in this group.
 - **SH-C8 Neutral base control grouping correction** — declaration-only
   regrouping so independent choices are separate from commands; the migrated
   53-step flow passes, live review open.
+
+## Owner rulings the type audit left open
+
+- **Recede contrast** — `opacity.recede` 0.45 leaves unselected `ListRow` and
+  `Menu` text at 3.89:1 (name) and 2.87:1 (metadata) on the band. Raise it to
+  0.50 / 0.65, recede by colour toward the band, or accept the dim.
+- **Segmented thumb** — the selected thumb is 1.29:1 on its track
+  (`opacity.selected` 0.12); raise it or add a non-colour cue.
+- **Label width ceiling** — `Capsule`, `Badge`, `ControlLabel` (so `Slider` and
+  `Field`) widen without limit. One width token is needed; pick the number
+  against a live popout row (190 = half a control width is the candidate).
+- **Hover growth of a small box** — `Checkbox` hardcodes 1.15, `Switch` 1.25,
+  the library default is 1.08.
+- **Host-owned state written by the component** — `Menu.currentIndex`,
+  `Menu` writing row `selected`, `MonthCalendar.shown`: report `moved` /
+  `monthShifted` and let the host assign; every host (units, qsm-desktop) wires
+  it in the same change.
+- **Size presets still missing** — `Capsule`, `IconButton`, `ActionTile`,
+  `StatRing`, `ColorSwatch`, `Avatar`, `Spinner`, `Skeleton` line box.

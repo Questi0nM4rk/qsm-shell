@@ -18,6 +18,8 @@ QtObject {
     readonly property color colorDanger: "#f5aeb7"
     readonly property color colorShadow: "#000000"
     readonly property color colorEdge: "#5e357f"
+    readonly property color colorCheckerLight: "#ffffff"
+    readonly property color colorCheckerDark: "#c0c0c0"
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -66,16 +68,27 @@ QtObject {
     readonly property int motionSpin: 900
     readonly property int motionPulse: 1400
     readonly property int motionHoverGrace: 180
+    readonly property real motionExitRatio: 0.8
+    readonly property int motionReadingPace: 16
+    readonly property int motionReadingDwell: 800
+    readonly property int motionHoverIntent: 400
+    readonly property int motionClockRefresh: 60000
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySelected: 0.12
     readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.45
     readonly property real opacityFloatingShadow: 0.28
     readonly property real opacityCardShadow: 0.28
-    readonly property real opacityBadgeTint: 0.18
+    readonly property real opacityBadgeTint: 0.12
     readonly property real opacityScrollCueActive: 0.6
     readonly property real opacityScrollCueRest: 0.2
     readonly property real opacityEdgeStrength: 0.5
+    readonly property real opacityAreaFill: 0.18
+    readonly property real opacityRingTrack: 0.18
+    readonly property real opacityScrim: 0.55
+    readonly property real opacityCalloutTint: 0.1
+    readonly property real opacityDivider: 0.35
+    readonly property real opacityThumbShadow: 0.45
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28
@@ -85,7 +98,7 @@ QtObject {
     readonly property int geometryNotificationWidth: 380
     readonly property int geometryControlWidth: 380
     readonly property int geometryNotificationCollapsedHeight: 36
-    readonly property int geometryNotificationPreviewHeight: 80
+    readonly property int geometryNotificationPreviewHeight: 88
     readonly property int geometryNotificationBodyViewportHeight: 96
     readonly property int geometryControlHeightLg: 52
     readonly property int geometrySwatchTarget: 44
@@ -122,9 +135,13 @@ QtObject {
     readonly property int geometryCardShadowExtent: 12
     readonly property int geometrySeamOverlap: 8
     readonly property int geometryEdgeFade: 16
+    readonly property int geometryBadgeDot: 8
+    readonly property int geometryStatWidth: 140
+    readonly property real geometrySpinnerStrokeRatio: 0.16
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55
     readonly property real trackingWide: 1.4
+    readonly property real blendBadgeInk: 0.5
     readonly property var sizes: ({"DataCapsule":{"sm":32,"md":64,"lg":96},"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"SpinBox":{"sm":32,"md":40,"lg":52},"Slider":{"sm":16,"md":24,"lg":40},"TextField":{"sm":32,"md":40,"lg":52},"Segmented":{"sm":32,"md":40,"lg":52}})
 }

@@ -18,7 +18,9 @@ import qs.QsmShell.Style
 // neither, so it eases at both ends.
 //
 // Reduced motion shortens every duration rather than removing the animation:
-// a change with no transition at all reads as a glitch, not as calm.
+// a change with no transition at all reads as a glitch, not as calm. The one
+// exception is the hover GROWTH scales below, which are movement rather than
+// time: they drop to 1 and the body's colour lift carries the hover alone.
 QtObject {
     // press — the acknowledgement under a finger. Anything slower feels late.
     readonly property int press: Style.reducedMotion ? 40 : Tokens.motionPress
@@ -40,16 +42,16 @@ QtObject {
     readonly property real microPopScale: Tokens.motionMicroPopScale
     // Capsules span a label and optional reading, so their hover response is
     // quieter than an icon target's default growth.
-    readonly property real capsuleHoverScale: Tokens.motionCapsuleHoverScale
+    readonly property real capsuleHoverScale: Style.reducedMotion ? 1 : Tokens.motionCapsuleHoverScale
     // The default response of an icon-sized target: it grows under the
     // pointer and pushes in under a press.
-    readonly property real hoverScale: Tokens.motionHoverScale
+    readonly property real hoverScale: Style.reducedMotion ? 1 : Tokens.motionHoverScale
     readonly property real pressScale: Tokens.motionPressScale
     // A press on a content group inside a wide body (a segment's label)
     // moves barely: the body does not grow, only the content acknowledges.
     readonly property real pressScaleSoft: Tokens.motionPressScaleSoft
     // A row's leading box is larger than an icon target and grows more.
-    readonly property real rowHoverScale: Tokens.motionRowHoverScale
+    readonly property real rowHoverScale: Style.reducedMotion ? 1 : Tokens.motionRowHoverScale
     readonly property real rowPressScale: Tokens.motionRowPressScale
     // fast — a control changing shape, a row disclosing. The ceiling for
     // anything the pointer or the keyboard is waiting on.
@@ -58,6 +60,15 @@ QtObject {
     readonly property int medium: Style.reducedMotion ? 100 : Tokens.motionMedium
     // large — a whole surface rolling out or retracting.
     readonly property int large: Style.reducedMotion ? 120 : Tokens.motionLarge
+
+    // An exit is shorter than the entry it undoes: nobody watches a thing leave,
+    // and a leaving thing that lingers reads as late. Pass the entry duration;
+    // it is already shortened under reduced motion, so the exit follows it.
+    //
+    //     duration: root.open ? Motion.medium : Motion.exit(Motion.medium)
+    function exit(entry: int): int {
+        return Math.round(entry * Tokens.motionExitRatio);
+    }
 
     // ── the rollout tier ────────────────────────────────────────────────
     // A rollout is not a surface arriving on top of another one: it is the
@@ -115,6 +126,20 @@ QtObject {
     // it does not shorten under Style.reducedMotion the way a duration does —
     // reduced motion asks for calmer animation, not a different dead-zone.
     readonly property int hoverGrace: Tokens.motionHoverGrace
+    // hoverIntent — how long a pointer must rest on a trigger before a hover
+    // popover opens, so a pointer passing through opens nothing. A timeout like
+    // hoverGrace, and unshortened for the same reason.
+    readonly property int hoverIntent: Tokens.motionHoverIntent
+    // clockRefresh — how often a relative timestamp ("3 min ago") is redrawn.
+    // A timer, not a visual change.
+    readonly property int clockRefresh: Tokens.motionClockRefresh
+
+    // Reading text that travels (Marquee): the pace is milliseconds per pixel,
+    // so a long title and a short one scroll at the same reading speed, and
+    // the dwell is the hold at each end. Neither follows reduced motion,
+    // because a marquee does not run under it.
+    readonly property int readingPace: Tokens.motionReadingPace
+    readonly property int readingDwell: Tokens.motionReadingDwell
 
     // Enter: decelerate in, so the arrival is where the eye lands.
     readonly property int standardEasing: Easing.OutCubic

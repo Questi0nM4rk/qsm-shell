@@ -35,6 +35,12 @@ Item {
         sourceSize: Qt.size(root.size * 2, root.size * 2)
         asynchronous: true
         visible: false
+        // QML cannot throw out of a binding, so a missing glyph says so on the
+        // error stream instead of drawing nothing in silence.
+        onStatusChanged: {
+            if (status === Image.Error)
+                console.error(`SvgIcon: no bundled icon "${root.name}"`);
+        }
     }
 
     MultiEffect {

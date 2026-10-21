@@ -63,20 +63,22 @@ Item {
 
     // Keyboard focus, which is when the ring shows. Hosted, Qt's `visualFocus`
     // (tab, backtab, shortcut) says it; a plain item says it when its parent
-    // does. A host whose focus lives on a DESCENDANT (a text input, a slider
+    // holds the active focus (it has no `visualFocus`). A host whose focus lives on a DESCENDANT (a text input, a slider
     // thumb) sets this itself: a `T.Control` is not a focus scope, so its own
     // `visualFocus` stays false while the descendant holds the focus. A host
     // that passes `activeFocus` here gets the ring on a click too, unless the
     // click came through this layer's own tap, which `_pointerFocus` hides
     // until focus is lost.
-    property bool focused: _hosted ? (host.visualFocus ?? false) : ((root.parent as T.Control)?.visualFocus ?? false)
+    property bool focused: _hosted ? (host.visualFocus ?? false)
+        : (root.parent as T.Control) ? ((root.parent as T.Control).visualFocus ?? false)
+        : (root.parent?.activeFocus ?? false)
     property bool _pointerFocus: false
     onFocusedChanged: if (!root.focused) root._pointerFocus = false
     // The corner the ring follows. The host states it, because `parent` is a
     // plain Item as far as the type system is concerned and probing it for a
     // radius is a warning plus a guess.
     property real focusRadius: 0
-    property color focusColor: Style.accent
+    property color focusColor: Style.focus
 
     readonly property bool pointerHovered: enabled && interactive && (_hosted ? host.hovered : hover.hovered)
     readonly property bool hovered: enabled && interactive && (pointerHovered || manualHoverOverride)
@@ -143,18 +145,21 @@ Item {
     // draw. Outside the painted body, never inside it: a ring on the body's own
     // edge vanishes on a full accent fill. Gap and stroke are both
     // `spaceTight`; the outer radius is the body's plus both, the reverse of
-    // `Style.childRadius`, so the ring stays concentric.
+    // `Style.childRadius`, so the ring stays concentric. The gap is measured
+    // from THIS LAYER's edge, so a layer sized to its body (not outset from it)
+    // is what puts the ring a half step clear.
     Rectangle {
         readonly property real _reach: Style.spaceTight * 2
         anchors.fill: parent
         anchors.margins: -_reach
         z: -1
-        visible: root.focused && !root._pointerFocus && root.enabled && root.interactive
+        // Hidden only once the fade has finished, so a ring leaves as it came.
+        visible: opacity > 0
         color: "transparent"
         radius: root.focusRadius + _reach
         border.width: Style.spaceTight
         border.color: root.focusColor
-        opacity: root.focused && !root._pointerFocus ? 1 : 0
+        opacity: root.focused && !root._pointerFocus && root.enabled && root.interactive ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -172,11 +177,12 @@ Item {
         enabled: root.interactive && root.clickable && !root._hosted
         gesturePolicy: root.gesturePolicy
         onTapped: root.activate()
-        // A pointer press that focuses the host must not ring it. Released
-        // without taking focus, the mark is cleared so a later Tab still rings.
+        // A pointer press that takes focus must not ring it; a press on a host
+        // that already holds focus keeps its ring. Released without taking
+        // focus, the mark is cleared so a later Tab still rings.
         onPressedChanged: {
             if (pressed)
-                root._pointerFocus = true;
+                root._pointerFocus = !root.focused;
             else
                 Qt.callLater(() => { if (!root.focused) root._pointerFocus = false; });
         }

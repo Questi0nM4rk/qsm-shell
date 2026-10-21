@@ -229,18 +229,17 @@ Item {
         return Math.max(0.05, Math.min(1, (thinnest / 2) / root.meltSmoothing));
     }
 
-    // `edgeBits` and `rimBits` are DIFFERENT QUESTIONS and must stay separate.
+    // `edgeBits` and `seamBits` are DIFFERENT QUESTIONS and must stay separate.
     //
     // edgeBits answers "which screen BAND is this rect welded through" — it
     // drives weldCap, which caps the melt fillet to half the thinnest band
-    // crossed. rimBits answers "which side must my rim copy extend through so
-    // no readability line is drawn at a seam", which is a question about a
-    // NEIGHBOURING SILHOUETTE, not about a band.
+    // crossed. seamBits answers "on which side does a NEIGHBOURING SILHOUETTE
+    // continue", so the rect overlaps it instead of merely touching.
     //
     // They were one field, and overloading it cost a real bug: setting the
-    // right bit so a parent popout's rim would reach through its flush child
-    // made weldCap believe the rect crossed the right band and visibly
-    // shrank the fillet where it joins a DIFFERENT edge entirely.
+    // right bit for a parent popout's flush child made weldCap believe the
+    // rect crossed the right band and visibly shrank the fillet where it joins
+    // a DIFFERENT edge entirely.
     // A flush seam has to OVERLAP, not merely touch (spec/03, amended
     // 2026-08-25 after measuring one).
     //
@@ -248,19 +247,17 @@ Item {
     // the bulge -- but an exact union of two rects that share an edge leaves the
     // merged SDF at ZERO all along it. Zero is the shader's definition of "edge"
     // in two independent places: `alpha` (a ~0.5 dip, so the wallpaper shows
-    // through as a translucent hairline) and the edge glow (depth ~ 0, so a
-    // full-strength tint is painted down the join). Both are computed
-    // from `mergedSdf` alone, which is why the law's third piece could never
-    // have worked -- it extends the RIM copy, and the rim is fed zero, so it
-    // contributes nothing to either.
+    // through as a translucent hairline) and the edge separation (depth ~ 0,
+    // so a full-strength tint is painted down the join). Both are computed
+    // from `mergedSdf` alone, so the overlap has to be in the rect itself.
     //
-    // rimBits already names the sides where a neighbouring silhouette continues,
+    // seamBits already names the sides where a neighbouring silhouette continues,
     // so it is the same question and needs no new argument. Reaching into the
     // neighbour is invisible: that side is covered by its body by definition.
     // Applied AFTER snapToEdges so weldCap still sees the rect's true size --
-    // the bug that cost a round when edgeBits and rimBits were one field.
-    function overlapSeams(rect, rimBits) {
-        if (!rimBits)
+    // the bug that cost a round when edgeBits and seamBits were one field.
+    function overlapSeams(rect, seamBits) {
+        if (!seamBits)
             return rect;
 
         const o = root.seamOverlap;
@@ -268,10 +265,10 @@ Item {
         let y = rect.y;
         let w = rect.width;
         let h = rect.height;
-        if (rimBits & 1) { x -= o; w += o; }
-        if (rimBits & 2) { w += o; }
-        if (rimBits & 4) { y -= o; h += o; }
-        if (rimBits & 8) { h += o; }
+        if (seamBits & 1) { x -= o; w += o; }
+        if (seamBits & 2) { w += o; }
+        if (seamBits & 4) { y -= o; h += o; }
+        if (seamBits & 8) { h += o; }
         return Qt.rect(x, y, w, h);
     }
 
@@ -281,7 +278,7 @@ Item {
     // outness says whether this body has emerged at all, which is what the
     // edge glow is allowed to draw on. Conflating them makes a settled flush
     // child look like something still coming out of the wall.
-    function registerBulge(id, rect, radius, blend, deform, minEig, edgeBits, rimBits,
+    function registerBulge(id, rect, radius, blend, deform, minEig, edgeBits, seamBits,
             detached = false, outness = 1) {
         const snapped = detached
             ? { rect: rect, radius: radius ?? Qt.vector4d(0, 0, 0, 0),
@@ -289,14 +286,14 @@ Item {
             : root.snapToEdges(rect, radius ?? Qt.vector4d(0, 0, 0, 0), edgeBits ?? 0);
         const next = Object.assign({}, bulgeRegions);
         next[id] = {
-            rect: root.overlapSeams(snapped.rect, rimBits ?? 0),
+            rect: root.overlapSeams(snapped.rect, seamBits ?? 0),
             radius: snapped.radius,
             blend: (blend === undefined ? 1 : blend) * snapped.blendCap,
             deform: deform ?? Qt.vector4d(1, 0, 0, 1),
             minEig: minEig === undefined ? 1 : minEig,
             outness: outness === undefined ? 1 : Math.max(0, Math.min(1, outness)),
             originBits: edgeBits ?? 0,
-            edgeBits: snapped.edgeBits | (rimBits ?? 0)
+            edgeBits: snapped.edgeBits | (seamBits ?? 0)
         };
         bulgeRegions = next;
     }
@@ -318,8 +315,7 @@ Item {
         return index < root.bulgeEntries.length ? root.bulgeEntries[index].radius : Qt.vector4d(0, 0, 0, 0);
     }
 
-    // Low side bits continue rim paint; high side bits extend the origin's
-    // fill. A parent's child-facing rim must not outrun the child's body.
+    // Low side bits are the seam bits; high side bits extend the origin's fill.
     function bulgeParamAt(index) {
         return index < root.bulgeEntries.length
             ? Qt.vector4d(root.bulgeEntries[index].minEig ?? 1, root.bulgeEntries[index].blend,

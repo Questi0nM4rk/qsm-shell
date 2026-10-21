@@ -14,7 +14,9 @@
     "warning": "#d9c284",
     "danger": "#f5aeb7",
     "shadow": "#000000",
-    "edge": "#5e357f"
+    "edge": "#5e357f",
+    "checkerLight": "#ffffff",
+    "checkerDark": "#c0c0c0"
   },
   "space": {
     "1": 4,
@@ -72,7 +74,12 @@
     "rowPressScale": 0.92,
     "spin": 900,
     "pulse": 1400,
-    "hoverGrace": 180
+    "hoverGrace": 180,
+    "exitRatio": 0.8,
+    "readingPace": 16,
+    "readingDwell": 800,
+    "hoverIntent": 400,
+    "clockRefresh": 60000
   },
   "opacity": {
     "disabled": 0.35,
@@ -81,10 +88,16 @@
     "recede": 0.45,
     "floatingShadow": 0.28,
     "cardShadow": 0.28,
-    "badgeTint": 0.18,
+    "badgeTint": 0.12,
     "scrollCueActive": 0.6,
     "scrollCueRest": 0.2,
-    "edgeStrength": 0.5
+    "edgeStrength": 0.5,
+    "areaFill": 0.18,
+    "ringTrack": 0.18,
+    "scrim": 0.55,
+    "calloutTint": 0.1,
+    "divider": 0.35,
+    "thumbShadow": 0.45
   },
   "font": {
     "family": "sans-serif",
@@ -98,7 +111,7 @@
     "notificationWidth": 380,
     "controlWidth": 380,
     "notificationCollapsedHeight": 36,
-    "notificationPreviewHeight": 80,
+    "notificationPreviewHeight": 88,
     "notificationBodyViewportHeight": 96,
     "controlHeightLg": 52,
     "swatchTarget": 44,
@@ -134,7 +147,10 @@
     "cardShadowOffset": 2,
     "cardShadowExtent": 12,
     "seamOverlap": 8,
-    "edgeFade": 16
+    "edgeFade": 16,
+    "badgeDot": 8,
+    "statWidth": 140,
+    "spinnerStrokeRatio": 0.16
   },
   "line": {
     "tight": 1.2,
@@ -143,6 +159,9 @@
   },
   "tracking": {
     "wide": 1.4
+  },
+  "blend": {
+    "badgeInk": 0.5
   },
   "sizes": {
     "DataCapsule": {
