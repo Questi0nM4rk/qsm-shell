@@ -42,6 +42,9 @@ import qs.QsmShell.Style
 T.RangeSlider {
     id: root
 
+    Accessible.role: Accessible.Slider
+    Accessible.name: root.accessibleName
+
     from: 0
     to: 1
     first.value: root.from
@@ -76,7 +79,7 @@ T.RangeSlider {
     property int increaseKey: Interaction.sliderIncreaseKey
 
     // ── colours, all the host's ────────────────────────────────────────
-    property color fill: Style.accent
+    property color fill: Style.primary
     property color trackColor: Style.overlay
     property color thumbColor: Style.text
     // A thin cut-out around a circle thumb. The thumb straddles the fill and
@@ -137,7 +140,7 @@ T.RangeSlider {
     property string thumbIcon: ""
     property string thumbText: ""
     // The glyph's edge. Defaults to the thumb less one step of air per side.
-    property real thumbIconSize: Math.max(Style.iconXs, root.thumbSize - Style.space2 * 2)
+    property real thumbIconSize: Style.iconNear(Math.max(Style.iconXs, root.thumbSize - Style.space2 * 2))
     // A press that lands on the thumb grabs it and moves nothing: the value
     // only changes once the pointer does. Off, a press anywhere jumps the
     // value to the pointer, the thumb included.
@@ -148,6 +151,9 @@ T.RangeSlider {
     property string labelText: ""
     property string labelIcon: ""
     property string labelAccessibleName: labelText
+    // What a screen reader calls the slider and its thumbs. The label's own
+    // action has `labelAccessibleName` (a mute button is not the slider).
+    property string accessibleName: labelText
     property string labelPosition: "below"
     // The label is the slider's one action surface. Off, it is a caption and
     // takes no pointer; on, it is a button and the host decides what a click
@@ -394,15 +400,12 @@ T.RangeSlider {
     // How far a thumb grows PER SIDE under the pointer. Growth and the
     // shadow's drop OVERFLOW into the gap around the control and are never
     // added to its layout size, so the visible gap between two sliders is
-    // the gap the host declared. The growth is capped at what the control's
-    // own cross extent leaves around the thumb: a thumb that grew past its
-    // track would stick out of a bar that is exactly as tall as the thumb.
+    // the gap the host declared. It is not capped: a cap at the room the
+    // cross extent leaves made a lg circle (thumb = cross extent) never grow.
     // A pill grows along its length only, and twice as far because that is
     // the only cue it has.
     readonly property real _hoverGrowth: Style.rhythm(Style.space1 * root._s)
-    readonly property real _growthRoom: Math.max(0,
-        ((root.vertical ? root.availableWidth : root.availableHeight) - root._thumbCross) / 2)
-    readonly property real _crossGrowth: Math.min(root._hoverGrowth * (root._pill ? 2 : 1), root._growthRoom)
+    readonly property real _crossGrowth: root._hoverGrowth * (root._pill ? 2 : 1)
 
     // At least a comfortable hit target across the axis, whatever the track's
     // thickness: a 4px track with a 16px thumb still has to be aimable.
@@ -541,6 +544,7 @@ T.RangeSlider {
         required property real offset
         property bool carriesContent: false
         property string thumbName: "sliderThumb"
+        Accessible.role: Accessible.Slider
         // Tab is handled by this focused control before it can bubble to the slider.
         Keys.onPressed: event => root.keyPressed(event)
         // Qt owns the handles' z from the first press on (the grabbed one
@@ -579,7 +583,7 @@ T.RangeSlider {
             x: (thumb.width - width) / 2
             y: (thumb.height - height) / 2 + thumb.lift
             radius: width / 2
-            color: Qt.rgba(0, 0, 0, .45)
+            color: Qt.rgba(Style.shadow.r, Style.shadow.g, Style.shadow.b, Style.thumbShadowOpacity)
         }
 
         Rectangle {
@@ -640,6 +644,7 @@ T.RangeSlider {
     second.handle: Thumb {
         id: highThumb
         objectName: "sliderHandle"
+        Accessible.name: root.range ? root.accessibleName + " maximum" : root.accessibleName
         node: root.second
         offset: root._highOffset
         carriesContent: true
@@ -652,6 +657,7 @@ T.RangeSlider {
         id: lowThumb
         objectName: "sliderLowHandle"
         thumbName: "sliderLowThumb"
+        Accessible.name: root.accessibleName + " minimum"
         node: root.first
         offset: root._lowOffset
         visible: root.range
@@ -715,8 +721,7 @@ T.RangeSlider {
     // with one thumb, the high node is moved to the press point FIRST, through
     // Qt's own setter and snapped to the grid, and then the press is handed
     // on to the template, whose nearest node is now the high one at distance
-    // zero. The same rect as the StateLayer: presses on the label never come
-    // here. `accepted = false` is what hands the press on. (A containment
+    // zero. Presses on the label never come here (the label sits in the padding). `accepted = false` is what hands the press on. (A containment
     // mask on the high handle would also make Qt pick it, but at the cost of
     // the press jump and of the thumb growing on whole-track hover.)
     // ONE pointer path for the single-thumb slider, above the thumbs: a press
@@ -731,7 +736,12 @@ T.RangeSlider {
         id: pointerPath
         enabled: !root.range && root.enabled
         acceptedButtons: Qt.LeftButton
-        anchors.fill: layer
+        // The control's whole cross band, not the track's thickness: every
+        // press the control reserves for aiming takes this one path.
+        x: root.leftPadding
+        y: root.topPadding
+        width: root.availableWidth
+        height: root.availableHeight
         z: 2
         property real _grab: 0
         // Whether this press and the one before it landed on the thumb: a
@@ -941,9 +951,15 @@ T.RangeSlider {
         root.committed();
     }
 
+    // A gesture that moved a value and loses its release (focus, availability
+    // or visibility gone) still ends: `committed` is the end of every gesture.
     function _clearKeyGestures(): void {
+        const moved = root._keyMoved
+            || Object.values(root._customKeyGestures).some(gesture => gesture.moved)
         root._customKeyGestures = ({})
         root._keyMoved = false
+        if (moved)
+            root.committed()
     }
 
     function _clearKeyGesturesWhenBlurred(): void {
@@ -980,7 +996,10 @@ T.RangeSlider {
         enabled: root.enabled && root.wheelUnits > 0
         acceptedButtons: Qt.NoButton
         onWheel: event => {
-            // On-axis, the same rule the arrows follow. The sign is flipped
+            // A vertical wheel drives either orientation: a mouse has no other
+            // axis, and `wheelUnits > 0` is the host's opt-in, so a host that
+            // wants the scroller beneath the slider leaves it 0. A sideways
+            // wheel drives a horizontal slider only. The sign is flipped
             // because Qt reports a POSITIVE `angleDelta.x` when the top of the
             // wheel is moved to the LEFT.
             const delta = event.angleDelta.y !== 0

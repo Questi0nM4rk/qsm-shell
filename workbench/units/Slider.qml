@@ -51,7 +51,7 @@ Item {
         labelAccessibleName: root.muted ? "Unmute output" : "Mute output"
         thumbIcon: "volume"
         thumbText: ""
-        fill: root.muted ? Style.textMuted : Style.accent
+        fill: root.muted ? Style.textMuted : Style.primary
         thumbColor: root.muted ? Style.textMuted : Style.text
 
         onLabelClicked: {
@@ -69,6 +69,11 @@ Item {
     }
 
     readonly property var controls: [
+        { label: "value", options: [
+            { label: "first", set: { value: 0 } },
+            { label: "middle", set: { value: 50 } },
+            { label: "last", set: { value: 100 } }
+        ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
             { label: "disabled", set: { enabled: false } }
