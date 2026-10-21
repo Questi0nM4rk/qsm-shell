@@ -3,7 +3,7 @@ import QtQuick
 import qs.QsmShell.Components
 import qs.QsmShell.Style
 
-Rectangle {
+Item {
     id: root
 
     property string variant: ""
@@ -15,7 +15,6 @@ Rectangle {
     property var entryFilter: null
     property bool registerHitRect: true
 
-    color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 
@@ -45,9 +44,11 @@ Rectangle {
         registerHitRect: root.registerHitRect
         padding: Style.space4
         bodyWidth: Style.controlWidth / 2 + padding * 2
-        bodyHeight: body.childrenRect.height + padding * 2
+        bodyHeight: card.height + padding * 2
 
         Card {
+            id: card
+            radius: Style.rolloutRadius - rollout.padding
             width: Style.controlWidth / 2
             height: body.implicitHeight + Style.space4 * 2
 
