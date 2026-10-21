@@ -28,6 +28,8 @@ Item {
         model: root.modelled ? root.modelRows : null
         delegate: rowDelegate
         currentIndex: root.currentIndex
+        // A Menu inset by space3 in a rollout: the curve its rows assume.
+        radius: Style.insetRadius(Style.space3)
 
         onActivated: index => {
             root.activatedIndex = index

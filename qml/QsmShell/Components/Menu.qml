@@ -12,7 +12,7 @@ import qs.QsmShell.Style
 // deterministic keyboard stepping that skips nonselectable (header/separator/
 // disabled) rows and a generic `activated(index)` hook. Rows are ListRow
 // instances supplied by the consumer via `content` or a `delegate`.
-Item {
+FocusScope {
     id: root
 
     // ── consumer-owned composition ───────────────────────────────────────
@@ -35,7 +35,10 @@ Item {
     readonly property bool _horizontal: orientation === Qt.Horizontal
     readonly property bool _vertical: !_horizontal
     readonly property int rowCount: _rows.length
-    implicitWidth: _rows.reduce((span, row) => Math.max(span, row.implicitWidth), 0)
+    // A vertical menu's natural width is a constant and long labels elide in
+    // their rows; a horizontal one is the sum of its columns.
+    implicitWidth: _vertical ? Style.controlWidth
+        : _rows.reduce((sum, row) => sum + row.implicitWidth, 0) + Math.max(0, rowCount - 1) * spacing
     implicitHeight: body.implicitHeight
 
     readonly property list<T.Action> actions: [
@@ -44,8 +47,10 @@ Item {
         T.Action { objectName: "activate-current"; text: "Activate item"; enabled: root.enabled && root._isSelectable(root.currentIndex); onTriggered: root.activateCurrent() }
     ]
 
+    // Focus goes to the current row so its ring shows (`_focusCurrent`). The
+    // ring sits outside the row, so the Menu does not clip it; the owning
+    // ScrollArea bounds overflow and leaves the ring room.
     focus: true
-    clip: true
 
     // The band the rows lie on, and the ONE selection thumb that slides
     // between them. Rows report `hovered` and `selected` and paint no
@@ -68,7 +73,7 @@ Item {
         y: origin.y
         width: shown ? row.width : 0
         height: shown ? row.selectionHeight : 0
-        radius: shown ? row.selectionRadius : 0
+        radius: shown ? Style.childRadius(thumb) : 0
         base: Style.surface
         accent: shown ? row.selectedColor : Style.accent
         hovered: shown && row.hovered
@@ -100,7 +105,7 @@ Item {
             model: root.model
             delegate: root.delegate
             onItemAdded: root._resync()
-            onItemRemoved: root._resync()
+            onItemRemoved: Qt.callLater(root._resync)
         }
     }
 
@@ -149,18 +154,62 @@ Item {
             const idx = i
             const h = function () { root.currentIndex = idx; root.activated(idx) }
             collected[i].activated.connect(h)
-            collected[i].paintsSelection = false
+            if (collected[i].paintsSelection)
+                collected[i].paintsSelection = false
             handlers.push(h)
+        }
+        // The cursor follows its row, not its number: an entry removed above
+        // it must not move the thumb to the next entry. A row that is gone
+        // is found again by its objectName, else the cursor clamps.
+        let cursor = currentIndex
+        if (_tracking) {
+            cursor = _current ? collected.indexOf(_current) : -1
+            if (cursor < 0 && _currentKey)
+                cursor = collected.findIndex(r => r.objectName === _currentKey)
+            if (cursor < 0)
+                cursor = Math.min(currentIndex, collected.length - 1)
         }
         _rows = collected
         _handlers = handlers
+        if (cursor !== currentIndex)
+            currentIndex = cursor
         _applySelection()
         _sizeRows()
     }
 
+    property var _current: null
+    property string _currentKey: ""
+    property bool _tracking: false
+
     function _applySelection() {
         for (let i = 0; i < _rows.length; i++) {
             _rows[i].selected = (i === currentIndex)
+        }
+        _current = rowAt(currentIndex)
+        _currentKey = _current?.objectName ?? ""
+        _tracking = !!_current
+        _focusCurrent()
+    }
+
+    function _holdsFocus(row) {
+        for (let it = root.Window.activeFocusItem; it; it = it.parent) {
+            if (it === row) return true
+        }
+        return false
+    }
+
+    // The ring is the row's own, so focus lives on the current row while the
+    // Menu is focused. A row whose child already holds focus (an editor)
+    // keeps it; with no selectable current row no row keeps a stale ring.
+    function _focusCurrent() {
+        if (!root.activeFocus) return
+        const row = rowAt(currentIndex)
+        if (row && _isSelectable(currentIndex)) {
+            if (!_holdsFocus(row)) row.forceActiveFocus()
+        } else {
+            for (const r of _rows) {
+                if (r && r.focus) r.focus = false
+            }
         }
     }
 
@@ -219,6 +268,7 @@ Item {
     // that opened); a model or delegate change resyncs on its own.
     function resync() { root._resync() }
 
+    onActiveFocusChanged: _focusCurrent()
     onModelChanged: _resync()
     onDelegateChanged: _resync()
     onCurrentIndexChanged: _applySelection()
