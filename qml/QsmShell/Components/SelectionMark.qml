@@ -33,6 +33,10 @@ Rectangle {
     implicitWidth: width
     implicitHeight: height
     radius: Style.radiusPill
+    // A bar this thin is a line with rounded ends: it snaps to the device grid
+    // like any rule, instead of smearing its straight sides over a partial
+    // column wherever its position falls between two.
+    antialiasing: false
     color: root.markColor
     opacity: root.shown ? (root.strong ? 1 : root.restOpacity) : 0
 

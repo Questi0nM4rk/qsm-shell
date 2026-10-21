@@ -20,12 +20,13 @@ Rectangle {
     property bool indeterminate: false
     property color fill: Style.accent
     property color trackColor: Style.overlay
-    property real thickness: Style.trackThickness
+    property real thickness: Style.stroke(Style.trackThickness, root)
 
     readonly property real _fraction: Math.max(0, Math.min(1, value))
 
     implicitHeight: thickness
     radius: Style.radiusPill
+    antialiasing: false
     color: enabled ? trackColor : Style.disabled(trackColor)
     clip: true
 
@@ -37,6 +38,7 @@ Rectangle {
         width: parent.width * root._fraction
         height: parent.height
         radius: parent.radius
+        antialiasing: false
         color: root.enabled ? root.fill : Style.disabled(root.fill)
 
         // Progress that snaps between readings reads as jitter rather than as
@@ -58,6 +60,7 @@ Rectangle {
         width: parent.width * 0.3
         height: parent.height
         radius: parent.radius
+        antialiasing: false
         color: root.enabled ? root.fill : Style.disabled(root.fill)
 
         XAnimator {

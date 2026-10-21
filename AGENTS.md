@@ -517,7 +517,11 @@ Earned, each from a specific failure. Break one and name which.
   three there. The WINDOW's ratio is read once, inside `Style.stroke`, from
   the item that paints the line: a caller passes the item and never a ratio,
   and never reads `Screen.devicePixelRatio`, which is the output's integer
-  scale. A curved edge anti-aliases by design.
+  scale. A bar whose only curve is its ends (a selection mark, a scroll cue,
+  a track, a dash) sets `antialiasing: false`, so its straight sides snap
+  like a rule's: antialiased, it paints a partial column or row on each side
+  wherever its position falls off the device grid. A curved edge anti-aliases
+  by design.
 - **A body directly in a rollout takes `Style.radiusBody`**, the rollout's
   radius minus `Style.rolloutPadding`. It is derived so every card, field,
   tile and row is concentric with the surface that holds it.

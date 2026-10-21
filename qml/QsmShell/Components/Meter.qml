@@ -32,7 +32,7 @@ Rectangle {
     property real high: -1
     property color fill: Style.primary
     property color trackColor: Style.overlay
-    property real thickness: Style.trackThickness
+    property real thickness: Style.stroke(Style.trackThickness, root)
     property int orientation: Qt.Horizontal
 
     readonly property bool vertical: orientation === Qt.Vertical
@@ -59,6 +59,7 @@ Rectangle {
     implicitWidth: vertical ? thickness : 0
     implicitHeight: vertical ? 0 : thickness
     radius: Style.radiusPill
+    antialiasing: false
     color: root._paintedTrack
 
     Rectangle {
@@ -71,6 +72,7 @@ Rectangle {
         width: root.vertical ? undefined : Math.round(parent.width * root._shown)
         height: root.vertical ? Math.round(parent.height * root._shown) : parent.height
         radius: parent.radius
+        antialiasing: false
         color: root._paintedFill
 
         // A level that snaps between readings reads as jitter, so the value

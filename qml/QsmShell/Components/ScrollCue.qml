@@ -75,6 +75,7 @@ Item {
         width: root.vertical ? _thickness : _length
         height: root.vertical ? _length : _thickness
         radius: Style.radiusPill
+        antialiasing: false
         color: Style.textMuted
         // Present while the list is moving, nearly gone at rest — at rest the
         // shell paints nothing it does not need to.

@@ -141,8 +141,9 @@ T.AbstractButton {
                 anchors.centerIn: parent
                 visible: root.indeterminate
                 width: parent.width / 2
-                height: Style.spaceTight
+                height: Style.stroke(Style.indicatorWidth, root)
                 radius: Style.radiusPill
+                antialiasing: false
                 color: root.enabled ? Style.textOnPrimary : Style.disabled(Style.textOnPrimary)
             }
         }
