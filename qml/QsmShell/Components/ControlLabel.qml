@@ -59,16 +59,33 @@ T.Control {
     visible: hasContent
     // Qt cannot remove its current Tab item; surrender focus before dropping eligibility.
     focusPolicy: _available || activeFocus ? Qt.StrongFocus : Qt.NoFocus
-    implicitWidth: row.implicitWidth
+    // The natural width is the text at full length. A host that gives the
+    // label less (`Field`'s column, a slot) makes the caption elide; the
+    // caption's bounded width never feeds this, which would be a loop.
+    readonly property real _fixedWidth: (icon !== "" ? iconLoader.implicitWidth : 0)
+        + (required ? mark.implicitWidth : 0)
+        + row.spacing * Math.max(0, (icon !== "" ? 1 : 0) + (text !== "" ? 1 : 0) + (required ? 1 : 0) - 1)
+    implicitWidth: _fixedWidth + (text !== "" ? caption.implicitWidth : 0)
     implicitHeight: row.implicitHeight
 
     Accessible.role: clickable && hasContent ? Accessible.Button : Accessible.StaticText
     Accessible.name: root.accessibleName
+    Accessible.description: root.required ? "Required" : ""
     Accessible.onPressAction: root.activate()
 
+    property bool _nameWarned: false
+    function checkName(): void {
+        if (root._nameWarned || !root.clickable || root.icon === "" || root.text !== "" || root.accessibleName !== "")
+            return
+        root._nameWarned = true
+        console.warn("ControlLabel: clickable icon-only label \"" + root.icon + "\" has no accessibleName")
+    }
+
+    Component.onCompleted: checkName()
     onActiveFocusChanged: if (!activeFocus) cancelKeyActivation()
     onEnabledChanged: updateAvailability()
-    onClickableChanged: updateAvailability()
+    onClickableChanged: { updateAvailability(); checkName() }
+    onAccessibleNameChanged: checkName()
     onHasContentChanged: updateAvailability()
 
     Keys.onPressed: event => {
@@ -98,6 +115,8 @@ T.Control {
         spacing: Style.rhythm(Style.space1 * root.sizeScale)
 
         Loader {
+            id: iconLoader
+            visible: active
             active: root.icon !== ""
             anchors.verticalCenter: parent.verticalCenter
             sourceComponent: SvgIcon {
@@ -107,7 +126,9 @@ T.Control {
             }
         }
         Prose {
+            id: caption
             visible: root.text !== ""
+            width: Math.min(implicitWidth, Math.max(0, root.width - root._fixedWidth))
             anchors.verticalCenter: parent.verticalCenter
             role: "label"
             text: root.text
@@ -116,6 +137,7 @@ T.Control {
         }
         // Needed, in a channel that is not colour alone.
         Prose {
+            id: mark
             visible: root.required
             anchors.verticalCenter: parent.verticalCenter
             role: "label"
@@ -132,7 +154,11 @@ T.Control {
         width: Math.max(parent.width, root.clickable ? Style.iconLg * root.sizeScale : 0)
         height: Math.max(parent.height, root.clickable ? Style.iconLg * root.sizeScale : 0)
         target: root
+        hoverTint: root.clickable
         interactive: root._available
+        // A label has no body to recolour, so the press is acknowledged by the
+        // label pushing in, the way a bare glyph's is.
+        pressScale: Motion.pressScale
         manualPressOverride: root._keyActivationHeld
         // The exclusive grab keeps a surrounding passive row tap from firing.
         gesturePolicy: TapHandler.ReleaseWithinBounds

@@ -22,6 +22,7 @@ Rectangle {
         id: label
         anchors.centerIn: parent
         text: root.caption
+        accessibleName: root.caption !== "" ? root.caption : "Volume"
         icon: root.iconShown ? "volume" : ""
         required: root.required
         clickable: root.clickable
