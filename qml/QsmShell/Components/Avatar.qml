@@ -165,7 +165,8 @@ Item {
     // rounded box is an arc of radius `_arc` whose centre is `size / 2 - _arc`
     // from the middle; on a circle that is the centre itself, on a square it
     // is the box corner.
-    Badge {
+    // Built only with a status: Badge throws on an unknown tone, and "" is one.
+    Loader {
         readonly property real _arc: Math.min(root.radius, root.size / 2)
         readonly property real _offset: root.size / 2 - _arc + _arc * Math.SQRT1_2
 
@@ -173,9 +174,11 @@ Item {
         height: Style.rhythm(root.size * 0.2)
         x: Math.round(root.width / 2 + _offset - width / 2)
         y: Math.round(root.height / 2 + _offset - height / 2)
-        visible: root.status.length > 0
-        tone: root.status
-        dot: true
-        filled: true
+        active: root.status.length > 0
+        sourceComponent: Badge {
+            tone: root.status
+            dot: true
+            filled: true
+        }
     }
 }
