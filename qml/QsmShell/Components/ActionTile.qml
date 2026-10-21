@@ -74,6 +74,8 @@ T.Control {
     // colour. Surface dims the fill when disabled.
     background: Surface {
         enabled: root.enabled
+        hovered: stateLayer.hovered
+        pressed: stateLayer.pressed
         radius: Style.radiusMd
         base: root.armed ? root.armedColor : root.selected ? root.accent : Style.surface
     }
@@ -81,18 +83,25 @@ T.Control {
         Column {
             anchors.centerIn: parent
             spacing: Style.space1
-            SvgIcon { anchors.horizontalCenter: parent.horizontalCenter; name: root.icon; size: Style.iconLg; color: root.stateColor }
+            SvgIcon { anchors.horizontalCenter: parent.horizontalCenter; name: root.icon; size: Style.iconLg; color: root.stateColor
+                Behavior on color { ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+            }
             Prose {
                 anchors.horizontalCenter: parent.horizontalCenter
+                // Narrower than the body so ElideRight has a width to act on.
+                width: Math.min(implicitWidth, root.buttonWidth - 2 * Style.space1)
                 role: "metadata"
                 font.pixelSize: Style.textSm
                 color: root._filled || root.danger ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                 text: root.shownLabel
+                Behavior on color { ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
             }
         }
     }
     StateLayer {
+        id: stateLayer
         anchors.fill: parent
+        pressScale: Motion.pressScale
         interactive: root.enabled
         focused: root.focused
         focusRadius: Style.radiusMd
