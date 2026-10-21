@@ -97,7 +97,9 @@ T.DoubleSpinBox {
     ]
 
     function _handleBoundKey(event): void {
-        if (!root.enabled || root.inputMethodComposing)
+        // An editable field keeps Home and End for the caret; the bounds stay
+        // reachable through toMinimum() and toMaximum().
+        if (!root.enabled || root.editable || root.inputMethodComposing)
             return;
         if (event.key === Qt.Key_Home) {
             root.toMinimum();
@@ -189,10 +191,6 @@ T.DoubleSpinBox {
                 interval: caret.halfPeriod
                 onTriggered: caret.opacity = caret.opacity === 1 ? 0 : 1
             }
-
-            Behavior on x {
-                NumberAnimation { duration: Motion.press; easing.type: Motion.standardEasing }
-            }
         }
     }
 
@@ -222,8 +220,7 @@ T.DoubleSpinBox {
             interactive: indicator.available
             focused: false
             target: glyph
-            hoverScale: 1.15
-            pressScale: 0.86
+            pressScale: Motion.pressScale
         }
     }
 

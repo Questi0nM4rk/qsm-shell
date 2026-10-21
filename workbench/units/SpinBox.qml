@@ -7,6 +7,7 @@ Item {
 
     property string variant: ""
     property var eventRecorder: null
+    property real maximum: 100
     property real value: variant === "decimal" ? 42.5 : 7
     property bool failed: false
     property bool editable: true
@@ -20,7 +21,7 @@ Item {
         id: spin
         anchors.centerIn: parent
         from: 0
-        to: 100
+        to: root.maximum
         stepSize: 0.5
         decimals: 1
         size: root.size
@@ -39,8 +40,13 @@ Item {
         { label: "size", options: [
             { label: "sm", set: { size: "sm" } },
             { label: "md", set: { size: "md" } },
-            { label: "lg", set: { size: "lg" } },
-            { label: "wide", set: { size: "xl" } }
+            { label: "lg", set: { size: "lg" } }
+        ] },
+        { label: "value", options: [
+            { label: "min", set: { maximum: 100, value: 0 } },
+            { label: "middle", set: { maximum: 100, value: 50 } },
+            { label: "max", set: { maximum: 100, value: 100 } },
+            { label: "long", set: { maximum: 1000000, value: 123456.7 } }
         ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
