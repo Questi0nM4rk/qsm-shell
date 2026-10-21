@@ -485,6 +485,9 @@ QtObject {
     // it counts as a dismiss rather than a spring-back.
     readonly property int notificationDividerInset: backend?.notificationDividerInset
         ?? Tokens.geometryNotificationDividerInset
+    // Where a notification's text starts: its padding, the glyph column and
+    // the gap after it. The card and a list's group headings share it.
+    readonly property int notificationTextColumn: root.space3 + root.iconLg + root.space3
     readonly property int notificationActionHitMargin: backend?.notificationActionHitMargin
         ?? Tokens.geometryNotificationActionHitMargin
     readonly property int notificationExpandDragPx: backend?.notificationExpandDragPx

@@ -73,12 +73,19 @@ ColumnLayout {
     signal selectionClaimed
     signal keyPressed(var event)
 
-    spacing: Style.space3
+    spacing: Style.space2
 
     // How far a bodied card's shadow reaches past its body.
     readonly property real shadowReach: Style.reducedEffects ? 0 : Style.cardShadowExtent
 
-    function focusField(): void { searchField.forceActiveFocus(); }
+    // Puts the caret in the search field. A pointer-opened menu asks for the
+    // pointer's focus, so the keyboard ring waits for a key.
+    function focusField(fromPointer = false): void {
+        if (fromPointer)
+            searchField.focusFromPointer();
+        else
+            searchField.forceActiveFocus();
+    }
 
     function entryKey(entry: var): string {
         if (entry.notificationId !== undefined) return `live-${entry.notificationId}`;
@@ -255,45 +262,30 @@ ColumnLayout {
         });
     }
 
-    RowLayout {
+    // The field takes the whole row. A menu that rolls out of a screen corner
+    // opens under the pointer that triggered it, and a text field is the one
+    // control a click there cannot do harm to.
+    TextField {
+        id: searchField
         Layout.fillWidth: true
-        spacing: Style.space2
-
-        TextField {
-            id: searchField
-            Layout.fillWidth: true
-            placeholder: "Search notifications"
-            focus: true
-            leading: SvgIcon { name: "search"; size: Style.glyphBeside(searchField.fieldHeight); color: Style.textMuted }
-            // The host's hook first; an unclaimed Up or Down moves the
-            // list under the field, which is this surface's meaning for it.
-            onKeyPressed: event => {
-                root.keyPressed(event);
-                if (event.accepted)
-                    return;
-                if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
-                    root.selectionClaimed();
-                    root.moveSelection(event.key === Qt.Key_Up ? -1 : 1);
-                    event.accepted = true;
-                }
+        placeholder: "Search notifications"
+        focus: true
+        leading: SvgIcon { name: "search"; size: Style.glyphBeside(searchField.fieldHeight); color: Style.textMuted }
+        // The host's hook first; an unclaimed Up or Down moves the
+        // list under the field, which is this surface's meaning for it.
+        onKeyPressed: event => {
+            root.keyPressed(event);
+            if (event.accepted)
+                return;
+            if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                root.selectionClaimed();
+                root.moveSelection(event.key === Qt.Key_Up ? -1 : 1);
+                event.accepted = true;
             }
-            onAccepted: root.activateSelected()
-            onEscaped: root.escaped()
-            onSelectionClaimed: root.selectionClaimed()
         }
-
-        // Icon-only, so the field keeps the width its placeholder needs; the
-        // names are the accessible labels. A square of the field's own height.
-        IconButton {
-            icon: "moon"
-            accessibleName: "Do not disturb"
-            color: root.dnd ? Style.accent : Style.text
-            size: "md"
-            Accessible.checkable: true
-            Accessible.checked: root.dnd
-            onClicked: root.dndToggled()
-        }
-
+        onAccepted: root.activateSelected()
+        onEscaped: root.escaped()
+        onSelectionClaimed: root.selectionClaimed()
     }
 
     RowLayout {
@@ -316,10 +308,22 @@ ColumnLayout {
             }
         }
 
-        // Irreversible, so it sits apart from the reversible DND toggle and
-        // asks twice: the first press arms (danger colour, the name says
-        // confirm), the second reports `clearRequested`. Timeout, a lost
-        // focus or the pointer leaving disarm it.
+        // Icon-only, so the switch keeps the width its labels need; the
+        // names are the accessible labels.
+        IconButton {
+            icon: "moon"
+            accessibleName: "Do not disturb"
+            color: root.dnd ? Style.accent : Style.text
+            size: "md"
+            Accessible.checkable: true
+            Accessible.checked: root.dnd
+            onClicked: root.dndToggled()
+        }
+
+        // Irreversible, so it asks twice: the first press arms (danger
+        // colour, the name says confirm), the second reports
+        // `clearRequested`. Timeout, a lost focus or the pointer leaving
+        // disarm it.
         IconButton {
             id: clearButton
             Layout.alignment: Qt.AlignVCenter
@@ -348,6 +352,8 @@ ColumnLayout {
     Item {
         Layout.fillWidth: true
         Layout.fillHeight: true
+        // 12 below the view switch: the column's 8 and 4 more.
+        Layout.topMargin: Style.space1
         Layout.preferredHeight: Math.max(Style.notificationCollapsedHeight * 2 + Style.space2,
             Math.min(root.maxListHeight, historyList.contentHeight))
 
@@ -380,17 +386,24 @@ ColumnLayout {
             section.delegate: Item {
                 id: sectionHeader
                 required property string section
+                // The first group has nothing above it to be apart from.
+                readonly property bool first: root.items.length > 0
+                    && String(root.items[0].appName) === section
+                readonly property real above: first ? 0 : Style.space2
                 width: historyList.width - root.shadowReach * 2
-                implicitHeight: sectionLabel.implicitHeight + Style.space2
+                // A label sits 16 under the group above (this 8 and the list's
+                // own 8 between rows) and 4 over its first card.
+                implicitHeight: above + sectionLabel.height + Style.space1
 
                 // Prose is a Text and has no padding, so the card's own text
-                // column (past its cursor, gap and glyph) is the label's x.
+                // column is the label's x; its box is a multiple of the 4 rhythm.
                 Prose {
                     id: sectionLabel
-                    x: Style.space2 + Style.markThickness + Style.spaceTight
-                        + Style.space2 + Style.iconSm + Style.space2
-                    y: Style.space2
+                    x: Style.notificationTextColumn
+                    y: sectionHeader.above
                     width: parent.width - x
+                    height: Math.ceil(implicitHeight / Style.space1) * Style.space1
+                    verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
                     role: "section"
                     text: sectionHeader.section
@@ -447,9 +460,12 @@ ColumnLayout {
                 : root.view === "unread" ? "New notifications appear here" : "History is empty"
         }
 
+        // The fade says there is more past an edge; a mark beside it said so
+        // a second time.
         ScrollCue {
             view: historyList
             fadeColor: root.fadeColor
+            indicator: false
         }
     }
 }

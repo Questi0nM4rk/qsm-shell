@@ -212,11 +212,11 @@ Item {
     readonly property string iconName: root.entry.urgency === "critical" ? "alert-triangle"
         : root.entry.urgency === "low" ? "moon"
         : "bell"
-    // Urgency is carried by the glyph's colour alone: critical danger, normal
-    // info, low textMuted.
+    // Urgency is carried by the glyph's shape first (triangle, moon, bell) and
+    // by its colour second: critical danger, low textMuted, normal plain text.
     readonly property color glyphColor: root.entry.urgency === "critical" ? Style.danger
         : root.entry.urgency === "low" ? Style.textMuted
-        : Style.info
+        : Style.text
 
     Timer {
         interval: Motion.clockRefresh
@@ -255,11 +255,15 @@ Item {
     readonly property bool hasBody: String(root.entry.body ?? "").length > 0
     readonly property bool hasDetails: root.hasBody
         || (root.showActions && !root.archived && root.actionList().length > 0)
+    // One padding on all four sides; the glyph column is the headline's
+    // height, and the text starts one gap past it.
+    readonly property real pad: Style.space3
+    readonly property real textColumn: Style.notificationTextColumn
     // A preview is as tall as its real lines; the token is the ceiling.
     readonly property real previewHeight: Math.min(Style.notificationPreviewHeight,
-        headline.height + Style.space1 + bodyPreview.implicitHeight + Style.space2)
+        root.pad + Style.iconLg + Style.space1 + bodyPreview.implicitHeight + root.pad)
     readonly property real restHeight: root.expanded && root.hasDetails
-            ? headline.height + Style.space1 + details.implicitHeight + Style.space2
+            ? root.pad + Style.iconLg + Style.space1 + details.implicitHeight + root.pad
         : root.hasBody ? root.previewHeight
         : Style.notificationCollapsedHeight
     readonly property bool leadHovered: leadLayer.hovered
@@ -327,90 +331,95 @@ Item {
         SelectionMark {
             id: tick
             anchors.left: parent.left
-            anchors.leftMargin: Style.space2
-            anchors.verticalCenter: headline.verticalCenter
+            anchors.leftMargin: Style.space1
+            anchors.verticalCenter: lead.verticalCenter
             shown: root.selected && !root.bodied
             strong: true
             markColor: root.enabled ? Style.accent : Style.disabled(Style.accent)
         }
 
+        // The app's own icon when it sent one, the swatch when the consumer
+        // decided this entry carries one, else the urgency glyph — all three
+        // occupy the same box so the headline never reflows on arrival.
+        Item {
+            id: lead
+            x: root.pad
+            y: root.pad
+            width: Style.iconLg
+            height: Style.iconLg
+
+            SvgIcon {
+                anchors.centerIn: parent
+                visible: root.leadHovered
+                name: root.expanded ? "chevron-up" : "chevron-down"
+                size: Style.iconSm
+                color: Style.text
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                visible: root.hasSwatch && !root.leadHovered
+                radius: Style.radiusSm
+                color: root.swatch ?? "transparent"
+                border.width: Style.stroke(Style.indicatorWidth, root)
+                border.color: Style.textMuted
+            }
+
+            Image {
+                id: iconImage
+                anchors.fill: parent
+                visible: !root.leadHovered && root.showsImage
+                source: root.iconSource
+                asynchronous: true
+                fillMode: Image.PreserveAspectFit
+            }
+
+            SvgIcon {
+                anchors.fill: parent
+                visible: !root.leadHovered && !root.hasSwatch && !root.showsImage
+                name: root.iconName
+                size: Style.iconLg
+                color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+            }
+
+            // An image or swatch carries no urgency, so a critical or low
+            // entry keeps its glyph as a badge on the slot's corner.
+            SvgIcon {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.rightMargin: -Style.spaceTight
+                anchors.bottomMargin: -Style.spaceTight
+                visible: !root.leadHovered && root.urgencyBadged
+                name: root.iconName
+                size: Style.iconXs
+                color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+            }
+        }
+
         RowLayout {
             id: headline
-            anchors.left: tick.right
+            anchors.left: parent.left
+            anchors.leftMargin: root.textColumn
             anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.leftMargin: Style.space2
-            anchors.rightMargin: Style.space3
-            height: Style.notificationCollapsedHeight
+            anchors.rightMargin: root.pad
+            y: root.pad
+            height: Style.iconLg
             spacing: Style.space2
-
-            // The app's own icon when it sent one, the swatch when the consumer
-            // decided this entry carries one, else the urgency glyph — all three
-            // occupy the same box so the headline never reflows on arrival.
-            Item {
-                implicitWidth: Style.iconSm
-                implicitHeight: Style.iconSm
-
-                SvgIcon {
-                    anchors.fill: parent
-                    visible: root.leadHovered
-                    name: root.expanded ? "chevron-up" : "chevron-down"
-                    size: Style.iconSm
-                    color: Style.text
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    visible: root.hasSwatch && !root.leadHovered
-                    radius: Style.radiusSm
-                    color: root.swatch ?? "transparent"
-                    border.width: Style.stroke(Style.indicatorWidth, root)
-                    border.color: Style.textMuted
-                }
-
-                Image {
-                    id: iconImage
-                    anchors.fill: parent
-                    visible: !root.leadHovered && root.showsImage
-                    source: root.iconSource
-                    asynchronous: true
-                    fillMode: Image.PreserveAspectFit
-                }
-
-                SvgIcon {
-                    anchors.fill: parent
-                    visible: !root.leadHovered && !root.hasSwatch && !root.showsImage
-                    name: root.iconName
-                    size: Style.iconSm
-                    color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
-                }
-
-                // An image or swatch carries no urgency, so a critical or low
-                // entry keeps its glyph as a badge on the slot's corner.
-                SvgIcon {
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    anchors.rightMargin: -Style.spaceTight
-                    anchors.bottomMargin: -Style.spaceTight
-                    visible: !root.leadHovered && root.urgencyBadged
-                    name: root.iconName
-                    size: Style.iconXs
-                    color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
-                }
-            }
 
             // A NAME, not a value — the technical face is reserved for numbers
             // and machine text.
             Prose {
                 id: appNameLabel
+                Layout.fillHeight: true
+                verticalAlignment: Text.AlignVCenter
                 role: "supporting"
                 text: root.entry.appName
-                Layout.maximumWidth: (Style.notificationWidth - Style.iconSm - Style.space3 * 3) / 3
+                Layout.maximumWidth: (Style.notificationWidth - root.textColumn - root.pad) / 3
                 color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
             }
             Rectangle {
                 visible: root.unread
-                width: Style.space1 + Style.spaceTight
+                width: Style.badgeDot
                 height: width
                 radius: Style.radiusPill
                 color: Style.accent
@@ -418,16 +427,21 @@ Item {
             }
             Prose {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                verticalAlignment: Text.AlignVCenter
                 role: "title"
                 text: root.entry.summary
                 color: !root.enabled ? Style.disabled(Style.text)
                     : root.primaryPressed && root.primaryActionAvailable ? Style.accent : Style.text
             }
+
             Prose {
                 role: "metadata"
                 technical: true
                 text: root.timestampText()
                 visible: text.length > 0
+                Layout.fillHeight: true
+                verticalAlignment: Text.AlignVCenter
                 Accessible.description: root.hasStamp
                     ? Qt.formatDateTime(new Date(root.stampMs), "ddd d MMM hh:mm") : ""
                 color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
@@ -437,11 +451,10 @@ Item {
         Text {
             id: bodyPreview
             anchors.left: headline.left
-            anchors.leftMargin: Style.iconSm + Style.space2
             anchors.right: headline.right
             anchors.top: headline.bottom
             anchors.topMargin: Style.space1
-            height: Math.min(implicitHeight, Style.notificationPreviewHeight - headline.height - Style.space1)
+            height: Math.min(implicitHeight, Style.notificationPreviewHeight - root.pad * 2 - headline.height - Style.space1)
             // Preview and full body start on the same line and cross-fade on
             // the card's own height token, so opening reveals lines rather
             // than swapping one text for another.
@@ -467,11 +480,9 @@ Item {
         ColumnLayout {
             id: details
             anchors.left: headline.left
-            anchors.leftMargin: Style.iconSm + Style.space2
-            anchors.right: parent.right
+            anchors.right: headline.right
             anchors.top: headline.bottom
             anchors.topMargin: Style.space1
-            anchors.rightMargin: Style.space3
             spacing: Style.space1
             opacity: root.expanded ? 1 : 0
             // Visible the moment it is asked for: an invisible layout reports
@@ -619,7 +630,7 @@ Item {
         id: leadLayer
         x: 0
         y: 0
-        width: headline.x + Style.iconSm + Style.space2
+        width: lead.x + lead.width + Style.space3
         height: root.height
         visible: !root.expandOnHover
         interactive: root.enabled && root.inputEnabled

@@ -463,6 +463,13 @@ T.Control {
         focusColor: root.failed ? Style.danger : Style.accent
     }
 
+    // Puts the caret in the field the way a click would: the ring waits for
+    // the keyboard. A host that opens a surface under the pointer uses it.
+    function focusFromPointer(): void {
+        root._pointerFocus = true;
+        input.forceActiveFocus(Qt.MouseFocusReason);
+    }
+
     // `forceActiveFocus()` on the frame means "put the caret in this field".
     // A plain T.Control keeps that focus for itself, so the frame hands it on.
     onActiveFocusChanged: if (root.activeFocus) input.forceActiveFocus()
