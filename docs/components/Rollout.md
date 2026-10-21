@@ -59,6 +59,10 @@ separate from the desktop surfaces the owner reviewed.
   square corners, not add another axis. Paint receives the aperture, free radii
   follow its current half extents, and content/shader deformation is identity.
   Nested origins use settled full-body source extents in host coordinates.
+  An anchored card is centred on its anchor along the free axis, shifted by
+  exactly the overflow when it would cross `placementBounds`. The half-height
+  it centres with is held once the reveal is near-settled, so a list that grows
+  keeps its top; a new anchor re-centres through its size morph.
   Anchored placement uses a visual `ShellBorder` host: Qt's `mapFromItem` takes
   an `Item`, not a `QtObject` with a lookalike mapping function. Keep the host,
   anchor and QML parent coordinate spaces distinct in fixtures as in consumers.

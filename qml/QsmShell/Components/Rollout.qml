@@ -190,19 +190,43 @@ Item {
     readonly property real _anchorCenterX: _anchorRect.x + _anchorRect.width / 2
     readonly property real _anchorCenterY: _anchorRect.y + _anchorRect.height / 2
 
-    // Half the body's height as it was when the rollout was last NOT painted,
-    // and held while it is. A side card is centred on its anchor once, at
-    // open; a list that grows or shrinks afterwards (a row expands, an inline
-    // submenu opens) then grows from a fixed top instead of re-centring, which
-    // would move the row the pointer just clicked. The anchor still carries
-    // the card when it moves, because only the half-height is held.
+    // Half the body's height, held once the card is open on its anchor. A side
+    // card is centred on its anchor once; a list that grows or shrinks
+    // afterwards (a row expands, an inline submenu opens) then grows from a
+    // fixed top instead of re-centring, which would move the row the pointer
+    // just clicked. The anchor still carries the card when it moves, because
+    // only the half-height is held.
+    //
+    // The hold starts when the reveal is near-settled, never earlier: a host
+    // that swaps content on open (the rail's popouts) states its size only
+    // after the reveal begins, so a hold taken while hidden or at its first
+    // frame centres the card on a stale height. A different anchor is a new
+    // placement: the half follows the body through its size morph, then holds.
     property real _pinHalf: 0
+    property bool _pinned: false
     Binding {
         target: root
         property: "_pinHalf"
         value: root.bodyHeight / 2
-        when: !root.visible
+        when: !root._pinned
         restoreMode: Binding.RestoreNone
+    }
+    function _hold(): void {
+        if (_inputReady && !heightMorph.running)
+            _pinned = true;
+    }
+    on_InputReadyChanged: {
+        if (_inputReady)
+            _hold();
+        else
+            _pinned = false;
+    }
+    onAnchorItemChanged: _pinned = false
+    // Deferred: a morph re-targeted by a faster pointer stops and restarts
+    // within one turn, and only a morph that stayed stopped is finished.
+    Connections {
+        target: heightMorph
+        function onRunningChanged() { Qt.callLater(() => root._hold()); }
     }
 
     function _clampCross(value: real, span: real, start: real, length: real): real {
