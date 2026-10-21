@@ -129,3 +129,178 @@ Not designed: arbitrary shapes, service/compositor policy, new focus/dismissal
 rules or a second expansion type. No new visual design is commissioned: task,
 hierarchy, tokens and states stay as recorded; this rewrite consolidates their
 mechanism. Archived travelling records are not active instructions.
+
+## UIX audit
+
+Evidence: source-reviewed only. Runtime-exercised: none. Owner-accepted: none. No Workbench session,
+capture or live tree was used, so channels 1 and 2 of `ui-audit` were not available. Every number
+below comes from `Rollout.qml`, the consumer code it names, `Style/Tokens.qml` and `Style/Motion.qml`.
+Pixel claims are hypotheses. Criteria for focus, names and reduced motion belong to `a11y-audit`,
+which must run on this surface; `ux-audit` check 7 and `review-animations` own the motion verdicts.
+
+### Purpose and consequence
+
+The task is to let a shell surface grow out of its source edge and return into it, with its content
+standing still. The consequence for a person is that the surface arrives from the frame they already
+look at and leaves the same way. The host owns intent; Rollout reports `triggered`, `hovered`,
+`keepOpen` and `wantsOpen` and never closes itself (`Rollout.qml` 120-125, 133).
+
+### Controls, states and routes
+
+| Item | Expected (this record) | Implemented (source) |
+| --- | --- | --- |
+| `shouldBeActive` | host intent, the one input | 37, 343 |
+| `suppressed` | snaps hidden, no retract | 39, 147-154, 348-349 |
+| `edges` | `edges[0]` is the reveal axis, others flush | 18, 324-325; validated once, at completion (598-607) |
+| `anchorItem`, `placementBounds`, `nudgeToBounds` | free-axis placement | 22-27, 172-245 |
+| `parentRollout`, `childRollout` | nesting, squared corners | 31-32, 114-116, 261-276, 341-343 |
+| `hoverAreas`, `triggerAreas`, `closeDelay` | keep-open and open regions | 81-113, 85 |
+| `tier` | 250 ms small, 500 ms large | 42, 365-366 |
+| `registerHitRect` | modal catch regions opt out | 46, 399 |
+| `padding` | inset of the full-size slot | 54, 636-639 |
+| `fullscreenDetached`, `fullscreenCapsule`, `fullscreenRadius` | detached capsule only | 59-62, 290, 331-332, 532-536 |
+| `fullscreenInset` | declared, no reader found | 61 only; no reader in this file or the consumers read |
+| `settleContent`, `deformScale` | detached compatibility only | 64-65, 423-427, 641-648 |
+| `animateBodySize` | one morph or direct child extents | 67, 381, 390 |
+| `contentItem`, default slot | full-size content | 10, 620-635 |
+| `actions` | none (host-owned intent) | none declared |
+
+States: hidden, revealing, shown, retracting, retained for a child (`_sourceRetained`, 341-343),
+suppressed (snap) and fullscreen-detached. None has been exercised.
+
+Routes, as the source gives them:
+
+- Pointer: no handler of its own. It reads `host.pointer` (98) and the host's `ScenePointer` decides
+  containment. Entry is immediate (`triggered`, 99-101). Exit is `keepOpen` through a 180 ms timer
+  (`closeDelayTimer` 135-138, `onHoveredChanged` 161-166).
+- Keyboard and wheel: none in this file. Content keeps its own routes.
+- Focus: none. Content is disabled until `_inputReady` (`shouldBeActive` and `revealProgress >= 0.9`, 642).
+- Accessibility: no role or name in this file. The example's Switch names itself.
+
+### Sizes, empty and long content, failure, cancellation
+
+- Example compact body: 316 x 184 px (`controlWidth` 380 minus 2 x `space6` 32; height is
+  3 x `controlHeight` 40 plus 2 x 32). Wide body: 380 x 184 (unit 70-71). Child sizes are the
+  unit's arithmetic, not Rollout's.
+- Long content does not grow the component: implicit size is body times progress (329-330) and
+  `clip: true` (333) cuts it. Scrolling or eliding is the content's job. The unit's long copy wraps
+  inside its own `Prose` (unit 88-90) and is not measured.
+- Empty: Rollout has no empty state. The example hides its column and shows its own text (unit 76, 123-129).
+- Failure: zero body size yields zero size, silently. Invalid `edges` logs once at creation (606).
+- Cancellation: `suppressed` completes running animations (147-154). Reversal mid-motion retargets
+  from the current value over the full tier duration (360-372, see P6).
+
+### Visual roles, palette, motion
+
+- Rollout paints nothing. The silhouette is the `ShellBorder` shader, fed by `registerBulge`
+  (529-531). Radius is `min(rolloutRadius` 28, half the aperture) on free corners and 0 on attached
+  edges (258-260, 281-285); the radius shrinks with the aperture by design (254-256).
+- Palette pairs: none in this file. The example's root uses `Style.band` (unit 31). Pairs for
+  its content belong to Prose and Switch.
+- Motion: reveal 250 ms (small) or 500 ms (large), curve `[0.05, 0.7, 0.1, 1.0]`; retract
+  `[0.3, 0, 0.2, 1]` (Motion.qml 94, 98); morph 250 ms, `OutQuart` (Motion.qml). Goo and deform run
+  only detached (423-427, `_joined` 290).
+- Reduced motion: reveal and morph become 120 ms (Motion.qml 72-73, 77). The hover grace does not
+  change (Motion.qml 117, Tokens.qml 68). The rule behind this is in conflict, see C1.
+
+### Pointer geometry
+
+Assumptions, labelled: output 1920 x 1080 logical px at scale 1; pointer origin at the screen centre
+(960, 540), a modelled start, not a measured or averaged human path; approach straight to the top edge.
+Width model: one dimension, W = the trigger's depth along the approach normal. The 40 px cross width
+is outside the ID.
+
+Measured from tokens and code:
+
+- Trigger input: the band item, 40 x 16 px (unit 47-53, 67; `ShellBorder.edge` defaults to
+  `frameThickness` 16). Rollout does not paint it.
+- Painted body when open: 316 x 184 px, centred on the trigger (placement 215-245, nudge 231).
+- Keep-open region with empty `hoverAreas`: trigger union viewport (110-113). It equals the painted
+  silhouette: no halo.
+- Corridor from trigger to panel: trigger bottom at y = 16, body top at `edgeInsetV` = 16
+  (52-53): gap 0 px, length 0 px.
+- Timing: open on entry at 0 ms; reveal 250 ms; close 180 ms after the pointer leaves the union
+  (Tokens.qml 68).
+- Fitts, strict model: D = 532 px (origin to trigger centre), W = 16 px, so
+  ID = log2(1 + 532 / 16) = log2(34.25) = 5.10 bits.
+- Edge overshoot: the pointer stops at the screen edge, so the far side of W is unbounded. The
+  5.10 bits is an upper bound, not a time. Aim tolerance across the 40 px width is +/-20 px and
+  is not in the ID.
+- Landing tolerance: 16 px depth, 40 px width, zero halo, then 180 ms of grace.
+- Child (alarms): no pointer trigger. It opens by click on the "Alarm settings" Capsule (unit 109-120),
+  so its geometry belongs to Capsule's record. Not examined here.
+
+### Findings
+
+Defects (source-backed):
+
+- **D1, qss-3il confirmed.** `Rollout.qml` 508-545 and 584-590: `syncRegistries` and
+  `onDestruction` address only the current `host` and `rolloutId`. No handler covers a change of
+  either (547-561). A person sees a stale silhouette bump painted on the old frame and an input
+  region still registered on the old host after a host or key change on a living instance. Severity
+  minor: the consumer sites read (EdgeScene 877, ModalHost 64, unit 56-58) do not change host or key.
+  Fix: remember the last host and id, unregister them before registering when either changes, and
+  do the same in `onDestruction`. Shared: no.
+- **D2, content takes input before the aperture settles. Fixed (source-reviewed, load-checked), not owner-accepted.**
+  The content slot (`inner.enabled`) and `hitActive` now read one predicate, `_inputReady`
+  (`shouldBeActive`, not `suppressed`, `revealProgress >= 0.9`), so a clipped control cannot take a
+  key or a click during the reveal. The unit's `rollout.hitActive` guards are removed. Runtime reach
+  of Tab and pointer over the revealing aperture is not exercised. A host that focuses a control
+  inside the slot at the moment it opens must wait for `hitActive`, because a disabled item cannot
+  hold focus.
+- **D3, the example folds child retention into `shouldBeActive`. Fixed (source-reviewed, load-checked), not owner-accepted.**
+  The unit passes host intent only (`shouldBeActive: root.openIntent`); the source is held for its
+  child through `childRollout` and `_sourceRetained`, so content and input are withdrawn while it is
+  held. Retract order with a child is not exercised at runtime.
+
+Redesign proposals (owner or review decisions, not defects):
+
+- **P1, keep-open halo.** The default keep-open region is the painted silhouette (110-113), so the
+  180 ms grace is the only forgiveness. A pointer that slips 1 px off the body and returns after
+  181 ms closes it. Owner: a default inset corridor, or require `hoverAreas` from consumers.
+- **P2, trigger depth.** The example trigger is 40 x 16 px, below the 24 px desktop-pointer floor
+  on the depth axis; the screen edge is the only mitigation, unmeasured. Consumer decision: extend
+  the trigger into the band, or add a trigger inset property.
+- **P3, dead guard.** `onPointerChanged` (156-159) runs when the `pointer` reference changes, not
+  when `pointer.inside` changes, so its stop never runs in normal use. Delete it, or move the stop to
+  the inside signal and decide whether leaving the scene closes at once. Today the 180 ms grace runs
+  through `onHoveredChanged`.
+- **P4, unused property.** `fullscreenInset` (61) has no reader found. Delete it.
+- **P5, edges.** `edges` is validated once (598-607), so a runtime change is silent. Validate on
+  change, or document it as creation-time only.
+- **P6, interruption.** `Behavior on offsetScale` (360-372) restarts from the current value over
+  the full tier duration, so a reversal at 90% takes the whole 250 or 500 ms. For `review-animations`
+  (standard 6).
+- **P7, exit timing.** Retract uses the reveal duration (365, 369-370). For `review-animations`
+  (standard 4), together with C2.
+
+Source conflicts (the owner rules):
+
+- **C1, reduced motion.** AGENTS.md law: "A one-shot position animation is REMOVED under reduced
+  motion, not shortened, and never runs during a gesture." The reveal and morph are one-shot size and
+  position changes, and Motion.qml 72-73 and 77 shorten them to 120 ms. This record's contract says
+  "Reduced motion uses the existing reduced duration." Shared: yes (Style/Motion.qml).
+- **C2, retract curve.** Motion.qml 96-98 says retract is deliberately not an exit curve: the border
+  returns to rest. `review-animations` standard 3 wants exits on ease-out, and standard 4 wants an
+  exit about 80% of entry. Shared: yes (Style/Motion.qml).
+
+Hypotheses (unmeasured):
+
+- **H1, binding loop.** In the example, `rollout.shouldBeActive` reads `childPanel.visible` (unit 64),
+  `childPanel.shouldBeActive` reads `rollout.revealProgress` (unit 141), `revealProgress` reads
+  `offsetScale` (352), and `offsetScale` reads `_sourceRetained` (343), which reads
+  `childRollout.visible` (342). The cycle is in the dependency graph while nested and open. Qt may log
+  "Binding loop detected". Not runtime-exercised.
+- **H2, focus on close.** `inner.enabled` goes false (640) when `shouldBeActive` goes false, which
+  removes focus from a focused control inside during the retract. Where focus goes is not defined in
+  this file. Criteria are `a11y-audit`'s.
+- **H3, morph cost.** `Behavior` on `bodyWidth` and `bodyHeight` (381-396) relayouts the slot on each
+  frame of the 250 ms morph. Not measured.
+- **H4, Fitts model.** If the one-sided edge model is wrong, the 5.10-bit figure is wrong. Only a
+  measured run settles it.
+
+Not examined: runtime and capture (no Workbench session, per instruction); live geometry; the
+trigger geometry of EdgeScene and ModalHost beyond their call sites; Capsule and Switch targets; the
+wheel routes of content; focus rings; palette pairs; reduced motion at runtime; 2x text scale. The
+desktop reads `contentCenterOffsetX/Y` (EdgeScene 893-923); that use is noted, not measured.
+Fullscreen capsules (`ShellBorder` 102-127) were read as source only.

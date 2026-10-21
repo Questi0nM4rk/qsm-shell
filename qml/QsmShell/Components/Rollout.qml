@@ -274,7 +274,7 @@ Item {
         && (revealHorizontal
             ? height >= _parentRect.height - Style.space1
             : width >= _parentRect.width - Style.space1)
-    readonly property int _childRimBits: _coveredByChild("left") ? 1
+    readonly property int _childSeamBits: _coveredByChild("left") ? 1
         : _coveredByChild("right") ? 2
         : _coveredByChild("top") ? 4
         : _coveredByChild("bottom") ? 8 : 0
@@ -396,8 +396,10 @@ Item {
     }
 
     // Paint survives retract; input is only the near-settled active aperture.
-    readonly property bool hitActive: registerHitRect && shouldBeActive && !suppressed
-        && visible && revealProgress >= 0.9
+    // The content slot and the hit region share this one predicate, so nothing
+    // clipped out of view can take a key or a click while the reveal runs.
+    readonly property bool _inputReady: shouldBeActive && !suppressed && revealProgress >= 0.9
+    readonly property bool hitActive: registerHitRect && _inputReady && visible
 
     // Melt-blend factor: the neck's reach grows with the window's size, so
     // the join closes exactly as the window vanishes into the wall.
@@ -519,7 +521,7 @@ Item {
             const dev = Math.sqrt(((effectiveDm00 - effectiveDm11) / 2) ** 2
                 + effectiveDm01 * effectiveDm01);
             // Origin sides extend fill through the source; child-facing
-            // continuations extend rim paint only (12-mechanism).
+            // continuations only overlap the seam (12-mechanism).
             const edgeBits = (attached("left") ? 1 : 0) + (attached("right") ? 2 : 0)
                 + (attached("top") ? 4 : 0) + (attached("bottom") ? 8 : 0);
             // outness is the same ratio here: a Rollout's melt and its
@@ -527,7 +529,7 @@ Item {
             // nested host sets blend to 0 for an exact union while being fully
             // out (BarPopouts.flushToParent).
             host.registerBulge(rolloutId, sceneRect, cornerRadii,
-                flushToParent ? 0 : meltBlend, inverse, mean - dev, edgeBits, _childRimBits,
+                flushToParent ? 0 : meltBlend, inverse, mean - dev, edgeBits, _childSeamBits,
                 false, meltBlend);
             if (fullscreenDetached && host.fullscreen && fullscreenCapsule)
                 host.registerFullscreenCapsule(rolloutId,
@@ -558,7 +560,7 @@ Item {
     onMeltBlendChanged: syncRegistries()
     onEffectiveDeformChanged: syncRegistries()
     onFlushToParentChanged: syncRegistries()
-    on_ChildRimBitsChanged: syncRegistries()
+    on_ChildSeamBitsChanged: syncRegistries()
 
     Connections {
         target: body
@@ -637,7 +639,7 @@ Item {
             y: root.padding
             width: Math.max(0, root.bodyWidth - root.padding * 2)
             height: Math.max(0, root.bodyHeight - root.padding * 2)
-            enabled: root.shouldBeActive && !root.suppressed
+            enabled: root._inputReady
             scale: root._joined || !root.settleContent ? 1
                 : (root.shouldBeActive && !root.suppressed ? 1 : Motion.microPopScale)
             transformOrigin: Item.Center

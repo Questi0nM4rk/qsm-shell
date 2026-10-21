@@ -59,9 +59,8 @@ Rectangle {
         edges: [root.edge]
         anchorItem: band
         tier: root.motionTier
-        // The example keeps the source until its outgoing detail is hidden.
-        // Containment and grace still come only from Rollout.
-        shouldBeActive: root.openIntent || childPanel.visible
+        // Host intent only; the source is held for its child through childRollout.
+        shouldBeActive: root.openIntent
         suppressed: root.suppressed
         fullscreenDetached: root.detached
         triggerAreas: [rollout.anchorRect]
@@ -94,7 +93,7 @@ Rectangle {
                     text: "Quiet mode"
                     Accessible.name: text
                     checked: root.quiet
-                    enabled: root.controlsEnabled && root.openIntent && rollout.hitActive
+                    enabled: root.controlsEnabled
                     onToggleRequested: next => {
                         root.quiet = next
                         root.eventRecorder?.("intent", "quiet-changed", { checked: next })
@@ -112,7 +111,7 @@ Rectangle {
                 variant: "ghost"
                 size: "sm"
                 label: root.detailsOpen ? "Hide alarm settings" : "Alarm settings"
-                enabled: root.controlsEnabled && root.openIntent && rollout.hitActive
+                enabled: root.controlsEnabled
                 onClicked: {
                     root.detailsOpen = !root.detailsOpen
                     root.eventRecorder?.("intent", "details-changed", { open: root.detailsOpen })
@@ -162,7 +161,7 @@ Rectangle {
                     text: "Keep alarms audible"
                     Accessible.name: text
                     checked: root.alarmsAudible
-                    enabled: root.controlsEnabled && childPanel.hitActive
+                    enabled: root.controlsEnabled
                     onToggleRequested: next => {
                         root.alarmsAudible = next
                         root.eventRecorder?.("intent", "alarms-changed", { checked: next })
