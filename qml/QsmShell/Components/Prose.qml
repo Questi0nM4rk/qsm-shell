@@ -61,6 +61,17 @@ Text {
     property bool technical: role === "reading"
 
     readonly property bool _wraps: role === "body"
+    readonly property var _roles: ["hero", "display", "heading", "title", "body",
+        "label", "supporting", "metadata", "reading", "section"]
+
+    // A misspelt role still renders as label, so it says so once per role
+    // value instead of passing for a deliberate label.
+    function _checkRole(): void {
+        if (_roles.indexOf(role) < 0)
+            console.warn(`Prose: unknown role "${role}" -- rendering as "label"`);
+    }
+    Component.onCompleted: _checkRole()
+    onRoleChanged: _checkRole()
 
     color: muted || role === "supporting" || role === "metadata" || role === "section" ? Style.textMuted : Style.text
 
@@ -114,6 +125,8 @@ Text {
     wrapMode: _wraps ? Text.WordWrap : Text.NoWrap
     textFormat: Text.PlainText
     // Text that cannot fit says so with an ellipsis rather than by running out
-    // of its container. Wrapping text has somewhere to go and is left alone.
-    elide: _wraps ? Text.ElideNone : Text.ElideRight
+    // of its container. A wrapping body only meets its limit through
+    // maximumLineCount or an explicit height; Qt elides it then and never
+    // otherwise, so ElideRight is safe for an unbounded body too.
+    elide: Text.ElideRight
 }

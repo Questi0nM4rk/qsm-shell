@@ -10,7 +10,7 @@ Item {
     property string variant: ""
     property string role: "heading"
     property bool muted: false
-    property bool technical: false
+    property var technical: undefined
     readonly property bool ladderMode: variant === "default"
 
     readonly property var ladder: ["hero", "display", "heading", "title", "body",
@@ -31,7 +31,10 @@ Item {
             text: "Quiet Luminous"
             role: root.role
             muted: root.muted
-            technical: root.technical
+            Binding on technical {
+                when: root.technical !== undefined
+                value: root.technical
+            }
         }
 
         Prose {
@@ -72,6 +75,7 @@ Item {
             { label: "off", set: { muted: false } }
         ] },
         { label: "technical", options: [
+            { label: "auto", set: { technical: undefined } },
             { label: "on", set: { technical: true } },
             { label: "off", set: { technical: false } }
         ] }
