@@ -23,24 +23,22 @@ QtObject {
     id: root
 
     property bool destructive: true
+    onDestructiveChanged: root.disarm()
     // How long the intent stands. Long enough to move a pointer deliberately,
     // short enough that a forgotten arm does not fire on a stray later click.
     property int timeout: 3000
 
     readonly property bool armed: state.armed
-    // What the control should SAY while armed. Empty leaves the wording to
-    // the control; the point is that the same surface that names the action
-    // is the one that asks for confirmation, never a different one.
-    property string confirmLabel: ""
 
     signal fired
-    // Armed and then abandoned. A control that changed its wording needs to
-    // know to change it back.
+    // Armed and then abandoned (timeout or disarm()), never on a confirmed
+    // fire. A control that changed its wording needs to know to change it back.
     signal disarmed
 
     function trigger(): void {
         if (!root.destructive || state.armed) {
-            root.disarm();
+            state.armed = false;
+            timer.stop();
             root.fired();
             return;
         }
@@ -48,9 +46,9 @@ QtObject {
         timer.restart();
     }
 
-    // Leaving the control abandons the intent. The gesture and the intent are
-    // one thing: an "armed" that outlives the pointer is a trap laid for the
-    // next click.
+    // The host calls this when the pointer leaves the control: this object has
+    // no pointer, and an "armed" that outlives the pointer is a trap laid for
+    // the next click. Emits `disarmed`; a confirmed fire does not.
     function disarm(): void {
         if (!state.armed)
             return;

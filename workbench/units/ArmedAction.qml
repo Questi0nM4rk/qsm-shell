@@ -19,7 +19,6 @@ Rectangle {
     ArmedAction {
         id: guard
         destructive: root.destructive
-        confirmLabel: "Confirm remove"
         onFired: {
             root.fired++
             root.eventRecorder?.("intent", "fired", {})
