@@ -3,7 +3,7 @@
 The row: one item a person operates repeatedly; the host owns selection, values, optional inline expansion and the action's consequence. Activating an item never means advancing selection.
 states: rest, hover, press, focus, selected (the accent at `opacitySelected` as a fill behind the row and the name in the accent, with no side marker), disabled and report-only; header and separator are structural rows a cursor steps past; disabled dims an unavailable action while a report-only row stays full-strength and simply is not a target; recede dims unpicked rows only in lists you pick from: text and glyph by colour (`Style.recede`), slotted content by `Style.opacityRecede`, reported as `receded`.
 actions: `activate()` guards selectable and emits `activated`; StateLayer click, pointer, keyboard and programmatic routes share it; keyboard navigation and focus belong to the owning list through `focused`.
-pointer: StateLayer grows the leading box only; clickable trailing actions take their own grab, while passive readings remain part of the row target; hover reports `hoveredEntered` for the list cursor and wheel is not claimed.
+pointer: StateLayer grows the leading glyph only (by `growth`, in `size`); clickable trailing actions take their own grab, while passive readings remain part of the row target; hover reports `hoveredEntered` for the list cursor and wheel is not claimed.
 keyboard: the owning list holds focus and routes arrows and Enter; the current row shows the focus ring on the body.
 expected: the single-row unit owns focus and routes Enter through `activate()`; a physical trailing-action click reports only that action, body and passive-reading clicks activate the row, and long-content mode keeps both routes judgeable. Menu composition / Shell items hosts interaction between multiple rows and their editors; the row unit never implements a selector.
 screen reader: selectable rows announce as buttons named by the primary label with supporting text as description; structural and report-only rows are static text.
@@ -125,7 +125,7 @@ removed (ListRow.qml:329). The hover scale is removed (`Motion.rowHoverScale` is
 
 Input shape: StateLayer covers the full row width and the heading height (ListRow.qml:183-186). The
 painted surface has the same bounds (ListRow.qml:161-163). For md the input is 44 px tall, equal to the
-painted box. The leading box's growth is visual only and is not a separate target.
+painted box. The leading glyph's growth is visual only and is not a separate target.
 
 Trailing action (ControlLabel): its hit box is at least `iconLg` (24 px) each way (ControlLabel.qml:13-15),
 so the width is max(footprint, 24). The footprint is not measured.

@@ -61,10 +61,10 @@ ColumnLayout {
         // Declared before the row so the hover disc paints under the label.
         StateLayer {
             anchors.fill: parent
-            // The CHEVRON answers: it is the part that means "there is more",
-            // and growing the whole heading shoves the rows below it. The
-            // disc over the heading is the colour half of the hover law.
-            target: chevron
+            // The disc over the heading is the body: it grows and tints, and
+            // the chevron keeps its size. Growing the whole heading would
+            // shove the rows below it, so the ratio is the chevron's.
+            extent: Style.iconSm
             host: heading
             focused: root.focused
             focusRadius: Style.radiusSm

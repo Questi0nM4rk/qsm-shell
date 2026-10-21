@@ -342,16 +342,22 @@ meter), never an edge. The silhouette itself keeps its edge separation
   body is one `Surface` (or one `tone` call) and never its own ternary. Four
   components each wrote their own and disagreed on the selected tint.
 - Hover grows slightly AND changes colour (owner: "on hover lehke zvetseni,
-  a zmena barvy"): `StateLayer` grows the target, `tone`'s hover lift is the
-  colour. A press changes colour only on a body (`pressScale` is 1); an icon
-  target with no body to recolour passes its own `pressScale`.
+  a zmena barvy"): the host grows its body by `StateLayer.growth`, `tone`'s
+  hover lift is the colour. A press changes colour only on a body
+  (`pressScale` is 1); a bare glyph with no body to recolour passes its own
+  `pressScale`.
 - Growth is a whole number of DEVICE pixels per side (`StateLayer.growth`),
   never a fractional scale (owner: "ideálně nechceme takovýhle float
-  scaling"). A ratio puts an edge between two pixels and resamples the glyph;
-  a body grows by pixels and its content keeps its size. A host with its own
-  body (`target: null`) grows that body's margins by `growth`, and the side
-  that joins a neighbour or a rollout does not grow, so the join stays flush.
-  A neighbour gap bounds it through `growthCap` (`Motion.hoverGrowthWithin`).
+  scaling"). A ratio puts an edge between two pixels and resamples what is
+  inside, so the layer never scales or moves anything: it reports `growth`
+  (at least one device pixel while the ratio asks for any, so a 2.5px grip
+  still answers) and the host applies it to the body it paints, through
+  negative margins or its own width and height, with the content a sibling at
+  its own size. A bare glyph grows through its `size`; the layer's `hoverTint`
+  disc grows by `growth`. The side that joins a neighbour or a rollout does
+  not grow, so the join stays flush. `extent` is the body's size at rest, the
+  number the ratio is taken on, so the grown size never feeds back into it. A
+  neighbour gap bounds it through `growthCap` (`Motion.hoverGrowthWithin`).
 - An inactive track (progress, meter, ring, slider) is `overlay`, a line of
   content on the card, never a body's step.
 - Selected is identity, not a lift: `accent` at 12 % over the layer plus

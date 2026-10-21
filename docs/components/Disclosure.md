@@ -32,7 +32,7 @@ Opens rare or advanced detail under a heading without that detail taking room in
 | Route | Real path | Source |
 | --- | --- | --- |
 | Pointer click | heading `clicked` calls `toggle()` | Disclosure.qml:51, :37-40 |
-| Pointer hover | chevron grows through StateLayer `target: chevron` | Disclosure.qml:93-103 |
+| Pointer hover | the heading's disc grows by `StateLayer.growth` and tints; the chevron keeps its size | Disclosure.qml:62-73 |
 | Space | Qt AbstractButton emits `clicked` on release, which calls `toggle()` | Disclosure.qml:44, :51 |
 | Return, Enter | `Keys.onReturnPressed` and `onEnterPressed` call `toggle()` | Disclosure.qml:58-59 |
 | Wheel | no wheel handler on the heading, so the wheel reaches the parent | Disclosure.qml:44-104 |

@@ -669,9 +669,8 @@ T.RangeSlider {
     // `activeFocus` and the enabled cascade all come from the template.
     //
     // It covers the TRACK and the RESTING thumbs, not the label: a focus ring
-    // drawn around the label's action said the action was focused. `target:
-    // null` because a scale is the wrong unit here; the thumbs grow by pixels
-    // off `span` above.
+    // drawn around the label's action said the action was focused. Its
+    // `growth` goes unused: the thumbs grow by pixels off `span` above.
     //
     // The ring is the TRACK's outline at a half-step, not the thumb's: sized
     // to the thumb it floats off the bar by the thumb's overhang, and flush on
@@ -688,7 +687,6 @@ T.RangeSlider {
         objectName: "sliderLayer"
         z: -0.5
         host: root
-        target: null
         // Focus lives on a thumb, and a `T.Control` is not a focus scope:
         // measured, the control's own `activeFocus` stays false while a
         // descendant holds it, so the thumbs are read by name.

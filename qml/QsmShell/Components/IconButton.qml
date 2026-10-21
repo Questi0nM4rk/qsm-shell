@@ -58,7 +58,7 @@ T.Control {
     StateLayer {
         z: -1
         anchors.fill: parent
-        target: glyph
+        extent: root._glyph
         hoverTint: true
         pressScale: Motion.pressScale
         focusRadius: Style.radiusPill

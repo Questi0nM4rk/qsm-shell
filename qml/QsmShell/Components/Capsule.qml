@@ -128,6 +128,10 @@ T.Control {
 
     // Flat: a button's growth is its depth, not a shadow and an edge line.
     background: Card {
+        x: -stateLayer.growth
+        y: -stateLayer.growth
+        width: root.width + 2 * stateLayer.growth
+        height: root.height + 2 * stateLayer.growth
         glow: false
         shadow: false
         radius: root.radius

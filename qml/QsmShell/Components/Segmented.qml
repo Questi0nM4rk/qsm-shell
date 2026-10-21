@@ -250,6 +250,10 @@ T.TabBar {
         // deeper step under a press. The picked item shows the sliding
         // thumb behind it instead, so it paints nothing of its own.
         background: Rectangle {
+            x: -tabLayer.growth
+            y: -tabLayer.growth
+            width: tab.width + 2 * tabLayer.growth
+            height: tab.height + 2 * tabLayer.growth
             radius: root._itemRadius
             color: tab.selectedSegment ? "transparent"
                 : Style.tone("transparent", tab.hovered, tab.pressed, false, tab.enabled, Style.accent)
@@ -306,13 +310,13 @@ T.TabBar {
         }
 
         StateLayer {
+            id: tabLayer
             anchors.fill: parent
             host: tab
-            // Hover lifts the item a little; a press only changes its colour
-            // and never its size. The picked item does not grow, because its
-            // thumb lives on the track and would be left behind; its label
+            // Hover lifts the item's pill a little; a press only changes its
+            // colour and never its size. The picked item does not grow, because
+            // its thumb lives on the track and would be left behind; its label
             // and glyph still change colour.
-            target: tab
             hoverScale: tab.selectedSegment ? 1 : Motion.capsuleHoverScale
             pressScale: 1
             focusRadius: root._itemRadius

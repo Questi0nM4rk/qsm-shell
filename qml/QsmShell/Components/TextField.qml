@@ -442,12 +442,11 @@ T.Control {
 
     // The five states, owned in one place. Host mode: hovered, pressed and the
     // enabled cascade come from the control itself, so there is one source of
-    // every state. `target: null` because nothing here scales.
+    // every state. Nothing here applies `growth`.
     StateLayer {
         id: layer
         objectName: "textFieldLayer"
         anchors.fill: parent
-        target: null
         host: root
         // `enabled` alone. A read-only field is still a tab stop -- its value
         // can be selected and copied -- and the layer owns the ring, so

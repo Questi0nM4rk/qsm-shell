@@ -160,7 +160,6 @@ T.Control {
         StateLayer {
             anchors.fill: parent
             host: root
-            target: null
             interactive: root.acceptsInput && root.interactive
             focusRadius: root.radius
         }

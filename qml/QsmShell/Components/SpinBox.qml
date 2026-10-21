@@ -209,16 +209,17 @@ T.DoubleSpinBox {
             id: glyph
             anchors.centerIn: parent
             name: indicator.increasing ? "plus" : "minus"
-            size: root.indicatorIconSize
+            size: root.indicatorIconSize + 2 * glyphLayer.growth
             color: indicator.available ? Style.textMuted : Style.disabled(Style.textMuted)
         }
 
         StateLayer {
+            id: glyphLayer
             anchors.fill: parent
             host: indicator.node
             interactive: indicator.available
             focused: false
-            target: glyph
+            extent: root.indicatorIconSize
             pressScale: Motion.pressScale
         }
     }
@@ -241,7 +242,6 @@ T.DoubleSpinBox {
         width: root.width
         height: root.height
         host: root
-        target: null
         focused: root.focused && !root._pointerFocus
         focusRadius: Style.radiusBody
         focusColor: root.failed ? Style.danger : Style.accent

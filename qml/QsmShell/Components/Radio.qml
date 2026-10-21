@@ -61,27 +61,34 @@ T.AbstractButton {
         anchors.fill: parent
         spacing: Style.rhythm(root._radio * 0.5)
 
-        Rectangle {
+        // The circle is the footprint; the body is what the layer grows, so
+        // the dot inside it keeps its size.
+        Item {
             id: circle
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: root._radio
             implicitHeight: root._radio
-            radius: Style.radiusPill
-            // Hover and press change the colour through the one state matrix
-            // (the layer below grows the circle; a press only recolours it).
-            color: root.checked
-                ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
-                : "transparent"
-            // The ring stays and takes the fill's colour when checked, so
-            // selecting is one cross-fade of fill, ring and dot on one clock.
-            border.width: Style.stroke(Style.indicatorWidth, root)
-            border.color: Style.tone(root.checked ? root.accentColor : Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
 
-            Behavior on color {
-                ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-            }
-            Behavior on border.color {
-                ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -stateLayer.growth
+                radius: Style.radiusPill
+                // Hover and press change the colour through the one state matrix
+                // (the layer below grows the body; a press only recolours it).
+                color: root.checked
+                    ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+                    : "transparent"
+                // The ring stays and takes the fill's colour when checked, so
+                // selecting is one cross-fade of fill, ring and dot on one clock.
+                border.width: Style.stroke(Style.indicatorWidth, root)
+                border.color: Style.tone(root.checked ? root.accentColor : Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+
+                Behavior on color {
+                    ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                }
+                Behavior on border.color {
+                    ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                }
             }
 
             // The dot is 2/5 of the circle: the M3 ratio, which leaves a ring
@@ -120,7 +127,6 @@ T.AbstractButton {
         width: circle.width
         height: circle.height
         host: root
-        target: circle
         focusRadius: Style.radiusPill
     }
 }

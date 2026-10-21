@@ -87,16 +87,14 @@ T.AbstractButton {
     }
 
     contentItem: Item {
-        Rectangle {
+        // The knob's own box slides; its painted body is what grows, so the
+        // slide never carries the growth with it.
+        Item {
             id: knob
             y: (parent.height - height) / 2
             x: root.checked ? root.width - width - root._inset : root._inset
             width: root._knob
             height: width
-            radius: Style.radiusPill
-            color: root.enabled
-                ? (root.checked ? Style.textOnPrimary : Style.band)
-                : Style.disabled(root.checked ? Style.textOnPrimary : Style.band)
 
             // The knob SLIDES: both ends already exist, so it eases at both.
             // An arrival curve here reads as the knob being thrown.
@@ -104,8 +102,18 @@ T.AbstractButton {
                 enabled: !Style.reducedMotion
                 NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
             }
-            Behavior on color {
-                ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -stateLayer.growth
+                radius: Style.radiusPill
+                color: root.enabled
+                    ? (root.checked ? Style.textOnPrimary : Style.band)
+                    : Style.disabled(root.checked ? Style.textOnPrimary : Style.band)
+
+                Behavior on color {
+                    ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                }
             }
         }
     }
@@ -146,9 +154,12 @@ T.AbstractButton {
     // concentric) sits at the documented distance. A press recolours the track
     // and never moves the knob: it already fills the track's height on hover.
     StateLayer {
+        id: stateLayer
         anchors.fill: parent
         host: root
-        target: knob
+        // The knob fills the track's height at most: growth stops at the inset.
+        extent: root._knob
+        growthCap: root._inset
         manualHoverOverride: hoverReader.hovered
         manualPressOverride: tapReader.pressed
         hoverScale: (Style.iconSm + Style.space1) / Style.iconSm

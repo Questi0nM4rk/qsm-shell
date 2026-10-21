@@ -216,9 +216,9 @@ Item {
         width: parent.width
         height: root._headingHeight
         visible: root.selectable
-        // The LEADING BOX grows, never the row. A 570px row scaled inside a
+        // The leading glyph grows, never the row. A 570px row grown inside a
         // clipped list just has its ends shaved off.
-        target: leadingBox
+        extent: root.leadingSize
         interactive: root.selectable
         focused: root.focused
         focusRadius: root.selectionRadius
@@ -289,7 +289,7 @@ Item {
                 anchors.centerIn: parent
                 visible: leadingSlot.children.length === 0
                 name: root.icon
-                size: root.glyphSize
+                size: root.glyphSize + 2 * layer.growth
                 color: root.proseColor
 
                 Behavior on color {

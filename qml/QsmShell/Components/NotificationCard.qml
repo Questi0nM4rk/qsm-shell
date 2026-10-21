@@ -589,15 +589,14 @@ Item {
     }
 
     // Hover pauses expiry AND expands (one gesture, reported once); the
-    // consumer decides what "paused" does. `target: null` because this
-    // card's own response IS its height opening — scaling it too would
+    // consumer decides what "paused" does. Its `growth` goes unused because
+    // this card's own response IS its height opening — growing it too would
     // answer the same hover twice.
     StateLayer {
         id: layer
         anchors.fill: parent
         interactive: root.enabled && root.inputEnabled
         clickable: root.primaryActionAvailable || root.activatable
-        target: null
         // The card is the focus holder (Tab stop); the layer only paints the ring.
         focused: root.activeFocus
         focusRadius: root.bodied ? root.bodyRadius : 0
@@ -625,7 +624,6 @@ Item {
         visible: !root.expandOnHover
         interactive: root.enabled && root.inputEnabled
         clickable: true
-        target: null
         onClicked: root.expandRequested()
     }
 

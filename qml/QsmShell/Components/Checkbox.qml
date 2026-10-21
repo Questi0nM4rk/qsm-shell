@@ -97,28 +97,35 @@ T.AbstractButton {
         anchors.fill: parent
         spacing: root._hasLabel ? Style.rhythm(root._box * 0.5) : 0
 
-        Rectangle {
+        // The box is the footprint; the body is what the layer grows, so the
+        // mark inside it keeps its size.
+        Item {
             id: box
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: root._box
             implicitHeight: root._box
-            radius: Style.radiusXs
-            // The unchecked box has to EXIST before it can be checked, and a
-            // transparent square on a boxless surface does not. This is the
-            // second place in the library that draws an outline, and for the
-            // same reason as the text field: the edge is the affordance.
-            // Disabled dims every role BY COLOUR, never by opacity on the
-            // composite, which would show the fill through the mark.
-            // Hover and press change the colour through the one state matrix
-            // (the layer below grows the box; a press only recolours it).
-            color: root._marked
-                ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
-                : "transparent"
-            border.width: root._marked ? 0 : Style.stroke(Style.indicatorWidth, root)
-            border.color: Style.tone(Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
 
-            Behavior on color {
-                ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -stateLayer.growth
+                radius: Style.radiusXs
+                // The unchecked box has to EXIST before it can be checked, and a
+                // transparent square on a boxless surface does not. This is the
+                // second place in the library that draws an outline, and for the
+                // same reason as the text field: the edge is the affordance.
+                // Disabled dims every role BY COLOUR, never by opacity on the
+                // composite, which would show the fill through the mark.
+                // Hover and press change the colour through the one state matrix
+                // (the layer below grows the body; a press only recolours it).
+                color: root._marked
+                    ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+                    : "transparent"
+                border.width: root._marked ? 0 : Style.stroke(Style.indicatorWidth, root)
+                border.color: Style.tone(Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+
+                Behavior on color {
+                    ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                }
             }
 
             // The check rides at 3:4 of the box (`_markRatio`) -- the inner
@@ -173,7 +180,6 @@ T.AbstractButton {
         width: box.width
         height: box.height
         host: root
-        target: box
         focusRadius: Style.radiusXs
         hoverScale: 1.15
     }

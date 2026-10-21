@@ -153,7 +153,6 @@ T.Control {
         anchors.centerIn: parent
         width: Math.max(parent.width, root.clickable ? Style.iconLg * root.sizeScale : 0)
         height: Math.max(parent.height, root.clickable ? Style.iconLg * root.sizeScale : 0)
-        target: root
         hoverTint: root.clickable
         interactive: root._available
         // A label has no body to recolour, so the press is acknowledged by the

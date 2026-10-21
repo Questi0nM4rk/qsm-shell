@@ -23,8 +23,10 @@ Item {
     Rectangle {
         id: body
         anchors.centerIn: parent
-        width: root.implicitWidth
-        height: root.implicitHeight
+        // The unit plays the host: the layer reports `growth` and the body
+        // takes it on every side.
+        width: root.implicitWidth + 2 * layer.growth
+        height: root.implicitHeight + 2 * layer.growth
         enabled: root.variant !== "disabled"
         activeFocusOnTab: enabled
         radius: Style.radiusMd
@@ -41,6 +43,7 @@ Item {
             y: -Style.spaceTight
             width: body.width + Style.spaceTight * 2
             height: body.height + Style.spaceTight * 2
+            extent: root.implicitHeight
             interactive: body.enabled
             clickable: root.variant !== "trigger"
             focusRadius: body.radius + Style.spaceTight

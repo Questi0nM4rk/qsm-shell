@@ -170,7 +170,8 @@ Item {
 
     // The FACE: the alpha check with the sample composited over it, masked to
     // the swatch's own corner, plus the ring and the reading. Hover and press
-    // animate this item's scale, which never moves the layout footprint.
+    // change this item's size by whole device pixels, which never moves the
+    // layout footprint.
     //
     // The check comes first, because without it a 20%-alpha colour reads as a
     // different opaque colour, which is the one confusion a colour tool must
@@ -185,8 +186,8 @@ Item {
     Item {
         id: face
         objectName: "swatchFace"
-        width: root.size
-        height: root.size
+        width: root.size + 2 * pointerLayer.growth
+        height: width
         anchors.centerIn: parent
 
         Item {
@@ -304,7 +305,6 @@ Item {
     StateLayer {
         anchors.fill: face
         anchors.margins: root.selected ? -root._selReach : 0
-        target: null
         clickable: false
         interactive: root.enabled
         focused: root.focused && !root._pointerFocus
@@ -315,8 +315,9 @@ Item {
     // Pressing pushes the face in: a colour change would alter the very colour
     // being sampled.
     StateLayer {
+        id: pointerLayer
         anchors.fill: parent
-        target: face
+        extent: root.size
         interactive: root.enabled
         hoverScale: root._hoverScale
         pressScale: Motion.pressScale

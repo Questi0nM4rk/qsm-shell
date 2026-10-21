@@ -72,6 +72,10 @@ T.Control {
     // Selected or armed is a solid fill, not a tint; armed wears its own
     // colour. Surface dims the fill when disabled.
     background: Surface {
+        x: -stateLayer.growth
+        y: -stateLayer.growth
+        width: root.width + 2 * stateLayer.growth
+        height: root.height + 2 * stateLayer.growth
         enabled: root.enabled
         hovered: stateLayer.hovered
         pressed: stateLayer.pressed
