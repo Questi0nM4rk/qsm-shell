@@ -28,7 +28,7 @@ Item {
         enabled: root.variant !== "disabled"
         activeFocusOnTab: enabled
         radius: Style.radiusMd
-        color: enabled ? Style.surface : Style.disabled(Style.surface)
+        color: enabled ? Style.tone(Style.surface, layer.hovered, layer.pressed, false, true, Style.accent) : Style.disabled(Style.surface)
         Accessible.role: Accessible.Button
         Accessible.name: "State layer sample"
         Accessible.onPressAction: layer.activate()
