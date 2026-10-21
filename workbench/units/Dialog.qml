@@ -10,6 +10,7 @@ Rectangle {
     property var eventRecorder: null
     property bool open: variant === "open"
     property string tone: "danger"
+    property bool longBody: false
     property int dismissals: 0
     property int closes: 0
     property int confirms: 0
@@ -22,7 +23,9 @@ Rectangle {
         id: dialog
         open: root.open
         title: "Remove device?"
-        body: "The sink stays; the route goes away."
+        body: root.longBody
+            ? "The sink stays; the route goes away. Anything routed through it falls back to the default output until a new route is made. ".repeat(12)
+            : "The sink stays; the route goes away."
         tone: root.tone
 
         onDismissRequested: {
@@ -34,6 +37,12 @@ Rectangle {
             root.eventRecorder?.("intent", "closed", {})
         }
 
+        // Reading order: the safe action leads and takes first focus.
+        Capsule {
+            label: "Keep"
+            icon: "x"
+            onClicked: root.eventRecorder?.("intent", "cancel-clicked", {})
+        }
         Capsule {
             id: confirm
             label: "Remove"
@@ -44,11 +53,6 @@ Rectangle {
                 root.eventRecorder?.("intent", "confirm-clicked", {})
             }
         }
-        Capsule {
-            label: "Keep"
-            icon: "x"
-            onClicked: root.eventRecorder?.("intent", "cancel-clicked", {})
-        }
     }
 
     readonly property var controls: [
@@ -58,7 +62,12 @@ Rectangle {
         ] },
         { label: "tone", options: [
             { label: "danger", set: { tone: "danger" } },
+            { label: "warning", set: { tone: "warning" } },
             { label: "neutral", set: { tone: "neutral" } }
+        ] },
+        { label: "body", options: [
+            { label: "short", set: { longBody: false } },
+            { label: "long", set: { longBody: true } }
         ] }
     ]
 

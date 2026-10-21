@@ -35,17 +35,32 @@ FocusScope {
     property string tone: "neutral"
     property real dialogWidth: Style.controlWidth
 
-    // The buttons. They live at the bottom-right, trailing edge last, because
-    // that is where the eye finishes a dialog it has just read.
+    // The buttons, declared in reading order: the first takes focus on open
+    // and the last sits at the trailing edge, bottom-right, because that is
+    // where the eye finishes a dialog it has just read.
     default property alias actions: actionHost.data
 
     signal dismissRequested
     // Closed for real: the moment focus goes back.
     signal closed
 
-    readonly property color _tone: tone === "danger" ? Style.danger
-        : tone === "warning" ? Style.warning
-        : Style.accent
+    readonly property var _tones: ({
+        neutral: { color: Style.accent, icon: "" },
+        danger: { color: Style.danger, icon: "circle-alert" },
+        warning: { color: Style.warning, icon: "alert-triangle" }
+    })
+    readonly property bool _toneKnown: _tones[tone] !== undefined
+    readonly property color _tone: (_tones[tone] ?? _tones.neutral).color
+    readonly property string _mark: (_tones[tone] ?? _tones.neutral).icon
+
+    // QML cannot throw out of a binding, so an unknown tone is reported on the
+    // error stream and drawn as neutral, with no mark.
+    on_ToneKnownChanged: _checkTone()
+    Component.onCompleted: _checkTone()
+    function _checkTone(): void {
+        if (!_toneKnown)
+            console.error(`Dialog: unknown tone "${tone}" -- expected neutral, danger or warning`);
+    }
 
     // Where focus goes back to. A consumer that knows (it owns the opening
     // control) states it; otherwise the dialog reads whatever held focus at
@@ -62,9 +77,10 @@ FocusScope {
     // nothing and the keyboard stayed behind the modal. The opacity term is
     // what keeps it laid out through the fade OUT.
     visible: root.open || card.opacity > 0
-    // A closed dialog must not be in the tab order at all: a set of controls
-    // that are invisible and still reachable is worse than no dialog.
-    enabled: root.open
+    // Not `enabled: root.open`: that greys every control at the first frame of
+    // the fade out. Answering is gated instead by the shield below (pointer)
+    // and by `_release` (keys), and the controls keep their colours until the
+    // card is gone. Once invisible they leave the tab order on their own.
 
     // Move the keyboard to the first control IN the dialog, not to the card.
     // The card is a plain surface: focusing it leaves the keyboard pointing at
@@ -75,7 +91,9 @@ FocusScope {
         if (!root.open)
             return;
         const first = head.nextItemInFocusChain(true);
-        if (first && root._holds(first))
+        // With no action the chain from `head` runs straight into `tail`, which
+        // is a sentinel, not a control: the card takes focus instead.
+        if (first && first !== tail && root._holds(first))
             first.forceActiveFocus();
         else
             card.forceActiveFocus();
@@ -104,8 +122,15 @@ FocusScope {
             // with nothing to say it had failed.
             Qt.callLater(root._enterFocus);
         } else {
+            // The invoker is the consumer's to keep alive (`returnFocusTo` names
+            // one that survives the action); an item that refuses focus is not
+            // second-guessed here.
             if (root._returnTo)
                 root._returnTo.forceActiveFocus();
+            // Whatever still holds focus inside the fading card must stop
+            // answering keys; the card itself only reports Escape while open.
+            if (root.activeFocus)
+                card.forceActiveFocus();
             root._returnTo = null;
             root.closed();
         }
@@ -116,15 +141,30 @@ FocusScope {
         onDismissed: root.dismissRequested()
     }
 
+    // Closed for real only when the fade ends, but no longer answering the
+    // moment `open` drops: it catches the pointer over the fading card and the
+    // fading scrim, which has already stopped catching.
+    MouseArea {
+        z: 1
+        anchors.fill: parent
+        enabled: !root.open
+        acceptedButtons: Qt.AllButtons
+    }
+
     Card {
         id: card
 
         anchors.centerIn: parent
         width: root.dialogWidth
-        implicitHeight: content.implicitHeight + Style.space5 * 2
+        // Capped to the window, so a long body scrolls under a fixed title and
+        // fixed actions instead of pushing them out of reach.
+        implicitHeight: Math.min(content.implicitHeight + Style.space5 * 2,
+            root.height - Style.space6 * 2)
         radius: Style.radiusXl
         surfaceColor: Style.overlay
         focus: true
+        Accessible.role: Accessible.Dialog
+        Accessible.name: root.title
         opacity: root.open ? 1 : 0
         scale: root.open ? 1 : 0.96
 
@@ -133,18 +173,27 @@ FocusScope {
         // arbitrary and would read as coming from somewhere.
         Behavior on opacity {
             NumberAnimation {
-                duration: Motion.medium
+                duration: root.open ? Motion.medium : Motion.exit(Motion.medium)
                 easing.type: root.open ? Motion.standardEasing : Motion.exitEasing
             }
         }
         Behavior on scale {
             NumberAnimation {
-                duration: Motion.medium
+                duration: root.open ? Motion.medium : Motion.exit(Motion.medium)
                 easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing
             }
         }
 
-        Keys.onEscapePressed: root.dismissRequested()
+        Keys.onEscapePressed: if (root.open) root.dismissRequested()
+
+        // The card takes every press that is not on a control it holds, so a
+        // click on its title, body or padding never reaches the scrim, which
+        // would read it as "clicked away". Declared before the content so the
+        // actions and the body stay on top of it.
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.AllButtons
+        }
 
         // The trap, half of it. Tabbing BACKWARD off the first real control
         // lands here, and this sends focus to whatever sits just before the
@@ -159,46 +208,55 @@ FocusScope {
 
         ColumnLayout {
             id: content
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin: Style.space5
-            anchors.rightMargin: Style.space5
+            anchors.fill: parent
+            anchors.margins: Style.space5
             spacing: Style.space3
 
+            // The mark is the tone's, so it shows without a title too.
             RowLayout {
                 Layout.fillWidth: true
-                visible: root.title.length > 0
+                visible: root.title.length > 0 || root._mark.length > 0
                 spacing: Style.space3
 
                 SvgIcon {
-                    visible: root.tone !== "neutral"
-                    name: root.tone === "danger" ? "circle-alert" : "alert-triangle"
+                    visible: root._mark.length > 0
+                    name: root._mark
                     size: Style.iconMd
                     color: root._tone
                 }
                 Prose {
                     Layout.fillWidth: true
+                    visible: root.title.length > 0
                     role: "heading"
                     text: root.title
                 }
             }
-            Prose {
+            // Takes the room the card has left; the title and the actions keep
+            // theirs, so a long body scrolls and they stay in reach.
+            ScrollArea {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredHeight: bodyText.implicitHeight
                 visible: root.body.length > 0
-                role: "body"
-                muted: true
-                text: root.body
+                fadeColor: Style.overlay
+
+                Prose {
+                    id: bodyText
+                    width: parent.width
+                    role: "body"
+                    muted: true
+                    text: root.body
+                }
             }
             RowLayout {
                 id: actionHost
                 Layout.fillWidth: true
                 Layout.topMargin: Style.space2
-                // Actions sit at the trailing edge. The leading space is the
-                // filler, so a single button lands on the right rather than
-                // stretching across the dialog.
-                layoutDirection: Qt.RightToLeft
                 spacing: Style.space2
+
+                // The leading space is the filler, so a single button lands on
+                // the trailing edge rather than stretching across the dialog.
+                Item { Layout.fillWidth: true }
             }
         }
 
