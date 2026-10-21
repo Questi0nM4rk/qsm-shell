@@ -128,7 +128,7 @@ Each one is source-reviewed only. Runtime was not exercised.
 ### Redesign proposals (taste, not defects)
 
 - Hover growth: 1.15 or the library's 1.08 (see defect 1). Owner's choice.
-- Ring and growth: StateLayer scales only the box, not the ring. With focus and hover together at md,
+- Ring and growth: the box grows by `StateLayer.growth`, the ring keeps its size. With focus and hover together at md,
   the 2 px ring clearance falls to 0.8 px (1.2 px growth per side). Consider growing the ring with the
   box, or keeping the ring outside the growth.
 - Mark size: a sm check is 9 px, which is off the icon scale (12, 16, 20, 24). See the source conflict

@@ -60,7 +60,7 @@ Assumptions, each labelled:
 
 - A-1, label width: "Pair device" at 10 px (`textXs`) is estimated at about 60 px, from an assumed 5.5 px per character. A real render replaces it.
 - A-2, origin: the pointer rests near the host centre, the position after a click on a centred surface. The column is centred in its host, so the action's offset from host centre does not depend on the host size. Any other origin changes D.
-- Input shape: the `Capsule`'s own rectangle. Its `StateLayer` fills it (`Capsule.qml` lines 164-166) and the handlers carry no margins (`StateLayer.qml` lines 164-170). Hover scale 1.04 is visual; whether it also scales the hit box depends on the `StateLayer` target, not checked.
+- Input shape: the `Capsule`'s own rectangle. Its `StateLayer` fills it (`Capsule.qml` lines 164-166) and the handlers carry no margins (`StateLayer.qml` lines 164-170). Hover grows the body by `StateLayer.growth` whole device pixels; the hit box keeps its size.
 - Painted: a `Card` with `radiusBody` 12 px (`Capsule.qml` line 35), height Control `sm` 32 px (`tokens/deep-night.json` `sizes.Control.sm`). Width is about 108 px: 12 inset, 16 glyph, 8 gap, about 60 label, 12 inset.
 - Column, from assumed line boxes (title 17 px, one detail line 19 px): icon 24 + 8 + 17 + 8 + 19 + 8 + 32 = 116 px. Action centre sits 42 px below the host centre: D = 42 px.
 - W: the approach is vertical, so the width model is the target height, 32 px. Shannon form: ID = log2(1 + D/W) = log2(1 + 42/32) = 1.21 bits.

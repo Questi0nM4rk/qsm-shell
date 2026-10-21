@@ -27,7 +27,7 @@ Public API: `sample` (required colour), `empty`, `reading`, `size` (raw px, defa
 | state | expected | implemented |
 | --- | --- | --- |
 | rest | outline when empty, face otherwise | yes (`ColorSwatch.qml:221-228`, `:163-216`) |
-| hover | face swell plus target | yes, `hoverScale` 1.08 through StateLayer (`:270-276`) |
+| hover | face grows by whole device pixels | yes, the face takes `StateLayer.growth` per side |
 | press | a visible response | yes, `pressScale: Motion.pressScale` on the face |
 | focus | keyboard ring around the face | yes, its own `StateLayer` sized to the face |
 | selected | accent ring outside the face | yes, reported as `Accessible.checked` |
@@ -64,7 +64,7 @@ Contrast computed from tokens, WCAG 2.2 relative luminance:
 ### Motion and reduced motion
 
 - Selection ring: `Behavior on border.width` at `Motion.micro` (130 ms, OutCubic). Reduced motion: 60 ms (`Motion.qml`, `Style.reducedMotion`).
-- Hover: face scale to 1.08 over `micro` through `StateLayer.response`, none under reduced motion. Press: `Motion.pressScale`.
+- Hover: the face grows by `StateLayer.growth` whole device pixels per side over `micro`, none under reduced motion. Press: `Motion.pressScale`.
 - Focus ring opacity: `micro`.
 - Reduced motion shortens durations and removes the hover swell.
 

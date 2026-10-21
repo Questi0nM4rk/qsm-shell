@@ -52,7 +52,7 @@ Failure and cancellation: `toggle()` refuses when disabled (Disclosure.qml:38). 
 
 - Chevron `textMuted` (Disclosure.qml:69). Icon `text` (:80). Label Prose `label` role, colour `text` (Prose.qml). Badge `neutral` tint (Badge.qml). Focus ring `Style.accent` (StateLayer default `focusColor`). Palette pairs were not measured.
 - Chevron rotation 0 to 90 degrees over `Motion.fast`, 180 ms (Tokens.qml:49), easing `Motion.moveEasing` (InOutCubic, Motion.qml:128). Measured from source only.
-- Hover response: `Motion.hoverScale` on the chevron plus a `Style.tone` disc over the heading. Press response: `Motion.pressScale`. Both from tokens.
+- Hover response: a `Style.tone` disc over the heading that grows by `StateLayer.growth`; the chevron keeps its size. Press response: `Motion.pressScale`. Both from tokens.
 - Body: appears and disappears with no transition.
 - Reduced motion: `Motion.fast` becomes 80 ms (Motion.qml:56). The rotation still plays. See S1.
 
