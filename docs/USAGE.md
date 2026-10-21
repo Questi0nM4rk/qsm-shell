@@ -51,7 +51,8 @@ Sizes work the same way. A sized type takes a preset NAME, `size: "md"`, and
 resolves it through `Style.size("<Type>", name)` against the theme's size
 table (`sizes.<Type>.<name>`, defaults in `tokens/deep-night.json`). Your
 backend's `sizes` extends or overrides that table, so `sizes: { Switch: { xl: 40 } }`
-makes `Switch { size: "xl" }` valid in your project. The resolved number
+makes `Switch { size: "xl" }` valid in your project. Types with no table of
+their own (`TextField`, `SpinBox`, `Segmented`) share the `Control` ladder, so `sizes: { Control: { xl: 56 } }` adds `xl` to every one of them. The resolved number
 (`knobSize`, `thumbSize`, `fieldHeight`) stays settable directly when one
   call site needs one value. The shell provider currently uses the library
   defaults; it does not install `workbench/theme.json` as a backend. The desktop

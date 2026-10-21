@@ -8,9 +8,11 @@ import qs.QsmShell.Style
 // theme, and a component library whose consumer cannot retheme it is a
 // component library with two sources of truth.
 //
-// Every value below resolves the same way: the consumer's backend wins, the
+// A scale value resolves the same way: the consumer's backend wins, the
 // library's generated token is the fallback. `Tokens` is the DEFAULT theme,
-// not the theme.
+// not the theme. A ROLE (a size preset, a glyph for its box, a stroke, a
+// body radius, a recede) is derived from the scales and the size table, so a
+// consumer reshapes it by theming those and never by naming the role.
 //
 // The scales are complete on purpose. Every gap here is a number typed into a
 // component instead — that is where 16, 18 and 22 all became "the small icon"
@@ -29,7 +31,8 @@ QtObject {
     // by lightness alone, 1.30:1 each: band is the one silhouette the shell
     // paints (frame and every rollout), surface a card inside it, overlay a
     // popout over a card. No rung is derived here: a theme generates all
-    // three from its wallpaper, and a component reads a role, never a lift.
+    // three from one seed (the default's come from `scripts/ladder.mjs`), and
+    // a component reads a role, never a lift.
     readonly property color band: backend?.band ?? Tokens.colorBand
     readonly property color surface: backend?.surface ?? Tokens.colorSurface
     readonly property color overlay: backend?.overlay ?? Tokens.colorOverlay
@@ -82,7 +85,8 @@ QtObject {
     // "Not the one you are looking at." A list recedes its non-current rows so
     // the current one is the only thing at full strength; it is a different
     // number from `opacityDisabled`, because receding says "later" and
-    // disabled says "never".
+    // disabled says "never". It is the strength `recede()` blends by, the
+    // lowest at which muted text still meets WCAG AA on the band.
     readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
     // A badge's tinted body: its tone at this strength over the layer.
     readonly property real badgeTintOpacity: backend?.badgeTintOpacity ?? Tokens.opacityBadgeTint
@@ -91,9 +95,12 @@ QtObject {
     // share clears it on band, surface and overlay.
     readonly property real badgeInkMix: backend?.badgeInkMix ?? Tokens.blendBadgeInk
     // A tinted callout's tone over the surface, and a divider's own line: both
-    // are a quiet echo, never a fill, so each is its own number.
+    // are a quiet echo, never a fill, so each is its own number. A rule in a
+    // surface and a rule in the band are the same line at two strengths, the
+    // band's stronger because nothing but the rule groups what sits on it.
     readonly property real calloutTintOpacity: backend?.calloutTintOpacity ?? Tokens.opacityCalloutTint
     readonly property real dividerOpacity: backend?.dividerOpacity ?? Tokens.opacityDivider
+    readonly property real dividerBandOpacity: backend?.dividerBandOpacity ?? Tokens.opacityDividerBand
     // The dim a modal lays over the surface beneath it.
     readonly property real scrimOpacity: backend?.scrimOpacity ?? Tokens.opacityScrim
     // The series colour under a sparkline's line, and the unlit remainder of a
@@ -126,7 +133,16 @@ QtObject {
     // It is a function rather than a per-role token because the strength is
     // one fact and the roles it applies to are the caller's business.
     function disabled(c: color): color {
-        const k = root.opacityDisabled;
+        return root._towardBand(c, root.opacityDisabled);
+    }
+
+    // "Not the current one", the same blend at `opacityRecede`: a row that
+    // is merely later stays legible, which a disabled one need not.
+    function recede(c: color): color {
+        return root._towardBand(c, root.opacityRecede);
+    }
+
+    function _towardBand(c: color, k: real): color {
         const bg = root.band;
         return Qt.rgba(bg.r + (c.r - bg.r) * k,
                        bg.g + (c.g - bg.g) * k,
@@ -241,6 +257,10 @@ QtObject {
     readonly property int iconSm: backend?.iconSm ?? Tokens.iconSm
     readonly property int iconMd: backend?.iconMd ?? Tokens.iconMd
     readonly property int iconLg: backend?.iconLg ?? Tokens.iconLg
+    // The display end: a glyph that is the content of a surface (a media
+    // cover, a dashboard reading) rather than a mark beside one.
+    readonly property int iconXl: backend?.iconXl ?? Tokens.iconXl
+    readonly property int iconXxl: backend?.iconXxl ?? Tokens.iconXxl
 
     // ── space ───────────────────────────────────────────────────────────
     // spaceTight is the half-step below the grid: a glyph and its own reading
@@ -268,23 +288,30 @@ QtObject {
 
     // THE size table. A component knows its own PROPORTIONS; this is the one
     // absolute number a preset NAME resolves to -- `sizes.<Type>.<name>`, the
-    // consumer's backend first, the theme's default second. An unknown name
-    // falls back to "md" (warned once) rather than throwing, because a typo'd
-    // preset should still render something.
+    // consumer's backend first, the theme's default second. A type the theme
+    // gives no table of its own belongs to the `Control` family and shares its
+    // ladder, so a preset name means one number across every field, button and
+    // bar, and a consumer's `Control.xl` reaches all of them at once. An unknown
+    // name falls back to "md" (warned once) rather than throwing, because a
+    // typo'd preset should still render something.
     function size(type: string, name: string): real {
-        const fromBackend = root.backend?.sizes?.[type]?.[name];
-        if (fromBackend !== undefined)
-            return fromBackend;
-        const fromTokens = Tokens.sizes[type]?.[name];
-        if (fromTokens !== undefined)
-            return fromTokens;
+        const found = root._preset(type, name);
+        if (found !== undefined)
+            return found;
 
         const key = type + "." + name;
         if (!root._warnedSizes[key]) {
             root._warnedSizes[key] = true;
             console.warn(`Style.size: no "${name}" preset for "${type}" -- falling back to "md"`);
         }
-        return Tokens.sizes[type].md;
+        return root._preset(type, "md");
+    }
+
+    function _preset(type: string, name: string): var {
+        const own = root.backend?.sizes?.[type]?.[name] ?? Tokens.sizes[type]?.[name];
+        if (own !== undefined || Tokens.sizes[type] !== undefined)
+            return own;
+        return root.backend?.sizes?.Control?.[name] ?? Tokens.sizes.Control[name];
     }
 
     // The type-scale step nearest a wanted pixel size. A control scaled by a
@@ -297,7 +324,42 @@ QtObject {
     // The icon-scale step nearest a wanted pixel size; same reason as
     // `textNear`, for glyphs.
     function iconNear(px: real): int {
-        return root._nearest(px, [root.iconXs, root.iconSm, root.iconMd, root.iconLg]);
+        return root._nearest(px, [root.iconXs, root.iconSm, root.iconMd, root.iconLg, root.iconXl, root.iconXxl]);
+    }
+
+    // THE glyph for a box, so no call site picks one. A glyph alone in its
+    // box (an icon button, a rail cell) fills half of it, and a glyph beside a
+    // label or a text (a capsule, a segment, a field's leading mark) takes two
+    // fifths, because the label carries the meaning and the glyph only marks
+    // it. Neither goes under `iconSm`; 12 is a status mark, never a control's.
+    function glyphAlone(box: real): int {
+        return root.iconNear(Math.max(box * Tokens.geometryGlyphAloneRatio, root.iconSm));
+    }
+
+    function glyphBeside(box: real): int {
+        return root.iconNear(Math.max(box * Tokens.geometryGlyphBesideRatio, root.iconSm));
+    }
+
+    // THE thickness of a line, in whole DEVICE pixels. A square Rectangle's
+    // edges snap to the device grid, so one of logical height h at y paints
+    // round((y + h) * dpr) - round(y * dpr) rows. When h * dpr is a whole
+    // number m that is m for every y, so the line is the same thickness
+    // wherever it sits and never anti-aliases into a second row. This returns
+    // the logical thickness nearest `n` that is a whole device count, never
+    // under one pixel. `dpr` is the item's own `Screen.devicePixelRatio`, read
+    // where the line is drawn so it is right per monitor: it is not a
+    // constant and not a global.
+    //
+    //     height: Style.stroke(1, Screen.devicePixelRatio)
+    //
+    function stroke(n: real, dpr: real): real {
+        return Math.max(1, Math.round(n * dpr)) / dpr;
+    }
+
+    // A position on the device grid. Centring a curved thing (a pill track,
+    // a ring) lands its edge between rows unless the offset is snapped.
+    function snap(v: real, dpr: real): real {
+        return Math.round(v * dpr) / dpr;
     }
 
     // A spacing snapped to the 4px rhythm, never below the half step. Insets
@@ -315,9 +377,9 @@ QtObject {
     }
 
     // ── control and surface geometry ────────────────────────────────────
-    readonly property int controlHeight: backend?.controlHeight ?? Tokens.geometryControlHeight
-    readonly property int controlHeightSm: backend?.controlHeightSm ?? Tokens.geometryControlHeightSm
-    readonly property int controlHeightLg: backend?.controlHeightLg ?? Tokens.geometryControlHeightLg
+    readonly property int controlHeight: backend?.controlHeight ?? root.size("Control", "md")
+    readonly property int controlHeightSm: backend?.controlHeightSm ?? root.size("Control", "sm")
+    readonly property int controlHeightLg: backend?.controlHeightLg ?? root.size("Control", "lg")
     // The Blueprint's pointer-target floor. A swatch paints a compact face
     // but answers on this square, so palette siblings never share a hit zone.
     readonly property int swatchTarget: backend?.swatchTarget ?? Tokens.geometrySwatchTarget
@@ -454,4 +516,11 @@ QtObject {
     function insetRadius(inset: real): int {
         return Math.max(0, root.rolloutRadius - Math.max(0, inset));
     }
+
+    // What a rollout leaves between its edge and its content on every side,
+    // and the radius a body sitting directly in that inset takes: derived, so
+    // a card, a field, a tile and a row's pill are all concentric with the
+    // rollout and none of them picks a corner by eye.
+    readonly property int rolloutPadding: root.space4
+    readonly property int radiusBody: root.insetRadius(root.rolloutPadding)
 }

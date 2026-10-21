@@ -9,7 +9,6 @@ Rectangle {
     property string variant: ""
     property bool unknown: variant === "unknown"
     property real reading: 0.42
-    property real weight: Style.trackThickness
 
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
@@ -21,7 +20,6 @@ Rectangle {
         width: Style.controlWidth
         indeterminate: root.unknown
         value: root.reading
-        thickness: root.weight
     }
 
     readonly property var controls: [
@@ -33,10 +31,6 @@ Rectangle {
             { label: "empty", set: { reading: 0 } },
             { label: "half", set: { reading: 0.5 } },
             { label: "full", set: { reading: 1 } }
-        ] },
-        { label: "weight", options: [
-            { label: "thin", set: { weight: Style.sliderTrackThickness } },
-            { label: "regular", set: { weight: Style.trackThickness } }
         ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },

@@ -261,7 +261,8 @@ follow the design sources.
 ## Surface ladder and borders
 
 Three neutral steps, each 1.30:1 on the one below, and nothing is derived:
-a theme generates all three from its wallpaper and a component reads a role.
+a theme generates all three from one seed (the default's come from
+`scripts/ladder.mjs`) and a component reads a role.
 Lightness is the only separation between containers: no hairline, no card
 border, no rim, no shadow does that job. A line inside is content (a track, a
 meter), never an edge. The silhouette itself keeps its edge separation
@@ -314,7 +315,10 @@ Earned, each from a specific failure. Break one and name which.
   (`"md"` by default) and the theme owns the table, `sizes.<Type>.<name>` in
   `tokens/deep-night.json` as the default and `Style.backend.sizes` as the
   consumer's, who adds `xl: 40` and writes `size: "xl"` (the Chakra, Radix
-  and Ant model). An unknown name falls back to `md` and warns once. The
+  and Ant model). A type with no table of its own joins the `Control`
+  family, so one preset name is one number across every field, button and
+  bar, and `Control.xl` reaches all of them. An unknown name falls back to
+  `md` and warns once. The
   number stays settable directly as the escape hatch. Never an enum with
   token mapping inside the component: this is a general library, not one
   desktop's kit.
@@ -322,8 +326,9 @@ Earned, each from a specific failure. Break one and name which.
   scales with it.** `s = Style.size(Type, size) / Style.size(Type, "md")`.
   A component is designed in `md`; every other measurement is its md value
   times `s`, snapped to its own scale so no value lands off the system:
-  text through `Style.textNear`, glyphs through `Style.iconNear`, spacing
-  and insets through `Style.rhythm`. The label, the glyph in a thumb, a
+  text through `Style.textNear`, a glyph through `Style.glyphAlone(box)` or
+  `Style.glyphBeside(box)` (the box decides, never the call site) and
+  otherwise `Style.iconNear`, spacing and insets through `Style.rhythm`. The label, the glyph in a thumb, a
   slot action, the gap to the label: all of it. Radius, the focus gap and a
   1px border do not scale (M3 keeps radius per component, not per size).
   Sizes that grew only the area left a huge control with a tiny glyph and a
@@ -495,7 +500,18 @@ Earned, each from a specific failure. Break one and name which.
 - **Disabled dims by colour, never by opacity on a composite.** Opacity on a
   control applies to each child separately, so a translucent thumb shows the
   translucent fill through it. `Style.disabled(colour)` blends each colour
-  toward the background opaquely and the layers stay layers.
+  toward the background opaquely and the layers stay layers; `Style.recede`
+  is the same blend for "not the current one", strong enough to keep muted
+  text legible.
+- **A line is a whole number of device pixels, and a straight one is a
+  radius-0 Rectangle.** A square Rectangle's edges snap to the device grid,
+  so a height from `Style.stroke(n, Screen.devicePixelRatio)` paints the
+  same rows wherever it sits; at a fractional scale any other height
+  paints two rows here and three there. The ratio is read where the line is
+  drawn, never a constant. A curved edge anti-aliases by design.
+- **A body directly in a rollout takes `Style.radiusBody`**, the rollout's
+  radius minus `Style.rolloutPadding`. It is derived so every card, field,
+  tile and row is concentric with the surface that holds it.
 - **A one-shot position animation is REMOVED under reduced motion, not
   shortened, and never runs during a gesture.** A slider's job is to sit
   where it was put.

@@ -1,8 +1,6 @@
 {
   "color": {
     "band": "#271e30",
-    "surface": "#42394c",
-    "overlay": "#534a5e",
     "text": "#f0ecf5",
     "textMuted": "#c5bad1",
     "primary": "#d9b4ea",
@@ -17,6 +15,9 @@
     "edge": "#5e357f",
     "checkerLight": "#ffffff",
     "checkerDark": "#c0c0c0"
+  },
+  "ladder": {
+    "step": 1.3
   },
   "space": {
     "1": 4,
@@ -49,7 +50,9 @@
     "xs": 12,
     "sm": 16,
     "md": 20,
-    "lg": 24
+    "lg": 24,
+    "xl": 32,
+    "xxl": 44
   },
   "motion": {
     "press": 80,
@@ -85,7 +88,7 @@
     "disabled": 0.35,
     "selected": 0.12,
     "surface": 0.9,
-    "recede": 0.45,
+    "recede": 0.7,
     "floatingShadow": 0.28,
     "cardShadow": 0.28,
     "badgeTint": 0.12,
@@ -97,6 +100,7 @@
     "scrim": 0.55,
     "calloutTint": 0.1,
     "divider": 0.35,
+    "dividerBand": 0.8,
     "thumbShadow": 0.45
   },
   "font": {
@@ -105,15 +109,12 @@
   },
   "geometry": {
     "rolloutRadius": 28,
-    "frameThickness": 16,
-    "controlHeight": 40,
-    "controlHeightSm": 32,
+    "frameThickness": 12,
     "notificationWidth": 380,
     "controlWidth": 380,
     "notificationCollapsedHeight": 36,
     "notificationPreviewHeight": 88,
     "notificationBodyViewportHeight": 96,
-    "controlHeightLg": 52,
     "swatchTarget": 44,
     "spinBoxWidth": 140,
     "markThickness": 3,
@@ -128,7 +129,7 @@
     "sliderLengthVertical": 180,
     "badgeHeight": 16,
     "badgeWidth": 28,
-    "trackThickness": 6,
+    "trackThickness": 4,
     "ringDiameter": 150,
     "ringStroke": 8,
     "tileWidth": 96,
@@ -150,7 +151,9 @@
     "edgeFade": 16,
     "badgeDot": 8,
     "statWidth": 140,
-    "spinnerStrokeRatio": 0.16
+    "spinnerStrokeRatio": 0.16,
+    "glyphAloneRatio": 0.5,
+    "glyphBesideRatio": 0.4
   },
   "line": {
     "tight": 1.2,
@@ -164,6 +167,17 @@
     "badgeInk": 0.5
   },
   "sizes": {
+    "Control": {
+      "xs": 24,
+      "sm": 32,
+      "md": 40,
+      "lg": 48
+    },
+    "ListRow": {
+      "sm": 32,
+      "md": 40,
+      "lg": 56
+    },
     "DataCapsule": {
       "sm": 32,
       "md": 64,
@@ -184,25 +198,10 @@
       "md": 16,
       "lg": 24
     },
-    "SpinBox": {
-      "sm": 32,
-      "md": 40,
-      "lg": 52
-    },
     "Slider": {
       "sm": 16,
       "md": 24,
       "lg": 40
-    },
-    "TextField": {
-      "sm": 32,
-      "md": 40,
-      "lg": 52
-    },
-    "Segmented": {
-      "sm": 32,
-      "md": 40,
-      "lg": 52
     }
   }
 }

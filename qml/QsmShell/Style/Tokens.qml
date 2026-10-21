@@ -4,8 +4,8 @@ import QtQuick
 
 QtObject {
     readonly property color colorBand: "#271e30"
-    readonly property color colorSurface: "#42394c"
-    readonly property color colorOverlay: "#534a5e"
+    readonly property color colorSurface: "#3b3145"
+    readonly property color colorOverlay: "#4c4357"
     readonly property color colorText: "#f0ecf5"
     readonly property color colorTextMuted: "#c5bad1"
     readonly property color colorPrimary: "#d9b4ea"
@@ -45,6 +45,8 @@ QtObject {
     readonly property int iconSm: 16
     readonly property int iconMd: 20
     readonly property int iconLg: 24
+    readonly property int iconXl: 32
+    readonly property int iconXxl: 44
     readonly property int motionPress: 80
     readonly property int motionMicro: 130
     readonly property int motionMicroPop: 120
@@ -76,7 +78,7 @@ QtObject {
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySelected: 0.12
     readonly property real opacitySurface: 0.9
-    readonly property real opacityRecede: 0.45
+    readonly property real opacityRecede: 0.7
     readonly property real opacityFloatingShadow: 0.28
     readonly property real opacityCardShadow: 0.28
     readonly property real opacityBadgeTint: 0.12
@@ -88,19 +90,17 @@ QtObject {
     readonly property real opacityScrim: 0.55
     readonly property real opacityCalloutTint: 0.1
     readonly property real opacityDivider: 0.35
+    readonly property real opacityDividerBand: 0.8
     readonly property real opacityThumbShadow: 0.45
     readonly property string fontFamily: "sans-serif"
     readonly property string fontTechnicalFamily: "monospace"
     readonly property int geometryRolloutRadius: 28
-    readonly property int geometryFrameThickness: 16
-    readonly property int geometryControlHeight: 40
-    readonly property int geometryControlHeightSm: 32
+    readonly property int geometryFrameThickness: 12
     readonly property int geometryNotificationWidth: 380
     readonly property int geometryControlWidth: 380
     readonly property int geometryNotificationCollapsedHeight: 36
     readonly property int geometryNotificationPreviewHeight: 88
     readonly property int geometryNotificationBodyViewportHeight: 96
-    readonly property int geometryControlHeightLg: 52
     readonly property int geometrySwatchTarget: 44
     readonly property int geometrySpinBoxWidth: 140
     readonly property int geometryMarkThickness: 3
@@ -115,7 +115,7 @@ QtObject {
     readonly property int geometrySliderLengthVertical: 180
     readonly property int geometryBadgeHeight: 16
     readonly property int geometryBadgeWidth: 28
-    readonly property int geometryTrackThickness: 6
+    readonly property int geometryTrackThickness: 4
     readonly property int geometryRingDiameter: 150
     readonly property int geometryRingStroke: 8
     readonly property int geometryTileWidth: 96
@@ -138,10 +138,12 @@ QtObject {
     readonly property int geometryBadgeDot: 8
     readonly property int geometryStatWidth: 140
     readonly property real geometrySpinnerStrokeRatio: 0.16
+    readonly property real geometryGlyphAloneRatio: 0.5
+    readonly property real geometryGlyphBesideRatio: 0.4
     readonly property real lineTight: 1.2
     readonly property real lineHeading: 1.25
     readonly property real lineBody: 1.55
     readonly property real trackingWide: 1.4
     readonly property real blendBadgeInk: 0.5
-    readonly property var sizes: ({"DataCapsule":{"sm":32,"md":64,"lg":96},"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"SpinBox":{"sm":32,"md":40,"lg":52},"Slider":{"sm":16,"md":24,"lg":40},"TextField":{"sm":32,"md":40,"lg":52},"Segmented":{"sm":32,"md":40,"lg":52}})
+    readonly property var sizes: ({"Control":{"xs":24,"sm":32,"md":40,"lg":48},"ListRow":{"sm":32,"md":40,"lg":56},"DataCapsule":{"sm":32,"md":64,"lg":96},"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"Slider":{"sm":16,"md":24,"lg":40}})
 }

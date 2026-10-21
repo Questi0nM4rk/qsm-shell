@@ -1,10 +1,14 @@
 import { readFileSync, writeFileSync } from 'node:fs'
+import { ladder } from './ladder.mjs'
 
 const tokens = JSON.parse(readFileSync(new URL('../tokens/deep-night.json', import.meta.url)))
 // `sizes` is nested two deep (type -> preset name -> number) and stays one
 // JSON literal rather than flattening into scalar properties like every
-// other group.
-const { sizes, ...scalarGroups } = tokens
+// other group. `ladder` is generator input, not a token: it states the ratio
+// the band's two steps are computed at, so surface and overlay are never typed.
+const { sizes, ladder: { step }, ...scalarGroups } = tokens
+const { band, ...palette } = scalarGroups.color
+scalarGroups.color = { band, ...ladder(band, step), ...palette }
 const entries = Object.entries(scalarGroups).flatMap(([group, values]) => Object.entries(values).map(([name, value]) => [group, name, value]))
 
 // QML typing: colors are hex strings under the `color` group; other strings are

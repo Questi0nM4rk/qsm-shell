@@ -10,7 +10,6 @@ Rectangle {
     property real reading: variant === "low" ? 0.08 : 0.62
     property real floor: variant === "low" ? 0.2 : -1
     property real ceiling: -1
-    property real weight: Style.trackThickness
     property bool tall: false
 
     implicitWidth: Style.controlWidth
@@ -20,13 +19,12 @@ Rectangle {
     Meter {
         id: level
         anchors.centerIn: parent
-        width: root.tall ? root.weight : Style.controlWidth
-        height: root.tall ? Style.controlWidth : root.weight
+        width: root.tall ? Style.trackThickness : Style.controlWidth
+        height: root.tall ? Style.controlWidth : Style.trackThickness
         orientation: root.tall ? Qt.Vertical : Qt.Horizontal
         value: root.reading
         low: root.floor
         high: root.ceiling
-        thickness: root.weight
     }
 
     readonly property var controls: [
@@ -43,10 +41,6 @@ Rectangle {
         { label: "axis", options: [
             { label: "horizontal", set: { tall: false } },
             { label: "vertical", set: { tall: true } }
-        ] },
-        { label: "weight", options: [
-            { label: "thin", set: { weight: Style.sliderTrackThickness } },
-            { label: "regular", set: { weight: Style.trackThickness } }
         ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
