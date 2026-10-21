@@ -38,6 +38,7 @@ Rectangle {
     ScrollCue {
         id: cue
         view: list
+        fadeColor: Style.band
         fade: root.fade
         indicator: root.indicator
     }
