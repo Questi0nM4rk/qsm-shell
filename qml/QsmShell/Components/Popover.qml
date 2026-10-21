@@ -50,8 +50,8 @@ Item {
     property bool open: false
     // A tooltip that appears instantly is a tooltip that appears while the
     // pointer is only passing through.
-    property int openDelay: Motion.large
-    property int closeDelay: Motion.medium
+    property int openDelay: Motion.hoverIntent
+    property int closeDelay: Motion.hoverGrace
 
     // Content goes straight in. An intermediate host that fills the popover
     // cannot also be what the popover sizes itself from — the first version
@@ -61,6 +61,20 @@ Item {
 
     signal openRequested
     signal dismissRequested
+
+    // The one route to open or close by request. The press TapHandler calls it,
+    // and so does a host's key handler on the anchor: a pointer and a keyboard
+    // never get two implementations of the same decision.
+    function toggle(): void {
+        if (root.open)
+            root.dismissRequested();
+        else
+            root.openRequested();
+    }
+
+    // The pointer is over the anchor (hover trigger only) or over the popover
+    // itself: the fact a host would otherwise re-derive to decide on closing.
+    readonly property bool hovered: anchorHover.hovered || selfHover.hovered
 
     // Which side it ACTUALLY landed on, after flipping. A caller drawing a
     // tail or a seam needs this, not the preference.
@@ -190,12 +204,21 @@ Item {
     opacity: open ? 1 : 0
     // It arrives from the side it sits on, by a short step. Far enough to read
     // as arriving, short enough not to read as flying in.
+    // Under reduced motion there is no offset to travel: a one-shot position
+    // animation is removed, not shortened.
+    readonly property real _step: Style.reducedMotion ? 0 : Style.space2
     transform: Translate {
-        x: root.open ? 0 : (root.side === "left" ? Style.space2 : root.side === "right" ? -Style.space2 : 0)
-        y: root.open ? 0 : (root.side === "top" ? Style.space2 : root.side === "bottom" ? -Style.space2 : 0)
+        x: root.open ? 0 : (root.side === "left" ? root._step : root.side === "right" ? -root._step : 0)
+        y: root.open ? 0 : (root.side === "top" ? root._step : root.side === "bottom" ? -root._step : 0)
 
-        Behavior on x { NumberAnimation { duration: Motion.medium; easing.type: Motion.emphasizedEasing } }
-        Behavior on y { NumberAnimation { duration: Motion.medium; easing.type: Motion.emphasizedEasing } }
+        Behavior on x {
+            enabled: !Style.reducedMotion
+            NumberAnimation { duration: Motion.medium; easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
+        }
+        Behavior on y {
+            enabled: !Style.reducedMotion
+            NumberAnimation { duration: Motion.medium; easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
+        }
     }
 
     Behavior on opacity {
@@ -231,7 +254,7 @@ Item {
     TapHandler {
         enabled: root.trigger === "press"
         parent: root.anchorItem
-        onTapped: root.open ? root.dismissRequested() : root.openRequested()
+        onTapped: root.toggle()
     }
 
     Timer {
@@ -250,12 +273,10 @@ Item {
         onTriggered: root.dismissRequested()
     }
 
-    readonly property bool _wanted: anchorHover.hovered || selfHover.hovered
-
-    on_WantedChanged: {
+    onHoveredChanged: {
         if (root.trigger !== "hover")
             return;
-        if (root._wanted) {
+        if (root.hovered) {
             closeTimer.stop();
             if (!root.open)
                 openTimer.restart();
@@ -266,5 +287,16 @@ Item {
         }
     }
 
-    Keys.onEscapePressed: root.dismissRequested()
+    // Escape closes from anywhere in the window while open, so a keyboard
+    // user who opened it from a focused trigger is not stranded: this item is
+    // not focusable and a key handler on it only hears its own descendants. A
+    // shortcut outranks a focused child's key handler; a child that needs
+    // Escape for itself (a nested menu, an editor) accepts it in
+    // Keys.onShortcutOverride.
+    Shortcut {
+        sequence: "Escape"
+        enabled: root.open
+        context: Qt.WindowShortcut
+        onActivated: root.dismissRequested()
+    }
 }

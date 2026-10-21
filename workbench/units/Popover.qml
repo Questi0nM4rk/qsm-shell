@@ -10,6 +10,11 @@ Rectangle {
     property var eventRecorder: null
     property bool open: variant === "open"
     property string placement: "bottom"
+    property string alignment: "center"
+    property string trigger: "manual"
+    // The anchor sits against the preferred side's edge, so the popover has to
+    // flip to the side with room.
+    property bool tight: false
     property int openRequests: 0
     property int dismissRequests: 0
 
@@ -19,18 +24,28 @@ Rectangle {
 
     Rectangle {
         id: anchor
-        x: (parent.width - width) / 2
-        y: Style.space4
+        readonly property bool _horizontal: root.placement === "left" || root.placement === "right"
+        // Against the preferred side when tight, against the far one when roomy.
+        readonly property bool _lowEdge: root.placement === "top" || root.placement === "left"
+        readonly property bool _atLow: root.tight ? _lowEdge : !_lowEdge
+        x: _horizontal ? (_atLow ? Style.space4 : parent.width - width - Style.space4) : (parent.width - width) / 2
+        y: _horizontal ? (parent.height - height) / 2 : (_atLow ? Style.space4 : parent.height - height - Style.space4)
         width: Style.space6 * 2
         height: Style.controlHeightSm
         color: Style.overlay
         radius: Style.radiusSm
+
+        activeFocusOnTab: true
+        Keys.onReturnPressed: pop.toggle()
+        Keys.onSpacePressed: pop.toggle()
     }
 
     Popover {
         id: pop
         anchorItem: anchor
         placement: root.placement
+        alignment: root.alignment
+        trigger: root.trigger
         open: root.open
 
         onOpenRequested: {
@@ -45,6 +60,7 @@ Rectangle {
         }
 
         Card {
+            surfaceColor: Style.overlay
             width: Style.controlWidth / 2
             height: note.implicitHeight + Style.space4 * 2
 
@@ -65,15 +81,38 @@ Rectangle {
         ] },
         { label: "placement", options: [
             { label: "bottom", set: { placement: "bottom" } },
-            { label: "top", set: { placement: "top" } }
+            { label: "top", set: { placement: "top" } },
+            { label: "left", set: { placement: "left" } },
+            { label: "right", set: { placement: "right" } }
+        ] },
+        { label: "alignment", options: [
+            { label: "center", set: { alignment: "center" } },
+            { label: "start", set: { alignment: "start" } },
+            { label: "end", set: { alignment: "end" } }
+        ] },
+        { label: "trigger", options: [
+            { label: "manual", set: { trigger: "manual" } },
+            { label: "hover", set: { trigger: "hover" } },
+            { label: "press", set: { trigger: "press" } }
+        ] },
+        { label: "room", options: [
+            { label: "roomy", set: { tight: false } },
+            { label: "tight", set: { tight: true } }
         ] }
     ]
 
     readonly property var integration: ({
         events: ["open-requested", "dismiss-requested"],
-        actions: [],
+        actions: ["toggle"],
+        runAction: name => {
+            if (name !== "toggle")
+                return false
+            pop.toggle()
+            return true
+        },
         observables: {
             open: () => pop.open,
+            hovered: () => pop.hovered,
             side: () => pop.side,
             "open-requests": () => root.openRequests,
             "dismiss-requests": () => root.dismissRequests
