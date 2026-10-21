@@ -43,37 +43,64 @@ Canvas {
         const c = getContext("2d");
         c.reset();
         const points = root.values;
-        if (points.length < 2)
+        const thickness = root._thickness;
+
+        // Round caps reach thickness/2 past each end, so the run is inset by
+        // that much and the stroke stays inside the box.
+        const left = thickness / 2;
+        const right = root.width - thickness / 2;
+        const usable = root.height - thickness;
+
+        // Nothing yet is a quiet line on the floor and one sample is a dot at
+        // the end, so a first-sample box never reads as a graph that failed.
+        if (points.length < 2) {
+            c.strokeStyle = root.color;
+            c.lineWidth = thickness;
+            c.lineCap = "round";
+            c.beginPath();
+            if (points.length === 0) {
+                c.moveTo(left, root.height - thickness / 2);
+                c.lineTo(right, root.height - thickness / 2);
+                c.stroke();
+            } else {
+                c.fillStyle = root.color;
+                const span = root._max - root._min;
+                const y = span === 0
+                    ? root.height / 2
+                    : thickness / 2 + usable - (Math.min(Math.max(points[0], root._min), root._max) - root._min) / span * usable;
+                c.arc(right, y, thickness / 2, 0, 2 * Math.PI);
+                c.fill();
+            }
             return;
+        }
 
         // A flat series has no span to divide by, and a zero span would put
         // every point on the same line by dividing by zero rather than by
-        // being flat. Centre it instead.
+        // being flat. Centre it instead. A value past a pinned extent sits on
+        // that extent, so the stroke never leaves the box.
         const span = root._max - root._min;
-        const thickness = root._thickness;
-        const usable = root.height - thickness;
-        const step = root.width / (points.length - 1);
+        const step = (right - left) / (points.length - 1);
         const yOf = value => span === 0
             ? root.height / 2
-            : thickness / 2 + usable - ((value - root._min) / span) * usable;
+            : thickness / 2 + usable - ((Math.min(Math.max(value, root._min), root._max) - root._min) / span) * usable;
 
-        c.beginPath();
-        c.moveTo(0, yOf(points[0]));
-        for (let i = 1; i < points.length; i++)
-            c.lineTo(i * step, yOf(points[i]));
+        const trace = () => {
+            c.beginPath();
+            c.moveTo(left, yOf(points[0]));
+            for (let i = 1; i < points.length; i++)
+                c.lineTo(left + i * step, yOf(points[i]));
+        };
 
         if (root.area) {
-            c.lineTo(root.width, root.height);
-            c.lineTo(0, root.height);
+            trace();
+            c.lineTo(right, root.height);
+            c.lineTo(left, root.height);
             c.closePath();
-            c.fillStyle = Qt.rgba(root.color.r, root.color.g, root.color.b, 0.18);
+            c.fillStyle = Qt.rgba(root.color.r, root.color.g, root.color.b, Style.areaFillOpacity);
             c.fill();
-            c.beginPath();
-            c.moveTo(0, yOf(points[0]));
-            for (let i = 1; i < points.length; i++)
-                c.lineTo(i * step, yOf(points[i]));
         }
 
+        trace();
         c.lineWidth = thickness;
         c.lineCap = "round";
         c.lineJoin = "round";

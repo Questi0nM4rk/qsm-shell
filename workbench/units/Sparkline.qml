@@ -29,6 +29,8 @@ Rectangle {
 
     readonly property var controls: [
         { label: "series", options: [
+            { label: "empty", set: { series: [] } },
+            { label: "one point", set: { series: [40] } },
             { label: "climbing", set: { series: [12, 18, 14, 26, 31, 24, 38, 44, 36, 52, 47, 61] } },
             { label: "settled", set: { series: [40, 44, 38, 42, 41, 39, 43, 40, 42, 41] } },
             { label: "spiking", set: { series: [8, 9, 10, 96, 12, 11, 13, 88, 14, 12, 11, 10] } }
