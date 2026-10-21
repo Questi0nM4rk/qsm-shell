@@ -81,6 +81,14 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 
 Each cost real time once. None is findable by reading the code.
 
+- **`Screen.devicePixelRatio` is the output's integer scale, not the window's.**
+  On a 1.25 monitor a Quickshell window reads 2 from `Screen` and 1.25 from
+  `Window.window.devicePixelRatio` once mapped. Every `Style.stroke(n, Screen.devicePixelRatio)`
+  call site (Divider, StateLayer, TextField, Checkbox, ...) therefore snaps to
+  a 2x grid, and by `Style.stroke`'s own round(y+h) - round(y) rule a 1px line paints
+  2 device rows instead of 1 wherever y*1.25 has a fraction of .25. Measured:
+  the rail's five dividers all land on .75 and render 1 row. Left unfixed: the
+  call sites need the window's ratio and a live check per scale.
 - **`clip: true` shaves a child's hover growth.** A control that grows on
   hover cannot sit inside a clipping ancestor sized to it.
 - **A `Rectangle` radius does not round its children, and `clip` does not
