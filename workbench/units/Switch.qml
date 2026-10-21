@@ -8,6 +8,7 @@ Item {
     property string variant: ""
     property var eventRecorder: null
     property bool checked: variant === "on"
+    property string size: "md"
 
     implicitWidth: toggle.implicitWidth
     implicitHeight: toggle.implicitHeight
@@ -16,6 +17,8 @@ Item {
         id: toggle
         anchors.centerIn: parent
         checked: root.checked
+        size: root.size
+        Accessible.name: "Do not disturb"
         onToggleRequested: next => {
             root.checked = next
             root.eventRecorder?.("intent", "toggle-requested", { checked: next })
@@ -27,6 +30,11 @@ Item {
             { label: "on", set: { checked: true } },
             { label: "off", set: { checked: false } }
         ] },
+        { label: "size", options: [
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } }
+        ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
             { label: "disabled", set: { enabled: false } }
@@ -35,10 +43,6 @@ Item {
     readonly property var integration: ({
         events: ["toggle-requested"],
         actions: ["toggle"],
-        keys: {
-            "Space": () => { toggle.flip(); return true },
-            "Enter": () => { toggle.flip(); return true }
-        },
         observables: { checked: () => root.checked },
         runAction: name => {
             if (name !== "toggle")

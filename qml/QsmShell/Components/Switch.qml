@@ -38,8 +38,8 @@ T.AbstractButton {
 
     signal toggleRequested(bool checked)
 
-    // Every route is this one call: pointer (clicked), Space (the template
-    // clicks on Space), Return (below) and a caller.
+    // Every route is this one call: pointer (the hit target below), Space (the
+    // template clicks on Space), Return and keypad Enter (below) and a caller.
     function flip(): void {
         if (root.enabled)
             root.toggleRequested(!root.checked);
@@ -57,15 +57,17 @@ T.AbstractButton {
 
     // The track is a pill two knobs wide; the knob is inset by the same
     // amount at both ends, so the travel is what is left over. The inset is
-    // the knob's own eighth, so the proportions survive any `knobSize`.
+    // the knob's own eighth, rounded to a whole pixel so no size puts the knob
+    // on a half pixel.
     readonly property real _knob: root.knobSize
-    readonly property real _inset: root.knobSize * Style.spaceTight / Style.iconSm
+    readonly property real _inset: Math.round(root.knobSize * Style.spaceTight / Style.iconSm)
     implicitWidth: _knob * 2 + _inset * 2
     implicitHeight: _knob + _inset * 2
     padding: 0
 
     onClicked: root.flip()
     Keys.onReturnPressed: root.flip()
+    Keys.onEnterPressed: root.flip()
 
     // Off: the track is a line (`textMuted`) and the knob a band-coloured dot. On: a
     // toggle with its own fill is selected as SOLID accent, and content on
@@ -75,9 +77,9 @@ T.AbstractButton {
         id: track
         radius: height / 2
         // The track is the body: hover lifts and press deepens its colour
-        // through the one state matrix, while the knob grows.
+        // through the one state matrix, while the knob grows on hover only.
         color: Style.tone(root.checked ? root.accentColor : Style.textMuted,
-            root.hovered, root.pressed, false, root.enabled, root.accentColor)
+            root._hot, root._down, false, root.enabled, root.accentColor)
 
         Behavior on color {
             ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -108,18 +110,48 @@ T.AbstractButton {
         }
     }
 
-    // The KNOB answers the pointer, not the track: growing the whole switch
-    // makes the travel look like it changed length. It grows on press rather
-    // than shrinking: a press is a lift. The ring is the track's outline at a
-    // half step (surface ladder), so the layer is the track plus the gap.
-    StateLayer {
+    // The pointer target is larger than the painted track and overflows it,
+    // centred, so the footprint stays the track's: at least one large icon
+    // each way (the 24 px floor of WCAG 2.5.8). The template only hears the
+    // pointer inside its own bounds, so this target is the pointer route, and
+    // its exclusive grab keeps the template's own click from also firing.
+    readonly property bool _hot: root.enabled && (root.hovered || hoverReader.hovered)
+    readonly property bool _down: root.enabled && (root.pressed || tapReader.pressed)
+
+    Item {
+        id: hit
         anchors.centerIn: parent
-        width: root.width + Style.spaceTight * 2
-        height: root.height + Style.spaceTight * 2
+        width: Math.max(root.width, Style.iconLg)
+        height: Math.max(root.height, Style.iconLg)
+
+        HoverHandler {
+            id: hoverReader
+            enabled: root.enabled
+            cursorShape: Qt.PointingHandCursor
+        }
+        TapHandler {
+            id: tapReader
+            enabled: root.enabled
+            gesturePolicy: TapHandler.ReleaseWithinBounds
+            onTapped: {
+                root.forceActiveFocus(Qt.MouseFocusReason)
+                root.flip()
+            }
+        }
+    }
+
+    // The KNOB answers the pointer, not the track: growing the whole switch
+    // makes the travel look like it changed length. The layer is the track
+    // itself, so the ring (a gap and a stroke of `spaceTight` outside it,
+    // concentric) sits at the documented distance. A press recolours the track
+    // and never moves the knob: it already fills the track's height on hover.
+    StateLayer {
+        anchors.fill: parent
         host: root
         target: knob
+        manualHoverOverride: hoverReader.hovered
+        manualPressOverride: tapReader.pressed
         hoverScale: (Style.iconSm + Style.space1) / Style.iconSm
-        pressScale: (Style.iconSm + Style.space2) / Style.iconSm
         focusRadius: height / 2
     }
 }
