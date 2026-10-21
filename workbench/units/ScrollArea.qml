@@ -21,6 +21,7 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: Style.space4
         orientation: root.orientation
+        fadeColor: Style.band
         fade: root.cues
         indicator: root.cues
 
@@ -71,17 +72,11 @@ Rectangle {
         runAction: name => {
             const view = scroll.viewport;
             if (name === "to-start") {
-                if (scroll.vertical)
-                    view.contentY = 0;
-                else
-                    view.contentX = 0;
+                scroll.scrollToStart();
                 return true;
             }
             if (name === "to-end") {
-                if (scroll.vertical)
-                    view.contentY = view.contentHeight - view.height;
-                else
-                    view.contentX = view.contentWidth - view.width;
+                scroll.scrollToEnd();
                 return true;
             }
             if (name === "settle") {

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
@@ -35,22 +36,49 @@ Item {
 
     readonly property bool vertical: orientation === Qt.Vertical
 
+    // Far edge of the content, not its size: content whose first child starts
+    // inset from the origin ends at `origin + size`, and scrolling to the size
+    // alone would leave that inset's worth of the last row out of reach.
+    readonly property real _extentX: host.childrenRect.x + host.childrenRect.width
+    readonly property real _extentY: host.childrenRect.y + host.childrenRect.height
+
+    // Clamped to the content, so content that fits stays put. Writing contentY
+    // directly with `contentHeight - height` goes negative for it.
+    function scrollToStart() {
+        if (vertical)
+            view.contentY = 0;
+        else
+            view.contentX = 0;
+    }
+
+    function scrollToEnd() {
+        if (vertical)
+            view.contentY = Math.max(0, view.contentHeight - view.height);
+        else
+            view.contentX = Math.max(0, view.contentWidth - view.width);
+    }
+
+    readonly property list<T.Action> actions: [
+        T.Action { objectName: "to-start"; text: "Scroll to start"; onTriggered: root.scrollToStart() },
+        T.Action { objectName: "to-end"; text: "Scroll to end"; onTriggered: root.scrollToEnd() }
+    ]
+
     Flickable {
         id: view
 
         anchors.fill: parent
         clip: true
         flickableDirection: root.vertical ? Flickable.VerticalFlick : Flickable.HorizontalFlick
-        contentWidth: root.vertical ? width : host.childrenRect.width
-        contentHeight: root.vertical ? host.childrenRect.height : height
+        contentWidth: root.vertical ? width : root._extentX
+        contentHeight: root.vertical ? root._extentY : height
         boundsBehavior: Flickable.StopAtBounds
 
         Item {
             id: host
             // The free axis matches the viewport, so content that fills the
             // width does not have to be told how wide the viewport is.
-            width: root.vertical ? view.width : childrenRect.width
-            height: root.vertical ? childrenRect.height : view.height
+            width: root.vertical ? view.width : root._extentX
+            height: root.vertical ? root._extentY : view.height
         }
     }
 
