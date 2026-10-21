@@ -7,7 +7,7 @@ Rectangle {
     id: root
 
     property string variant: ""
-    property string tone: root.variant
+    property string tone: root.variant !== "" ? root.variant : "neutral"
     property bool filled: false
     property string reading: "3"
     property string glyph: ""
@@ -25,6 +25,7 @@ Rectangle {
         dot: root.dot
         text: root.reading
         icon: root.glyph
+        accessibleName: root.dot ? "Unread" : root.glyph !== "" ? "Done" : ""
     }
 
     readonly property var controls: [
@@ -42,6 +43,8 @@ Rectangle {
         ] },
         { label: "presence", options: [
             { label: "reading", set: { reading: "3", glyph: "", dot: false } },
+            { label: "count 120", set: { reading: "120", glyph: "", dot: false } },
+            { label: "long", set: { reading: "Reconnecting to the network", glyph: "", dot: false } },
             { label: "glyph", set: { reading: "", glyph: "check", dot: false } },
             { label: "dot", set: { reading: "", glyph: "", dot: true } },
             { label: "empty", set: { reading: "", glyph: "", dot: false } }
