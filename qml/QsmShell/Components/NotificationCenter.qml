@@ -265,7 +265,7 @@ ColumnLayout {
             Layout.fillWidth: true
             placeholder: "Search notifications"
             focus: true
-            leading: SvgIcon { name: "search"; size: Style.iconMd; color: Style.textMuted }
+            leading: SvgIcon { name: "search"; size: Style.glyphBeside(searchField.fieldHeight); color: Style.textMuted }
             // The host's hook first; an unclaimed Up or Down moves the
             // list under the field, which is this surface's meaning for it.
             onKeyPressed: event => {
@@ -289,7 +289,7 @@ ColumnLayout {
             icon: "moon"
             accessibleName: "Do not disturb"
             color: root.dnd ? Style.accent : Style.text
-            padding: (Style.controlHeight - Style.iconMd) / 2
+            size: "md"
             Accessible.checkable: true
             Accessible.checked: root.dnd
             onClicked: root.dndToggled()
@@ -327,7 +327,7 @@ ColumnLayout {
             icon: "trash-2"
             accessibleName: clearAction.armed ? "Confirm clear history" : "Clear history"
             color: clearAction.armed ? Style.danger : Style.text
-            padding: (Style.controlHeight - Style.iconMd) / 2
+            size: "md"
             hoverEnabled: true
             onClicked: clearAction.trigger()
             onHoveredChanged: if (!hovered) clearAction.disarm()

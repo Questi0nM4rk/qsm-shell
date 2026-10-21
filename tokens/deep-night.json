@@ -87,7 +87,6 @@
   "opacity": {
     "disabled": 0.35,
     "selected": 0.12,
-    "surface": 0.9,
     "recede": 0.7,
     "floatingShadow": 0.28,
     "cardShadow": 0.28,
@@ -129,7 +128,7 @@
     "badgeWidth": 28,
     "trackThickness": 4,
     "ringDiameter": 150,
-    "ringStroke": 8,
+    "ringStrokeRatio": 0.0533,
     "tileWidth": 96,
     "tileHeight": 72,
     "notificationDividerInset": 20,

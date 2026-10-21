@@ -5,13 +5,11 @@ import qs.QsmShell.Style
 
 // THE row. One line in a list of things a person picks from.
 //
-// It replaced three types that were one type: `MenuRowItem` (a menu's row),
-// `PopoutRow` (a device list's row), `ResultRow` (a launcher's row). Put side
-// by side they had the same anatomy — a mark, one leading visual, a name, a
-// supporting line, some trailing content — and they differed in a handful of
-// numbers and in which of the three had remembered which rule. Two of them
-// were named after the SURFACE they were written for, which is the tell: a
-// library that grows a type per call site has stopped being a library.
+// A menu's row, a device list's row and a launcher's row are one anatomy: a
+// mark, one leading visual, a name, a supporting line, some trailing content.
+// They differ in a handful of numbers, which `size` and `recede` carry, so
+// they are one type: a type named after the SURFACE it serves is a type you
+// have twice.
 //
 // ── the leading box ──────────────────────────────────────────────────────
 // Whatever sits at the leading edge — a glyph, an application icon, a
@@ -24,11 +22,13 @@ import qs.QsmShell.Style
 // sets `reserveLeading` on all of them to keep the edge put.
 //
 // ── receding ─────────────────────────────────────────────────────────────
-// A list where you want ONE thing (a launcher) recedes everything else hard,
-// so the row that Enter will fire is the only thing at full strength. A list
-// you are READING (a device list, a settings list) must not — dimming every
-// name to 45% to mark one of them costs the person the other nine. That is
-// `recede`, and it is the one real difference the three old types had.
+// A list where you want ONE thing (a launcher) recedes everything else, so
+// the row that Enter will fire is the only thing at full strength. A list you
+// are READING (a device list, a settings list) must not: dimming every name to
+// mark one of them costs the person the other nine. That is `recede`, and it is
+// the one real difference the three old types had. A row recedes its own text
+// and glyph by colour (`Style.recede`) and the content a host slots in at
+// `Style.opacityRecede`, since a picture cannot be blended; it reports `receded`.
 Item {
     id: root
 
@@ -73,10 +73,10 @@ Item {
     property bool focused: false
 
     // ── shape ───────────────────────────────────────────────────────────
-    // sm | md | lg — the row's height, its type step and its leading box, off
-    // one scale. Not a proportional zoom: a denser row gets disproportionately
-    // tighter, because scaling everything by one factor reads as a zoom rather
-    // than as a different row.
+    // sm | md | lg: the row's height (the ListRow table), its type step and its
+    // leading box. A denser row is tighter than a proportional zoom would make
+    // it, because scaling everything by one factor reads as a zoom rather than
+    // as a different row.
     property string size: "md"
     // Dim the rows that are not the current one. True for a list you PICK from,
     // false for a list you READ.
@@ -87,10 +87,10 @@ Item {
     // slides between rows and sets this false; a row in a plain ListView keeps
     // the default and paints it.
     property bool paintsSelection: true
-    // The highlight's corner is the rollout's radius minus the row's inset, so
-    // the two curves stay concentric (`childRadius` cannot see through a
-    // ListView). A `Menu` reads it for its thumb.
-    readonly property real selectionRadius: Style.insetRadius(Style.space3)
+    // The highlight sits directly in a rollout, so it takes the body radius
+    // (`childRadius` cannot see through a ListView). A `Menu` reads it for its
+    // thumb.
+    readonly property real selectionRadius: Style.radiusBody
 
     readonly property bool _sm: size === "sm"
     readonly property bool _lg: size === "lg"
@@ -102,7 +102,7 @@ Item {
     readonly property real selectionHeight: root._headingHeight
     readonly property real _nativeHeadingHeight: root.separator ? Style.space3
         : root.header ? Style.space4 + Style.space2
-        : (_sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight) + Style.space1
+        : Style.size("ListRow", root.size)
     property real headingHeight: root._nativeHeadingHeight
     readonly property real expansionHeight: expandedViewport.height
     readonly property real _headingHeight: root._hasExpandedContent
@@ -118,17 +118,30 @@ Item {
     readonly property real _expandedHeight: root.expanded && root._hasExpandedContent ? expandedViewport.implicitHeight : 0
     // The leading box every visual sits in.
     readonly property int leadingSize: _sm ? Style.iconMd : Style.iconLg
+    // Not the current one: later in a list you pick from, not under the
+    // pointer, not unavailable and not a report. Disabled and report-only rows
+    // show at full strength; disabled dims by colour on its own.
+    readonly property bool receded: root.recede && root._normal && root.interactive
+        && !root.disabled && !root.selected && !root.hovered && !root.pressed
     readonly property real contentInset: root._inset
         + (leadingBox.visible ? root.leadingSize + Style.space2 : 0)
-    // Report-only rows (interactive: false) are not targets but render at full
-    // strength; disabled rows dim; recede only applies to interactive rows.
-    // Disabled dims by colour, never by opacity on the row: the glyph and both
-    // lines are dimmed here, so a leading visual the consumer supplies is the
-    // one thing that stays at full strength.
-    readonly property color proseColor: root.disabled ? Style.disabled(Style.text)
-        : root.danger ? Style.danger
-        : root._normal && root.selected ? root.selectedColor
-        : Style.text
+    // Disabled and receded dim by colour, never by opacity on the row: the
+    // glyph and both lines are dimmed here. A host's slotted content falls back
+    // with them through `_slotOpacity`; disabled leaves it at full strength.
+    readonly property color proseColor: {
+        if (root.disabled)
+            return Style.disabled(Style.text);
+        const ink = root.danger ? Style.danger
+            : root._normal && root.selected ? root.selectedColor
+            : Style.text;
+        return root.receded ? Style.recede(ink) : ink;
+    }
+    property real _slotOpacity: root.receded ? Style.opacityRecede : 1
+    Behavior on _slotOpacity {
+        NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+    }
+    readonly property color _mutedColor: root.disabled ? Style.disabled(Style.textMuted)
+        : root.receded ? Style.recede(Style.textMuted) : Style.textMuted
 
     signal activated
     // A hover-enter the POINTER caused. A list binds its cursor to this rather
@@ -220,13 +233,13 @@ Item {
         anchors.rightMargin: root._inset
         spacing: Style.space2
 
-        Divider { Layout.fillWidth: true; strength: 0.5 }
+        Divider { Layout.fillWidth: true }
         Prose {
             role: "section"
             text: root.primary
             color: root.accentHeader ? Style.accent : Style.textMuted
         }
-        Divider { Layout.fillWidth: true; strength: 0.5 }
+        Divider { Layout.fillWidth: true }
     }
 
     // ── separator ───────────────────────────────────────────────────────
@@ -236,7 +249,6 @@ Item {
         anchors.right: parent.right
         y: Math.round((root._headingHeight - height) / 2)
         inset: Style.space3
-        strength: 0.5
     }
 
     // ── the row itself ──────────────────────────────────────────────────
@@ -252,16 +264,6 @@ Item {
         anchors.leftMargin: root._inset
         anchors.rightMargin: root._inset
         spacing: Style.space2
-        // Receding is row-level, so the leading visual and the text fall back
-        // together and the mark stays lit. A second fade inside would compound
-        // to near-invisible. Disabled is not here: it is colour (`proseColor`).
-        opacity: (root.disabled || !root.interactive || root.selected || root.hovered || root.pressed) ? 1
-            : root.recede ? Style.opacityRecede
-            : 1
-
-        Behavior on opacity {
-            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-        }
 
         Item {
             id: leadingBox
@@ -274,6 +276,7 @@ Item {
             Item {
                 id: leadingSlot
                 anchors.fill: parent
+                opacity: root._slotOpacity
             }
             SvgIcon {
                 anchors.centerIn: parent
@@ -282,6 +285,10 @@ Item {
                 // Smaller than its box on purpose — see the leading-box note.
                 size: root._sm ? Style.iconSm : Style.iconMd
                 color: root.proseColor
+
+                Behavior on color {
+                    ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                }
             }
         }
 
@@ -302,16 +309,20 @@ Item {
             }
             Prose {
                 Layout.fillWidth: true
-                // Hidden when it only repeats the name. Desktop entries often
-                // set the comment to the application's own name ("Volume
+                // Hidden when it only repeats the name. Application entries
+                // often set the comment to the application's own name ("Volume
                 // Control / Volume Control"), and a line restating the line
                 // above costs a row's worth of attention for nothing.
                 visible: root.supporting.length > 0
                     && root.supporting.toLowerCase() !== root.primary.toLowerCase()
                 role: "metadata"
-                color: root.disabled ? Style.disabled(Style.textMuted) : Style.textMuted
+                color: root._mutedColor
                 font.pixelSize: root._lg ? Style.textSm : Style.textXs
                 text: root.supporting
+
+                Behavior on color {
+                    ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                }
             }
         }
 
@@ -320,6 +331,7 @@ Item {
             objectName: "trailingSlot"
             Layout.alignment: Qt.AlignVCenter
             spacing: Style.space2
+            opacity: root._slotOpacity
             // A child that measures nothing (an empty Loader) is not content.
             // Reads each child's own size, never this layout's, which is hidden
             // while empty.

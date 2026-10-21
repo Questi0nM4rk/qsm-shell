@@ -28,7 +28,7 @@ Item {
     property int expired: 0
 
     implicitWidth: Style.controlWidth
-    implicitHeight: Style.controlHeight
+    implicitHeight: Style.size("Control", "md")
 
     readonly property real preferredLength: length === "short"
         ? Style.rhythm(Style.controlWidth / 2)

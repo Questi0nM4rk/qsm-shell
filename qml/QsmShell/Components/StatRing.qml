@@ -33,7 +33,9 @@ Item {
     property color trackColor: Style.overlay
 
     property int diameter: Style.ringDiameter
-    property int strokeWidth: Style.ringStroke
+    // A proportion of the ring, in whole device pixels, so a smaller ring keeps
+    // its look instead of a fixed stroke that is a disc on a small one.
+    property real strokeWidth: Style.stroke(root._box * Style.ringStrokeRatio, Screen.devicePixelRatio)
     // Degrees. -90 is twelve o'clock; 360 closes the circle.
     property real startAngle: -90
     property real sweepAngle: 360

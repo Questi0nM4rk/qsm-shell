@@ -25,7 +25,7 @@ Rectangle {
     readonly property real _fraction: Math.max(0, Math.min(1, value))
 
     implicitHeight: thickness
-    radius: height / 2
+    radius: Style.radiusPill
     color: enabled ? trackColor : Style.disabled(trackColor)
     clip: true
 

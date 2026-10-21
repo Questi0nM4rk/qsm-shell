@@ -8,8 +8,7 @@ Item {
 
     property string variant: ""
     property var eventRecorder: null
-    property int size: Style.iconMd
-    property int padding: Style.space3
+    property string size: "md"
 
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
@@ -20,19 +19,15 @@ Item {
         icon: "check"
         accessibleName: "Apply"
         size: root.size
-        padding: root.padding
         onClicked: root.eventRecorder?.("intent", "clicked", {})
     }
 
     readonly property var controls: [
         { label: "size", options: [
-            { label: "iconXs", set: { size: Style.iconXs } },
-            { label: "iconSm", set: { size: Style.iconSm } },
-            { label: "iconMd", set: { size: Style.iconMd } }
-        ] },
-        { label: "padding", options: [
-            { label: "default", set: { padding: Style.space3 } },
-            { label: "compact", set: { padding: Style.space1 } }
+            { label: "xs", set: { size: "xs" } },
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } }
         ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },

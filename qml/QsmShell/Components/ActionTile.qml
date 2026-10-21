@@ -76,7 +76,7 @@ T.Control {
         enabled: root.enabled
         hovered: stateLayer.hovered
         pressed: stateLayer.pressed
-        radius: Style.radiusMd
+        radius: Style.radiusBody
         base: root.armed ? root.armedColor : root.selected ? root.accent : Style.surface
     }
     contentItem: Item {
@@ -104,7 +104,7 @@ T.Control {
         pressScale: Motion.pressScale
         interactive: root.enabled
         focused: root.focused
-        focusRadius: Style.radiusMd
+        focusRadius: Style.radiusBody
         onClicked: {
             root.forceActiveFocus()
             root.activate()

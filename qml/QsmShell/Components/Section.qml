@@ -21,7 +21,11 @@ ColumnLayout {
     default property alias content: bodyHost.data
     property real bodySpacing: Style.space1
 
-    spacing: Style.space2
+    // The group owns the rhythm around its own name: a section starts a step
+    // clear of whatever precedes it, and its rows hang from the heading. The
+    // first section in a column takes `Layout.topMargin: 0`.
+    Layout.topMargin: Style.space4
+    spacing: Style.space1
 
     RowLayout {
         Layout.fillWidth: true

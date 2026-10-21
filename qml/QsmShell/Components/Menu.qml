@@ -8,7 +8,7 @@ import qs.QsmShell.Style
 // The consumer owns the model (or static content) and the delegate, the current
 // selection, orientation, and spacing. `Menu` SHALL NOT define action
 // categories, nested command routes, confirmation policy, service calls, or
-// desktop shortcuts — those remain with the consumer. It provides only generic,
+// keyboard shortcuts — those remain with the consumer. It provides only generic,
 // deterministic keyboard stepping that skips nonselectable (header/separator/
 // disabled) rows and a generic `activated(index)` hook. Rows are ListRow
 // instances supplied by the consumer via `content` or a `delegate`.

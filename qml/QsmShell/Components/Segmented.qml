@@ -24,7 +24,7 @@ T.TabBar {
     property real barHeight: Style.size("Segmented", root.size)
     readonly property real _s: root.barHeight / Style.size("Segmented", "md")
     readonly property int _textSize: Style.textNear(Style.textSm * root._s)
-    readonly property int _iconSize: Style.iconNear(Style.iconSm * root._s)
+    readonly property int _iconSize: Style.glyphBeside(root.barHeight)
     readonly property int _inset: Style.rhythm(Style.space2 * root._s)
     readonly property int _gap: Style.rhythm(Style.space1 * root._s)
     // The items levitate on the rounded track: a full step of air all round,
@@ -34,7 +34,7 @@ T.TabBar {
     // inset between them, so the gap reads even all the way round a corner.
     // Deriving the inner from the outer instead left 40px items with an 8px
     // corner that read as square.
-    readonly property int _pad: Style.rhythm(Style.space2 * root._s)
+    readonly property int _pad: root._s < 1 ? Style.space1 : Style.space2
     readonly property int _itemRadius: Style.radiusMd
     readonly property int _radius: root._itemRadius + root._pad
     // The segment that rings under keyboard focus: the picked one, or the

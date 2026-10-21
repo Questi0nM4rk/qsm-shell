@@ -32,7 +32,7 @@ Rectangle {
                 id: row
                 required property int index
                 readonly property real step: scroll.vertical
-                    ? Style.controlHeight : Style.controlWidth / 2
+                    ? Style.size("Control", "md") : Style.controlWidth / 2
 
                 x: scroll.vertical ? 0 : index * step
                 y: scroll.vertical ? index * step : 0

@@ -545,9 +545,9 @@ TestCase {
     // has to grow the control rather than be clipped by it.
     function test_a_thick_track_grows_the_control_and_keeps_the_thumb_centred() {
         const shapes = [
-            { thickness: Style.controlHeightSm, thumb: Style.controlHeightSm },
-            { thickness: Style.controlHeight, thumb: Style.controlHeight },
-            { thickness: Style.controlHeight, thumb: Style.controlHeightSm }
+            { thickness: Style.size("Control", "sm"), thumb: Style.size("Control", "sm") },
+            { thickness: Style.size("Control", "md"), thumb: Style.size("Control", "md") },
+            { thickness: Style.size("Control", "md"), thumb: Style.size("Control", "sm") }
         ];
 
         for (let i = 0; i < shapes.length; i++) {
@@ -558,9 +558,9 @@ TestCase {
             // The thumb GROWS by `space1` per side on hover, and a growth the
             // control does not reserve is a growth that paints outside it.
             const expected = Math.max(
-                Style.controlHeightSm, shape.thickness, shape.thumb + Style.space1 * 2);
+                Style.size("Control", "xs"), shape.thickness, shape.thumb + Style.space1 * 2);
             compare(sliderFat.implicitHeight, expected,
-                "the cross axis is not the largest of controlHeightSm, thickness and the "
+                "the cross axis is not the largest of the Control xs floor, thickness and the "
                 + "thumb plus the room its hover growth needs");
             compare(sliderFat.height, expected,
                 "the control did not take the cross size it asked for");
@@ -591,8 +591,8 @@ TestCase {
         ];
 
         sliderFat.raised = true;
-        sliderFat.thickness = Style.controlHeight;
-        sliderFat.thumbSize = Style.controlHeight;
+        sliderFat.thickness = Style.size("Control", "md");
+        sliderFat.thumbSize = Style.size("Control", "md");
 
         for (let i = 0; i < cases.length; i++) {
             const slider = cases[i].slider;
@@ -653,9 +653,9 @@ TestCase {
                 "size " + shapes[i].size + " did not resolve its thumb size");
         }
 
-        sliderSize.thumbSize = Style.controlHeight;
+        sliderSize.thumbSize = Style.size("Control", "md");
         sliderSize.size = "sm";
-        compare(sliderSize.thumbSize, Style.controlHeight,
+        compare(sliderSize.thumbSize, Style.size("Control", "md"),
             "a size change took back an explicit thumbSize -- the preset is the default, "
             + "not an override of the call site");
         compare(sliderSize.thickness, Style.space1,

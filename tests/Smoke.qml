@@ -25,13 +25,10 @@ Item {
         property color danger: "#ff8b94"
         property string fontFamily: "Test Sans"
         property string technicalFontFamily: "Test Mono"
-        property real surfaceOpacity: 0.9
         property real opacityDisabled: 0.23
-        property int controlHeight: 53
-        property int controlHeightSm: 29
         property int textDisplay: 37
         property color warning: "#abcdef"
-        property var sizes: ({ "Slider": { "md": 26 } })
+        property var sizes: ({ "Slider": { "md": 26 }, "Control": { "sm": 29, "md": 53 } })
     }
 
     Component.onCompleted: {
@@ -55,10 +52,10 @@ Item {
     }
 
     function run() {
-        if (!require(compactCapsule.implicitHeight === backend.controlHeightSm,
+        if (!require(compactCapsule.implicitHeight === backend.sizes.Control.sm,
                 "Capsule did not consume backend compact height"))
             return;
-        if (!require(capsule.implicitHeight === backend.controlHeight,
+        if (!require(capsule.implicitHeight === backend.sizes.Control.md,
                 "Capsule did not consume backend height"))
             return;
         // The md thumb derives from the theme's size table, so that is what

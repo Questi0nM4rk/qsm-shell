@@ -74,7 +74,7 @@ Card {
         anchors.topMargin: root.radius
         anchors.bottom: parent.bottom
         anchors.bottomMargin: root.radius
-        width: Style.markThickness
+        width: Style.stroke(Style.markThickness, Screen.devicePixelRatio)
         color: root._tone
     }
 

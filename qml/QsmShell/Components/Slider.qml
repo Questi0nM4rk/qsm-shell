@@ -168,9 +168,12 @@ T.RangeSlider {
         root.labelClicked()
         return true
     }
+    // A label stacked above or below sits close, as a Field's does; one beside
+    // the track sits a step away.
     readonly property real _labelGap: Style.rhythm(Style.space2 * root._s)
-    readonly property real _labelAbove: _hasLabel && labelPosition === "above" ? label.implicitHeight + _labelGap : 0
-    readonly property real _labelBelow: _hasLabel && labelPosition === "below" ? label.implicitHeight + _labelGap : 0
+    readonly property real _labelGapStacked: Style.rhythm(Style.space1 * root._s)
+    readonly property real _labelAbove: _hasLabel && labelPosition === "above" ? label.implicitHeight + _labelGapStacked : 0
+    readonly property real _labelBelow: _hasLabel && labelPosition === "below" ? label.implicitHeight + _labelGapStacked : 0
     readonly property real _labelLeft: _hasLabel && labelPosition === "left" ? label.implicitWidth + _labelGap : 0
     readonly property real _labelRight: _hasLabel && labelPosition === "right" ? label.implicitWidth + _labelGap : 0
 
@@ -409,7 +412,7 @@ T.RangeSlider {
 
     // At least a comfortable hit target across the axis, whatever the track's
     // thickness: a 4px track with a 16px thumb still has to be aimable.
-    readonly property real _crossSize: Math.max(Style.controlHeightSm, root.thickness, root._thumbCross)
+    readonly property real _crossSize: Math.max(Style.size("Control", "xs"), root.thickness, root._thumbCross)
 
     // The main axis is a constant PLUS what the label takes, so the track
     // keeps its natural length whatever sits beside it.

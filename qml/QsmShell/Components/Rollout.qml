@@ -551,7 +551,7 @@ Item {
             // outness is the same ratio here: a Rollout's melt and its
             // emergence are one number. They are separate arguments because a
             // nested host sets blend to 0 for an exact union while being fully
-            // out (BarPopouts.flushToParent).
+            // out (`flushToParent`).
             host.registerBulge(rolloutId, sceneRect, cornerRadii,
                 flushToParent ? 0 : meltBlend, inverse, mean - dev, edgeBits, _childSeamBits,
                 false, meltBlend);

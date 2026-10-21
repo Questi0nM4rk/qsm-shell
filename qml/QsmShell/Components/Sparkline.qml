@@ -36,8 +36,8 @@ Canvas {
     readonly property real _min: isNaN(minimum) ? Math.min(...(values.length > 0 ? values : [0])) : minimum
     readonly property real _max: isNaN(maximum) ? Math.max(...(values.length > 0 ? values : [1])) : maximum
 
-    implicitWidth: Style.controlHeightLg * 2
-    implicitHeight: Style.controlHeightSm
+    implicitWidth: Style.size("Sparkline", "lg") * 2
+    implicitHeight: Style.size("Sparkline", "sm")
 
     onPaint: {
         const c = getContext("2d");

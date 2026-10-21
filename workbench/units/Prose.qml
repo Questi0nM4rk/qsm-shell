@@ -17,7 +17,7 @@ Item {
         "label", "supporting", "metadata", "reading", "section"]
 
     implicitWidth: Style.controlWidth
-    implicitHeight: root.ladderMode ? Style.controlWidth * 2 : Style.controlHeightLg + Style.space6 * 2
+    implicitHeight: root.ladderMode ? Style.controlWidth * 2 : Style.size("Control", "lg") + Style.space6 * 2
 
     ColumnLayout {
         id: column

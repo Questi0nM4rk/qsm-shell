@@ -45,7 +45,7 @@ Item {
     property string reading: ""
     // The painted face's square side. The layout footprint is the face
     // widened to the target floor, never the other way round.
-    property real size: Style.controlHeight
+    property real size: Style.size("ColorSwatch", "md")
     property bool selected: false
     property bool focused: root.activeFocus
 
@@ -56,8 +56,7 @@ Item {
     activeFocusOnTab: enabled
 
     // A swatch always has a name: the host's reading, else the colour's own
-    // value, else what an empty slot is. The name was the reading alone, and no
-    // desktop call site passes one.
+    // value, else what an empty slot is.
     Accessible.role: Accessible.Button
     Accessible.name: root.reading.length > 0 ? root.reading
         : root.empty ? qsTr("Empty colour slot") : root.sample.toString()
@@ -153,8 +152,8 @@ Item {
     // pale or accent sample keeps its own edge and the ring keeps 3:1 against
     // the host (WCAG 1.4.11), which an ink ring chosen against the sample alone
     // did not. The keyboard ring steps out beyond it while selected.
-    readonly property real _selStroke: Style.markThickness - 1
-    readonly property real _selReach: Style.spaceTight + root._selStroke
+    readonly property real _selStroke: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+    readonly property real _selReach: root._selStroke * 2
 
     // Hover growth is capped to about one pixel a side: a fixed ratio let a
     // 52px face overhang its footprint by 2px, and it is movement, so reduced
@@ -252,7 +251,7 @@ Item {
             visible: root.empty
             color: "transparent"
             radius: Style.radiusSm
-            border.width: 1
+            border.width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
             border.color: root._paint(Style.textMuted)
         }
 

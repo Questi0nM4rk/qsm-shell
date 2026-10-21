@@ -32,7 +32,7 @@ Item {
     // The name the initials come from. Two words give two letters, one gives
     // one — three letters is a monogram, not a glance.
     property string name: ""
-    property real size: Style.controlHeight
+    property real size: Style.size("Avatar", "md")
     property color background: Style.overlay
     // Empty = no dot. Otherwise a Badge tone.
     property string status: ""

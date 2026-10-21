@@ -81,7 +81,6 @@ QtObject {
     // The accent's strength over a layer when a body is selected (M3 state
     // layer 12 %, Radix step 5). One number, read by `selected()` alone.
     readonly property real opacitySelected: backend?.opacitySelected ?? Tokens.opacitySelected
-    readonly property real surfaceOpacity: backend?.surfaceOpacity ?? Tokens.opacitySurface
     // "Not the one you are looking at." A list recedes its non-current rows so
     // the current one is the only thing at full strength; it is a different
     // number from `opacityDisabled`, because receding says "later" and
@@ -377,9 +376,6 @@ QtObject {
     }
 
     // ── control and surface geometry ────────────────────────────────────
-    readonly property int controlHeight: backend?.controlHeight ?? root.size("Control", "md")
-    readonly property int controlHeightSm: backend?.controlHeightSm ?? root.size("Control", "sm")
-    readonly property int controlHeightLg: backend?.controlHeightLg ?? root.size("Control", "lg")
     // The Blueprint's pointer-target floor. A swatch paints a compact face
     // but answers on this square, so palette siblings never share a hit zone.
     readonly property int swatchTarget: backend?.swatchTarget ?? Tokens.geometrySwatchTarget
@@ -469,7 +465,8 @@ QtObject {
         ?? Tokens.geometryNotificationDismissFraction
 
     readonly property int ringDiameter: backend?.ringDiameter ?? Tokens.geometryRingDiameter
-    readonly property int ringStroke: backend?.ringStroke ?? Tokens.geometryRingStroke
+    // A ring's stroke as a share of its diameter, the way a spinner's is.
+    readonly property real ringStrokeRatio: backend?.ringStrokeRatio ?? Tokens.geometryRingStrokeRatio
     // A spinner's stroke as a share of its diameter: a fixed stroke is a disc
     // on a small one and a hairline on a large one.
     readonly property real spinnerStrokeRatio: backend?.spinnerStrokeRatio ?? Tokens.geometrySpinnerStrokeRatio

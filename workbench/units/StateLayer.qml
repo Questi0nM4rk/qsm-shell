@@ -18,7 +18,7 @@ Item {
     property var eventRecorder: null
 
     implicitWidth: Style.controlWidth / 2
-    implicitHeight: Style.controlHeightLg
+    implicitHeight: Style.size("Control", "lg")
 
     Rectangle {
         id: body

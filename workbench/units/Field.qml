@@ -16,7 +16,7 @@ Item {
     property int toggles: 0
 
     implicitWidth: Style.controlWidth
-    implicitHeight: Style.controlHeightLg + Style.space6 * 2
+    implicitHeight: Style.size("Control", "lg") + Style.space6 * 2
 
     Field {
         id: field

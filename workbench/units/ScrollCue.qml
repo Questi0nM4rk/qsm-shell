@@ -29,7 +29,7 @@ Rectangle {
         delegate: Prose {
             required property int index
             width: ListView.view.width
-            height: Style.controlHeight
+            height: Style.size("Control", "md")
             role: "label"
             text: "Cue row " + (index + 1)
         }

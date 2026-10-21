@@ -58,7 +58,7 @@ Rectangle {
 
     implicitWidth: vertical ? thickness : 0
     implicitHeight: vertical ? 0 : thickness
-    radius: (vertical ? width : height) / 2
+    radius: Style.radiusPill
     color: root._paintedTrack
 
     Rectangle {

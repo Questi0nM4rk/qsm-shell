@@ -12,10 +12,10 @@ import qs.QsmShell.Style
 //
 //   variant — how loudly it asks. ghost < secondary < primary, plus
 //             destructive, which is not louder but different in kind.
-//   size    — sm / md / lg, off the one control-height scale. Not a
-//             proportional zoom: a smaller control gets disproportionately
-//             tighter padding and a smaller label, because scaling everything
-//             by one factor reads as a zoom rather than as a different control.
+//   size    — a Control preset (xs, sm, md, lg). The box is the preset and
+//             the glyph, the label and the inset are derived from it, so a
+//             capsule of one size matches a field or a segmented bar of the
+//             same name.
 //
 // The states are the point. `ghost` paints nothing at rest, which is this
 // shell's resting law — and it still answers the pointer, the press, the
@@ -29,15 +29,14 @@ T.Control {
     property string detail: ""
     property color accentColor: Style.accent
     property color surfaceColor
-    property real surfaceOpacity
-    // One control radius across a row of controls (the search field and the
-    // segmented track wear radiusMd); only a glyph-only capsule is a pill.
-    property real radius: root.label.length === 0 ? Style.radiusPill : Style.radiusMd
+    // One control radius across a row of controls; only a glyph-only capsule
+    // is a pill.
+    property real radius: root.label.length === 0 ? Style.radiusPill : Style.radiusBody
 
     // ── the two axes ────────────────────────────────────────────────────
     // ghost | secondary | primary | destructive
     property string variant: "secondary"
-    // sm | md | lg
+    // A Control preset name: xs | sm | md | lg
     property string size: "md"
 
     // ── consumer-owned state ────────────────────────────────────────────
@@ -67,15 +66,16 @@ T.Control {
             console.warn("Capsule: no label and no accessibleName -- a screen reader hears an unnamed button")
     }
 
-    readonly property bool _sm: size === "sm"
-    readonly property bool _lg: size === "lg"
+    readonly property real _box: Style.size("Capsule", root.size)
+    // One scale per instance: every measurement is md's times this.
+    readonly property real _s: root._box / Style.size("Capsule", "md")
     readonly property bool _quiet: variant === "ghost" || variant === "destructive"
     readonly property color _accent: variant === "destructive" ? Style.danger : accentColor
     // Selected is identity (AGENTS.md, surface ladder): the accent tint on the
     // body AND accent content. Tint alone left an ON capsule telling only by
     // a shade of its surface.
     // A quiet capsule paints no body at rest and shows one under the pointer
-    // (surfaceOpacity below), so hover and press are visible on every variant.
+    // (`_bodyOpacity` below), so hover and press are visible on every variant.
     // A ghost also rests muted and brightens its label on hover. Primary is the
     // one filled action: its body is `primary` and its content `textOnPrimary`.
     readonly property bool _primary: variant === "primary"
@@ -90,9 +90,9 @@ T.Control {
     // ONE padding value, used by BOTH the width and the content margins. They
     // used to disagree, and every small capsule came out narrower than its own
     // contents asked for.
-    readonly property real contentInset: _sm ? Style.space3 : _lg ? Style.space5 : Style.space4
+    readonly property real contentInset: Style.rhythm(Style.space4 * root._s)
 
-    implicitHeight: _sm ? Style.controlHeightSm : _lg ? Style.controlHeightLg : Style.controlHeight
+    implicitHeight: root._box
     implicitWidth: content.implicitWidth + leftPadding + rightPadding
     leftPadding: contentInset
     rightPadding: contentInset
@@ -113,20 +113,17 @@ T.Control {
     // card, glyph and text show through one another as a composite.
     surfaceColor: Style.tone(root._primary ? Style.primary : Style.surface, stateLayer.hovered,
         stateLayer.pressed, root.active && !root._primary, root.enabled, root._accent)
-    // A quiet variant at rest paints NOTHING. It is transparent rather than
-    // surface-at-90%, which is the difference between a control that sits on
-    // the surface and one that is part of it. Under the pointer it takes the
-    // lifted surface, so the colour answers hover and press as well as the
-    // growth. A filled primary is opaque.
-    surfaceOpacity: root._primary ? 1
-        : root._quiet && !root.active && !stateLayer.hovered && !stateLayer.pressed
-        ? 0
-        : Style.surfaceOpacity
+    // A quiet variant at rest paints NOTHING, which is the difference between
+    // a control that sits on the surface and one that is part of it. Under the
+    // pointer it takes the lifted surface, so the colour answers hover and
+    // press as well as the growth. The body fades rather than the colour, so
+    // the colour never passes through a translucent black.
+    property real _bodyOpacity: root._quiet && !root.active && !stateLayer.hovered && !stateLayer.pressed ? 0 : 1
 
     Behavior on surfaceColor {
         ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
     }
-    Behavior on surfaceOpacity {
+    Behavior on _bodyOpacity {
         NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
     }
 
@@ -136,7 +133,7 @@ T.Control {
         shadow: false
         radius: root.radius
         surfaceColor: root.surfaceColor
-        surfaceOpacity: root.surfaceOpacity
+        opacity: root._bodyOpacity
     }
 
     contentItem: RowLayout {
@@ -159,7 +156,7 @@ T.Control {
             // carrying an icon-sized hole and a gap.
             visible: icon.name.length > 0
             Layout.alignment: Qt.AlignVCenter
-            size: root._sm ? Style.iconSm : root._lg ? Style.iconLg : Style.iconMd
+            size: Style.glyphBeside(root._box)
             color: root._prose
         }
         Prose {
@@ -168,10 +165,10 @@ T.Control {
             verticalAlignment: Text.AlignVCenter
             role: "label"
             color: root._prose
-            // The label is the one place a size axis still reads through to
-            // type: a small control with a body-sized label is not a small
-            // control. Everything else about the role stays the role's.
-            font.pixelSize: root._sm ? Style.textXs : root._lg ? Style.textMd : Style.textSm
+            // The label scales with the box: a small control with a body-sized
+            // label is not a small control. Everything else about the role
+            // stays the role's.
+            font.pixelSize: Style.textNear(Style.textSm * root._s)
         }
         Prose {
             Layout.fillHeight: true

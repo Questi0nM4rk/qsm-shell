@@ -5,10 +5,8 @@ import qs.QsmShell.Style
 // THE "this one" mark: the short accent pill that says which row is current.
 //
 // A launcher result, a device row, a menu row and a notification in the
-// history all answer the same question, and each of them used to answer it by
-// drawing its own 3x18 rectangle with its own animation. Four copies of one
-// idiom is four places for it to drift, and it had already started to: some
-// grew in, some only faded, and one changed width while the others did not.
+// history all answer the same question, so they share one mark and one
+// animation instead of four copies that drift.
 //
 // The consumer positions it — a mark belongs to the row's own layout, and a
 // component that anchors itself into its parent cannot be reused by a parent
@@ -31,11 +29,12 @@ Rectangle {
     // would spend the same signal `strong` already owns.
     property real restOpacity: 1
 
-    width: root.strong ? Style.markThickness + Style.spaceTight : Style.markThickness
+    width: Style.stroke(root.strong ? Style.markThickness + Style.spaceTight : Style.markThickness,
+        Screen.devicePixelRatio)
     height: root.shown ? Style.markHeight : 0
     implicitWidth: width
     implicitHeight: height
-    radius: width / 2
+    radius: Style.radiusPill
     color: root.markColor
     opacity: root.shown ? (root.strong ? 1 : root.restOpacity) : 0
 

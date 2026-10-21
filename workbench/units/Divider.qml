@@ -11,9 +11,7 @@ Rectangle {
 
     // The rule's own properties, set by a case or by a single control.
     property real inset: Style.space3
-    property real strength: .35
-    property real thickness: 1
-    property color lineColor: Style.textMuted
+    property real strength: Style.dividerOpacity
     // 0 means the rule's natural width: the card's width minus nothing.
     property real ruleWidth: 0
     // 0 means the rule's natural height; the item may claim a gap around the ink.
@@ -65,8 +63,6 @@ Rectangle {
                     x: root.turned ? 0 : (parent.width - width) / 2
                     inset: root.inset
                     strength: root.strength
-                    thickness: root.thickness
-                    lineColor: root.lineColor
                     rotation: root.turned ? 90 : 0
                 }
             }
@@ -80,27 +76,16 @@ Rectangle {
 
     readonly property var controls: [
         { label: "case", options: [
-            { label: "default", set: { inset: Style.space3, strength: .35, thickness: 1, lineColor: Style.textMuted, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.band } },
-            { label: "list header", set: { inset: 0, strength: .5, thickness: 1, lineColor: Style.textMuted, ruleWidth: 0, gap: 0, turned: false, heading: true, ground: Style.surface } },
-            { label: "list separator", set: { inset: Style.space3, strength: .5, thickness: 1, lineColor: Style.textMuted, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.surface } },
-            { label: "card bottom", set: { inset: Style.notificationDividerInset, strength: .25, thickness: 1, lineColor: Style.textMuted, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.surface } },
-            { label: "menu short", set: { inset: 0, strength: .25, thickness: 1, lineColor: Style.textMuted, ruleWidth: Style.space6 * 3, gap: 0, turned: false, heading: false, ground: Style.overlay } },
-            { label: "rail", set: { inset: Style.space2, strength: .8, thickness: Style.space1 / 2, lineColor: Style.textMuted, ruleWidth: 0, gap: Style.space2, turned: false, heading: false, ground: Style.band } },
-            { label: "rail turned", set: { inset: 0, strength: .8, thickness: Style.space1 / 2, lineColor: Style.textMuted, ruleWidth: Style.space6 * 2, gap: 0, turned: true, heading: false, ground: Style.band } }
+            { label: "surface", set: { inset: Style.space3, strength: Style.dividerOpacity, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.surface } },
+            { label: "list heading", set: { inset: 0, strength: Style.dividerOpacity, ruleWidth: 0, gap: 0, turned: false, heading: true, ground: Style.surface } },
+            { label: "card", set: { inset: Style.notificationDividerInset, strength: Style.dividerOpacity, ruleWidth: 0, gap: 0, turned: false, heading: false, ground: Style.surface } },
+            { label: "short", set: { inset: 0, strength: Style.dividerOpacity, ruleWidth: Style.space6 * 3, gap: 0, turned: false, heading: false, ground: Style.overlay } },
+            { label: "band", set: { inset: Style.space2, strength: Style.dividerBandOpacity, ruleWidth: 0, gap: Style.space2, turned: false, heading: false, ground: Style.band } },
+            { label: "band turned", set: { inset: 0, strength: Style.dividerBandOpacity, ruleWidth: Style.space6 * 2, gap: 0, turned: true, heading: false, ground: Style.band } }
         ] },
         { label: "strength", options: [
-            { label: ".25", set: { strength: .25 } },
-            { label: ".35", set: { strength: .35 } },
-            { label: ".5", set: { strength: .5 } },
-            { label: ".8", set: { strength: .8 } }
-        ] },
-        { label: "thickness", options: [
-            { label: "1", set: { thickness: 1 } },
-            { label: "2", set: { thickness: Style.space1 / 2 } }
-        ] },
-        { label: "colour", options: [
-            { label: "muted", set: { lineColor: Style.textMuted } },
-            { label: "band", set: { lineColor: Style.band } }
+            { label: "surface", set: { strength: Style.dividerOpacity } },
+            { label: "band", set: { strength: Style.dividerBandOpacity } }
         ] },
         { label: "inset", options: [
             { label: "none", set: { inset: 0 } },

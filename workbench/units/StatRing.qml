@@ -42,7 +42,7 @@ Rectangle {
             { label: "full", set: { fraction: 1 } }
         ] },
         { label: "diameter", options: [
-            { label: "sm", set: { box: Style.controlHeightLg } },
+            { label: "sm", set: { box: Style.size("Control", "lg") } },
             { label: "md", set: { box: Style.ringDiameter } },
             { label: "lg", set: { box: Style.controlWidth } }
         ] },

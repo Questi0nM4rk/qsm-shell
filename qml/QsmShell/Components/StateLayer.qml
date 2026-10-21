@@ -144,12 +144,13 @@ Item {
     // mark on every control instead of whatever each surface remembered to
     // draw. Outside the painted body, never inside it: a ring on the body's own
     // edge vanishes on a full accent fill. Gap and stroke are both
-    // `spaceTight`; the outer radius is the body's plus both, the reverse of
-    // `Style.childRadius`, so the ring stays concentric. The gap is measured
-    // from THIS LAYER's edge, so a layer sized to its body (not outset from it)
-    // is what puts the ring a half step clear.
+    // `spaceTight` in whole device pixels; the outer radius is the body's plus
+    // both, the reverse of `Style.childRadius`, so the ring stays concentric.
+    // The gap is measured from THIS LAYER's edge, so a layer sized to its body
+    // (not outset from it) is what puts the ring a half step clear.
     Rectangle {
-        readonly property real _reach: Style.spaceTight * 2
+        readonly property real _stroke: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+        readonly property real _reach: _stroke * 2
         anchors.fill: parent
         anchors.margins: -_reach
         z: -1
@@ -157,7 +158,7 @@ Item {
         visible: opacity > 0
         color: "transparent"
         radius: root.focusRadius + _reach
-        border.width: Style.spaceTight
+        border.width: _stroke
         border.color: root.focusColor
         opacity: root.focused && !root._pointerFocus && root.enabled && root.interactive ? 1 : 0
 

@@ -66,7 +66,7 @@ T.AbstractButton {
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: root._radio
             implicitHeight: root._radio
-            radius: width / 2
+            radius: Style.radiusPill
             // Hover and press change the colour through the one state matrix
             // (the layer below grows the circle; a press only recolours it).
             color: root.checked
@@ -74,7 +74,7 @@ T.AbstractButton {
                 : "transparent"
             // The ring stays and takes the fill's colour when checked, so
             // selecting is one cross-fade of fill, ring and dot on one clock.
-            border.width: Style.spaceTight
+            border.width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
             border.color: Style.tone(root.checked ? root.accentColor : Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
 
             Behavior on color {
@@ -91,7 +91,7 @@ T.AbstractButton {
                 anchors.centerIn: parent
                 width: Math.round(parent.width * 0.4)
                 height: width
-                radius: width / 2
+                radius: Style.radiusPill
                 visible: opacity > 0
                 opacity: root.checked ? 1 : 0
                 color: root.enabled ? Style.textOnPrimary : Style.disabled(Style.textOnPrimary)
@@ -121,6 +121,6 @@ T.AbstractButton {
         height: circle.height
         host: root
         target: circle
-        focusRadius: width / 2
+        focusRadius: Style.radiusPill
     }
 }

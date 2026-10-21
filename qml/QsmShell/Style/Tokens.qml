@@ -77,7 +77,6 @@ QtObject {
     readonly property int motionClockRefresh: 60000
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySelected: 0.12
-    readonly property real opacitySurface: 0.9
     readonly property real opacityRecede: 0.7
     readonly property real opacityFloatingShadow: 0.28
     readonly property real opacityCardShadow: 0.28
@@ -115,7 +114,7 @@ QtObject {
     readonly property int geometryBadgeWidth: 28
     readonly property int geometryTrackThickness: 4
     readonly property int geometryRingDiameter: 150
-    readonly property int geometryRingStroke: 8
+    readonly property real geometryRingStrokeRatio: 0.0533
     readonly property int geometryTileWidth: 96
     readonly property int geometryTileHeight: 72
     readonly property int geometryNotificationDividerInset: 20

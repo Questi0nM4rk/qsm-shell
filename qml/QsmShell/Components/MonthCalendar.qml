@@ -46,9 +46,9 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: Style.space2
-            IconButton { objectName: "prevMonth"; icon: "chevron-left"; accessibleName: qsTr("Previous month"); size: Style.iconSm; padding: Style.space2; color: Style.textMuted; onClicked: root.shiftMonth(-1) }
+            IconButton { objectName: "prevMonth"; icon: "chevron-left"; accessibleName: qsTr("Previous month"); size: "sm"; color: Style.textMuted; onClicked: root.shiftMonth(-1) }
             Prose { id: title; Layout.fillWidth: true; Layout.preferredWidth: root.titleWidth; horizontalAlignment: Text.AlignHCenter; role: "title"; text: Qt.formatDate(root.shown, "MMMM yyyy") }
-            IconButton { objectName: "nextMonth"; icon: "chevron-right"; accessibleName: qsTr("Next month"); size: Style.iconSm; padding: Style.space2; color: Style.textMuted; onClicked: root.shiftMonth(1) }
+            IconButton { objectName: "nextMonth"; icon: "chevron-right"; accessibleName: qsTr("Next month"); size: "sm"; color: Style.textMuted; onClicked: root.shiftMonth(1) }
         }
 
         GridLayout {
@@ -72,7 +72,7 @@ Item {
                     readonly property bool isToday: cellDate.getFullYear() === root.today.getFullYear() && cellDate.getMonth() === root.today.getMonth() && cellDate.getDate() === root.today.getDate()
                     Layout.fillWidth: true
                     Layout.preferredHeight: Style.space5
-                    Rectangle { anchors.centerIn: parent; width: Style.space5 - Style.spaceTight; height: Style.space5 - Style.spaceTight; radius: width / 2; color: parent.isToday ? Style.accent : "transparent" }
+                    Rectangle { anchors.centerIn: parent; width: Style.space5 - Style.spaceTight; height: Style.space5 - Style.spaceTight; radius: Style.radiusPill; color: parent.isToday ? Style.accent : "transparent" }
                     Prose {
                         anchors.centerIn: parent
                         role: "reading"

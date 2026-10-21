@@ -23,7 +23,7 @@ Item {
     // extent, so a departing row takes its gap with it and the survivors
     // land exactly where the shift stops.
     property bool bodied: false
-    property real bodyRadius: Style.radiusLg
+    property real bodyRadius: Style.radiusBody
     property real rowSpacing: 0
 
     signal dismissRequested(var entry)
@@ -86,8 +86,8 @@ Item {
         return -1;
     }
 
-    // The desktop wrapper exposes this target to native Workbench input and
-    // fullscreen-mask inspection without reaching into the Repeater.
+    // A host reaches a card for native input and fullscreen-mask inspection
+    // without reaching into the Repeater.
     function targetForNotification(id: var): var {
         const index = root.indexFor(id);
         return index >= 0 ? cardRepeater.itemAt(index) : null;

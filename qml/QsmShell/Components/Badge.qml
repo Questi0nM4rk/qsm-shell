@@ -71,7 +71,7 @@ Rectangle {
         ? implicitHeight
         : root._count ? Style.badgeWidth
         : Math.max(implicitHeight, content.implicitWidth + Style.space2)
-    radius: height / 2
+    radius: Style.radiusPill
     color: filled ? _hue : Qt.rgba(_hue.r, _hue.g, _hue.b, Style.badgeTintOpacity)
     visible: dot || text.length > 0 || icon.length > 0
 

@@ -20,11 +20,13 @@ Item {
     property string size: "md"
     property int acceptedCount: 0
     property int escapedCount: 0
-    // Slot content is the host's, so the host scales its glyphs with the field.
-    readonly property int slotGlyph: Style.iconNear(Style.iconMd * field.sizeScale)
+    // Slot content is the host's: its glyph follows the field's box, and an
+    // action's own box is one preset below the field's so its glyph is the same.
+    readonly property int slotGlyph: Style.glyphBeside(field.fieldHeight)
+    readonly property string actionSize: ({ xs: "xs", sm: "xs", md: "sm", lg: "md" })[root.size] ?? "sm"
 
     implicitWidth: Style.controlWidth
-    implicitHeight: Style.controlHeightLg
+    implicitHeight: Style.size("Control", "lg")
 
     TextField {
         id: field
@@ -69,7 +71,7 @@ Item {
     Component {
         id: revealAction
         IconButton {
-            size: root.slotGlyph
+            size: root.actionSize
             icon: field.passwordVisible ? "eye" : "eye-off"
             accessibleName: "Reveal password"
             onClicked: field.toggleReveal()
@@ -79,7 +81,7 @@ Item {
     Component {
         id: unitSuffix
         Prose {
-            role: "caption"
+            role: "metadata"
             text: "%"
         }
     }

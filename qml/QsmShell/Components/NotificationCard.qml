@@ -53,9 +53,8 @@ Item {
     // `surface` body with a slight shadow, so neighbours never read as one
     // run of text. The default stays boxless for the popup stack.
     property bool bodied: false
-    // The bodied card's corner radius. The menu keeps the large radius; the
-    // popup stack asks for the medium one (spec 04).
-    property real bodyRadius: Style.radiusLg
+    // The bodied card's corner radius.
+    property real bodyRadius: Style.radiusBody
     // Hover expands a popup, which nothing scrolls. Inside a scrolled list
     // hover expansion steals the wheel under the pointer, so a list sets
     // false: the leading column then asks for expansion by click
@@ -226,13 +225,9 @@ Item {
         onTriggered: root.currentTimeMs = Date.now()
     }
 
-    // Constants no theme retunes: the preview shows two lines (its ceiling in
-    // pixels is `notificationPreviewHeight`), a divider is a quiet fraction
-    // of the text colour, and a swatch's containment border is one device
-    // pixel, which AGENTS keeps off the size scale.
+    // The preview shows two lines; its ceiling in pixels is
+    // `notificationPreviewHeight`.
     readonly property int previewLines: 2
-    readonly property real dividerStrength: 0.25
-    readonly property int swatchBorder: 1
 
     // One format for every entry, live or archived: a list that mixed a clock
     // time with "5m ago" read as two columns of different widths. The wall
@@ -369,7 +364,7 @@ Item {
                     visible: root.hasSwatch && !root.leadHovered
                     radius: Style.radiusSm
                     color: root.swatch ?? "transparent"
-                    border.width: root.swatchBorder
+                    border.width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
                     border.color: Style.textMuted
                 }
 
@@ -590,7 +585,6 @@ Item {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             inset: Style.notificationDividerInset
-            strength: root.dividerStrength
         }
     }
 

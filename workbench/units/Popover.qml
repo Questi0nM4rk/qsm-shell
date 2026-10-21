@@ -31,7 +31,7 @@ Rectangle {
         x: _horizontal ? (_atLow ? Style.space4 : parent.width - width - Style.space4) : (parent.width - width) / 2
         y: _horizontal ? (parent.height - height) / 2 : (_atLow ? Style.space4 : parent.height - height - Style.space4)
         width: Style.space6 * 2
-        height: Style.controlHeightSm
+        height: Style.size("Control", "sm")
         color: Style.overlay
         radius: Style.radiusSm
 

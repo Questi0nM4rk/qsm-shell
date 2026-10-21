@@ -28,7 +28,7 @@ Item {
     implicitWidth: Style.sliderLength + Style.space6 * 2
     implicitHeight: ods
         ? Style.sliderLengthVertical + Style.space6 * 2
-        : Style.controlHeightLg + Style.space6 * 2
+        : Style.size("Control", "lg") + Style.space6 * 2
 
     Slider {
         id: slider

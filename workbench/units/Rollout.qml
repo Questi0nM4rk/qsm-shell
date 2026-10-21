@@ -46,8 +46,8 @@ Rectangle {
 
     Item {
         id: band
-        width: root.horizontal ? (root.edge === "left" ? border.leftEdge : border.edge) : Style.controlHeight
-        height: root.horizontal ? Style.controlHeight : border.edge
+        width: root.horizontal ? (root.edge === "left" ? border.leftEdge : border.edge) : Style.size("Control", "md")
+        height: root.horizontal ? Style.size("Control", "md") : border.edge
         x: root.edge === "right" ? root.width - width : root.edge === "left" ? 0 : (root.width - width) / 2
         y: root.edge === "bottom" ? root.height - height : root.edge === "top" ? 0 : (root.height - height) / 2
     }
@@ -67,7 +67,7 @@ Rectangle {
         childRollout: childPanel
         padding: Style.space4
         bodyWidth: root.extent === "wide" ? Style.controlWidth : Style.controlWidth - Style.space6 * 2
-        bodyHeight: Style.controlHeight * 3 + Style.space6 * 2
+        bodyHeight: Style.size("Control", "md") * 3 + Style.space6 * 2
 
         ColumnLayout {
             anchors.fill: parent
@@ -145,7 +145,7 @@ Rectangle {
         padding: Style.space4
         bodyWidth: root.horizontal ? Style.controlWidth - Style.space6 * 2
             : root.layerMode === "full-span-child" ? rollout.bodyWidth : rollout.bodyWidth - Style.space6
-        bodyHeight: !root.horizontal ? Style.controlHeight * 3 + padding * 2
+        bodyHeight: !root.horizontal ? Style.size("Control", "md") * 3 + padding * 2
             : root.layerMode === "full-span-child" ? rollout.bodyHeight : rollout.bodyHeight - Style.space6
 
         ColumnLayout {

@@ -45,7 +45,7 @@ ColumnLayout {
         id: heading
         objectName: "disclosureHeading"
         Layout.fillWidth: true
-        implicitHeight: Style.controlHeightSm
+        implicitHeight: Style.size("Disclosure", "sm")
         focusPolicy: Qt.StrongFocus
         hoverEnabled: root.enabled
         onClicked: root.toggle()

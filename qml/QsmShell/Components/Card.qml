@@ -7,9 +7,6 @@ Rectangle {
     id: root
 
     property color surfaceColor: Style.surface
-    // Translucency applies only with `shadow: false`; a card that casts its
-    // shadow is opaque (the copy beneath keeps the fill from showing it).
-    property real surfaceOpacity: Style.surfaceOpacity
     // The silhouette's edge separation (a slight line at the edge fading
     // inward), painted inside this card's rounded edge so the card reads as an
     // object, not a traced rectangle. A card that sits flat inside another
@@ -19,13 +16,12 @@ Rectangle {
     // separates it from the ground, the shadow only finishes the edge.
     property bool shadow: true
 
-    color: Qt.rgba(surfaceColor.r, surfaceColor.g, surfaceColor.b, surfaceOpacity)
-    radius: Style.radiusLg
+    color: surfaceColor
+    radius: Style.radiusBody
 
-    // Beneath the card (negative z paints under the parent's own fill): an
-    // opaque copy of the body in the card's colour, so the translucent fill
-    // above it changes nothing and only the shadow it casts shows past the
-    // edge. This is why a shadowed card is opaque.
+    // Beneath the card (negative z paints under the parent's own fill): a copy
+    // of the body that casts the shadow, so the card's own content is never
+    // rendered into the shadow layer.
     Rectangle {
         anchors.fill: parent
         z: -1

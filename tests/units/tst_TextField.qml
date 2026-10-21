@@ -29,15 +29,15 @@ TestCase {
         property bool showLeading: true
         readonly property bool passwordExample: purposeOverride === "password"
         readonly property bool numberExample: purposeOverride === "number"
-        readonly property int _slotIconSize: Style.iconNear(Style.iconMd * previewField.sizeScale)
+        readonly property int _slotIconSize: Style.glyphBeside(previewField.fieldHeight)
         inputType: passwordExample ? "password" : numberExample ? "number" : "text"
         failed: numberExample && text.length > 0 && !acceptableInput
         leadingSlotInset: purposeOverride === "search" ? 0 : previewField._inset
         leadingCursorShape: purposeOverride === "search" ? Qt.PointingHandCursor : Qt.IBeamCursor
         trailingCursorShape: readOnly && !passwordExample ? Qt.ArrowCursor : Qt.PointingHandCursor
         leading: Loader { active: previewField.showLeading; sourceComponent: previewField.purposeOverride === "search" ? searchAction : purposeGlyph }
-        trailing: Loader { active: previewField.text.length > 0; sourceComponent: IconButton { objectName: "textFieldTrailingAction"; enabled: previewField.passwordExample || !previewField.readOnly; icon: previewField.passwordExample ? previewField.passwordVisible ? "eye-off" : "eye" : "x"; size: previewField._slotIconSize; padding: 0; color: Style.textMuted; onClicked: previewField.passwordExample ? previewField.toggleReveal() : previewField.clear() } }
-        Component { id: searchAction; IconButton { objectName: "textFieldSearchAction"; icon: "search"; size: previewField._slotIconSize; padding: 0; leftPadding: previewField._inset; height: previewField.fieldHeight; color: Style.textMuted; onClicked: previewField.accept() } }
+        trailing: Loader { active: previewField.text.length > 0; sourceComponent: IconButton { objectName: "textFieldTrailingAction"; enabled: previewField.passwordExample || !previewField.readOnly; icon: previewField.passwordExample ? previewField.passwordVisible ? "eye-off" : "eye" : "x"; size: "sm"; padding: 0; color: Style.textMuted; onClicked: previewField.passwordExample ? previewField.toggleReveal() : previewField.clear() } }
+        Component { id: searchAction; IconButton { objectName: "textFieldSearchAction"; icon: "search"; size: "sm"; padding: 0; leftPadding: previewField._inset; height: previewField.fieldHeight; color: Style.textMuted; onClicked: previewField.accept() } }
         Component { id: purposeGlyph; SvgIcon { objectName: "textFieldPurposeGlyph"; name: previewField.passwordExample ? "key" : previewField.numberExample ? "hash" : "type"; size: previewField._slotIconSize; color: previewField.enabled ? Style.textMuted : Style.disabled(Style.textMuted) } }
     }
 
@@ -269,8 +269,8 @@ TestCase {
         verify(leading !== null, "the filled text field had no leading glyph");
         verify(trailing !== null, "the filled text field had no trailing action");
 
-        const expected = Style.iconNear(Style.iconMd * composedField.sizeScale);
-        compare(trailing.size, expected, "the trailing slot glyph is not on the size scale");
+        const expected = Style.glyphBeside(composedField.fieldHeight);
+        compare(trailing._glyph, expected, "the trailing slot glyph is not the field's glyph");
         compare(leading.size, expected, "the leading slot glyph does not match the trailing one");
     }
 

@@ -18,7 +18,7 @@ Rectangle {
         id: body
         anchors.centerIn: parent
         width: Style.controlWidth / 2
-        height: Style.controlHeight
+        height: Style.size("Control", "md")
         radius: Style.radiusMd
         hovered: stateLayer.hovered
         pressed: stateLayer.pressed

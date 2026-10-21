@@ -34,7 +34,7 @@ FocusScope {
     readonly property bool device: variant === "reading-selected"
 
     implicitWidth: Style.controlWidth
-    implicitHeight: Style.controlHeightLg
+    implicitHeight: Style.size("Control", "lg")
 
     property Component readingComponent: Component {
         Prose { role: "reading"; text: "87%" }

@@ -43,6 +43,7 @@ Item {
             { label: "off", set: { active: false } }
         ] },
         { label: "size", options: [
+            { label: "xs", set: { size: "xs" } },
             { label: "sm", set: { size: "sm" } },
             { label: "md", set: { size: "md" } },
             { label: "lg", set: { size: "lg" } }

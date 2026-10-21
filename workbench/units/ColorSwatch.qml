@@ -12,7 +12,7 @@ Rectangle {
     property string reading: "#E8C58A"
     property bool empty: false
     property bool selected: false
-    property real face: Style.controlHeight
+    property real face: Style.size("Control", "md")
     property int clicks: 0
 
     implicitWidth: Style.controlWidth
@@ -45,9 +45,9 @@ Rectangle {
             { label: "selected", set: { selected: true } }
         ] },
         { label: "size", options: [
-            { label: "sm", set: { face: Style.controlHeightSm } },
-            { label: "md", set: { face: Style.controlHeight } },
-            { label: "lg", set: { face: Style.controlHeightLg } }
+            { label: "sm", set: { face: Style.size("Control", "sm") } },
+            { label: "md", set: { face: Style.size("Control", "md") } },
+            { label: "lg", set: { face: Style.size("Control", "lg") } }
         ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },

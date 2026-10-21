@@ -114,7 +114,7 @@ T.AbstractButton {
             color: root._marked
                 ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
                 : "transparent"
-            border.width: root._marked ? 0 : 1
+            border.width: root._marked ? 0 : Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
             border.color: Style.tone(Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
 
             Behavior on color {

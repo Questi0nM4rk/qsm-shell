@@ -4,13 +4,13 @@ Reusable QML components and design tokens for Qt 6 and Quickshell desktops.
 
 The product is a fully functional component system with beautiful Quiet
 Luminous defaults and responsive, accessible interaction. Callers can compose
-different desktops through slots, actions, host-owned state and `Style`; the
-current proof consumer, `qsm-desktop`, does not define the library's policy.
+different desktops through slots, actions, host-owned state and `Style`; no
+single consumer defines the library's policy.
 Workbench supports that development and verification. Its chrome is not the
 product and is improved only when it blocks component work.
 
 The visual direction is cosy, minimal dusk/night: deep quiet surfaces and
-diffuse lilac light, inspired by the desktop's two wallpapers. A glyph, label,
+diffuse lilac light, inspired by two dusk wallpapers. A glyph, label,
 state and action consequence must tell the same story; generic sample content
 is not a design decision.
 
@@ -51,12 +51,20 @@ Sizes work the same way. A sized type takes a preset NAME, `size: "md"`, and
 resolves it through `Style.size("<Type>", name)` against the theme's size
 table (`sizes.<Type>.<name>`, defaults in `tokens/deep-night.json`). Your
 backend's `sizes` extends or overrides that table, so `sizes: { Switch: { xl: 40 } }`
-makes `Switch { size: "xl" }` valid in your project. Types with no table of
-their own (`TextField`, `SpinBox`, `Segmented`) share the `Control` ladder, so `sizes: { Control: { xl: 56 } }` adds `xl` to every one of them. The resolved number
-(`knobSize`, `thumbSize`, `fieldHeight`) stays settable directly when one
-  call site needs one value. The shell provider currently uses the library
-  defaults; it does not install `workbench/theme.json` as a backend. The desktop
-  provider installs its own `Theme` explicitly.
+makes `Switch { size: "xl" }` valid in your project. A type with no table of
+its own (`TextField`, `SpinBox`, `Segmented`, `Capsule`, `IconButton`) belongs
+to the `Control` family and shares its ladder, so `sizes: { Control: { xl: 56 } }`
+adds `xl` to every one of them. The resolved number (`knobSize`, `thumbSize`,
+`fieldHeight`) stays settable directly when one call site needs one value.
+
+A glyph, a line and a body's corner are roles, not call-site choices:
+`Style.glyphAlone(box)` and `Style.glyphBeside(box)` pick the icon for a box,
+`Style.stroke(n, Screen.devicePixelRatio)` gives a line a whole number of
+device pixels, `Style.radiusBody` is the corner of a body directly in a
+rollout, and `Style.recede(colour)` dims a colour for "not the current one".
+A role derives from the scales and the size table, so a theme changes it by
+changing those.
+
 `Interaction` is the one place you state a fact components cannot see for
 themselves (whether a hover may claim a selection).
 
@@ -95,8 +103,8 @@ bash scripts/build-shaders        # only after editing a .frag; commit .frag + .
 
 - `preview` uses installed `qsm-workbench` on `PATH` with this repo as the
   provider; story names come from `workbench/stories.json`. No sibling checkout
-  or source-script fallback is used. Desktop stories such as Notification Layer
-  belong to the `qsm-desktop` provider, not this component catalog.
+  or source-script fallback is used. A consumer's composed stories belong to
+  its own provider, not this component catalog.
 - `capture` delegates to the same provider workbench entry point.
 - `unit` runs one type's test file under `tests/units/` (falling back to
   `tests/interaction/` for types not yet migrated).
@@ -124,6 +132,6 @@ the owner-review loop.
 
 ## Next
 
-The desktop's 31-component production scope, ordered roadmap and per-component
+The ordered roadmap and per-component
 what is true now and what comes next live in [GOAL.md](../GOAL.md#next-in-this-order). Open findings and deferred work
 live in [docs/BACKLOG.md](BACKLOG.md).

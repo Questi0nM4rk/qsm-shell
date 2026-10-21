@@ -20,7 +20,7 @@ T.DoubleSpinBox {
     readonly property real _s: root.fieldHeight / Style.size("SpinBox", "md")
     readonly property real sizeScale: root._s
     readonly property int fieldTextSize: Style.textNear(Style.textMd * root._s)
-    readonly property int indicatorIconSize: Style.iconNear(Style.iconSm * root._s)
+    readonly property int indicatorIconSize: Style.glyphAlone(root.fieldHeight)
     readonly property int _inset: Style.rhythm(Style.space3 * root._s)
     readonly property real _minimum: Math.min(root.from, root.to)
     readonly property real _maximum: Math.max(root.from, root.to)
@@ -114,10 +114,10 @@ T.DoubleSpinBox {
 
     background: Surface {
         objectName: "spinBoxSurface"
-        radius: Style.radiusMd
+        radius: Style.radiusBody
         hovered: root.enabled && (root.hovered || root.focused)
         enabled: root.enabled
-        border.width: root.failed ? 1 : 0
+        border.width: root.failed ? Style.stroke(Style.spaceTight, Screen.devicePixelRatio) : 0
         border.color: root.enabled ? Style.danger : Style.disabled(Style.danger)
     }
 
@@ -161,10 +161,9 @@ T.DoubleSpinBox {
             readonly property int halfPeriod: Application.styleHints.cursorFlashTime / 2
             x: Math.round(editor.x + editor.cursorRectangle.x)
             y: editor.y + editor.cursorRectangle.y
-            width: Style.spaceTight
+            width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
             height: editor.cursorRectangle.height
             color: root.enabled ? Style.accent : Style.disabled(Style.accent)
-            radius: Style.radiusXs
             visible: editor.activeFocus && root.editable
 
             onVisibleChanged: opacity = 1
@@ -244,7 +243,7 @@ T.DoubleSpinBox {
         host: root
         target: null
         focused: root.focused && !root._pointerFocus
-        focusRadius: Style.radiusMd
+        focusRadius: Style.radiusBody
         focusColor: root.failed ? Style.danger : Style.accent
     }
 

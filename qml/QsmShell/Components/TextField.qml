@@ -5,11 +5,8 @@ import qs.QsmShell.Style
 
 // THE text input. One line, every state, two slots.
 //
-// It replaced `SearchField`, which was this component plus a magnifier plus
-// four booleans naming which keys the launcher wanted to steal. A search box
-// is a text box with an icon in its leading slot; it is not a second kind of
-// text box, and the moment a second surface needed a plain one the library
-// would have grown a third.
+// A search box is a text box with an icon in its leading slot; it is not a
+// second kind of text box, so it is not a second type.
 //
 // It stands on `T.Control` with a `TextInput` in a clipped `contentItem`, the
 // shape Qt's own `T.SpinBox` uses. A `T.TextField` root cannot host slots: it
@@ -187,7 +184,7 @@ T.Control {
 
     background: Surface {
         objectName: "textFieldSurface"
-        radius: Style.radiusMd
+        radius: Style.radiusBody
         // Hover is answered by the SURFACE, not by growth: the caret and the
         // text have to stay where the eye put them, and a field that jumps
         // under the pointer is a field you cannot aim a click into. A
@@ -206,7 +203,7 @@ T.Control {
         // accent ring and said "failed" in a channel already spoken for.
         // Pointer focus is the surface lift plus the caret; keyboard focus is
         // the ring.
-        border.width: root.failed ? 1 : 0
+        border.width: root.failed ? Style.stroke(Style.spaceTight, Screen.devicePixelRatio) : 0
         border.color: root.enabled ? Style.danger : Style.disabled(Style.danger)
 
         Behavior on border.color {
@@ -413,10 +410,9 @@ T.Control {
             readonly property int halfPeriod: Application.styleHints.cursorFlashTime / 2
             x: Math.round(input.x + input.cursorRectangle.x)
             y: input.y + input.cursorRectangle.y
-            width: Style.spaceTight
+            width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
             height: input.cursorRectangle.height
             color: root.enabled ? Style.accent : Style.disabled(Style.accent)
-            radius: Style.radiusXs
             visible: input.activeFocus && !input.readOnly
 
             onVisibleChanged: opacity = 1
@@ -473,7 +469,7 @@ T.Control {
         // scope: measured, the frame's own `activeFocus` stays false while
         // the input holds it, so the layer's hosted default would never ring.
         focused: root.focused && !root._pointerFocus
-        focusRadius: Style.radiusMd
+        focusRadius: Style.radiusBody
         focusColor: root.failed ? Style.danger : Style.accent
     }
 

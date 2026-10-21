@@ -100,7 +100,7 @@ Item {
         runAction: name => {
             if (name === "add-capsule") {
                 border.registerFullscreenCapsule("capsule",
-                    Qt.rect(0, 0, Style.controlWidth, Style.controlHeight),
+                    Qt.rect(0, 0, Style.controlWidth, Style.size("Control", "md")),
                     Style.radiusPill);
                 return true;
             }

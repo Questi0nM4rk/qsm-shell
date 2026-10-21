@@ -22,14 +22,6 @@ TestCase {
 
     function neutral() { mouseMove(probe, 390, 510); }
 
-    function childNamed(item, name) {
-        for (const child of item.children) {
-            if (child.objectName === name)
-                return child;
-        }
-        return null;
-    }
-
     function cleanup() {
         // Restore the shared singleton so one test's gate can never poison
         // the next -- Interaction.pointerSelects is consumer-owned state,
@@ -246,12 +238,13 @@ TestCase {
     // when recede is true. It refuses hover/click like a disabled row, but
     // its content does not dim -- a live reading is not stale.
     function test_report_only_row_renders_at_full_strength_even_with_recede() {
-        // The report-only row with recede should have opacity 1.0
-        compare(childNamed(reportWithRecede, "body").opacity, 1,
+        compare(reportWithRecede.receded, false, "a report-only row with recede reported receding");
+        compare(reportWithRecede.proseColor, Style.text,
             "a report-only row with recede did not render at full strength");
 
-        // The plain interactive row with recede (not selected) should be receded
-        compare(childNamed(plainWithRecede, "body").opacity, Style.opacityRecede,
+        // The plain interactive row with recede (not selected) recedes by colour.
+        compare(plainWithRecede.receded, true, "an interactive row with recede did not report receding");
+        compare(plainWithRecede.proseColor, Style.recede(Style.text),
             "an interactive row with recede did not recede");
 
         // Both should still refuse hover and click
@@ -264,5 +257,6 @@ TestCase {
         neutral();
         mouseMove(plainWithRecede, 10, 16);
         compare(plainWithRecede.hovered, true, "an interactive row did not report hover");
+        compare(plainWithRecede.receded, false, "a hovered row kept receding");
     }
 }

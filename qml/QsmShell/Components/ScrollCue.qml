@@ -63,6 +63,7 @@ Item {
     Rectangle {
         // A mark, not a gauge: long enough to see, short enough that it never
         // claims to measure the content.
+        readonly property real _thickness: Style.stroke(Style.markThickness, Screen.devicePixelRatio)
         readonly property real _length: Math.max(Style.space5,
             Math.min(Style.space6 * 2, root._span * root._ratio))
         readonly property real _offset: Math.max(0, Math.min(1,
@@ -71,9 +72,9 @@ Item {
         visible: root.indicator && root.overflows
         x: root.vertical ? root.width - width - Style.spaceTight : _offset
         y: root.vertical ? _offset : root.height - height - Style.spaceTight
-        width: root.vertical ? Style.markThickness : _length
-        height: root.vertical ? _length : Style.markThickness
-        radius: Style.markThickness / 2
+        width: root.vertical ? _thickness : _length
+        height: root.vertical ? _length : _thickness
+        radius: Style.radiusPill
         color: Style.textMuted
         // Present while the list is moving, nearly gone at rest — at rest the
         // shell paints nothing it does not need to.

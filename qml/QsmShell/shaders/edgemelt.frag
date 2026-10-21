@@ -238,7 +238,7 @@ void main() {
     }
 
     // Handle circles (dedicated uniforms, not slots). They belong only to the
-    // attached desktop path; fullscreen has no persistent affordances.
+    // attached path; fullscreen has no persistent affordances.
     if (fullscreenMode == 0 && handle0.z > 0.0) {
         float dHandle = length(pixel - handle0.xy) - handle0.z;
         mergedSdf = smin(mergedSdf, dHandle,

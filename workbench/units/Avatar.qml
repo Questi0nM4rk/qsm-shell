@@ -12,7 +12,7 @@ Rectangle {
     property string presence: variant === "online" ? "success" : ""
     property bool ringed: false
     property real fraction: 0.5
-    property real box: Style.controlHeight
+    property real box: Style.size("Control", "md")
     property url photo: ""
 
     // No picture ships with the library, so the sample is drawn from the
@@ -59,8 +59,8 @@ Rectangle {
             { label: "full", set: { ringed: true, fraction: 1 } }
         ] },
         { label: "size", options: [
-            { label: "md", set: { box: Style.controlHeight } },
-            { label: "lg", set: { box: Style.controlHeightLg } }
+            { label: "md", set: { box: Style.size("Control", "md") } },
+            { label: "lg", set: { box: Style.size("Control", "lg") } }
         ] }
     ]
     readonly property var integration: ({
