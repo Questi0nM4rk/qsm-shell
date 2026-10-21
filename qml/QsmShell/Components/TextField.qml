@@ -177,7 +177,7 @@ T.Control {
     leftPadding: leadingSlot.hasContent
         ? root.leadingSlotInset + leadingSlot.implicitWidth + root._slotGap
         : root._inset
-    rightPadding: root._inset + (trailingSlot.hasContent ? trailingSlot.implicitWidth + root._slotGap : 0)
+    rightPadding: root._inset + (trailingSlot.hasContent ? trailingSlot.footprint + root._slotGap : 0)
 
     hoverEnabled: true
     // Focus lands on the INPUT, never on the frame: the frame forwards it
@@ -242,6 +242,21 @@ T.Control {
         return false;
     }
 
+    // A Control's padding is its hit box, not its footprint: an action never
+    // adds footprint, so the text column loses the glyph's width and the hit
+    // box overflows it. `slot` children are read through a Loader's `item`;
+    // only a Control (the one with a `contentItem`) carries such padding.
+    function _slotPad(slot, key: string): real {
+        let pad = 0;
+        for (let i = 0; i < slot.children.length; i++) {
+            const child = slot.children[i];
+            const content = child.item ?? child;
+            if (content.contentItem !== undefined)
+                pad += content[key];
+        }
+        return pad;
+    }
+
     // The slots live in the padding, outside the clipped content, so a glyph
     // is never scrolled over by the text.
     Item {
@@ -258,13 +273,18 @@ T.Control {
     Item {
         id: trailingSlot
         readonly property bool hasContent: root._slotHasContent(trailingSlot)
+        // The glyph, not the hit box, sits `_inset` from the edge.
+        readonly property real overhang: hasContent ? root._slotPad(trailingSlot, "rightPadding") : 0
+        readonly property real footprint: hasContent
+            ? implicitWidth - root._slotPad(trailingSlot, "leftPadding") - overhang : 0
         anchors.right: parent.right
-        anchors.rightMargin: root._inset
+        anchors.rightMargin: root._inset - overhang
         anchors.verticalCenter: parent.verticalCenter
         implicitWidth: hasContent ? childrenRect.width : 0
         implicitHeight: hasContent ? childrenRect.height : 0
         width: implicitWidth
         height: implicitHeight
+        z: 1
     }
 
     contentItem: Item {
@@ -424,7 +444,10 @@ T.Control {
                 onTriggered: caret.opacity = caret.opacity === 1 ? 0 : 1
             }
 
+            // A one-shot position animation is removed under reduced motion,
+            // not shortened.
             Behavior on x {
+                enabled: !Style.reducedMotion
                 NumberAnimation { duration: Motion.press; easing.type: Motion.standardEasing }
             }
         }

@@ -20,6 +20,8 @@ Item {
     property string size: "md"
     property int acceptedCount: 0
     property int escapedCount: 0
+    // Slot content is the host's, so the host scales its glyphs with the field.
+    readonly property int slotGlyph: Style.iconNear(Style.iconMd * field.sizeScale)
 
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlHeightLg
@@ -37,7 +39,7 @@ Item {
 
         leading: Loader {
             active: root.purpose === "search"
-            sourceComponent: Component { SvgIcon { name: "search" } }
+            sourceComponent: Component { SvgIcon { name: "search"; size: root.slotGlyph } }
         }
         trailing: Loader {
             active: root.purpose === "password" || root.purpose === "number"
@@ -67,6 +69,7 @@ Item {
     Component {
         id: revealAction
         IconButton {
+            size: root.slotGlyph
             icon: field.passwordVisible ? "eye" : "eye-off"
             accessibleName: "Reveal password"
             onClicked: field.toggleReveal()
