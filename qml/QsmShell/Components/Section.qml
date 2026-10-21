@@ -5,16 +5,14 @@ import qs.QsmShell.Style
 
 // A named group of things, with the group's own action beside its name.
 //
-// The pattern was already everywhere in the one consuming shell — a section
-// rule, a gap, some rows, and where the group had an action ("Clear all",
-// "Refresh") it sat in a hand-built row with its own spacing. Three surfaces,
-// three different gaps between the rule and the first row.
-//
 // The action lives on the HEADING, not at the bottom of the group: it acts on
 // the group, so it belongs where the group is named. Putting it after the rows
 // makes it read as acting on the last one.
 ColumnLayout {
     id: root
+
+    Accessible.role: Accessible.Grouping
+    Accessible.name: root.title
 
     property string title: ""
     // The group's own action. Empty takes no space.
