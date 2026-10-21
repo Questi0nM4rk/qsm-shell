@@ -39,6 +39,7 @@ ColumnLayout {
     }
     RowLayout {
         id: actionHost
+        visible: children.length > 0
         Layout.alignment: Qt.AlignHCenter
         spacing: Style.space2
     }
