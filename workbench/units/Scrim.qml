@@ -11,7 +11,8 @@ Rectangle {
     property bool shown: variant === "shown"
     property int dismissals: 0
 
-    color: Style.band
+    // Not band: the scrim dims with band, so band under it would show no dim.
+    color: Style.surface
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 

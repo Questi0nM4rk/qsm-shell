@@ -18,7 +18,7 @@ Rectangle {
     id: root
 
     property bool shown: false
-    property real strength: 0.55
+    property real strength: Style.scrimOpacity
 
     signal dismissed
     readonly property list<T.Action> actions: [T.Action { text: "Dismiss"; enabled: root.enabled && root.shown; onTriggered: root.dismiss() }]
@@ -37,14 +37,15 @@ Rectangle {
 
     Behavior on opacity {
         NumberAnimation {
-            duration: Motion.medium
+            duration: root.shown ? Motion.medium : Motion.exit(Motion.medium)
             easing.type: root.shown ? Motion.standardEasing : Motion.exitEasing
         }
     }
 
     MouseArea {
         anchors.fill: parent
-        enabled: root.shown && root.enabled
+        // Disabled still catches (the dim is painted); it only stops reporting.
+        enabled: root.shown
         // Every button, so a right-click cannot reach a context menu behind
         // an open modal.
         acceptedButtons: Qt.AllButtons
