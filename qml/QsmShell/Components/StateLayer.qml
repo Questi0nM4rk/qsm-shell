@@ -10,8 +10,7 @@ import qs.QsmShell.Style
 // not remove it — it just means the control answers that state by accident.
 //
 //   rest        nothing. The shell paints no box around a thing at rest.
-//   hover       the affordance grows slightly AND changes colour (owner:
-//               "on hover lehke zvetseni, a zmena barvy"). Growth is this
+//   hover       the affordance grows slightly AND changes colour. Growth is this
 //               layer's `hoverScale`; the colour is the body's own, through
 //               `Style.tone`, or this layer's `hoverTint` for a target that
 //               has no body of its own.
@@ -20,8 +19,7 @@ import qs.QsmShell.Style
 //               `pressScale` and pushes in on a faster curve, so a click is
 //               acknowledged even when the action it starts takes time.
 //   focus       an accent ring outside the body (see below), for KEYBOARD
-//               focus only (owner: "ten select line, ten je jen pro keyb
-//               focused"). A keyboard user needs to know where they are
+//               focus only. A keyboard user needs to know where they are
 //               without anything moving; a pointer user already knows. A text
 //               field's caret is its own focus mark.
 //   disabled    the host dims itself BY COLOUR -- every painted role through

@@ -177,8 +177,7 @@ void main() {
         float incomingSdf = mergedSdf;
         // Blend 0 means an EXACT union, and that has to be a real min().
         //
-        // The k floor was believed to deliver one ("k = max(.., 0.01) turns
-        // blend 0 into a hard min") and it does not: this smin does
+        // A k floor ("k = max(.., 0.01)") does not deliver one: this smin does
         // NOT converge to min as k falls. For equal inputs it reduces to
         //
         //     smin(a, a, k) = sqrt(2) * a + k * (1 - sqrt(2))
@@ -207,7 +206,7 @@ void main() {
         // same number for a plain Rollout and deliberately different for a
         // flush nested host, which sets blend 0 to ask for an exact union
         // while being fully out. Gating on blend blanked that host's edge
-        // entirely (owner-caught within the hour).
+        // entirely.
         float nearThis = 1.0 - smoothstep(0.0, seamReach, abs(d));
         // The existing union's edge must never blink while a body is absorbed.
         float newBoundary = nearThis * smoothstep(0.0, seamReach, incomingSdf);

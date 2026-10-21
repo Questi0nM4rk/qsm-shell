@@ -21,10 +21,10 @@ import qs.QsmShell.Style
 //
 // `progress` rides the RIM, for the same reason and one more: "a picture with
 // how-far-through drawn around it" is ONE thing, and a consumer assembling it
-// out of a ring and a picture assembles it differently every time. It was
-// built twice in the one consuming shell — a circle with a full ring on one
-// surface, a square with a half ring on another, the arc hidden behind the
-// square's own corners — which is the whole argument for this type owning it.
+// out of a ring and a picture assembles it differently every time (a circle
+// with a full ring here, a square with a half ring there, the arc hidden
+// behind the square's own corners), which is the argument for this type
+// owning it.
 Item {
     id: root
 
@@ -129,10 +129,8 @@ Item {
 
     // A round photograph needs a real alpha MASK. Item clipping is
     // rectangular, and a Rectangle with a radius and `layer.enabled` does not
-    // mask its children either — the first version did exactly that and the
-    // photograph stayed square, sitting over the round ground it was supposed
-    // to fill. `MultiEffect.maskSource` is the mechanism that actually cuts
-    // the corners.
+    // mask its children either. `MultiEffect.maskSource` is the mechanism that
+    // actually cuts the corners.
     Image {
         id: portrait
         anchors.fill: ground

@@ -15,9 +15,8 @@ T.TabBar {
 
     required property var options
     property string size: "md"
-    // Opt-in Tab/Shift+Tab selection for a host that owns one tab GROUP
-    // (owner panel contract). The default stays the conventional single tab
-    // stop; arrows, Home/End and the actions are unchanged either way.
+    // Opt-in Tab/Shift+Tab selection for a host that owns one tab GROUP. The
+    // default is the conventional single tab stop; arrows, Home/End and the actions are unchanged either way.
     property bool tabNavigation: false
     // Ends are visible landmarks: a group that must stop there sets false.
     property bool wrapNavigation: true

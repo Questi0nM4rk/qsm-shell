@@ -11,7 +11,7 @@ import qs.QsmShell.Style
 // quantity throws away information the person wanted.
 //
 // It never disappears on its own. A spinner that simply vanishes has reported
-// nothing, and the outcome was the point — the surface that started the work
+// nothing, and the outcome is the point — the surface that started the work
 // replaces this with the result, success or failure.
 Item {
     id: root

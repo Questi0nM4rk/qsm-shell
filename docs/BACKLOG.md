@@ -25,8 +25,6 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - R0: provider installs no `Style.backend`, so reduced motion defaults to false;
   add a provider-owned review environment, deferred to the first selected
   implementation item.
-- R1: recording cadence guidance distinguishes actual capture rate from CFR
-  encoding in `AGENTS.md`.
 - NotificationCenter: live notification action targets, spoken output and
   appearance await owner review.
 - R2/R3: Slider's unit does not answer label clicks; horizontal ScrollCue and long
@@ -77,97 +75,13 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - Vertical `Divider` when a layout needs it. SVG aliases at the first naming
   conflict. A light theme after its palette is designed.
 
-## Measured Qt quirks
+## Workbench provider milestones awaiting the owner
 
-Each cost real time once. None is findable by reading the code.
-
-- **`Screen.devicePixelRatio` is the output's integer scale, not the window's.**
-  On a 1.25 monitor a Quickshell window reads 2 from `Screen` and 1.25 from
-  `Window.window.devicePixelRatio` once mapped. A line snapped to the `Screen`
-  grid paints two device rows instead of one wherever y * 1.25 has a fraction of
-  .25. `Style.stroke(n, item)` reads the window's ratio itself; never feed a line
-  from `Screen`.
-- **`clip: true` shaves a child's hover growth.** A control that grows on
-  hover cannot sit inside a clipping ancestor sized to it.
-- **A `Rectangle` radius does not round its children, and `clip` does not
-  either.** Item clipping is rectangular; `MultiEffect.maskSource` is the only
-  mechanism that cuts corners. `layer.enabled` does not help.
-- **`Keys.onSpacePressed` needs focus, and nothing gives it by default.** Key
-  handlers without `activeFocusOnTab` and without focus on press are a
-  keyboard path that cannot be reached.
-- **`Keys.onPressed` accepting an event does NOT stop the per-key handler.**
-  Both hang off the same attached object. Use ONE dispatcher.
-- **`Keys` has no `onHomePressed` / `onEndPressed`.** Only arrows, Return,
-  Enter, Escape, Space, Tab, Backtab, Delete and digits get named handlers.
-- **A `Flickable`'s declared children go into its `contentItem`** and count
-  toward `childrenRect`; chrome sized from content is a binding loop. Chrome
-  is a sibling of the viewport. `Flickable.contentData` is not aliasable;
-  alias a named `Item` inside the viewport instead.
-- **Qt clamps a rectangle's radius to half its SHORT side.** A thin rule
-  flush against a rounded card cannot curve with it; the container clips.
-- **`Qt.application` has no `activeFocusItem`.** `Window.window.activeFocusItem`
-  does.
-- **A ternary yielding `undefined` does NOT withdraw an anchor.** An item
-  that works in two orientations states its own rectangle.
-- **A Rectangle paints its fill and border BEHIND every child.** A selection
-  ring has to be the last child, not the root's `border`.
-- **Rotating a rectangle rotates it about its CENTRE.** Set a Gradient's
-  `orientation` instead of rotating the item that carries it.
-- **`visualPosition` on a slider node emits no change when orientation or
-  mirroring flips**; a painted position names both as dependencies.
-- **`T.RangeSlider` picks the pressed node by VALUE distance, not by handle
-  geometry**, after a handle hit test that ignores `visible`. A parked node
-  needs a sizeless handle, and a single-thumb press has to move the live
-  node to the press point before Qt sees it.
-- **`T.RangeSlider` makes each handle a tab stop and its `focusInEvent`
-  hands focus to a handle.** Taking the stops away sends that hand-off in a
-  circle until the stack is gone; keep them and read the handle's focus.
-- **`T.RangeSlider` rewrites handle z on every press** (grabbed 1, other 0),
-  so anything meant to paint under both handles sits at -1.
-- **`T.Switch` writes `checked` itself on a drag release, even with
-  `checkable: false`.** A click leaves `checked` alone and emits `clicked`;
-  a drag past the middle sets it. A host-owned switch stands on
-  `T.AbstractButton` and gives up drag. Space clicks a template button,
-  Return does not.
-- **A `HoverHandler` forces `acceptHoverEvents` on its item even while
-  disabled**, and `hoverEnterEvent` sets `hovered` from `hoverEnabled`.
-- **`setValue` refuses a write fuzzy-equal to the current value**, so a
-  `stepSize` whose multiples cannot express a bound saturates below it (0.1
-  lands on 0.9999999999999999, 0.01 lands on 1).
-- **Qt reports positive `angleDelta.x` when the top of the wheel goes left**
-  and does not consult `event.inverted`.
-- **`QT_QUICK_BACKEND=opengl` does not exist.** The RHI backend is
-  `QSG_RHI_BACKEND`.
-
-## Agent task backlog (folded in from `.codeagent`)
-
-The codeagent task files are gone; these lines retain their scope.
-The implementation is committed on `main`; `SH-C3` is the only owner-accepted
-task in this group.
-
-- **SH-C1 Forward the shared preview environment** — implemented; composition
-  boundary checks pass, story opt-in source-reviewed, runtime proof rides on
-  SH-C3.
-- **SH-C2 Shared mock screen and bounded placement** — implemented; the
-  fixture's checks pass and the overlay does not crop external elevation. Owner
-  judgement open.
-- **SH-C3 Neutral capsule base on the mock screen** — implemented, **owner
-  accepted**; the 53-step native base flow passes.
-- **SH-C4 Real capsule composition container nodes** — implemented; real slot
-  children, host-owned capsule state and shared placement verified, composition
-  owner review open.
-- **SH-C5 Real Slider sound-channel composition leaf** — implemented; actual
-  Slider and mute-label input verified inside a correctly sized vertical
-  capsule, owner review open.
-- **SH-C6 Discoverable sound Compose and migrated flows** — implemented; the
-  starter and the 28-step sound plus 57-step lifecycle flows pass. Live window
-  evidence deferred to SH-C7.
-- **SH-C7 Exact live base and Compose handoff** — live run on workspace 10 got
-  as far as real pointer, keyboard, label mute and wheel routes; native F11
-  compositor evidence still missing. Not accepted.
-- **SH-C8 Neutral base control grouping correction** — declaration-only
-  regrouping so independent choices are separate from commands; the migrated
-  53-step flow passes, live review open.
+- Shared mock screen and bounded placement: owner judgement open.
+- Real capsule composition container nodes and the real Slider sound-channel leaf: owner review open.
+- Sound Compose and its migrated flows: live window evidence still missing.
+- Exact live base and Compose handoff: native F11 compositor evidence still missing; not accepted.
+- Neutral base control grouping: live review open.
 
 ## Owner rulings the type audit left open
 

@@ -54,9 +54,8 @@ Item {
     property int closeDelay: Motion.hoverGrace
 
     // Content goes straight in. An intermediate host that fills the popover
-    // cannot also be what the popover sizes itself from — the first version
-    // had `implicitWidth: panel.implicitWidth` over an `anchors.fill` Item,
-    // which is 0 forever, so every popover was zero by zero.
+    // cannot also be what the popover sizes itself from: `implicitWidth:
+    // panel.implicitWidth` over an `anchors.fill` Item is 0 forever.
     default property alias content: contentHost.data
 
     signal openRequested
@@ -96,8 +95,8 @@ Item {
     // position changes whenever any ancestor moves, and Qt Quick emits no
     // signal for that — a binding that reads `anchorItem.x` re-fires when the
     // anchor moves inside its own parent and stays silent when the parent
-    // scrolls out from under it. Measured: a popover anchored to a row in a
-    // scrolling list sat where the row used to be.
+    // scrolls out from under it: a popover anchored to a row in a scrolling
+    // list would sit where the row used to be.
     //
     // So it is resampled every frame while OPEN, and never while closed. The
     // assignment is a no-op when nothing moved, so a still popover costs one
@@ -125,9 +124,9 @@ Item {
     Component.onCompleted: { root.resample(); root.resampleBounds(); }
 
     // The bounds rectangle in the SAME space as the anchor. Reading only its
-    // width and height put its origin at (0, 0), so a bounds item that is
-    // translated — a panel inset inside a scene, which is the normal case —
-    // was clamped against the wrong rectangle entirely.
+    // width and height puts its origin at (0, 0), so a translated bounds item
+    // (a panel inset inside a scene, the normal case) would be clamped
+    // against the wrong rectangle.
     property rect _bounds: Qt.rect(0, 0, 0, 0)
 
     function resampleBounds(): void {

@@ -11,9 +11,8 @@ import QtQuick
 // may sit. Over SHORT haystacks -- app names, keybind descriptions -- plain
 // subsequence matching is right and the cap is left off. Over long ones it is
 // not: a clipboard entry can be a whole file, and any four letters will be
-// findable somewhere in it in order, so "zzqq" matched two real entries and
-// "No match" was practically unreachable. Callers with long haystacks pass a
-// span.
+// findable somewhere in it in order, so no query would ever report "No
+// match". Callers with long haystacks pass a span.
 QtObject {
     function score(query: string, text: string, maxSpan: real): real {
         const q = String(query ?? "").toLowerCase();

@@ -10,18 +10,15 @@ import qs.QsmShell.Style
 Item {
     id: root
 
-    // Consumer suppression hook (11c gap: a second consumer's fullscreen or
-    // focus-mode policy is exactly the Wayland-shaped knowledge this type may
-    // never hold, per the design's boundary decision — yet a registration can
-    // outlive the moment such a consumer already decided it must stop
-    // painting/masking. `Rollout.suppressed` unregisters INSTANTLY for a
-    // caller built on it; a caller that talks to registerBulge or
-    // registerFullscreenCapsule directly, or one torn down through an async
-    // callback, can leave an entry behind for a frame the consumer already
-    // ruled out. `entryFilter` is a predicate over a registry id, applied to
-    // every derived view below (never to the raw registries themselves, so a
-    // trace or a dump still sees the truth). Absent (null, the default)
-    // filters nothing — the pre-hook behaviour.
+    // Consumer suppression hook. A consumer's fullscreen or focus-mode policy
+    // is Wayland-shaped knowledge this type never holds, yet a registration
+    // can outlive the moment the consumer decided it must stop painting and
+    // masking. `Rollout.suppressed` unregisters INSTANTLY for a caller built
+    // on it; a caller that talks to registerBulge or registerFullscreenCapsule
+    // directly, or one torn down through an async callback, can leave an entry
+    // behind for a frame. `entryFilter` is a predicate over a registry id,
+    // applied to every derived view below (never to the raw registries, so a
+    // trace or a dump still sees the truth). Null filters nothing.
     property var entryFilter: null
 
     // The pointer reader every Rollout's `hovered`/`keepOpen` needs (the
@@ -38,9 +35,9 @@ Item {
     property var rolloutRegions: ({})
     // The union of hit rects the consumer needs, as plain Qt.rect values.
     // A `readonly property`, not a signal: a binding cannot forget to
-    // subscribe, and cannot deliver an update the consumer drops (ADR
-    // "transport"). What the consumer does with these — a Wayland Region, a
-    // mask, nothing at all — is the one thing this type may never know.
+    // subscribe, and cannot deliver an update the consumer drops. What the
+    // consumer does with these — a Wayland Region, a mask, nothing at all — is
+    // the one thing this type may never know.
     readonly property var maskRects: Object.keys(rolloutRegions)
         .filter(id => !root.entryFilter || root.entryFilter(id))
         .map(id => rolloutRegions[id])
@@ -66,8 +63,7 @@ Item {
     // it gets its own registry, keyed and reassigned the same way. Shares the
     // 8-slot ceiling with the shader's uniform cap (and with rolloutRegions
     // above) so the mask and the melt never disagree about how many rollouts
-    // fit. (The eight-slot budget itself is not redesigned here — ADR "not
-    // designed".)
+    // fit.
     property var bulgeRegions: ({})
     readonly property var bulgeEntries: Object.keys(bulgeRegions)
         .filter(id => !root.entryFilter || root.entryFilter(id))
@@ -130,7 +126,7 @@ Item {
     // bottom-right, bottom-left) — as a vector4d. A Rollout derives this from
     // its own `edges`; a non-Rollout consumer (e.g. a popout Card that
     // touches no screen edge) passes the same radius on all four corners.
-    // The shader's edgemelt.frag reads this order via its own bulgeRadius0..7
+    // The shader's edgemelt.frag reads this order via its own radii0..7
     // uniforms — keep both sides of that contract in sync.
     // blend: [0,1] scale on the melt reach for this bulge's neck — Rollouts
     // shrink it with their protrusion so absorbed bodies stop bridging.
@@ -164,13 +160,11 @@ Item {
         // the two become one body.
         // The threshold is `<= reach` with NO lower bound, so flush (gap
         // exactly 0) and already-overlapping (negative) both count as merged.
-        // A strict `> 0` was the bug behind a nudge in a tall popout's
-        // bottom-right corner: a card clamped to rest ON the band's inner face
-        // has a gap of precisely zero, fell through every branch, and kept its
-        // corner radius — so the silhouette curved away before it reached the
-        // band and the melt bridged the sliver it left. Zero is the most
-        // likely gap of all, not an edge case: it is where the clamp parks
-        // anything too tall for the space.
+        // A strict `> 0` would miss a card clamped to rest ON the band's inner
+        // face: its gap is precisely zero, it would keep its corner radius,
+        // and the silhouette would curve away before it reached the band.
+        // Zero is the most likely gap of all, because it is where the clamp
+        // parks anything too tall for the space.
         // Origin fill continues in the shader. Snapping that side to the screen
         // would truncate the full moving body and displace its deformation pivot.
         if (!(edgeBits & 1) && x - root.leftEdge <= reach) {
@@ -235,10 +229,9 @@ Item {
     // crossed. seamBits answers "on which side does a NEIGHBOURING SILHOUETTE
     // continue", so the rect overlaps it instead of merely touching.
     //
-    // They were one field, and overloading it cost a real bug: setting the
-    // right bit for a parent popout's flush child made weldCap believe the
-    // rect crossed the right band and visibly shrank the fillet where it joins
-    // a DIFFERENT edge entirely.
+    // They are two fields because overloading one would make weldCap believe a
+    // parent popout's flush child crossed the right band and shrink the fillet
+    // where it joins a DIFFERENT edge entirely.
     // A flush seam has to OVERLAP, not merely touch.
     //
     // Square corners and blend 0 give an exact union, which removes the dip and
@@ -252,8 +245,7 @@ Item {
     // seamBits already names the sides where a neighbouring silhouette continues,
     // so it is the same question and needs no new argument. Reaching into the
     // neighbour is invisible: that side is covered by its body by definition.
-    // Applied AFTER snapToEdges so weldCap still sees the rect's true size --
-    // the bug that cost a round when edgeBits and seamBits were one field.
+    // Applied AFTER snapToEdges so weldCap still sees the rect's true size.
     function overlapSeams(rect, seamBits) {
         if (!seamBits)
             return rect;

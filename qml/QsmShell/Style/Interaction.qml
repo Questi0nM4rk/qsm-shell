@@ -23,6 +23,6 @@ QtObject {
     // was just pressed and the pointer has not moved since — so the consumer
     // sets this, and every component honours it without being asked.
     //
-    // Default true: a shell that never sets it behaves exactly as before.
+    // Default true: a shell that never sets it lets the pointer select.
     property bool pointerSelects: true
 }

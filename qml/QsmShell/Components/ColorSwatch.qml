@@ -9,11 +9,9 @@ import qs.QsmShell.Style
 // A colour slot: the colour shown as itself with its value readable, or the
 // empty state when there is no colour in it yet.
 //
-// Three surfaces in the consuming shell drew this by hand — the picker's
-// history, the theme cards, the palette sheet — and each answered "is this
-// swatch light or dark?" differently, so the hex on a pale swatch was
-// unreadable in one of them. Contrast against the sample is not a style
-// choice; it is the difference between a swatch and a coloured square.
+// Contrast against the sample is not a style choice: surfaces that each answer
+// "is this swatch light or dark?" their own way leave the hex on a pale swatch
+// unreadable. It is the difference between a swatch and a coloured square.
 //
 // The checkerboard under a translucent colour is not decoration either: a
 // 20%-alpha swatch over the shell's own surface looks like a different opaque
@@ -24,12 +22,10 @@ import qs.QsmShell.Style
 // 24px sample in a palette row still answers on a full target without its
 // hit zone overlapping a sibling's. Selection and focus belong to the face;
 // the target itself paints nothing.
-// NOT clipped. `clip` here shaved the StateLayer's hover growth back to
-// the swatch's own bounds, so the swatch answered a pointer by not moving
-// — measured by the consumer's ui-guard at 1.3px off a 32px swatch. The
-// sample carries the corner itself instead, which is what the clip was
-// doing for it, and item clipping never rounded the check's corners
-// anyway (it is rectangular).
+// NOT clipped. `clip` would shave the StateLayer's hover growth back to the
+// swatch's own bounds, so the swatch would answer a pointer by not moving.
+// The sample carries the corner itself instead; item clipping never rounds
+// the check's corners anyway (it is rectangular).
 Item {
     id: root
 
@@ -49,10 +45,8 @@ Item {
     property bool selected: false
     property bool focused: root.activeFocus
 
-    // The keyboard handlers below need focus, and nothing was giving it: no
-    // tab stop, and a pointer press that never moved focus here. The five
-    // states law counts a state the component cannot express as a state it
-    // does not have, and this one was written down and unreachable.
+    // The keyboard handlers below need focus, so the swatch is a tab stop and
+    // a pointer press moves focus here.
     activeFocusOnTab: enabled
 
     // A swatch always has a name: the host's reading, else the colour's own

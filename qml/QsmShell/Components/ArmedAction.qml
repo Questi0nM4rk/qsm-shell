@@ -5,12 +5,11 @@ import QtQuick
 // Arm, then fire. The confirmation for something that cannot be undone, when
 // a dialog would be too much ceremony for the gesture.
 //
-// WHY it is a component and not four lines in each control: two controls in
-// the consuming shell had grown their own copy — a bool, a timer, a reset on
-// pointer-leave — and they already disagreed about the timeout and about
-// whether leaving disarms. A confirmation that behaves differently in two
-// places is worse than no confirmation, because the person learns the lenient
-// one and is caught by the strict one.
+// WHY it is a component and not four lines in each control: a bool, a timer
+// and a reset on pointer-leave copied into two controls disagree about the
+// timeout and about whether leaving disarms. A confirmation that behaves
+// differently in two places is worse than no confirmation, because the person
+// learns the lenient one and is caught by the strict one.
 //
 // The ladder this sits on matters: constraint beats a safe default beats a
 // consequence preview beats undo beats confirmation, in that order. Reach for

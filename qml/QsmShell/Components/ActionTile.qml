@@ -5,13 +5,12 @@ import qs.QsmShell.Style
 
 // A TILE: an icon over its label, in a box big enough to hit without aiming.
 //
-// It was called `SessionButton`, after the one surface that happened to use
-// it — the tell the library's own laws name. What it actually is: the shape a
-// SET of equally-weighted choices takes when they are laid out as a column or
-// a grid rather than inline. A `Capsule` is the inline form and this is the
-// stacked one, and they are not one type with a layout flag: a tile has a
-// fixed footprint so a set of them lines up, and it carries an ARMED state,
-// because a grid of consequential choices is exactly where arming belongs.
+// It is the shape a SET of equally-weighted choices takes when they are laid
+// out as a column or a grid rather than inline. A `Capsule` is the inline
+// form and this is the stacked one, and they are not one type with a layout
+// flag: a tile has a fixed footprint so a set of them lines up, and it carries
+// an ARMED state, because a grid of consequential choices is exactly where
+// arming belongs.
 //
 // The host owns which tile is selected and which is armed — the keyboard has
 // to be able to fire the selected one, and "which is armed" must have exactly
@@ -112,10 +111,8 @@ T.Control {
         onHoveredChanged: { if (hovered) root.entered(); else root.exited(); }
     }
 
-    // A tile is a button, and a button answers a key. Without these the only
-    // way to fire one was the pointer, on a surface a person reaches by
-    // keybind. Every route shares `activate()`, so the disabled guard lives
-    // in exactly one place.
+    // A tile is a button, and a button answers a key. Every route shares
+    // `activate()`, so the disabled guard lives in exactly one place.
     Keys.onSpacePressed: event => { event.accepted = true; root.activate() }
     Keys.onReturnPressed: event => { event.accepted = true; root.activate() }
     Keys.onEnterPressed: event => { event.accepted = true; root.activate() }

@@ -19,8 +19,8 @@ import qs.QsmShell.Style
 //
 // The states are the point. `ghost` paints nothing at rest, which is this
 // shell's resting law — and it still answers the pointer, the press, the
-// keyboard and its own unavailability, because "no box at rest" was never a
-// reason to leave those undefined.
+// keyboard and its own unavailability, because "no box at rest" is no reason
+// to leave those undefined.
 T.Control {
     id: root
 
@@ -87,9 +87,8 @@ T.Control {
     // focus, selection and the primary action.
     readonly property color _reading: _primary ? Style.textOnPrimary : Style.textMuted
 
-    // ONE padding value, used by BOTH the width and the content margins. They
-    // used to disagree, and every small capsule came out narrower than its own
-    // contents asked for.
+    // ONE padding value, used by BOTH the width and the content margins, so a
+    // small capsule is never narrower than its own contents ask for.
     readonly property real contentInset: Style.rhythm(Style.space4 * root._s)
 
     implicitHeight: root._box

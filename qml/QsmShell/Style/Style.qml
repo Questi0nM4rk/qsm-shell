@@ -177,8 +177,8 @@ QtObject {
     }
 
     // THE state matrix, once. A body on a layer answers hover, press, selection
-    // and unavailability with ONE colour, and every component used to write
-    // its own version of this ternary (four of them disagreed on the tint).
+    // and unavailability with ONE colour; a ternary written per component
+    // would drift on the tint.
     // Order matters and is the ladder's: selection is identity (the accent
     // over the layer), a lift stacks on top of it, and disabled dims whatever
     // came out. `Surface` binds this for the common case; a component with
@@ -260,8 +260,8 @@ QtObject {
     readonly property int textXl: backend?.textXl ?? Tokens.typeXl
     // The top of the ladder. A big reading (a temperature, a ring's value) and
     // a number read from across the room (a clock) are different enough from
-    // each other and from textXl that surfaces were inventing 28 and 44
-    // locally rather than going without.
+    // each other and from textXl that a surface would otherwise invent 28 and
+    // 44 locally.
     readonly property int textDisplay: backend?.textDisplay ?? Tokens.typeDisplay
     readonly property int textHero: backend?.textHero ?? Tokens.typeHero
     // Line height is a RATIO, and it is the difference between a paragraph and
@@ -385,9 +385,7 @@ QtObject {
     //
     // The ratio is the WINDOW's, read here from the item that paints the line
     // and nowhere else, so every caller is right per monitor and none passes
-    // it: `Screen.devicePixelRatio` is the output's integer scale (2 on a 1.25
-    // output) and snaps to a grid the window does not have. An item with no
-    // window yet reads 1 and is re-read when it gets one.
+    // it. An item with no window yet reads 1 and is re-read when it gets one.
     //
     //     height: Style.stroke(Style.hairline, root)
     //

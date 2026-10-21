@@ -21,8 +21,7 @@ Rectangle {
     property bool strong: false
     property color markColor: Style.accent
     // What a SHOWN-but-not-strong mark reads at. A list cursor is either gone
-    // or fully present, so this defaults to 1 and every existing consumer is
-    // unaffected. A mark that never leaves (a notification's urgency tick,
+    // or fully present, so this defaults to 1. A mark that never leaves (a notification's urgency tick,
     // present on every row and only THICKENING on select) needs a third,
     // dimmer level for "here, but not the current one" — brightening it too
     // would spend the same signal `strong` already owns.

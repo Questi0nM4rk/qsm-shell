@@ -274,7 +274,7 @@ Item {
     // Retention owns the last body until the host reports genuinely hidden, so a
     // departure caught mid-slide stops where it is instead of animating the
     // retained extent smaller. The evicting rows stay in the column at their
-    // frozen heights, which is the paint the owner last saw.
+    // frozen heights, which is the paint last seen.
     function holdEviction(): void {
         if (root.evicting.length === 0)
             return;

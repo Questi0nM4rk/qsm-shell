@@ -118,12 +118,9 @@ Item {
     // The keep-open verdict a consumer reads: `hovered`, extended by
     // `closeDelay` after it drops. Kept separate from `hovered` on purpose --
     // a `hovered` that stayed true for `closeDelay` after the pointer left
-    // would be a name that lies, and this library has already been bitten by
-    // a name that said where a type was used rather than what it was. This
-    // component only REPORTS — never `shouldBeActive = false` here. The
-    // surface holding this rollout decides what `keepOpen` means; a
-    // component that closed itself would be the exact law this library
-    // breaks nowhere else.
+    // would be a name that lies. This component only REPORTS — never
+    // `shouldBeActive = false` here. The surface holding this rollout decides
+    // what `keepOpen` means.
     readonly property bool keepOpen: root.visible && (hovered || closeDelayTimer.running)
 
     // The verdict a surface binds `shouldBeActive` against: open because the
@@ -343,9 +340,9 @@ Item {
         bodyWidth, bodyHeight)
 
     // The reveal animates along ONE axis only — the FIRST declared edge's
-    // axis (owner: a corner rollout scaling both axes reads as a popup
-    // zoom, not a roll). A second attached edge only affects flushness and
-    // corner squaring.
+    // axis: a corner rollout scaling both axes reads as a popup zoom, not a
+    // roll. A second attached edge only affects flushness and corner
+    // squaring.
     readonly property bool revealHorizontal: edges.length > 0
         && (edges[0] === "left" || edges[0] === "right")
 
@@ -389,8 +386,7 @@ Item {
             id: revealAnim
             duration: root.tier === "small" ? Motion.revealSmall : Motion.revealLarge
             easing.type: Easing.BezierSpline
-            // Reveal decelerates hard, retract never overshoots (10-motion,
-            // owner-amended: NO springs anywhere).
+            // Reveal decelerates hard, retract never overshoots: no springs.
             easing.bezierCurve: (root.shouldBeActive && !root.suppressed)
                 ? Motion.revealCurve : Motion.retractCurve
         }

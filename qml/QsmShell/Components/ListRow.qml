@@ -56,9 +56,9 @@ Item {
     // strength — it simply is not a target, so it must not offer a pointer
     // cursor and a press bounce for a click that does nothing.
     //
-    // The two are different states and were being conflated: dimming a row to
-    // 35% to say "you cannot click this" also says "this reading is stale",
-    // which is the opposite of what a live readout means.
+    // The two are different states: dimming a row to say "you cannot click
+    // this" also says "this reading is stale", which is the opposite of what
+    // a live readout means.
     property bool interactive: true
     property bool danger: false
     // Structural rows. They are rows so a keyboard cursor can step past them

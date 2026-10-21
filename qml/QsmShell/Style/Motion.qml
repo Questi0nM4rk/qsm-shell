@@ -106,10 +106,10 @@ QtObject {
     // constants rather than theme tokens: a theme changes how long the border
     // takes, never what shape the deformation has.
     //
-    // NO overshoot in either. A spring was tried and cut: overshoot made every
-    // reveal read as a popup landing on top of the shell rather than as the
-    // border itself moving. Attached Rollout changes aperture depth only;
-    // detached compatibility can deform without changing this curve.
+    // NO overshoot in either: overshoot makes a reveal read as a popup landing
+    // on top of the shell rather than as the border itself moving. Attached
+    // Rollout changes aperture depth only; a detached presentation can deform
+    // without changing this curve.
     //
     // Reveal is a strong decelerate: fast out of the border, soft landing.
     readonly property var revealCurve: [0.05, 0.7, 0.1, 1.0, 1.0, 1.0]

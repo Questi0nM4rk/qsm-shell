@@ -113,10 +113,9 @@ T.RangeSlider {
     // ratio is geometry, not taste. The fill's rounded end sits at the
     // thumb's centre and its shoulders are 0.707 x thickness from it, so the
     // thumb hides them only while thickness < 0.7 x thumb; "thumb minus one
-    // unit" gave 0.83 at md (barely visible) and 0.9 at lg (a second pill
-    // peeking out beside the thumb, owner's live finding). Two thirds keeps
-    // every preset under the line and the bigger the control, the calmer
-    // the join reads.
+    // unit" would be 0.83 at md and 0.9 at lg, a second pill peeking out
+    // beside the thumb. Two thirds keeps every preset under the line and the
+    // bigger the control, the calmer the join reads.
     property real thickness: root._presetSize <= Style.size("Slider", "sm")
         ? Style.space1 : Style.rhythm(root._presetSize * 2 / 3)
 
@@ -483,7 +482,7 @@ T.RangeSlider {
         visible: root._pill && shown
         width: Style.space1
         height: Style.space1
-        radius: Style.space1 / 2
+        radius: Style.radiusPill
         color: root._paintedFill
         x: root.vertical ? (parent.width - width) / 2 : at
         y: root.vertical ? at : (parent.height - height) / 2
@@ -533,9 +532,9 @@ T.RangeSlider {
     // A thumb, positioned in the CONTROL's coordinates so it carries the
     // padding the label created. What it paints GROWS under
     // the pointer by a fixed step per side rather than by a percentage: 8% of
-    // a 12px thumb was under a pixel. `pressed` is in the condition as well,
+    // a 12px thumb is under a pixel. `pressed` is in the condition as well,
     // because a drag that leaves the control keeps the press. Press is a
-    // LIFT, and only a lift; a shrink contradicted it.
+    // LIFT, and only a lift; a shrink would contradict it.
     //
     // A `T.Control`, because keyboard focus lives ON a RangeSlider's handle:
     // Qt makes each handle a tab stop and `focusInEvent` on the control hands
@@ -675,8 +674,8 @@ T.RangeSlider {
     // off `span` above.
     //
     // The ring is the TRACK's outline at a half-step, not the thumb's: sized
-    // to the thumb it floated off the bar by the thumb's overhang and read as
-    // a mistake, and flush on the track it vanished on a full accent bar
+    // to the thumb it floats off the bar by the thumb's overhang, and flush on
+    // the track it vanishes on a full accent bar
     // (WCAG 2.4.13 wants 3:1 against the adjacent colour; M3 and Radix keep
     // the indicator outside the component with a gap for the same reason).
     // Concentric with the track: `Style.childRadius` is inner = outer minus

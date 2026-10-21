@@ -5,11 +5,10 @@ import qs.QsmShell.Style
 // THE text. One axis carries almost everything: what ROLE this text plays.
 // The FACE is the one thing a role does not decide, and `technical` is it.
 //
-// WHY it exists, measured: `font.pixelSize` was typed by hand 104 times in the
-// one consuming shell and 40-odd more inside this library, always as the same
-// three-line incantation — family, size, weight — and often a fourth line that
-// disagreed with its neighbours. That is not a scale, it is a scale plus a
-// hundred chances to leave it. A role names the DECISION ("this is a section
+// WHY it exists: a hand-typed `font.pixelSize` is always the same three-line
+// incantation — family, size, weight — and often a fourth line that disagrees
+// with its neighbours. That is not a scale, it is a scale plus a hundred
+// chances to leave it. A role names the DECISION ("this is a section
 // heading") instead of restating its three consequences, so the decision can
 // be changed in one place and cannot be half-applied.
 //
@@ -48,14 +47,11 @@ Text {
 
     // The mono face, as a SECOND axis rather than a consequence of the role.
     //
-    // It was tied to `reading` alone, and that turned out to be the one thing
-    // that pushed text back out of this type: a clock is a hero AND technical,
-    // a temperature is a display AND technical, a percentage under an icon is
-    // metadata AND technical. None of those is a "reading" — they are their
-    // own roles, at their own sizes, that happen to be made of digits. Every
-    // one of them had to abandon Prose and hand-type family, size and weight
-    // to get the face, which is the exact three-line incantation this type
-    // exists to delete.
+    // A clock is a hero AND technical, a temperature is a display AND
+    // technical, a percentage under an icon is metadata AND technical. None of
+    // those is a "reading" — they are their own roles, at their own sizes,
+    // that happen to be made of digits. Tied to one role, each would have to
+    // abandon Prose and hand-type family, size and weight to get the face.
     //
     // It still DEFAULTS from the role, so a reading needs to say nothing.
     property bool technical: role === "reading"

@@ -98,9 +98,8 @@ Item {
     // being cut rather than sinking out of view.
     // The gradient's DIRECTION is set by the Gradient, not by rotating the
     // rectangle. Rotating a `fadeDepth × height` strip 90 degrees about its
-    // centre gives `height × fadeDepth` bounds displaced around that centre —
-    // so the horizontal fades sat across the middle of the list instead of on
-    // its edges, and were the wrong shape besides.
+    // centre gives `height × fadeDepth` bounds displaced around that centre,
+    // which would put the horizontal fades across the middle of the list.
     Rectangle {
         width: root.vertical ? root.width : root.fadeDepth
         height: root.vertical ? root.fadeDepth : root.height

@@ -31,8 +31,8 @@ Rectangle {
         color: root.foreground
     }
 
-    // The glyph has no pointer and no state of its own: its colour is the
-    // owner's decision and its size is the owner's call, so both arrive here.
+    // The glyph has no pointer and no state of its own: its colour and size
+    // belong to the host, so both arrive here.
     readonly property var controls: [
         { label: "name", options: [
             { label: "battery", set: { name: "battery-full" } },

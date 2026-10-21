@@ -4,8 +4,8 @@ import qs.QsmShell.Style
 
 // THE body of a component: one rectangle whose colour is the surface ladder's
 // answer to where it lies (`base`) and what it is doing (hovered, pressed,
-// selected, enabled). Every component used to write its own state ternary
-// and its own Behavior, and four of them disagreed on the selected tint.
+// selected, enabled). A component that wrote its own state ternary and its
+// own Behavior would disagree with the next one on the selected tint.
 //
 //     background: Surface { base: Style.surface; hovered: root.hovered; selected: root.checked }
 //

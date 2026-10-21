@@ -108,9 +108,8 @@ T.Control {
     // scale owns rather than a fraction. Never keyed on the preset NAME.
     readonly property int fieldTextSize: Style.textNear(Style.textMd * root._s)
     readonly property bool focused: input.activeFocus
-    // The ring is for KEYBOARD focus (owner: "ten select line, ten je jen pro
-    // keyb focused"); a click leaves the caret as the field's own mark. The
-    // input holds the focus, never the frame, so Qt's `visualFocus` is never
+    // The ring is for KEYBOARD focus; a click leaves the caret as the field's
+    // own mark. The input holds the focus, never the frame, so Qt's `visualFocus` is never
     // true here and the route is read from the pointer instead: a press on
     // the input latches `_pointerFocus` until the focus leaves.
     property bool _pointerFocus: false
@@ -158,9 +157,9 @@ T.Control {
     }
 
     // How wide the field wants to be when nothing tells it. A text box's
-    // preferred width is a CONSTANT, never its content: the first version fed
-    // the input's own implicit width into this sum, so typing stretched the
-    // box across the screen instead of scrolling inside itself.
+    // preferred width is a CONSTANT, never its content: feeding the input's own
+    // implicit width into this sum would stretch the box as the person types
+    // instead of scrolling inside itself.
     property real naturalWidth: Style.controlWidth
 
     implicitWidth: Math.max(naturalWidth, leftPadding + rightPadding)
@@ -196,13 +195,11 @@ T.Control {
         // dim must come off the REST colour, not the lifted one.
         hovered: root.enabled && (root.focused || (root.hovered && !input.readOnly))
         enabled: root.enabled
-        // The one border in the library, and it means one thing: this field
-        // FAILED. Invisible otherwise. It used to double as the focus edge,
-        // which drew one state twice -- `StateLayer` owns the focus ring, so a
-        // focused-and-failed field would have painted a danger border under an
-        // accent ring and said "failed" in a channel already spoken for.
-        // Pointer focus is the surface lift plus the caret; keyboard focus is
-        // the ring.
+        // This border means one thing: this field FAILED. Invisible otherwise.
+        // `StateLayer` owns the focus ring, so a border that doubled as the
+        // focus edge would draw one state twice and say "failed" in a channel
+        // already spoken for. Pointer focus is the surface lift plus the
+        // caret; keyboard focus is the ring.
         border.width: root.failed ? Style.stroke(Style.indicatorWidth, root) : 0
         border.color: root.enabled ? Style.danger : Style.disabled(Style.danger)
 
@@ -331,12 +328,10 @@ T.Control {
             validator: root.validator
             inputMethodHints: root.inputMethodHints
             // The password is ALWAYS masked, including the character being
-            // typed. Echo-on-edit was tried first because hiding the very
-            // first keystroke read as a dead field, but it revealed the WHOLE
-            // password while the field was being edited -- and since the dots
-            // turned into letters under the caret, it read as if typing wiped
-            // the text. A password that stops being a password exactly while a
-            // person works on it is not one.
+            // typed. Echo-on-edit reveals the WHOLE password while the field is
+            // being edited, and since the dots turn into letters under the
+            // caret it reads as if typing wiped the text. A password that stops
+            // being a password exactly while a person works on it is not one.
             echoMode: root._password && !root.passwordVisible
                 ? TextInput.Password
                 : TextInput.Normal
@@ -355,15 +350,11 @@ T.Control {
                 root.edited(text);
             }
 
-            // ONE dispatcher, and the reason is measured rather than
-            // stylistic: `Keys.onPressed` and the per-key handlers
-            // (`Keys.onDownPressed` and friends) hang off the SAME
-            // attached object, and accepting the event in the generic one
-            // does not stop the specific one from running. The first
-            // version of this component had both, and a consumer that
-            // claimed Down got its own handler AND the field's -- a
-            // results list that moved two rows per keystroke.
-            // `tests/units/tst_TextField.qml` is that bug, kept.
+            // ONE dispatcher, and the reason is mechanical: `Keys.onPressed` and
+            // the per-key handlers (`Keys.onDownPressed` and friends) hang off
+            // the SAME attached object, and accepting the event in the generic
+            // one does not stop the specific one from running, so a consumer
+            // that claimed Down would get its own handler AND the field's.
             //
             // So the hook fires, and if it did not take the key this
             // decides what the key means. No ordering to depend on.
@@ -490,12 +481,11 @@ T.Control {
     // The cursor describes the region under it, not the outer component: a
     // clickable glyph that still shows a text cursor denies its own action.
     //
-    // A HoverHandler, not a filling MouseArea. The MouseArea this replaced was
-    // the frontmost item in the frame with `hoverEnabled`, so it consumed hover
-    // from the slot actions underneath and their `StateLayer`s never grew --
-    // press and click survived, and the one state that says "this is a target"
-    // went missing. A hover reader belongs on the ANCESTOR of the surfaces,
-    // where it coexists with theirs instead of stacking on top of them.
+    // A HoverHandler, not a filling MouseArea. A MouseArea that is the
+    // frontmost item in the frame with `hoverEnabled` consumes hover from the
+    // slot actions underneath, so their `StateLayer`s never grow. A hover
+    // reader belongs on the ANCESTOR of the surfaces, where it coexists with
+    // theirs instead of stacking on top of them.
     HoverHandler {
         id: cursorReader
         cursorShape: {

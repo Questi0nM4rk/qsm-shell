@@ -10,7 +10,7 @@ size: edge thickness and viewport radius from the frame scale; regions arrive in
 tokens: frameThickness, radius2xl, meltSmoothing, band fill, edgeColor, edgeStrength, edgeFade and the edge shader; no local colours or measurements.
 motion: none; it renders host-animated geometry. Origin sides extend fill through the weld; child-facing seam continuations are paint-only.
 registration: snapping skips declared source-origin sides; other nearby edges still snap and cap their welds. Attached expansion supplies a growing aperture with identity deformation. Paint-only normalization does not change content size or viewport input.
-paint endpoint: slot outness restores incoming fill/rim distance fields; the emergence glow gate applies outside the incoming union. Removing a hidden slot must not change frame lighting.
+paint endpoint: slot outness restores the incoming fill field; the edge gate (water law) applies outside the incoming union. Removing a hidden slot must not change frame lighting.
 not designed: pointer tracking, rollout behaviour or surface content; use ScenePointer, Rollout or the host for those.
 
 ## UIX audit
@@ -70,13 +70,11 @@ None in this type: ShellBorder.qml has no animation. The geometry it draws is an
 Source-backed defects:
 
 - SB-1, minor, shared. `workbench/stories.json:969`: the description says "Full-viewport shell border", but the unit declares 380 by 380 implicit size (unit lines 19-20) and the story viewport is 800 by 500 (stories.json:964-967). What a person sees: a square frame in the window, not a full-viewport border. Unless the workbench stretches the unit, which the source does not show.
-- SB-2, low, shared. The `qss-anp` known issue, confirmed in part. The rim ramp, glass stroke and their uniforms are not in `qml/QsmShell/shaders/edgemelt.frag` (the uniform block at lines 18-59 has no rim or stroke field, and a search for rim, stroke or glass finds no match) and not in docs/12-mechanism.md (no rim ramp; the edge-separation section at 235-294 replaces the glow). The shader and the normative doc are already free of the rim path, and the shader's last change, commit 6b9ec51, also changed the committed `.qsb`. So no edit to 12-mechanism and no shader rebuild is needed for this item. What remains: the CPU-side name `rimBits` (ShellBorder.qml:232-262, 284, 292, 299; `_childRimBits` at Rollout.qml:530) still drives seam overlap (`overlapSeams`, ShellBorder.qml:262-276) and the low bits are read by no shader code (edgemelt.frag:218-225 reads origin bits only). Also stale: ShellBorder.qml:321-322 "continue rim paint", and this record's line 13 "rim distance fields" and "emergence glow gate". No visible effect; the fix is a rename to `seamBits` in ShellBorder.qml and Rollout.qml plus the comments. Shared because Rollout.qml is outside this type.
 
 Proposals (taste and shape, no defect a person sees):
 
 - Fail loud at the ninth registration. `registerBulge` (ShellBorder.qml:284-302) accepts a ninth id, `occupied` clamps to 8 (ShellBorder.qml:402), and the ninth is never painted. The 8-slot budget is documented as never exceeded (docs/12-mechanism.md:232-233), so this is a latent failure, not an observed one. Propose a typed error with a code at the cap.
 - The `?fullscreen=` query on the shader URL (ShellBorder.qml:394-395) names no variant: the shader has one program and a `fullscreenMode` uniform (edgemelt.frag:144, 409 in ShellBorder.qml). The comment's reason (a binary cached across hot reload) cites no source. Either record the reason with its source or remove the query.
-- Stale comments: ShellBorder.qml:6 cites `docs/design-2026-09-06-shell-border.md`, which is not in docs/ or docs/archive/; line 134-135 names `bulgeRadius0..7` (the shader's names are `radii0..7`, edgemelt.frag:41-42); line 378 cites `shaders/edgemelt.frag` (it is `qml/QsmShell/shaders/`); line 383 cites `spec/12-mechanism.md` (it is `docs/12-mechanism.md`).
 - Edge doubling: a Card inside a Rollout draws its own cardglow edge (Card.qml:46-58) inside the silhouette's edge line, so the rail shows two edge lines about 16 px apart. Card.qml:11-14 says a card sitting flat inside another body turns it off. Propose `glow: false` for a card in a rollout, after an owner look.
 - The trigger band is 12 px along x, below the 24 px pointer floor. Whether the consumer's hover zone is larger is not visible from this type. Propose the consumer publish its trigger zone next to the rollout, not a second hit model here.
 

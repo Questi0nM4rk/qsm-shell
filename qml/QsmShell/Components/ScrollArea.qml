@@ -12,10 +12,9 @@ import qs.QsmShell.Style
 // WHY the chrome is a sibling of the viewport and the content is in a named
 // host: a Flickable's declared children become children of its `contentItem`,
 // which means they SCROLL, and worse, they count toward `childrenRect`, which
-// is what sizes the content. The first version put the indicator inside, so
-// the indicator's height fed the content height fed the indicator's height —
-// a binding loop, invisible to `qmllint` and caught the first time anything
-// ran it.
+// is what sizes the content. An indicator inside would have its height feed
+// the content height feed its own height — a binding loop, invisible to
+// `qmllint`.
 Item {
     id: root
 
