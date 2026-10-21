@@ -94,18 +94,7 @@ content that fits, where the interface claims more than it has.
 
 #### Defects
 
-- D1 (minor, fixed: source-reviewed, load-checked; not owner-accepted): the unit fades to the library surface on a band ground.
-  - Fixed: the unit now sets `fadeColor: Style.band` (workbench/units/ScrollCue.qml:41). The sibling ScrollArea
-    unit still has the gap; it is another type's file.
-  - Evidence: the unit's ground is `Style.band` (workbench/units/ScrollCue.qml:17) and it sets no `fadeColor`.
-    The default is `Style.surface` (qml/QsmShell/Components/ScrollCue.qml:33). Token contrast surface/band is
-    1.30:1.
-  - Person sees: a lighter 64 px strip at the top and bottom of the list, opaque at the clipped edge, inside a
-    16 px band margin (units:24). The list reads as a box inside the band.
-  - Fix: set `fadeColor: Style.band` in the unit. The sibling ScrollArea unit has the same gap (it sets `band`
-    as its ground and no `fadeColor`, and inherits the same surface default). shared = false.
-
-- D2 (minor, BACKLOG R2/R3): the horizontal case is not reachable in the unit or the catalog.
+- D1 (minor, BACKLOG R2/R3): the horizontal case is not reachable in the unit or the catalog.
   - Evidence: the unit's `ListView` is vertical only and has no orientation property (workbench/units/ScrollCue.qml:21-27).
     Its controls have no axis group (:45-58). The sibling ScrollArea unit has an `axis` control and an
     `orientation` property. stories.json holds one key, with no horizontal and no fitting key
@@ -115,7 +104,7 @@ content that fits, where the interface claims more than it has.
   - Fix: give the unit an `orientation` and a horizontal scroll host, as the ScrollArea unit does; add an `axis`
     control; add story keys for horizontal and fitting. shared = true (stories.json).
 
-- D3 (polish): two cues on one view meet at the far corner.
+- D2 (polish): two cues on one view meet at the far corner.
   - Evidence: the vertical mark occupies x in [W - 5, W - 2] (ScrollCue.qml:72); the horizontal mark occupies
     y in [H - 5, H - 2] (:73). Both are at opacity 0.6 (:81). Where both reach their far ends, the 3 x 3 px
     overlap composes to 0.6 + 0.6 x 0.4 = 0.84. This applies only if the view overflows on both axes, which
@@ -163,6 +152,5 @@ content that fits, where the interface claims more than it has.
 ### Evidence
 
 - source-reviewed: every row above.
-- load-checked: D1 fix (`scroll-cue` capture exits 0, qmllint clean). Not a look-and-feel check.
 - runtime-exercised: none.
 - owner-accepted: none.

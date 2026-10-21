@@ -91,24 +91,6 @@ full strength because a dimmed reading would look stale.
 
 ### Findings
 
-Defects (source-backed):
-
-- **D1, major. Fixed (source-reviewed, load-checked; not owner-accepted).** KeyValueRow.qml:27 uses `role: "body"`. In Prose.qml a body role wraps
-  (Prose.qml:63, 114) and takes no elision (Prose.qml:118). A label longer than the free width wraps
-  to a second line, the row grows taller, and the rows under it move. This breaks AGENTS.md
-  ("Natural size is a constant. Long content scrolls or elides, never grows the control."). Fix:
-  `role: "label"` (the Prose default, `ElideRight`, `NoWrap`). The label then becomes medium weight,
-  which is an owner decision. Not shared. Now `role: "label"`.
-- **D2, minor. Fixed (source-reviewed, load-checked; not owner-accepted).** KeyValueRow.qml:7-15 sets no `implicitWidth` or `implicitHeight`. qml-ui requires
-  both on a reusable component. Natural width therefore grows with the label and the value text, so
-  a host that sizes by content widens with the text. The
-  unit hides the effect with `width: parent.width`, so nothing visible breaks today. Fix: set
-  `implicitWidth` to `Style.controlWidth` and derive `implicitHeight` from the layout. Not shared. Now `implicitWidth: Style.controlWidth`; `implicitHeight` stays the RowLayout's own.
-- **D3, minor. Fixed (source-reviewed, load-checked; not owner-accepted).** workbench/units/KeyValueRow.qml:37 declares no controls. The owner cannot reach
-  glyph set and cleared, long label, long value, or `valueColor` from the preview, which the
-  definition of done requires. Fix: add `controls` for those cases. Not shared (the units directory
-  is not on the shared list). Now controls for glyph, label, value and value colour.
-
 Source conflicts (the owner decides):
 
 - **SC1.** The record says the size is "content-driven row" (line 9). AGENTS.md says natural size is

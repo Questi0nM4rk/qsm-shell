@@ -60,7 +60,8 @@ Item {
     property bool fullscreenCapsule: true
     property real fullscreenInset: Style.rolloutPadding
     property real fullscreenRadius: Style.radiusPill
-    // Detached-only compatibility; attached content never travels or deforms.
+    // Scales the speed-driven stretch of a detached presentation; attached
+    // content never travels or deforms.
     property real deformScale: Motion.rolloutDeformScale
     property bool settleContent: false
     // Animated child extents already provide the size transition.

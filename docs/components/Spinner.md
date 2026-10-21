@@ -69,20 +69,19 @@ The track is deliberately dim, and the active arc is measured above it. Whether 
 
 **Defects (source-backed)**
 
-- **D1, medium. Fixed (source-reviewed, load-checked; not owner-accepted). Stopped reads as a fixed 28% progress arc.** `Spinner.qml:23`, `:27`, `:71-78`. A stopped spinner keeps the angle it reached, so the arc sits wherever the turn stopped and reads as a steady fraction of about 28%. This record says "not designed: fractions", and AGENTS says a spinner in front of a known quantity misleads. Fixed by drawing the unlit track only when stopped (`onPaint` skips the arc, `onRunningChanged` repaints), so the stopped image carries no fraction. The owner may still prefer hiding the mark (P1).
-- **D2, low. Literal numbers in the component.** `Spinner.qml:42` (`* 3`), `:52` (`0.18`), `:23` (`0.28`). AGENTS says every number comes from Style or Motion. The line "no local colours or measurements" in the existing record above is wrong for this file. Fix: name the track alpha and the stroke factor as Style tokens.
-- **D3, low. Default size is a raw token, not a preset.** `Spinner.qml:19` (`size: Style.iconMd`). AGENTS says a sized type takes a preset from `Style.size("<Type>", …)`, and a raw px is only the escape hatch. A caller that needs another size passes px. Fix: default to `Style.size("Spinner", "md")` and add a `Spinner` row to `sizes` in the token file.
-- **D4, low. Default colour is the accent.** `Spinner.qml:20` (`Style.accent`). `Style.qml:44-48` reserves the accent for what is current and says "a passive readout never spends the accent", with the status set beneath it. AGENTS says the accent belongs to focus, selection and primary action. Fix: default to a status token, such as `Style.info`. The owner names the colour.
+- **D1, low. Literal numbers in the component.** `Spinner.qml:42` (`* 3`), `:52` (`0.18`), `:23` (`0.28`). AGENTS says every number comes from Style or Motion. The line "no local colours or measurements" in the existing record above is wrong for this file. Fix: name the track alpha and the stroke factor as Style tokens.
+- **D2, low. Default size is a raw token, not a preset.** `Spinner.qml:19` (`size: Style.iconMd`). AGENTS says a sized type takes a preset from `Style.size("<Type>", …)`, and a raw px is only the escape hatch. A caller that needs another size passes px. Fix: default to `Style.size("Spinner", "md")` and add a `Spinner` row to `sizes` in the token file.
+- **D3, low. Default colour is the accent.** `Spinner.qml:20` (`Style.accent`). `Style.qml:44-48` reserves the accent for what is current and says "a passive readout never spends the accent", with the status set beneath it. AGENTS says the accent belongs to focus, selection and primary action. Fix: default to a status token, such as `Style.info`. The owner names the colour.
 
 **Proposals (owner's judgement, not defects)**
 
-- P1: The stopped image (D1). Options are the unlit track only, or hiding the mark. Stopping inside a hidden surface already avoids the repaint cost, so hiding is the simpler option.
+- P1: The stopped image. A stopped spinner draws the unlit track only, so it carries no fraction. The alternative is hiding the mark; stopping inside a hidden surface already avoids the repaint cost, so hiding is the simpler option.
 - P2: A stroke that grows with size (line 42). AGENTS says the bigger the instance, the calmer, and a 24 px ring carries a 3.84 px stroke. caelestia's `CircularIndicator.qml` uses a fixed stroke from a token instead. Choose one after a live look.
 - P3: The accessible name. It belongs to a11y-audit. The proposal is only to name the owner of the status text at each caller.
 
 **Source conflicts**
 
-None between the component, this record and AGENTS, apart from the record-versus-source mismatch in D2.
+None between the component, this record and AGENTS, apart from the record-versus-source mismatch in D1.
 
 **Hypotheses (unmeasured, never mixed into the defects)**
 

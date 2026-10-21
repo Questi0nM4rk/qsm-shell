@@ -64,9 +64,7 @@ Judged by review-animations; values only, from source. Height and opacity use `M
 
 Defects (source-backed):
 
-1. `SelectionMark.qml:17-58`. The root sets no `implicitWidth` or `implicitHeight`, so to any layout the mark is 0 x 0. qml-ui requires a reusable component to set both. A host that places it in a RowLayout or ColumnLayout would see no mark at all. Latent: the only caller uses anchors. Severity minor. Fix: `implicitWidth: width` and `implicitHeight: height` in the component; height is 0 while hidden, which the layout should honour. shared: false. Fixed (source-reviewed, load-checked): the root sets `implicitWidth: width` and `implicitHeight: height`.
-2. `workbench/units/SelectionMark.qml:19-25`. `anchors.centerIn` on a 380-wide parent (`Style.controlWidth`, `tokens/deep-night.json` `controlWidth`) puts x at 188.5 for the 3 px pill and 187.5 for the 5 px pill. A half-pixel x blurs a 1 px edge (qml-ui, "Integer geometry"), so the person would see soft pill edges in the unit. Inferred from arithmetic, not captured. Severity minor. Fix: place the unit's mark with `x: Math.round((parent.width - width) / 2)`. shared: false. Fixed (source-reviewed, load-checked): the unit uses `anchors.verticalCenter` and `x: Math.round((root.width - width) / 2)`.
-3. `SelectionMark.qml:32` with `workbench/units/SelectionMark.qml:24`. No live caller uses `restOpacity`, but its dim level is 2.30:1 against band. If the owner keeps the dim as meaning, it fails the 3:1 non-text line. Severity minor. Fix: owner ruling, either remove `restOpacity` and the `rest` control, or move its dim value to a Style token that passes the line the owner picks. shared: true, because the token route touches `qml/QsmShell/Style/*` and `tokens/*`.
+1. `SelectionMark.qml:32` with `workbench/units/SelectionMark.qml:24`. No live caller uses `restOpacity`, but its dim level is 2.30:1 against band. If the owner keeps the dim as meaning, it fails the 3:1 non-text line. Severity minor. Fix: owner ruling, either remove `restOpacity` and the `rest` control, or move its dim value to a Style token that passes the line the owner picks. shared: true, because the token route touches `qml/QsmShell/Style/*` and `tokens/*`.
 
 Redesign proposals (taste or simplification, not defects):
 
@@ -86,7 +84,6 @@ Source conflicts:
 Hypotheses (not measured):
 
 - `NotificationCard.qml` centres the mark with `anchors.verticalCenter: headline.verticalCenter`. With an odd headline height that gives a half-pixel y for the 18 px mark. The headline height is not measured.
-- Finding 2's soft edge would also appear in a live window. Not captured.
 - The row's selected state may not reach assistive technology. That is a11y-audit's question.
 
 Not examined:

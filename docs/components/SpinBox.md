@@ -78,7 +78,7 @@ The hover lift (`Style.tone`, `Style.qml:126`) and the disabled blend (`opacityD
 
 - Hover and press use `Motion.micro` (130 ms) and `Motion.press` (80 ms), which become 60 and 40 ms under reduced motion (`Motion.qml:24`, `:26`). This is a shortened duration, which is the allowed form.
 - The caret blink is gated on `Style.reducedMotion` (`:186-187`): under reduced motion the caret is solid.
-- The caret jumps to its new position; no animation (D2, fixed).
+- The caret jumps to its new position; no animation.
 
 ### Pointer geometry
 
@@ -110,20 +110,11 @@ Popup corridor: not applicable (the field is not a popup).
 
 ### Findings
 
-Fixed (source-reviewed, load-checked, not owner-accepted): D1, D2, D3, D5, D6. Line numbers in the findings below are from the audit and predate the fixes.
-
 #### Source-backed defects
 
 | id | file:line | what a person sees | fix | shared | severity |
 | --- | --- | --- | --- | --- | --- |
-| D1 fixed | `SpinBox.qml:99-108`, `:153` | In the editable field, Home and End do not move the caret. They set the value to the minimum or maximum and consume the key, so text cannot be edited with Home or End. | Return early from `_handleBoundKey` when `root.editable` is true, and keep the `toMinimum()` and `toMaximum()` actions. | false | major |
-| D2 fixed | `SpinBox.qml:193-195` | The caret slides to its new position over 80 ms, not gated by reduced motion, and during a drag selection it trails the pointer. | Delete the `Behavior on x` block. The caret jumps, which is what a one-shot position under a gesture requires. | false | minor |
-| D3 fixed | `SpinBox.qml:225-226` | Indicator hover is 1.15 and press is 0.86, numbers that are not in the token set. The press pushes the glyph further than the token press of 0.94. | Use `Motion.hoverScale` (1.08) and `Motion.pressScale` (0.94), `Motion.qml:46-47`. If 1.15 or 0.86 is the owner's intent, it becomes a token, which is a shared change. | false | minor |
-| D4 | `SpinBox.qml:42` | When the field sits in a scrolling list and the pointer is over it, a wheel step changes the value and the list does not scroll. This applies when the field is hosted in a scroller. | Gate the wheel on focus, `wheelEnabled: root.enabled && root.focused`, or keep it and record the owner's ruling. The trade-off is discoverability of the wheel. | false | minor |
-| D5 fixed | `workbench/units/SpinBox.qml:43` | The "wide" option sets `size: "xl"`. the Control family defines only xs, sm, md and lg (`deep-night.json`), so `Style.size` falls back to md and warns once. The option renders the same 40 px field. | Replace it with a width option that sets `naturalWidth`, or delete it. | false | minor |
-| D6 fixed | `workbench/units/SpinBox.qml:8-10`, `:38-61` | The unit has no control that puts the value at the minimum or the maximum, so the disabled indicator and the disabled Minimum and Maximum actions cannot be reached from the controls. It has no long-value case. | Add a value control with min, middle and max options, and a long-value option. | false | minor |
-
-D1 is fixed by the editable rule; S1 still needs the owner ruling on read-only Home/End. D4 depends on placement.
+| D1 | `SpinBox.qml:42` | When the field sits in a scrolling list and the pointer is over it, a wheel step changes the value and the list does not scroll. This applies when the field is hosted in a scroller. | Gate the wheel on focus, `wheelEnabled: root.enabled && root.focused`, or keep it and record the owner's ruling. The trade-off is discoverability of the wheel. | false | minor |
 
 #### Redesign proposals (taste, not defects)
 
@@ -134,7 +125,7 @@ D1 is fixed by the editable rule; S1 still needs the owner ruling on read-only H
 
 #### Source conflicts
 
-- S1. The interaction row of this record says "Home/End reach bounds". Native text editing uses Home and End to move the caret (`SpinBox.qml:102-108` implements the record's rule). Owner ruling needed; it decides D1.
+- S1. The interaction row of this record says "Home/End reach bounds". Native text editing uses Home and End to move the caret (`SpinBox.qml:102-108` implements the record's rule while read-only). Owner ruling needed.
 - S2. The unit's control reads "read-only" (`workbench/units/SpinBox.qml:53-56`), while the component keeps stepping, wheel and Home/End active when `editable` is false (`SpinBox.qml:40`, `:42`, `:99-108`). Which meaning is intended is an owner ruling.
 
 #### Hypotheses (not measured)
@@ -151,5 +142,5 @@ D1 is fixed by the editable rule; S1 still needs the owner ruling on read-only H
 - Live window, captures, tree dump, keyboard in the Qt accessibility tree, screen reader, 200% text scale, RTL mirroring (`:233`, `:239`), locale decimals.
 - Hover lift colour from `Style.tone` (`Style.qml:126`) and the disabled blend `opacityDisabled`: neither value was read or computed.
 - `tests/units/tst_SpinBox.qml`: listed by the story, not read and not run, per instruction.
-- Placement in a real scroller (D4) and any real instance.
+- Placement in a real scroller (D1) and any real instance.
 - Whether `Field` renders the failed copy, which belongs to that component.

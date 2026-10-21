@@ -233,24 +233,13 @@ Measured from tokens and code:
 
 Defects (source-backed):
 
-- **D1, qss-3il confirmed.** `Rollout.qml` 508-545 and 584-590: `syncRegistries` and
+- **D1.** `Rollout.qml` 508-545 and 584-590: `syncRegistries` and
   `onDestruction` address only the current `host` and `rolloutId`. No handler covers a change of
   either (547-561). A person sees a stale silhouette bump painted on the old frame and an input
   region still registered on the old host after a host or key change on a living instance. Severity
   minor: the sites read (unit 56-58) do not change host or key.
   Fix: remember the last host and id, unregister them before registering when either changes, and
   do the same in `onDestruction`. Shared: no.
-- **D2, content takes input before the aperture settles. Fixed (source-reviewed, load-checked), not owner-accepted.**
-  The content slot (`inner.enabled`) and `hitActive` now read one predicate, `_inputReady`
-  (`shouldBeActive`, not `suppressed`, `revealProgress >= 0.9`), so a clipped control cannot take a
-  key or a click during the reveal. The unit's `rollout.hitActive` guards are removed. Runtime reach
-  of Tab and pointer over the revealing aperture is not exercised. A host that focuses a control
-  inside the slot at the moment it opens must wait for `hitActive`, because a disabled item cannot
-  hold focus.
-- **D3, the example folds child retention into `shouldBeActive`. Fixed (source-reviewed, load-checked), not owner-accepted.**
-  The unit passes host intent only (`shouldBeActive: root.openIntent`); the source is held for its
-  child through `childRollout` and `_sourceRetained`, so content and input are withdrawn while it is
-  held. Retract order with a child is not exercised at runtime.
 
 Redesign proposals (owner or review decisions, not defects):
 

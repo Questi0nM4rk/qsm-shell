@@ -25,31 +25,29 @@ person reads a truncated title, or a reader that scrolls forever in the corner o
 
 **Expected controls and states.** Expected: `mode` (once, always, hover, never), `text`, `role`,
 `muted`, `width` from the host. Implemented: `mode`, `text`, `role`, `muted`. States: resting and travelling, each in the four modes; overflowing and fitting.
-Controls in `workbench/units/Marquee.qml:27-34` cover `mode` only (see D13).
+Controls in `workbench/units/Marquee.qml:27-34` cover `mode` only (see D1).
 
 **Routes.** Pointer: hover mode only, through `HoverHandler` (`Marquee.qml:62`), claims nothing.
 Keyboard: none, not a tab stop, correct for non-interactive text. Wheel: no handler, passes through.
 Focus: none, no ring, correct for non-interactive text. Screen reader: no `Accessible` property set
 in source; the full name relies on Qt `Text` defaults, unverified, a11y-audit's verdict.
 
-**Sizes, content, failure, cancellation.** Implicit size is the text's own width (`Marquee.qml:35`,
-see D5). Empty text: `label.implicitWidth` is 0, nothing overflows, nothing travels. Long text:
-travel equals the overflow. Cancellation: a text or mode change resets `label.x` to 0
-(`Marquee.qml:45-49`); leaving hover mid-pass snaps back (D4). A mode outside the four is silent
-(D7).
+**Sizes, content, failure, cancellation.** Implicit size is the constant `Style.controlWidth`. Empty
+text: `label.implicitWidth` is 0, nothing overflows, nothing travels. Long text: travel equals the
+overflow. Cancellation: a text or mode change resets `label.x` to 0; leaving hover mid-pass settles
+back from the current position over `Motion.medium`. A mode outside the four logs an error and never
+travels.
 
 **Visual roles and palette pairs.** Default role `label`: `Style.text` (#f0ecf5) on `Style.band`
-(#271e30), computed from the token hex: 12.3:1, passes 4.5:1 for body text. The metadata role would
-be `Style.textMuted` (#c5bad1) on band, 7.8:1, but the forwarded `color` overrides it (D6). Font
-family is not read here (`Style.fontFamily` is in `Style.qml`, not checked); weight is assumed
-Medium (`Style.weightMedium`, Prose's default for `label`). Size: `Style.textSm` (12 px).
+(#271e30), computed from the token hex: 12.3:1, passes 4.5:1 for body text. The metadata role is
+`Style.textMuted` (#c5bad1) on band, 7.8:1; `muted` forwards to Prose so the role decides the
+colour. Font family is not read here (`Style.fontFamily` is in `Style.qml`, not checked); weight is
+assumed Medium (`Style.weightMedium`, Prose's default for `label`). Size: `Style.textSm` (12 px).
 
 **Motion and reduced motion.** Token values at md: `Motion.large` 400 ms, `Motion.medium` 260 ms.
-Each pass: dwell 800 ms (`Marquee.qml:27`, `Motion.large * 2`), forward at 16 ms per px with a
-400 ms floor (`:78`), dwell 800 ms, return 260 ms over any distance (`:86`). Forward speed at 300 px
-of travel is 62.5 px/s; the return is 1154 px/s, 18.5 times faster (D3). Reduced motion
-(`Motion.large` 120, `Motion.medium` 100): once and hover never travel (`:32-33`); always still
-loops (D1), with a loop period of 5380 ms against 6660 ms at 300 px travel (D1).
+Each pass: dwell `Motion.readingDwell` (800 ms), forward at `Motion.readingPace` (16 ms per px) with
+a `Motion.large` floor, dwell, return at the same pace with a `Motion.medium` floor. Every mode
+rests as an ellipsis under reduced motion.
 
 **Pointer geometry (assumptions, labelled).**
 - Input shape: the root rectangle. Width is the host width (the unit uses `Style.controlWidth`, 380
@@ -72,66 +70,12 @@ loops (D1), with a loop period of 5380 ms against 6660 ms at 300 px travel (D1).
 
 ### Source-backed defects
 
-Fixed items below keep their original finding for the reasoning. What changed: D1 `always` is gated
-on `!Style.reducedMotion` like the other modes and rests as an ellipsis; D4 a stop mid-pass runs a
-`Motion.medium` settle from the current `label.x` (placed directly under reduced motion); D5
-`implicitWidth` is `Style.controlWidth`; D6 `color` is replaced by `muted`, forwarded to Prose; D7
-an unknown `mode` logs `console.error` (the Callout form) and never travels; D8 the once pass is
-armed after layout, only if the text overflows. None is owner-accepted.
-
-- **D1, major. Fixed (source-reviewed, load-checked).** `always` ignored reduced motion: `Marquee.qml:32` tests `mode === "always" ||`
-  before `!Style.reducedMotion`, and the loop (`:66`, `Animation.Infinite`) runs. The loop period
-  also shortens under reduced motion: `Motion.large * 2` (`:27`, `:70`, `:81`) falls from 800 to 240
-  ms, so the period drops from 6660 to 5380 ms at 300 px travel. AGENTS requires a loop to lengthen
-  under reduced motion and respects `Style.reducedMotion`. What a person sees: a title in the
-  always mode keeps moving for a person who asked for less movement, and moves faster. Fix: gate
-  `always` on the same reduced-motion check, and make the stop path a rest with an ellipsis.
-  Shared: no.
-- **D3, major.** Return snap: `Marquee.qml:86` uses `Motion.medium` (260 ms) for any travel, while
-  the forward pass uses 16 ms per px (`:78`). At 300 px the return is 18.5 times faster than the
-  forward pass, a visible whip at the end of every pass. Fix: derive the return from the same pace,
-  with the pace as a `Motion` token. Shared: yes, the token lives in `qml/QsmShell/Style/Motion.qml`.
-- **D4, major. Fixed (source-reviewed, load-checked).** Hover exit snap: `Marquee.qml:68`, `onRunningChanged: if (!running) label.x = 0`.
-  Stopping mid-pass, by leaving hover in hover mode or by the text shrinking to fit, moves the text
-  from its mid-travel position to 0 in one frame. What a person sees: the title jumps back when
-  the pointer leaves it. Fix: return from the current `label.x` with a short animation, not an
-  assignment. Shared: no.
-- **D5, major. Fixed (source-reviewed, load-checked).** Content-derived natural width: `Marquee.qml:35`, `implicitWidth:
-  label.implicitWidth`. AGENTS: a text box's preferred width is a constant, and natural size is a
-  constant so long content scrolls or elides and never grows the control. A host that sets no width
-  gets a row as wide as the full title, so the title pushes its siblings or overflows its container.
-  The unit sets `width`, so the catalog hides this. Fix: a constant preferred width (a `Style`
-  value, read only). Shared: no.
-- **D6, minor. Fixed (source-reviewed, load-checked).** Forwarded colour overrides the role's colour: `Marquee.qml:24` sets
-  `property color color: Style.text`, and `:54` forwards it to Prose. Prose's own binding
-  (`Prose.qml:65`) gives `Style.textMuted` for `metadata`, `supporting` and `section`. Prose's own
-  comment says a call site sets `color` only when it needs a colour (`Prose.qml:44-46`). What a
-  person sees: a `metadata` line in a Marquee is as loud as the title (12.3:1, not 7.8:1). Fix:
-  remove `color` from Marquee and expose `muted`, forwarded to Prose. Shared: no.
-- **D7, minor. Fixed (source-reviewed, load-checked).** Silent unknown mode: `Marquee.qml:31-33` and `:47`. A value outside once, always,
-  hover, never (for example `"Always"`) never travels, never warns, and never fails. The same
-  shape elsewhere (`Style.size`) warns once; here nothing does. Fix: validate at ingress and fail
-  loud with a named error, per the implementation rule. Shared: no.
-- **D8, minor. Fixed (source-reviewed, load-checked).** Stale pending pass: `Marquee.qml:47` sets `run.pending` on any text change in once
-  mode. It is cleared only in `onFinished` (`:67`), which runs only for a pass that played. A text
-  that fits leaves `pending` true, and a later resize that makes it overflow plays a pass nobody
-  asked for. Fix: set `pending` only when `overflows`. Shared: no.
-- **D9, minor.** Numbers in the component: `Marquee.qml:27` (`* 2`) and `:78` (`* 16`). AGENTS
-  requires every number to come from `Style` or `Motion` (definition of done item 6, "no numbers in
-  a component"). Fix: `Motion` tokens for dwell and pace. Shared: yes, `Motion.qml`.
-- **D13, minor (unit).** `workbench/units/Marquee.qml:27-34` exposes `mode` only. Content is never
+- **D1, minor (unit).** `workbench/units/Marquee.qml:27-34` exposes `mode` only. Content is never
   empty, never short enough to fit, and never a second role, so the supported cases AGENTS asks
   for are not reachable from the harness. `workbench/stories.json:300-316` holds one key,
   `marquee`, with `variant: "always"`, so the component default `once` has no catalog story. Fix:
   add a text option (empty, fitting, long) to `controls`, and a `once` story key. Shared: yes, the
   story key lives in `workbench/stories.json`, which is on the shared list.
-
-### Source conflicts
-
-- `docs/components/Marquee.md` line 3 and line 11 say "single pass or infinite by mode" and "a
-  one-shot position change is removed under reduced motion". The first is true, the second holds
-  for once and hover only. AGENTS requires the reduced-motion form of `always` too (D1). This is
-  one project's record against AGENTS, not two owners, so no `source-conflict` tag is needed.
 
 ### Proposals (taste, not defects)
 
@@ -140,9 +84,8 @@ armed after layout, only if the text overflows. None is owner-accepted.
   text at both ends of every pass. Owner ruling.
 - A dwell of 800 ms at each end of a 300 px pass is a 6.7 s cycle. Owner should judge the
   reading time.
-- Under reduced motion the overflow is never readable on screen (`Marquee.qml:32-33`). AGENTS
-  requires that the one-shot position change is removed. The remaining question is a non-moving
-  reveal (a fade or a wrap). Owner ruling.
+- Under reduced motion the overflow is never readable on screen. The remaining question is a
+  non-moving reveal (a fade or a wrap). Owner ruling.
 - The component has no known consumer yet; keep or remove is the owner's call.
 
 ### Hypotheses (observed nowhere, measured nowhere)

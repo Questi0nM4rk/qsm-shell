@@ -59,7 +59,7 @@ that takes effect at once is a `Switch`.
 - Bare (no slot content): no gap and no label width, so the input is the box: 12, 16, 24 square.
   Source-reviewed; the unit cannot show it, because any slot child counts as a label.
 - Long label: natural width is box + gap + `labelWidth`, a constant; the host-bound label elides in the
-  clipped slot (defect 2, fixed).
+  clipped slot.
 - Labelled height: max(box, label line). The label line height is not measured (see Not examined).
 
 ### Visual roles and pairs (token values)
@@ -114,50 +114,23 @@ part of the row, so a click there toggles.
 
 Each one is source-reviewed only. Runtime was not exercised.
 
-1. FIXED (source-reviewed, load-checked). Hit area is the footprint, below the 24 px floor (Checkbox.qml:72-73 and 150-156): the input is
-   the row, so a bare md box is 16 px high and a bare sm box 12 px. A person aiming at the box misses
-   a small target. Fix: a centred hit item that overflows the footprint, at least Style.iconLg (24)
-   each way, calling `flip()`, as AGENTS.md requires ("an action never adds padding or footprint").
-   Layout size stays as it is. Fixed as a `containmentMask` on the root: the row footprint or a square of
-   max(box, iconLg) around the box. Hover, press and click all route through it. Whether Qt delivers the
-   overflow in the live window is unmeasured.
-2. FIXED (source-reviewed, load-checked). Natural width grows with a long label (Checkbox.qml:72 and 138-142): `labelSlot.implicitWidth`
-   is `childrenRect.width`, so the natural width is box + gap + the whole label. The Prose label
-   (`Prose.qml`, role label, `elide: ElideRight`) is not bound to the slot's width, so it never
-   elides; the text runs past the slot, unclipped, and past the control. This breaks the definition
-   of done, item 5. Fix: `clip: true` on the slot, a constant preferred label width, and the host
-   binds the label to the slot width. Fixed: `clip: true`, `labelWidth` constant, unit binds `width: parent.width`.
-3. Hover growth is a literal, not a token (Checkbox.qml:159 `hoverScale: 1.15`): the library's
+1. Hover growth is a literal, not a token (Checkbox.qml:159 `hoverScale: 1.15`): the library's
    default target growth is `Motion.hoverScale` = 1.08 (Motion.qml:46, Tokens.qml:61). A person sees
    the box grow 15 percent (16 to 18.4 px) where other targets grow 8 percent. Fix: use
    Motion.hoverScale, or add a named growth token (touches tokens, hence shared).
-4. FIXED (source-reviewed, load-checked). Focus ring sits 4 px off the box, not the documented 2 px (Checkbox.qml:152-155): the layer is
-   offset by spaceTight, and StateLayer.qml's ring reaches a further spaceTight x 2 (`_reach`), so the
-   stroke's inner edge is 4 px from the box. Checkbox.md:4 documents a half step, 2 px. On sm the gap
-   is a third of the box. Fix: make the layer the box's own geometry, which gives the documented 2 px. Done.
-5. The indeterminate dash is heavier than the check (Checkbox.qml:127-128): the dash is one `Style.indicatorWidth`
+2. The indeterminate dash is heavier than the check (Checkbox.qml:127-128): the dash is one `Style.indicatorWidth`
    stroke (3 device rows at 1.25) at every size. The check is `check.svg` (stroke-width 2 on a 24 grid), so its stroke is glyph x 2 / 24:
    md 1.0 px, lg 1.5 px, sm 0.75 px. The dash is 2x the md check stroke and 2.7x the sm one. A person
    sees "some" read heavier than "on". The rendered weight is unmeasured: SvgIcon does not rasterise
    offscreen. Fix: derive the dash thickness from the same 2/24 ratio, or the owner accepts the
    heavier dash.
-6. FIXED (source-reviewed, load-checked). The harness stands in for the keyboard route (workbench/units/Checkbox.qml:51-52): integration
-   `keys` "Space" and "Enter" call `box.flip()` directly. A harness Enter therefore passes without the
-   component ever seeing that key, while the component handles only Return (Checkbox.qml:77). AGENTS.md
-   forbids a host standing in for the component. Fix: send the key to the control, or fail when the
-   component does not answer. This is harness integrity only; the keyboard verdict is a11y-audit's. Fixed: the unit's `keys` are removed and it declares `targets: checkbox`, so a flow key step goes to the real control through the native driver.
-7. FIXED (source-reviewed, load-checked). The unit does not drive the sizes or the content cases (workbench/units/Checkbox.qml:36-46): the
-   `controls` offer checked and enabled state only. `size` (sm, lg), an empty label and a long label
-   are never shown, against the unit rule that sizes and empty and long content are exposed. Fix: add
-   a size control and a label-length option to the unit. Fixed with sm, md, lg and short, long; an empty label is not exposed, because any slot child counts as a label.
 
 ### Redesign proposals (taste, not defects)
 
-- Hover growth: 1.15 or the library's 1.08 (see defect 3). Owner's choice.
+- Hover growth: 1.15 or the library's 1.08 (see defect 1). Owner's choice.
 - Ring and growth: StateLayer scales only the box, not the ring. With focus and hover together at md,
-  the ring clearance falls from 4 px to 2.8 px (4 minus the 1.2 px growth per side); at lg to 2.2 px.
-  With defect 4 fixed, md falls to 0.8 px. Consider growing the ring with the box, or keeping the
-  ring outside the growth.
+  the 2 px ring clearance falls to 0.8 px (1.2 px growth per side). Consider growing the ring with the
+  box, or keeping the ring outside the growth.
 - Mark size: a sm check is 9 px, which is off the icon scale (12, 16, 20, 24). See the source conflict
   below.
 - Disabled dimming: the host dims the label (unit: `Style.disabled(Style.text)`); the component dims

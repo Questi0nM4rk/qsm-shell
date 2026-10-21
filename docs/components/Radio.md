@@ -25,17 +25,17 @@ Finishes one single-choice pick inside a set the host owns. The consequence is t
 ### Routes
 
 - Pointer: click anywhere on the button, including the label slot (`Radio.qml:45`). Hover reads `host.hovered` (`StateLayer.qml:81`), so the whole row counts as hover.
-- Keyboard: Tab via `activeFocusOnTab: enabled`. Space is the `AbstractButton` default press and release (not an explicit handler here). Return and keypad Enter are explicit handlers (D4 fixed). Arrow keys have no handler and each option is its own Tab stop (see P1).
+- Keyboard: Tab via `activeFocusOnTab: enabled`. Space is the `AbstractButton` default press and release (not an explicit handler here). Return and keypad Enter are explicit handlers. Arrow keys have no handler and each option is its own Tab stop (see P1).
 - Wheel: not applicable.
 - Focus ring: `StateLayer.qml:147-161`, shown only for keyboard focus (`visualFocus`, `_pointerFocus`).
-- Accessibility: role `RadioButton`, checkable, checked (`Radio.qml:35-37`). Name is `accessibleName` when set, else the text of the first label-slot item (D5 fixed).
+- Accessibility: role `RadioButton`, checkable, checked (`Radio.qml:35-37`). Name is `accessibleName` when set, else the text of the first label-slot item.
 - Cancellation: Qt's default for a button, release outside the button does not click. Not exercised.
 - Disabled: no Tab stop, actions refuse, hover off (`StateLayer.qml:81`), every painted role through `Style.disabled`.
 
 ### Sizes, empty, long content, failure
 
-- Sizes from `tokens/deep-night.json` `sizes.Radio`: sm 12, md 16, lg 24. Border is `Style.indicatorWidth` 2 px at every size. Dot is 0.4 of the circle rounded: 5, 6 and 10 px (D2 fixed). Gap is `Style.rhythm(radio * 0.5)`: 8, 8 and 12 px, because `Style.rhythm` rounds half up (`Style.qml:284`, 6 becomes 8).
-- Empty label: the slot is hidden, so the width is the circle alone (D1 fixed).
+- Sizes from `tokens/deep-night.json` `sizes.Radio`: sm 12, md 16, lg 24. Border is `Style.indicatorWidth` 2 px at every size. Dot is 0.4 of the circle rounded: 5, 6 and 10 px. Gap is `Style.rhythm(radio * 0.5)`: 8, 8 and 12 px, because `Style.rhythm` rounds half up (`Style.qml:284`, 6 becomes 8).
+- Empty label: the slot is hidden, so the width is the circle alone.
 - Long label: no maximum width and no elision (`Radio.qml:86-88`), so the natural width grows with the label (P3).
 - Failure: the radio has no error state. Cancellation: see Routes.
 
@@ -57,8 +57,8 @@ Disabled colours are blends toward band at `opacityDisabled` 0.35. Inactive cont
 ### Motion and reduced motion
 
 - Fill colour: `ColorAnimation`, `Motion.micro` 130 ms, standard easing (`Radio.qml:67-69`). Under 300 ms, ease-out, retargets when interrupted.
-- Hover growth: `StateLayer` response, `Motion.micro` 130 ms, target scale `Motion.hoverScale` (D3 fixed).
-- Selection: fill, ring colour and dot opacity all fade on `Motion.micro`; the ring keeps its width and takes the fill colour when checked (D8 fixed).
+- Hover growth: `StateLayer` response, `Motion.micro` 130 ms, target scale `Motion.hoverScale`.
+- Selection: fill, ring colour and dot opacity all fade on `Motion.micro`; the ring keeps its width and takes the fill colour when checked.
 - Reduced motion: `Motion.micro` drops to 60 ms (`Motion.qml:26`) for all of them.
 - Review-animations verdict: withheld. No block trigger is present. Approval needs the reduced-motion path verified live. Feel cannot be judged from code: the owner should check the fill fade and the ring and dot timing in a live window at 2 to 5 times the duration.
 
@@ -76,18 +76,6 @@ Disabled colours are blends toward band at `opacityDisabled` 0.35. Inactive cont
 - Popup corridor: not applicable, no popup.
 
 ### Findings
-
-Source-backed defects (all source-reviewed):
-
-- D5 `Radio.qml:18, 38`, major: `accessibleName` defaults to empty and is the only name the platform gets. A host that fills the label slot (`Radio.qml:84-90`) and leaves the name unset gives a screen reader "radio button, not checked" with no label. Fix: derive the name from the label slot's text, or fail loud when a label exists and the name is empty. The criterion verdict (4.1.2, 2.5.3) is a11y-audit's and was not run. Fixed (source-reviewed, load-checked), not owner-accepted.
-- D1 `Radio.qml:51, 84-90`, minor: `RowLayout` applies its spacing between visible items, and `labelSlot` stays visible at zero width. An unlabelled radio is 24 px wide at md, not 16. Fix: set `labelSlot.visible` to whether it has children, so the layout skips it and the gap. Fixed (source-reviewed, load-checked), not owner-accepted.
-- D2 `Radio.qml:76-77`, minor: dot width 0.4 times the circle gives 6.4, 4.8 and 9.6 px, so `centerIn` lands on half pixels and the dot edge is soft. Fix: `Math.round(parent.width * 0.4)`, giving 6, 5 and 10 px. Fixed (source-reviewed, load-checked), not owner-accepted.
-- D3 `Radio.qml:102`, minor: literal 1.15 where AGENTS.md requires a `Style` or `Motion` value; `Motion.hoverScale` is 1.08. A hovered radio grows 15 percent where the rest of the shell grows 8 percent, and the literal bypasses the reduced-motion clamp. Fix: remove the override and use `Motion.hoverScale`, or add a named Motion token (that needs `tokens/*`). Fixed (source-reviewed, load-checked), not owner-accepted.
-- D4 `Radio.qml:46`, minor: keypad Enter has no handler. Siblings handle both keys (`ActionTile.qml:112`, `Capsule.qml:178`). Fix: add `Keys.onEnterPressed` the same way. Fixed (source-reviewed, load-checked), not owner-accepted.
-- D6 `Radio.qml:95-98` with `StateLayer.qml:147-161`, minor: the layer is inflated by `spaceTight` on each side, then the ring reaches out a further `2 * spaceTight`. The ring sits 4 px from the circle (2 px stroke, outer edge 6 px out), not the one-step gap the layer law states. Fix: give the layer the circle's own geometry, so the ring's gap is `spaceTight`. Fixed (source-reviewed, load-checked), not owner-accepted.
-- D7 `StateLayer.qml:79`, minor, shared: `focusColor` defaults to `Style.accent`, not `Style.focus` (`Style.qml:46`). A theme that separates the two cannot retheme the keyboard ring. Fix: default to `Style.focus`.
-- D8 `Radio.qml:61-69, 79`, minor: the fill fades over 130 ms while the border colour and width and the dot visibility change at once. On selection the 2 px ring disappears before the fill arrives. Fix: animate `border.color` and drive the dot with the same micro duration; the form is review-animations' call. Fixed (source-reviewed, load-checked), not owner-accepted.
-- D9 `docs/components/Radio.md:4` (existing record line), minor: the record says press shrinks the circle to 0.88 and the focus ring sits "a half step" out. Source has `pressScale` 1 (`StateLayer.qml:59`, no override in `Radio.qml`), so press only recolours, as AGENTS.md requires. The ring sits 4 px out (D6). Fix: correct that line. The existing record was kept. Fixed (source-reviewed, load-checked), not owner-accepted.
 
 Redesign proposals:
 

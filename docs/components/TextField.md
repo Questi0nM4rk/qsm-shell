@@ -26,7 +26,7 @@ The one text input a person uses to type or search a value, enter a password, or
 
 | Control or state | Implemented | Where |
 | --- | --- | --- |
-| purpose: text, search, password, number | Partly. The component switches `inputType` only: echo mode, validator, input-method hints. The leading glyph and trailing action live in the consumer (see SC4). | TextField.qml 91-100, 323-325; unit 31-45 |
+| purpose: text, search, password, number | Partly. The component switches `inputType` only: echo mode, validator, input-method hints. The leading glyph and trailing action live in the consumer (see SC2). | TextField.qml 91-100, 323-325; unit 31-45 |
 | enabled, disabled | Yes. Disabled blends text, placeholder, caret, border through `Style.disabled`. | TextField.qml 210, 284, 304, 398 |
 | failed | Yes. 2 px `danger` border (`Style.stroke(Style.indicatorWidth, root)`), and focus ring turns `danger`. The message belongs to `Field`. | TextField.qml 209, 454 |
 | readOnly | Yes. No hover lift, no caret, still a tab stop. | TextField.qml 200, 400, 448 |
@@ -72,13 +72,13 @@ Disabled colours blend 35 % toward band (`Style.disabled`) and are exempt from 1
 ### Motion and reduced motion
 
 - Surface colour and border: `Motion.micro`, 130 ms, reduced 60 ms (`Surface.qml` 42-44; TextField.qml 212-214).
-- Caret travel: `Motion.press`, 80 ms, reduced 40 ms (TextField.qml, `Behavior on x`; Motion.qml 24). Removed under reduced motion (D2).
+- Caret travel: `Motion.press`, 80 ms, reduced 40 ms (TextField.qml, `Behavior on x`; Motion.qml 24). Removed under reduced motion.
 - Caret blink: half of the platform `cursorFlashTime`, off under `Style.reducedMotion` (TextField.qml 393, 419-425).
 
 ### Pointer geometry
 
 - **Input shape.** The root `T.Control` at 380 x 40 px (md) holds the hover and tap handlers (TextField.qml 182, 461, 480). The painted `Surface` fills the root. So the input shape equals the painted size for the body.
-- **Exception.** The unit's trailing `IconButton` is 44 x 44 px (`IconButton.qml` 24-26: 20 + 2 x 12 padding). It overhangs the field by 2 px top and bottom at md, 6 px at sm, and lies 4 px inside at lg. See D3.
+- **Exception.** The unit's trailing `IconButton` is 44 x 44 px (`IconButton.qml` 24-26: 20 + 2 x 12 padding). It overhangs the field by 2 px top and bottom at md, 6 px at sm, and lies 4 px inside at lg. See D2.
 - **Origin.** The field is entered from its label, which `Field` places above it (`Field.qml` 52). The label's geometry is not in this file. The distances below are assumptions, not measurements and not a human average.
 - **Width model.** Model A, vertical approach: W = 40 px. Model B, horizontal approach from a neighbour: W = 380 px. A press anywhere in the body lands, so the axis of approach sets W.
 - **Difficulty.** ID = log2(1 + D / W), in bits:
@@ -105,11 +105,8 @@ Disabled colours blend 35 % toward band (`Style.disabled`) and are exempt from 1
 Source-backed defects. Each cites a file and line, and says what a person sees.
 
 - **D1, medium.** Pressing Return in a number field with intermediate text does nothing visible. `accept()` returns false silently (TextField.qml 126-131). The Return branch then sets `event.accepted = true` regardless (359-364). A person who types "1e" and presses Enter sees no border, no message and no change, because `accepted` is not emitted and `failed` is not set. Fix: emit a `rejected` signal from `accept()` when `!input.acceptableInput`, so the host can set `failed` and show its copy. Shared: no.
-- **D2, minor. Fixed (source-reviewed, load-checked; not owner-accepted).** The caret glides under reduced motion. The caret's `Behavior on x` uses `Motion.press`, which reduces to 40 ms rather than removing the slide (TextField.qml 427-429; Motion.qml 24). AGENTS.md: a one-shot position animation is removed under reduced motion, not shortened. Fix: `enabled: !Style.reducedMotion` on that Behavior. Shared: no.
-- **D3, minor.** The reveal's hover disc overhangs the field. The unit's trailing `IconButton` (unit 69-73) is 44 px tall (`IconButton.qml` 24-26). It is centred on a 40 px field (TextField.qml 262-263), so its disc (`StateLayer.qml` 115-124, radius `height / 2` at `IconButton.qml` 61) paints 2 px above and below the field on hover, and 6 px at sm. A person sees a small lip at the right end of the field when hovering the eye. Fix: clamp the trailing slot to `fieldHeight` and give the unit's action a hit disc no taller than the field. Shared: no.
-- **D4, minor. Fixed (source-reviewed, load-checked; not owner-accepted).** The trailing slot now reserves the Control's width minus its padding; the hit box overflows over the gap. The reveal action reserves its 44 px hit box in the text column, not its 20 px glyph. `trailingSlot.implicitWidth` is the Loader's width, 44 px (TextField.qml 264), and `rightPadding` adds 12 + 44 + 8 = 64 px (180). At md the text column is 304 px where a glyph footprint would give 328 px. AGENTS.md: an action never adds footprint. Fix: the action's layout width is its glyph, and the hit box overflows (`IconButton` padding). Shared: no.
-- **D5, minor.** Slot content does not dim when the field is disabled. The text dims to `Style.disabled` (TextField.qml 304), but the unit's leading `SvgIcon` takes `Style.text` at full strength (`SvgIcon.qml` 22; unit 40) and the "%" `Prose` has no `enabled` handling (`Prose.qml`, no match). A person sees dimmed text beside a bright magnifier and a bright "%". Fix: bind slot colours to `field.enabled`. Shared: no.
-- **D7, low. Fixed (source-reviewed, load-checked; not owner-accepted).** Line 6 says the host scales slot content by `sizeScale`; the unit does. The record promises slot glyph scaling that the code does not do. Line 6 says "both slot glyphs iconNear(iconMd·s)". TextField.qml has no `iconNear` (grep: none). Fix: either the component sizes slot content, or line 6 says the consumer scales. Shared: no.
+- **D2, minor.** The reveal's hover disc overhangs the field. The unit's trailing `IconButton` (unit 69-73) is 44 px tall (`IconButton.qml` 24-26). It is centred on a 40 px field (TextField.qml 262-263), so its disc (`StateLayer.qml` 115-124, radius `height / 2` at `IconButton.qml` 61) paints 2 px above and below the field on hover, and 6 px at sm. A person sees a small lip at the right end of the field when hovering the eye. Fix: clamp the trailing slot to `fieldHeight` and give the unit's action a hit disc no taller than the field. Shared: no.
+- **D3, minor.** Slot content does not dim when the field is disabled. The text dims to `Style.disabled` (TextField.qml 304), but the unit's leading `SvgIcon` takes `Style.text` at full strength (`SvgIcon.qml` 22; unit 40) and the "%" `Prose` has no `enabled` handling (`Prose.qml`, no match). A person sees dimmed text beside a bright magnifier and a bright "%". Fix: bind slot colours to `field.enabled`. Shared: no.
 
 Redesign proposals (taste, not defects):
 
@@ -121,13 +118,12 @@ Redesign proposals (taste, not defects):
 
 Source conflicts (owner decides which wins):
 
-- SC2. Hover growth: AGENTS.md says hover "grows slightly AND changes colour" through `StateLayer`. TextField.qml 191-193 chose colour only, because the caret and text must not move under the pointer. Owner ruling needed.
-- SC3. Record line 6 (`iconNear` for slot glyphs) against the code: see D7.
-- SC4. Record line 5 says the purpose switch changes "leading glyph, trailing action". The component changes `inputType`, validator and hints only (TextField.qml 91-100). The glyph and action come from the host, and each host builds them its own way.
+- SC1. Hover growth: AGENTS.md says hover "grows slightly AND changes colour" through `StateLayer`. TextField.qml 191-193 chose colour only, because the caret and text must not move under the pointer. Owner ruling needed.
+- SC2. Record line 5 says the purpose switch changes "leading glyph, trailing action". The component changes `inputType`, validator and hints only (TextField.qml 91-100). The glyph and action come from the host, and each host builds them its own way.
 
 Hypotheses (unmeasured):
 
-- H1. The reveal's disc overhang (D3) is visible at md and clearly visible at sm. The geometry is certain; visibility is not measured.
+- H1. The reveal's disc overhang (D2) is visible at md and clearly visible at sm. The geometry is certain; visibility is not measured.
 - H2. The Clear action is not undoable in this file, but Qt's `TextInput` undo may survive `clear()`. Unverified.
 - H3. The rest boundary (1.30:1) may fail the 3:1 of 1.4.11 if the field must be identified by its edge. This is a11y-audit's call.
 - H4. Caret blink period depends on the platform's `cursorFlashTime`. Unmeasured.
