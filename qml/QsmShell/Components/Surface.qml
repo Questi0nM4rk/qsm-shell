@@ -12,7 +12,7 @@ import qs.QsmShell.Style
 // `pressed` is for bodies that cannot grow (rows, text); a control that grows
 // through StateLayer leaves it false. `contentColor` is what text and glyphs
 // on this body wear: accent while selected, the text role otherwise, dimmed
-// with the body.
+// with the body. Hosts read it and never assign it.
 Rectangle {
     id: root
 
@@ -26,7 +26,7 @@ Rectangle {
     // `radius`. A rail cell against the frame must not round into the wall.
     property string snapEdge: ""
 
-    readonly property color contentColor: root.enabled
+    property color contentColor: root.enabled
         ? (root.selected ? root.accent : Style.text)
         : Style.disabled(root.selected ? root.accent : Style.text)
 
@@ -40,6 +40,11 @@ Rectangle {
     color: Style.tone(root.base, root.hovered, root.pressed, root.selected, root.enabled, root.accent)
 
     Behavior on color {
+        ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+    }
+
+    // Same curve as the fill, so a label never lands before its body.
+    Behavior on contentColor {
         ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
     }
 }

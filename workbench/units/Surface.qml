@@ -8,8 +8,6 @@ Rectangle {
 
     property string variant: ""
     property var eventRecorder: null
-    property bool hovered: false
-    property bool pressed: false
     property bool selected: variant === "selected"
 
     color: Style.band
@@ -21,26 +19,27 @@ Rectangle {
         anchors.centerIn: parent
         width: Style.controlWidth / 2
         height: Style.controlHeight
-        hovered: root.hovered
-        pressed: root.pressed
+        radius: Style.radiusMd
+        hovered: stateLayer.hovered
+        pressed: stateLayer.pressed
         selected: root.selected
+
+        StateLayer {
+            id: stateLayer
+            anchors.fill: parent
+            interactive: root.enabled
+            focusRadius: body.radius
+        }
 
         Prose {
             anchors.centerIn: parent
+            color: body.contentColor
             role: "label"
             text: "Surface body"
         }
     }
 
     readonly property var controls: [
-        { label: "hover", options: [
-            { label: "off", set: { hovered: false } },
-            { label: "on", set: { hovered: true } }
-        ] },
-        { label: "press", options: [
-            { label: "off", set: { pressed: false } },
-            { label: "on", set: { pressed: true } }
-        ] },
         { label: "selection", options: [
             { label: "rest", set: { selected: false } },
             { label: "selected", set: { selected: true } }
@@ -55,8 +54,8 @@ Rectangle {
         events: [],
         actions: [],
         observables: {
-            hovered: () => body.hovered,
-            pressed: () => body.pressed,
+            hovered: () => stateLayer.hovered,
+            pressed: () => stateLayer.pressed,
             selected: () => body.selected,
             enabled: () => body.enabled
         }
