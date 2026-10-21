@@ -6,6 +6,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 ## Next
 
 - Full-library UIX audit and redesign: every one of the 52 exported types reviewed against the installed qsm-uix guidance, with per-type records carrying hitbox and pointer-path mathematics, then repairs one item at a time with owner acceptance. Orientation `docs/UIX-AUDIT.md`, plan `openspec/changes/uix-component-audit/`, tracker `qss-9zk`.
+- Kbd, Capsule's detail, ColorSwatch's reading and the Slider thumb's reading still set `textXs` (10 px) directly; the token goes when the last of them does.
 - Menu and MonthCalendar assign host-owned selection/month directly; these writes can replace host bindings. Source-confirmed ownership mismatch, left for each type's named repair and live review (`qss-bcn`).
 - Rollout unregisters only its current host/key; changing either on a living instance can orphan the previous paint/input registration. Production reachability is unverified; settle the lifetime contract before changing the mechanism (`qss-3il`).
 - Shell readiness first: close concrete component defects and keyboard/public-action
