@@ -55,11 +55,13 @@ content that fits, where the interface claims more than it has.
 
 ### Visual roles and palette pairs
 
-- Mark: `textMuted` at opacity 0.6 when moving, 0.2 at rest (ScrollCue.qml:77, :80-81; Tokens.qml:76-77).
+- Mark: `textMuted` at opacity 0.8 when moving, 0.6 at rest (ScrollCue.qml:77, :80-81; Tokens.qml:76-77).
 - Fade: `fadeColor` to transparent, fully opaque over the first 30 % (:107-109, :120-122). Default
   `Style.surface` (:33).
 - Computed from tokens, WCAG relative luminance, alpha blended over the unit ground `band` #271e30:
-  mark at rest 1.56:1; mark when moving 4.02:1; `textMuted` on `band` 8.61:1; `surface` on `band` 1.30:1.
+  mark at rest 3.64:1 on `band` (the rest opacity is the lowest that clears the 3:1 floor of WCAG 1.4.11 on
+  `band`, 3.13:1 on `surface`, 2.63:1 on `overlay`); mark when moving 5.44:1 on `band`; `textMuted` on `band`
+  7.71:1; `surface` on `band` 1.31:1 (deep-night.json roles).
 
 ### Motion and reduced motion
 
@@ -120,9 +122,8 @@ content that fits, where the interface claims more than it has.
 - P2, hold before the dim: the caelestia StyledScrollBar keeps itself up for a 600 ms hold after movement stops
   (`hideDelay` interval 600) and uses the same 0.6 active opacity. ScrollCue.qml:80-81 drops to 0.2 as soon as
   `moving` ends. Proposal: a hold before the mark dims. The verdict is review-animations'.
-- P3, rest visibility: at rest the mark is 1.56:1 (computed). The comment at ScrollCue.qml:78-79 makes "nearly
-  gone" deliberate, and the fade is then the only rest affordance. Owner decision whether to keep it; do not
-  raise the value without that decision.
+- P3, rest visibility: the mark rests at 0.6 so a hint that may be the only cue to content past an edge stays
+  a legible non-text mark (3.64:1 on `band`); a list over `overlay` still falls under 3:1 at rest (2.63:1).
 
 #### Hypotheses
 

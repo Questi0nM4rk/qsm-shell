@@ -60,8 +60,8 @@ Fitting content shows neither fade nor mark (`ScrollCue.qml:71`, `:104`, `:117`)
 
 - Fades paint `fadeColor`, default `Style.surface` (`ScrollCue.qml:33`). Opaque to 30 percent of
   the depth, then transparent (`:107-109`); the bottom fade is opaque from 70 percent (`:120-122`).
-- Mark: `Style.textMuted`, opacity `Style.scrollCueActiveOpacity` (0.6) while moving, else
-  `Style.scrollCueRestOpacity` (0.2) (`tokens/deep-night.json:85-86`).
+- Mark: `Style.textMuted`, opacity `Style.scrollCueActiveOpacity` (0.8) while moving, else
+  `Style.scrollCueRestOpacity` (0.6) (`tokens/deep-night.json`).
 - Contrast of the mark and of the fade against the consumer's ground: not computed.
 
 ### Motion and reduced motion
@@ -142,8 +142,6 @@ Source conflicts, recorded and not resolved here:
 
 Hypotheses (unmeasured, not in the table):
 
-- **H-1**: at rest the only overflow cue is the fades. The mark drops to 0.2 opacity, so a viewer
-  at rest may not see where they are in a long list.
 - **H-2**: a vertical wheel over a horizontal viewport (`ScrollArea.qml:43`) may not scroll it. Qt's
   wheel mapping is not checked here.
 - **H-3**: a programmatic jump does not set `view.moving` (`ScrollCue.qml:80`), so the mark stays at

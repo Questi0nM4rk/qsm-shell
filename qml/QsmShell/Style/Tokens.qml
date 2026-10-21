@@ -81,8 +81,8 @@ QtObject {
     readonly property real opacityFloatingShadow: 0.28
     readonly property real opacityCardShadow: 0.28
     readonly property real opacityBadgeTint: 0.12
-    readonly property real opacityScrollCueActive: 0.6
-    readonly property real opacityScrollCueRest: 0.2
+    readonly property real opacityScrollCueActive: 0.8
+    readonly property real opacityScrollCueRest: 0.6
     readonly property real opacityEdgeStrength: 0.5
     readonly property real opacityAreaFill: 0.18
     readonly property real opacityRingTrack: 0.18

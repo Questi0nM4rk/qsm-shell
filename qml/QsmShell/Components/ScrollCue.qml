@@ -77,8 +77,9 @@ Item {
         radius: Style.radiusPill
         antialiasing: false
         color: Style.textMuted
-        // Present while the list is moving, nearly gone at rest — at rest the
-        // shell paints nothing it does not need to.
+        // Brighter while the list is moving; at rest it still clears the 3:1
+        // floor of a non-text mark on the band, because it may be the only
+        // cue to content past an edge.
         opacity: root.view.moving || root.view.flicking
             ? Style.scrollCueActiveOpacity : Style.scrollCueRestOpacity
 
