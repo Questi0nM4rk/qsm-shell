@@ -116,8 +116,11 @@ Item {
     }
     readonly property bool _hasExpandedContent: root._normal && expandedHost.implicitHeight > 0
     readonly property real _expandedHeight: root.expanded && root._hasExpandedContent ? expandedViewport.implicitHeight : 0
-    // The leading box every visual sits in.
+    // The leading box every visual sits in, and the glyph that sits in it:
+    // smaller than its box on purpose, and the size a host's own leading glyph
+    // takes so it never differs from the row's.
     readonly property int leadingSize: _sm ? Style.iconMd : Style.iconLg
+    readonly property int glyphSize: _sm ? Style.iconSm : Style.iconMd
     // Not the current one: later in a list you pick from, not under the
     // pointer, not unavailable and not a report. Disabled and report-only rows
     // show at full strength; disabled dims by colour on its own.
@@ -282,8 +285,7 @@ Item {
                 anchors.centerIn: parent
                 visible: leadingSlot.children.length === 0
                 name: root.icon
-                // Smaller than its box on purpose — see the leading-box note.
-                size: root._sm ? Style.iconSm : Style.iconMd
+                size: root.glyphSize
                 color: root.proseColor
 
                 Behavior on color {
