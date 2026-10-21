@@ -81,12 +81,20 @@ QtObject {
     // The accent's strength over a layer when a body is selected (M3 state
     // layer 12 %, Radix step 5). One number, read by `selected()` alone.
     readonly property real opacitySelected: backend?.opacitySelected ?? Tokens.opacitySelected
+    // The contrast a reading must keep on the band (WCAG AA for text). A
+    // theme that needs more states it; every derived strength below measures
+    // against it.
+    readonly property real contrastText: backend?.contrastText ?? Tokens.contrastText
     // "Not the one you are looking at." A list recedes its non-current rows so
     // the current one is the only thing at full strength; it is a different
     // number from `opacityDisabled`, because receding says "later" and
-    // disabled says "never". It is the strength `recede()` blends by, the
-    // lowest at which muted text still meets WCAG AA on the band.
-    readonly property real opacityRecede: backend?.opacityRecede ?? Tokens.opacityRecede
+    // disabled says "never". It is the share of its own colour a receded
+    // colour keeps, and it is DERIVED: contrast depends on the theme's own
+    // band and muted text, so the weakest share that still reads is found from
+    // them (a typed number is right for one band only). Muted text receded by
+    // it keeps `contrastText` on the band; a theme whose muted text is below
+    // that already gets 1, nothing recedes, and the fix is its muted colour.
+    readonly property real opacityRecede: root._recedeShare()
     // A badge's tinted body: its tone at this strength over the layer.
     readonly property real badgeTintOpacity: backend?.badgeTintOpacity ?? Tokens.opacityBadgeTint
     // How far a tinted badge's reading is pulled from its tone toward `text`.
@@ -111,7 +119,7 @@ QtObject {
     // A scroll mark shows while the list moves and all but disappears at rest.
     readonly property real scrollCueActiveOpacity: backend?.scrollCueActiveOpacity ?? Tokens.opacityScrollCueActive
     readonly property real scrollCueRestOpacity: backend?.scrollCueRestOpacity ?? Tokens.opacityScrollCueRest
-    // The edge separation of the melt silhouette (owner 2026-10-18): a slight
+    // The edge separation of the melt silhouette: a slight
     // line of this colour exactly at the merged shape's edge, fading inward
     // into the fill, drawn by the shader on top of the flat fill. Strength is
     // the colour's share at the very edge; it is gone edgeFade px inward.
@@ -147,6 +155,25 @@ QtObject {
                        bg.g + (c.g - bg.g) * k,
                        bg.b + (c.b - bg.b) * k,
                        1);
+    }
+
+    // The smallest share of muted text that, blended toward the band, still
+    // measures `contrastText` against it, as the 8-bit colour that ships.
+    // Contrast falls monotonically as the blend approaches the band, so
+    // twenty halvings land within a quarter of an 8-bit step. Muted text below
+    // the floor even undimmed never moves `hi`, so the answer is 1.
+    function _recedeShare(): real {
+        const shipped = c => Qt.rgba(Math.round(c.r * 255) / 255, Math.round(c.g * 255) / 255,
+                                     Math.round(c.b * 255) / 255, 1);
+        let lo = 0, hi = 1;
+        for (let i = 0; i < 20; i++) {
+            const mid = (lo + hi) / 2;
+            if (contrast(shipped(root._towardBand(root.textMuted, mid)), root.band) < root.contrastText)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        return hi;
     }
 
     // THE state matrix, once. A body on a layer answers hover, press, selection
@@ -306,6 +333,11 @@ QtObject {
         return root._preset(type, "md");
     }
 
+    // A name resolves through the type's own entries, the backend's first. A
+    // type the default theme gives no table inherits the names it lacks from
+    // `Control`, so `sizes: { IconButton: { xl: 64 } }` adds one preset to one
+    // type and keeps the shared ladder under it. A type that has a table of
+    // its own never falls back to Control: a name it lacks is a typo.
     function _preset(type: string, name: string): var {
         const own = root.backend?.sizes?.[type]?.[name] ?? Tokens.sizes[type]?.[name];
         if (own !== undefined || Tokens.sizes[type] !== undefined)
@@ -326,17 +358,21 @@ QtObject {
         return root._nearest(px, [root.iconXs, root.iconSm, root.iconMd, root.iconLg, root.iconXl, root.iconXxl]);
     }
 
-    // THE glyph for a box, so no call site picks one. A glyph alone in its
-    // box (an icon button, a rail cell) fills half of it, and a glyph beside a
-    // label or a text (a capsule, a segment, a field's leading mark) takes two
-    // fifths, because the label carries the meaning and the glyph only marks
-    // it. Neither goes under `iconSm`; 12 is a status mark, never a control's.
+    // The share of its box a glyph takes: half when it is alone in the box (an
+    // icon button, a cell), two fifths beside a label or a text (a capsule, a
+    // segment, a field's leading mark), because the label carries the meaning
+    // and the glyph only marks it.
+    readonly property real glyphAloneRatio: backend?.glyphAloneRatio ?? Tokens.geometryGlyphAloneRatio
+    readonly property real glyphBesideRatio: backend?.glyphBesideRatio ?? Tokens.geometryGlyphBesideRatio
+
+    // THE glyph for a box, so no call site picks one. Neither goes under
+    // `iconSm`; 12 is a status mark, never a control's.
     function glyphAlone(box: real): int {
-        return root.iconNear(Math.max(box * Tokens.geometryGlyphAloneRatio, root.iconSm));
+        return root.iconNear(Math.max(box * root.glyphAloneRatio, root.iconSm));
     }
 
     function glyphBeside(box: real): int {
-        return root.iconNear(Math.max(box * Tokens.geometryGlyphBesideRatio, root.iconSm));
+        return root.iconNear(Math.max(box * root.glyphBesideRatio, root.iconSm));
     }
 
     // THE thickness of a line, in whole DEVICE pixels. A square Rectangle's
@@ -345,20 +381,19 @@ QtObject {
     // number m that is m for every y, so the line is the same thickness
     // wherever it sits and never anti-aliases into a second row. This returns
     // the logical thickness nearest `n` that is a whole device count, never
-    // under one pixel. `dpr` is the item's own `Screen.devicePixelRatio`, read
-    // where the line is drawn so it is right per monitor: it is not a
-    // constant and not a global.
+    // under one pixel.
     //
-    //     height: Style.stroke(1, Screen.devicePixelRatio)
+    // The ratio is the WINDOW's, read here from the item that paints the line
+    // and nowhere else, so every caller is right per monitor and none passes
+    // it: `Screen.devicePixelRatio` is the output's integer scale (2 on a 1.25
+    // output) and snaps to a grid the window does not have. An item with no
+    // window yet reads 1 and is re-read when it gets one.
     //
-    function stroke(n: real, dpr: real): real {
+    //     height: Style.stroke(Style.hairline, root)
+    //
+    function stroke(n: real, item: Item): real {
+        const dpr = item?.Window.window?.devicePixelRatio ?? 1;
         return Math.max(1, Math.round(n * dpr)) / dpr;
-    }
-
-    // A position on the device grid. Centring a curved thing (a pill track,
-    // a ring) lands its edge between rows unless the offset is snapped.
-    function snap(v: real, dpr: real): real {
-        return Math.round(v * dpr) / dpr;
     }
 
     // A spacing snapped to the 4px rhythm, never below the half step. Insets
@@ -412,18 +447,17 @@ QtObject {
     // Long message content scrolls inside this fixed expanded viewport.
     readonly property int notificationBodyViewportHeight: backend?.notificationBodyViewportHeight
         ?? Tokens.geometryNotificationBodyViewportHeight
-    // The melt reach every join neck derives from (spec 01-frame), how close
+    // The melt reach every join neck derives from how close
     // a silhouette must come to a band before it fuses rather than leaves a
     // sliver, and how far a flush silhouette reaches into the neighbour it
     // seams against (see ShellBorder.overlapSeams), so the AA never finds a
     // zero-depth edge along the join.
     readonly property int meltSmoothing: backend?.meltSmoothing ?? Tokens.geometryMeltSmoothing
     readonly property int edgeSnapReach: backend?.edgeSnapReach ?? Tokens.geometryEdgeSnapReach
-    // How far a hover trigger reaches past the shape it opens (owner
-    // 2026-10-18: "musime to roztahnout, abych nemusel mit pixel perfect
-    // aim"). A handle is a few pixels of paint; the pointer is found inside
-    // that paint grown by this many pixels on every side, never inside the
-    // paint alone. 20 makes the 8px dots handle a 48px target.
+    // How far a hover trigger reaches past the shape it opens, so a pointer
+    // needs no pixel-perfect aim. A handle is a few pixels of paint; the
+    // pointer is found inside that paint grown by this many pixels on every
+    // side, never inside the paint alone.
     readonly property int hoverReach: backend?.hoverReach ?? Tokens.geometryHoverReach
     // The zone a pointer must be inside to open what a painted shape opens:
     // `painted` grown by hoverReach on every side, clipped to `bounds` (the
@@ -439,14 +473,6 @@ QtObject {
     readonly property real seamOverlap: backend?.seamOverlap ?? Tokens.geometrySeamOverlap
     readonly property int edgeFade: backend?.edgeFade ?? Tokens.geometryEdgeFade
 
-    // The "this one" mark: the same 3x18 pill the launcher, the menu rows, the
-    // notification history and the device lists all use to say which row is
-    // current. It is one idiom, so it is one pair of numbers.
-    // A count riding a cell's corner, and the bar a progress or a level is
-    // drawn on. Both were being typed as literals at the call sites that
-    // needed them.
-    // The ring, at the size a performance card wants it. A card fitting three
-    // of them states its own; the library keeps one default.
     // A tile: an icon over its label, big enough to hit without aiming.
     readonly property int tileWidth: backend?.tileWidth ?? Tokens.geometryTileWidth
     readonly property int tileHeight: backend?.tileHeight ?? Tokens.geometryTileHeight
@@ -464,6 +490,7 @@ QtObject {
     readonly property real notificationDismissFraction: backend?.notificationDismissFraction
         ?? Tokens.geometryNotificationDismissFraction
 
+    // The ring at its default size; a call site that fits several states its own.
     readonly property int ringDiameter: backend?.ringDiameter ?? Tokens.geometryRingDiameter
     // A ring's stroke as a share of its diameter, the way a spinner's is.
     readonly property real ringStrokeRatio: backend?.ringStrokeRatio ?? Tokens.geometryRingStrokeRatio
@@ -478,6 +505,17 @@ QtObject {
     readonly property int badgeWidth: backend?.badgeWidth ?? Tokens.geometryBadgeWidth
     readonly property int trackThickness: backend?.trackThickness ?? Tokens.geometryTrackThickness
 
+    // The two line thicknesses, as logical sizes `Style.stroke` snaps to whole
+    // device pixels. A rule inside a surface (a divider) is a hairline. A line
+    // that indicates state is `indicatorWidth`: the four borders colour alone
+    // cannot carry (a failed value, an empty toggle, a foreign colour's
+    // containment, the focus ring) and the caret. Neither is a spacing step
+    // that happens to match.
+    readonly property int hairline: backend?.hairline ?? Tokens.geometryHairline
+    readonly property int indicatorWidth: backend?.indicatorWidth ?? Tokens.geometryIndicatorWidth
+
+    // The "this one" mark: a thin pill that says which row is current, one idiom
+    // and so one pair of numbers.
     readonly property int markThickness: backend?.markThickness ?? Tokens.geometryMarkThickness
     readonly property int markHeight: backend?.markHeight ?? Tokens.geometryMarkHeight
 
@@ -511,10 +549,12 @@ QtObject {
         return Math.max(0, root.rolloutRadius - Math.max(0, inset));
     }
 
-    // What a rollout leaves between its edge and its content on every side,
-    // and the radius a body sitting directly in that inset takes: derived, so
-    // a card, a field, a tile and a row's pill are all concentric with the
-    // rollout and none of them picks a corner by eye.
+    // What a rollout leaves between its edge and its content on every side
+    // (a host passes it as `Rollout.padding`), and the radius a body sitting
+    // directly in that inset takes: derived, so a card, a field, a tile and a
+    // row's pill are all concentric with the rollout and none of them picks a
+    // corner by eye. A host that insets by another amount passes
+    // `insetRadius(thatInset)` to the bodies instead.
     readonly property int rolloutPadding: root.space4
     readonly property int radiusBody: root.insetRadius(root.rolloutPadding)
 }

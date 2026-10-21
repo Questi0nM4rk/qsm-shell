@@ -74,7 +74,7 @@ Item {
     // Measured from `size`, which IS the picture's box: the ground, the mask
     // and this corner all follow the same number, and the item's own width may
     // be larger because a ring asked for room.
-    property real radius: size / 2
+    property real radius: Style.radiusPill
 
     readonly property string initials: {
         const words = name.trim().split(/\s+/).filter(word => word.length > 0);

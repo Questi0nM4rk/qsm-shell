@@ -63,7 +63,7 @@ Item {
     Rectangle {
         // A mark, not a gauge: long enough to see, short enough that it never
         // claims to measure the content.
-        readonly property real _thickness: Style.stroke(Style.markThickness, Screen.devicePixelRatio)
+        readonly property real _thickness: Style.stroke(Style.markThickness, root)
         readonly property real _length: Math.max(Style.space5,
             Math.min(Style.space6 * 2, root._span * root._ratio))
         readonly property real _offset: Math.max(0, Math.min(1,

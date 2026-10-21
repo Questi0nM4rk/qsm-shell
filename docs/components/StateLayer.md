@@ -40,7 +40,7 @@ signals `clicked`, `hoveredEntered`; function `activate()`. The `actions` list h
 | rest | `response` 1, no paint unless `hoverTint` | l. 113, 115 |
 | hover | growth to `hoverScale` (1.08) on the target; colour only through `hoverTint` (`Style.tone` lift 0.4) or a hosted body | l. 56, 113, 118 |
 | press | colour only through `hoverTint` (lift 0.8) or host; scale only if `pressScale` is set (default 1); pressed comes from the tap or the host only | l. 59, 83, 118 |
-| focus | accent ring of `Style.stroke(spaceTight)` outside the layer, concentric; keyboard only | l. 72, 147-162 |
+| focus | accent ring of `Style.stroke(Style.indicatorWidth, root)` outside the layer, concentric; keyboard only | l. 72, 147-162 |
 | disabled | the layer stops answering and hides the ring; dimming is the host's (`Style.disabled`) | l. 81-83, 152 |
 
 Routes:

@@ -149,7 +149,7 @@ Item {
     // The gap is measured from THIS LAYER's edge, so a layer sized to its body
     // (not outset from it) is what puts the ring a half step clear.
     Rectangle {
-        readonly property real _stroke: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+        readonly property real _stroke: Style.stroke(Style.indicatorWidth, root)
         readonly property real _reach: _stroke * 2
         anchors.fill: parent
         anchors.margins: -_reach

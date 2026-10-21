@@ -203,7 +203,7 @@ T.Control {
         // accent ring and said "failed" in a channel already spoken for.
         // Pointer focus is the surface lift plus the caret; keyboard focus is
         // the ring.
-        border.width: root.failed ? Style.stroke(Style.spaceTight, Screen.devicePixelRatio) : 0
+        border.width: root.failed ? Style.stroke(Style.indicatorWidth, root) : 0
         border.color: root.enabled ? Style.danger : Style.disabled(Style.danger)
 
         Behavior on border.color {
@@ -362,7 +362,7 @@ T.Control {
             // does not stop the specific one from running. The first
             // version of this component had both, and a consumer that
             // claimed Down got its own handler AND the field's -- a
-            // launcher list that moved two rows per keystroke.
+            // results list that moved two rows per keystroke.
             // `tests/units/tst_TextField.qml` is that bug, kept.
             //
             // So the hook fires, and if it did not take the key this
@@ -410,7 +410,7 @@ T.Control {
             readonly property int halfPeriod: Application.styleHints.cursorFlashTime / 2
             x: Math.round(input.x + input.cursorRectangle.x)
             y: input.y + input.cursorRectangle.y
-            width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+            width: Style.stroke(Style.indicatorWidth, root)
             height: input.cursorRectangle.height
             color: root.enabled ? Style.accent : Style.disabled(Style.accent)
             visible: input.activeFocus && !input.readOnly

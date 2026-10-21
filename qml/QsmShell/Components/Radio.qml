@@ -74,7 +74,7 @@ T.AbstractButton {
                 : "transparent"
             // The ring stays and takes the fill's colour when checked, so
             // selecting is one cross-fade of fill, ring and dot on one clock.
-            border.width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+            border.width: Style.stroke(Style.indicatorWidth, root)
             border.color: Style.tone(root.checked ? root.accentColor : Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
 
             Behavior on color {

@@ -4,9 +4,9 @@ import qs.QsmShell.Style
 // The one line: a straight rule of whole device pixels, so it paints the same
 // rows wherever it sits.
 //
-// `strength` is how loud it is. `Style.dividerOpacity` inside a surface, and
-// `Style.dividerBandOpacity` in the band, where nothing but the rule groups
-// what sits on it.
+// `strength` is how loud it is. A rule inside a surface is quiet; one drawn
+// directly in the band (`inBand`) is stronger, because nothing but the rule
+// groups what sits on it.
 //
 // `inset` insets the DRAWN LINE rather than the item, so it works the same for
 // a fixed-width consumer and an anchored one without forcing a layout style.
@@ -16,15 +16,19 @@ Item {
     id: root
 
     property real inset: 0
-    property real strength: Style.dividerOpacity
+    // The rule sits directly in the band, not inside a surface.
+    property bool inBand: false
+    property real strength: root.inBand ? Style.dividerBandOpacity : Style.dividerOpacity
 
-    implicitHeight: Style.stroke(1, Screen.devicePixelRatio)
+    readonly property real thickness: Style.stroke(Style.hairline, root)
+
+    implicitHeight: root.thickness
 
     Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         x: root.inset
         width: Math.max(0, parent.width - root.inset * 2)
-        height: Style.stroke(1, Screen.devicePixelRatio)
+        height: root.thickness
         color: Qt.alpha(Style.textMuted, root.strength)
     }
 }

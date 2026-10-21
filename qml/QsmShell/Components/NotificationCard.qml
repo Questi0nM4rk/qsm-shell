@@ -212,8 +212,8 @@ Item {
     readonly property string iconName: root.entry.urgency === "critical" ? "alert-triangle"
         : root.entry.urgency === "low" ? "moon"
         : "bell"
-    // Urgency is carried by the glyph's colour alone (spec 04, owner
-    // 2026-10-16): critical danger, normal info, low textMuted.
+    // Urgency is carried by the glyph's colour alone: critical danger, normal
+    // info, low textMuted.
     readonly property color glyphColor: root.entry.urgency === "critical" ? Style.danger
         : root.entry.urgency === "low" ? Style.textMuted
         : Style.info
@@ -364,7 +364,7 @@ Item {
                     visible: root.hasSwatch && !root.leadHovered
                     radius: Style.radiusSm
                     color: root.swatch ?? "transparent"
-                    border.width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+                    border.width: Style.stroke(Style.indicatorWidth, root)
                     border.color: Style.textMuted
                 }
 
@@ -412,7 +412,7 @@ Item {
                 visible: root.unread
                 width: Style.space1 + Style.spaceTight
                 height: width
-                radius: width / 2
+                radius: Style.radiusPill
                 color: Style.accent
                 Accessible.name: "unread"
             }

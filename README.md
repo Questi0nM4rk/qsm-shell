@@ -65,7 +65,7 @@ The application owns state and passes it in through slots and actions.
 `Style`, `Motion`, the components in `qmldir` and the `Style.backend` object a theme installs. Nothing else is imported.
 
 Look is a set of roles, not numbers a call site picks: three surface steps (`band`, `surface`, `overlay`, each 1.30:1 on the one below, generated from the band alone),
-`Style.glyphAlone(box)` and `glyphBeside(box)` for icons, `Style.stroke(n, dpr)` for whole-device-pixel lines,
+`Style.glyphAlone(box)` and `glyphBeside(box)` for icons, `Style.stroke(n, item)` for whole-device-pixel lines,
 `Style.radiusBody` for a body inside a rollout, and `Style.recede(colour)` for "not the current one".
 
 ## Numbers

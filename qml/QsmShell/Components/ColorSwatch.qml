@@ -152,7 +152,7 @@ Item {
     // pale or accent sample keeps its own edge and the ring keeps 3:1 against
     // the host (WCAG 1.4.11), which an ink ring chosen against the sample alone
     // did not. The keyboard ring steps out beyond it while selected.
-    readonly property real _selStroke: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+    readonly property real _selStroke: Style.stroke(Style.indicatorWidth, root)
     readonly property real _selReach: root._selStroke * 2
 
     // Hover growth is capped to about one pixel a side: a fixed ratio let a
@@ -251,7 +251,7 @@ Item {
             visible: root.empty
             color: "transparent"
             radius: Style.radiusSm
-            border.width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+            border.width: Style.stroke(Style.indicatorWidth, root)
             border.color: root._paint(Style.textMuted)
         }
 

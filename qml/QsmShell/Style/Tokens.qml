@@ -20,6 +20,7 @@ QtObject {
     readonly property color colorEdge: "#5e357f"
     readonly property color colorCheckerLight: "#ffffff"
     readonly property color colorCheckerDark: "#c0c0c0"
+    readonly property real contrastText: 4.5
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -77,7 +78,6 @@ QtObject {
     readonly property int motionClockRefresh: 60000
     readonly property real opacityDisabled: 0.35
     readonly property real opacitySelected: 0.12
-    readonly property real opacityRecede: 0.7
     readonly property real opacityFloatingShadow: 0.28
     readonly property real opacityCardShadow: 0.28
     readonly property real opacityBadgeTint: 0.12
@@ -102,6 +102,8 @@ QtObject {
     readonly property int geometryNotificationBodyViewportHeight: 96
     readonly property int geometrySwatchTarget: 44
     readonly property int geometrySpinBoxWidth: 140
+    readonly property int geometryHairline: 1
+    readonly property int geometryIndicatorWidth: 2
     readonly property int geometryMarkThickness: 3
     readonly property int geometryMarkHeight: 18
     readonly property int geometrySliderThumbLift: 2

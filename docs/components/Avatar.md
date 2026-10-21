@@ -6,7 +6,7 @@ actions: none; no signals, no functions and no pointer, keyboard or programmatic
 pointer: none; it never claims hover, press, focus or wheel.
 keyboard: none; it is never a tab stop and takes no keys.
 screen reader: no role of its own; the surrounding row or surface names the person.
-size: one `size` box for the picture; the implicit size grows by the ring room (gap plus ring width, whole pixels, even) only while ringed; `radius` defaults to half the size; `glyphSize` defaults to two fifths of it and the initials and the glyph snap to the type and icon scales; the presence dot is a fifth of `size` on the 4px rhythm, centred on the rim at 45 degrees.
+size: one `size` box for the picture; the implicit size grows by the ring room (gap plus ring width, whole pixels, even) only while ringed; `radius` defaults to `Style.radiusPill`, a circle; `glyphSize` defaults to two fifths of it and the initials and the glyph snap to the type and icon scales; the presence dot is a fifth of `size` on the 4px rhythm, centred on the rim at 45 degrees.
 properties: `source`, `name`, `icon`, `size`, `background`, `status`, `progress`, `progressColor`, `progressTrack`, `ringWidth`, `ringGap`, `glyphSize`, `radius`.
 tokens: the Control size table, overlay, text, textMuted, spaceTight, rhythm, textNear, iconNear, Prose, SvgIcon, StatRing and Badge; no local colours; the dot and ring proportions are ratios of `size`.
 motion: none of its own; the dot's colour animates in Badge (`Motion.micro`); image and ring settle without animation.
@@ -22,7 +22,7 @@ Shows which person or thing a picture stands for when no picture is loaded, with
 
 ### Public controls and states
 
-- Properties (`Avatar.qml`): `source`, `name`, `icon`, `size` (real, default `Style.size("Avatar", "md")`, 40), `background` (default `Style.overlay`), `status` (a Badge tone, or empty for no dot), `progress` (-1 for no ring, 0..1 for a ring), `progressColor` (`Style.text`), `progressTrack` (`Style.overlay`), `ringWidth` (`max(2, round(0.06 * size))`), `ringGap` (`Style.spaceTight`), `glyphSize` (`round(0.4 * size)`), `radius` (`size / 2`). Not documented above before this section: `icon`, `radius`, `glyphSize`, `ringGap`, `ringWidth`, `progressColor`, `progressTrack`.
+- Properties (`Avatar.qml`): `source`, `name`, `icon`, `size` (real, default `Style.size("Avatar", "md")`, 40), `background` (default `Style.overlay`), `status` (a Badge tone, or empty for no dot), `progress` (-1 for no ring, 0..1 for a ring), `progressColor` (`Style.text`), `progressTrack` (`Style.overlay`), `ringWidth` (`max(2, round(0.06 * size))`), `ringGap` (`Style.spaceTight`), `glyphSize` (`round(0.4 * size)`), `radius` (`Style.radiusPill`, a circle). Not documented above before this section: `icon`, `radius`, `glyphSize`, `ringGap`, `ringWidth`, `progressColor`, `progressTrack`.
 - Visible states implemented: photo (image Ready), icon fallback (`icon` set, no image), initials fallback (`name` set, no icon, no image), blank disc (`name` and `icon` both empty, no image; not designed, see P1), presence dot (none or one tone), ring (none, or 0..1).
 - Not applicable: rest, hover, press, focus, disabled, selected, loading. Avatar is not interactive.
 - Unit coverage (`workbench/units/Avatar.qml:31-51`): identity (initials, one-word, icon), presence (none, online, away), ring (none, half, full), size (md, lg). Not reachable in the unit: the photo path, a failed source, blank identity, radius, the small size.

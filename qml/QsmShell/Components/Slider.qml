@@ -585,7 +585,7 @@ T.RangeSlider {
             height: thumb.span
             x: (thumb.width - width) / 2
             y: (thumb.height - height) / 2 + thumb.lift
-            radius: width / 2
+            radius: Style.radiusPill
             color: Qt.rgba(Style.shadow.r, Style.shadow.g, Style.shadow.b, Style.thumbShadowOpacity)
         }
 
@@ -595,7 +595,7 @@ T.RangeSlider {
             height: width
             x: (thumb.width - width) / 2
             y: (thumb.height - height) / 2
-            radius: width / 2
+            radius: Style.radiusPill
             color: root.thumbRingColor
         }
 
@@ -605,7 +605,7 @@ T.RangeSlider {
             height: root._pill && root.vertical ? root._thumbMain : thumb.span
             x: (thumb.width - width) / 2
             y: (thumb.height - height) / 2
-            radius: Math.min(width, height) / 2
+            radius: Style.radiusPill
             color: root._paintedThumb
 
             Behavior on color {

@@ -297,8 +297,9 @@ meter), never an edge. The silhouette itself keeps its edge separation
 - A border encodes a fact colour cannot, and there are four: a failed
   value (`danger`), the shape of an empty toggle (`textMuted`), containment
   of a foreign colour (a swatch may equal the ground), and the focus ring.
-  Each is a `Style.stroke(spaceTight)` line. Layers are separated by a step,
-  never by a line.
+  Each is a `Style.stroke(Style.indicatorWidth, item)` line, as is the
+  caret; a rule inside a surface is a `Style.hairline`. Layers are separated
+  by a step, never by a line.
 
 ## Component laws
 
@@ -506,14 +507,17 @@ Earned, each from a specific failure. Break one and name which.
   control applies to each child separately, so a translucent thumb shows the
   translucent fill through it. `Style.disabled(colour)` blends each colour
   toward the background opaquely and the layers stay layers; `Style.recede`
-  is the same blend for "not the current one", strong enough to keep muted
-  text legible.
+  is the same blend for "not the current one", at the weakest share that
+  keeps muted text at `Style.contrastText` on the band, derived from the
+  theme's own colours and never typed.
 - **A line is a whole number of device pixels, and a straight one is a
   radius-0 Rectangle.** A square Rectangle's edges snap to the device grid,
-  so a height from `Style.stroke(n, Screen.devicePixelRatio)` paints the
-  same rows wherever it sits; at a fractional scale any other height
-  paints two rows here and three there. The ratio is read where the line is
-  drawn, never a constant. A curved edge anti-aliases by design.
+  so a height from `Style.stroke(n, item)` paints the same rows wherever it
+  sits; at a fractional scale any other height paints two rows here and
+  three there. The WINDOW's ratio is read once, inside `Style.stroke`, from
+  the item that paints the line: a caller passes the item and never a ratio,
+  and never reads `Screen.devicePixelRatio`, which is the output's integer
+  scale. A curved edge anti-aliases by design.
 - **A body directly in a rollout takes `Style.radiusBody`**, the rollout's
   radius minus `Style.rolloutPadding`. It is derived so every card, field,
   tile and row is concentric with the surface that holds it.

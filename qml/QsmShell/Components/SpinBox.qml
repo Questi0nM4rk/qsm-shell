@@ -117,7 +117,7 @@ T.DoubleSpinBox {
         radius: Style.radiusBody
         hovered: root.enabled && (root.hovered || root.focused)
         enabled: root.enabled
-        border.width: root.failed ? Style.stroke(Style.spaceTight, Screen.devicePixelRatio) : 0
+        border.width: root.failed ? Style.stroke(Style.indicatorWidth, root) : 0
         border.color: root.enabled ? Style.danger : Style.disabled(Style.danger)
     }
 
@@ -161,7 +161,7 @@ T.DoubleSpinBox {
             readonly property int halfPeriod: Application.styleHints.cursorFlashTime / 2
             x: Math.round(editor.x + editor.cursorRectangle.x)
             y: editor.y + editor.cursorRectangle.y
-            width: Style.stroke(Style.spaceTight, Screen.devicePixelRatio)
+            width: Style.stroke(Style.indicatorWidth, root)
             height: editor.cursorRectangle.height
             color: root.enabled ? Style.accent : Style.disabled(Style.accent)
             visible: editor.activeFocus && root.editable

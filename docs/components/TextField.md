@@ -4,7 +4,7 @@ states: rest(surface on band, 1.30:1 from the deep-night ladder; no border) hove
 actions: Accept Clear Reveal(password only) Select all
 purposes: text search password number; one type, the purpose switches input semantics, leading glyph, trailing action and sample value together
 size: `size` is a preset name (Control family) resolved by Style.size("TextField", name) into `fieldHeight` (escape hatch); s = fieldHeight / md; text textNear(textMd·s), slot content is the host's and the host scales it by `sizeScale` (the unit uses iconNear(iconMd·s)), insets rhythm(space3·s), slot gap rhythm(space2·s); a leading action owns the full-height strip from the field edge while its glyph keeps the inset; a trailing Control reserves only its glyph width (its padding is hit box and overflows, above the text); caret, radius and border constant; width naturalWidth = controlWidth, constant, text scrolls inside
-tokens: space3 (box inset) space2 (slot gap) spaceTight (scroll-end inset) stroke (caret width, danger border) radiusBody surface accent danger Style.disabled textSm|Md|Lg
+tokens: space3 (box inset) space2 (slot gap) spaceTight (scroll-end inset) `Style.indicatorWidth` (caret width, danger border) radiusBody surface accent danger Style.disabled textSm|Md|Lg
 motion: micro (surface, border) press (caret travel); blink = platform cursorFlashTime/2, off under reducedMotion
 events: accepted(only when acceptableInput) edited(text) escaped keyPressed(event, the one hook for every key a surface wants, Up/Down included) selectionClaimed
 label: outside, through Field, which uses ControlLabel (the element Slider wears)
@@ -28,7 +28,7 @@ The one text input a person uses to type or search a value, enter a password, or
 | --- | --- | --- |
 | purpose: text, search, password, number | Partly. The component switches `inputType` only: echo mode, validator, input-method hints. The leading glyph and trailing action live in the consumer (see SC4). | TextField.qml 91-100, 323-325; unit 31-45 |
 | enabled, disabled | Yes. Disabled blends text, placeholder, caret, border through `Style.disabled`. | TextField.qml 210, 284, 304, 398 |
-| failed | Yes. 2 px `danger` border (`Style.stroke(spaceTight)`), and focus ring turns `danger`. The message belongs to `Field`. | TextField.qml 209, 454 |
+| failed | Yes. 2 px `danger` border (`Style.stroke(Style.indicatorWidth, root)`), and focus ring turns `danger`. The message belongs to `Field`. | TextField.qml 209, 454 |
 | readOnly | Yes. No hover lift, no caret, still a tab stop. | TextField.qml 200, 400, 448 |
 | size xs, sm, md, lg | Yes. 24, 32, 40, 48 px from the Control family. | tokens `sizes.Control`; TextField.qml 45 |
 | empty, long | Yes. Empty shows placeholder; long text scrolls inside a constant 380 px width. | TextField.qml 167, 270-273, 278 |
@@ -49,7 +49,7 @@ The one text input a person uses to type or search a value, enter a password, or
 - Left and right inset (`rhythm(12 · s)`): 8, 12, 16 px.
 - Slot gap (`rhythm(8 · s)`): 8, 8, 8 px.
 - Height 32, 40, 48 px. Width 380 px, constant (`Style.controlWidth`).
-- Radius 12 px (`radiusBody`), constant. Caret `Style.stroke(spaceTight)` wide, a straight line.
+- Radius 12 px (`radiusBody`), constant. Caret `Style.stroke(Style.indicatorWidth, root)` wide, a straight line.
 - Slot glyphs: not sized by this component; the host takes `Style.glyphBeside(fieldHeight)` (16 at sm and md, 20 at lg). The unit does.
 
 ### Palette pairs (deep-night, computed)

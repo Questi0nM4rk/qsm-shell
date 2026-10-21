@@ -62,7 +62,7 @@ Computed from the deep-night token values against `band`, the unit AGENTS names:
 | --- | --- | --- |
 | `text` on `band` (title, in-month days) | `:36`, `:68` | 13.71 |
 | `textMuted` on `band` (weekday labels, chevrons) | `:47`, `:35` | 8.61 |
-| `textMuted` at opacity 0.4 on `band` (out-of-month days) | `:68-69` | 2.55 (4.95 at the token `opacity.recede` 0.70 as a colour blend) |
+| `textMuted` at opacity 0.4 on `band` (out-of-month days) | `:68-69` | 2.55 (`Style.recede(Style.textMuted)` keeps `Style.contrastText` on the band by construction) |
 | `textOnPrimary` on `accent` (today digit) | `:68` | 8.87 |
 | `accent` on `band` (today disc) | `:61` | 8.87 |
 
@@ -142,8 +142,8 @@ Defects (source-reviewed, each cited by file and line; the structured list carri
   `textMuted` alone, no opacity (8.61:1 computed). As audited: `:68-69` stacks `textMuted` (8.61:1) with a literal 0.4
   opacity, giving 2.55:1 computed, which is below the 4.5 that 1.4.3 asks of text. Whether
   out-of-month days are incidental is not decided here. The literal also breaks "no numbers in a
-  component": the token `opacity.recede` is 0.70 (4.95:1 computed as a colour blend). Fix: use one mechanism, the
-  colour without opacity (8.61:1), or the token.
+  component": `Style.recede` is a colour blend that keeps muted text at `Style.contrastText`. Fix: use one
+  mechanism, the colour without opacity (8.61:1), or `Style.recede`.
 - `mc-today-stale` (minor, conditional): `:13` evaluates `new Date()` once, when the component is
   created, and nothing refreshes it. If the instance stays loaded past midnight, the marker stays on
   the previous day. Whether an instance lives that long depends on the host. Fix: one `Timer` set

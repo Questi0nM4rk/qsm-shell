@@ -34,7 +34,7 @@ Finishes one single-choice pick inside a set the host owns. The consequence is t
 
 ### Sizes, empty, long content, failure
 
-- Sizes from `tokens/deep-night.json` `sizes.Radio`: sm 12, md 16, lg 24. Border is `spaceTight` 2 px at every size. Dot is 0.4 of the circle rounded: 5, 6 and 10 px (D2 fixed). Gap is `Style.rhythm(radio * 0.5)`: 8, 8 and 12 px, because `Style.rhythm` rounds half up (`Style.qml:284`, 6 becomes 8).
+- Sizes from `tokens/deep-night.json` `sizes.Radio`: sm 12, md 16, lg 24. Border is `Style.indicatorWidth` 2 px at every size. Dot is 0.4 of the circle rounded: 5, 6 and 10 px (D2 fixed). Gap is `Style.rhythm(radio * 0.5)`: 8, 8 and 12 px, because `Style.rhythm` rounds half up (`Style.qml:284`, 6 becomes 8).
 - Empty label: the slot is hidden, so the width is the circle alone (D1 fixed).
 - Long label: no maximum width and no elision (`Radio.qml:86-88`), so the natural width grows with the label (P3).
 - Failure: the radio has no error state. Cancellation: see Routes.

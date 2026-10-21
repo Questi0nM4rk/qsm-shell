@@ -59,8 +59,9 @@ adds `xl` to every one of them. The resolved number (`knobSize`, `thumbSize`,
 
 A glyph, a line and a body's corner are roles, not call-site choices:
 `Style.glyphAlone(box)` and `Style.glyphBeside(box)` pick the icon for a box,
-`Style.stroke(n, Screen.devicePixelRatio)` gives a line a whole number of
-device pixels, `Style.radiusBody` is the corner of a body directly in a
+`Style.stroke(n, item)` gives a line a whole number of device pixels in
+the item's own window (`Style.hairline` for a rule, `Style.indicatorWidth` for
+a border, a ring or a caret), `Style.radiusBody` is the corner of a body directly in a
 rollout, and `Style.recede(colour)` dims a colour for "not the current one".
 A role derives from the scales and the size table, so a theme changes it by
 changing those.

@@ -75,7 +75,7 @@ T.AbstractButton {
     // role by colour, never by opacity on the composite.
     background: Rectangle {
         id: track
-        radius: height / 2
+        radius: Style.radiusPill
         // The track is the body: hover lifts and press deepens its colour
         // through the one state matrix, while the knob grows on hover only.
         color: Style.tone(root.checked ? root.accentColor : Style.textMuted,
@@ -93,7 +93,7 @@ T.AbstractButton {
             x: root.checked ? root.width - width - root._inset : root._inset
             width: root._knob
             height: width
-            radius: width / 2
+            radius: Style.radiusPill
             color: root.enabled
                 ? (root.checked ? Style.textOnPrimary : Style.band)
                 : Style.disabled(root.checked ? Style.textOnPrimary : Style.band)
