@@ -333,6 +333,12 @@ QtObject {
         return root._preset(type, "md");
     }
 
+    // Whether a preset resolves for the type, its own table or the Control
+    // family's: a consumer asks before it adds a name, so it never restates one.
+    function hasSize(type: string, name: string): bool {
+        return root._preset(type, name) !== undefined;
+    }
+
     // A name resolves through the type's own entries, the backend's first. A
     // type the default theme gives no table inherits the names it lacks from
     // `Control`, so `sizes: { IconButton: { xl: 64 } }` adds one preset to one
