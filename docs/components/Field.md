@@ -24,7 +24,7 @@ It names one control from outside and puts its requirement, hint and failure cop
 - Unit controls (`workbench/units/Field.qml`): validation ok/failed, hint shown/none, required yes/no, size sm/md/lg. Size reaches the wrapped Switch, and the label follows through `sizeScale`.
 - Implemented: hint; failed (the error replaces the hint on the same line); required mark; collapse of the label, hint and error when empty.
 - Story key: `field` only, variant `error`.
-- Not reached by the unit: a long label, a long error, and a required field with an empty label (a caller error, see F4).
+- Not reached by the unit: a long label, a long error, and a required field with an empty label (a caller error that logs at load).
 
 ### Routes
 
@@ -35,10 +35,10 @@ It names one control from outside and puts its requirement, hint and failure cop
 
 ### Sizes, empty, long, failure, cancellation
 
-- Size: `sizeScale` reaches the label, the message, the glyph and both gaps (F2, fixed).
+- Size: `sizeScale` reaches the label, the message, the glyph and both gaps.
 - Empty: the label row is invisible when the label is empty (ControlLabel.qml:59). The message row is hidden when there is neither an error nor a hint (Field.qml:69).
-- Long: the label and the message are single-line and elide (F1, F7).
-- Failure: `failed` is `error.trim().length > 0`, so whitespace is not a failure (F6, fixed). The host owns the verdict and the copy. A host derives `error` from its own operation state.
+- Long: the label and the message are single-line and elide (F1, F3).
+- Failure: `failed` is `error.trim().length > 0`, so whitespace is not a failure. The host owns the verdict and the copy. A host derives `error` from its own operation state.
 - Cancellation: nothing in Field. The host clears `error`.
 
 ### Visual roles and palette pairs
@@ -77,12 +77,8 @@ Field adds no pointer target. Its only input is the wrapped control. Worked exam
 Defects (source-backed):
 
 - F1 (high): Field.qml:78-83 sets the failure copy in `role: "metadata"`. Prose.qml:114 makes non-body roles `NoWrap`, and Prose.qml:118 makes them `ElideRight`. A message wider than the field (380 px in the unit, `Style.controlWidth`) is cut with an ellipsis, and the fix clause that the comment at Field.qml:32 asks for is the part that disappears. Fix in Field.qml: override the message's `wrapMode` to `Text.WordWrap` and `elide` to `Text.ElideNone`, then decide its leading (P1).
-- F2 (medium): FIXED (message `textNear`, glyph `iconNear`, gaps `rhythm`, all times `sizeScale`; source-reviewed, load-checked, not owner-accepted). Field.qml:40 accepts `sizeScale`, but only ControlLabel receives it (Field.qml:55). The message (Field.qml:78-83, fixed `textXs`), the icon (Field.qml:75, `iconXs`) and the gaps (Field.qml:49 `space1`, Field.qml:70 `spaceTight`) do not scale. At the Switch's lg, `_s` = 24 / 16 = 1.5 (Switch.qml `_s`; `sizes.Switch` in tokens). The label grows by 1.5 and the message stays put. AGENTS.md: everything connected to the component scales with it. Fix in Field.qml: `Style.textNear(Style.textXs * root.sizeScale)` for the message, `Style.iconNear(Style.iconXs * root.sizeScale)` for the icon, `Style.rhythm` for the gaps.
-- F3 (low): FIXED (the glyph keeps its slot at opacity 0 while a hint shows; source-reviewed, load-checked, not owner-accepted). the message RowLayout (Field.qml:67-70) gets the icon as a visible child only when failed (Field.qml:73). When the error appears the message moves right by iconXs + spaceTight = 12 + 2 = 14 px. The comment at Field.qml:64-66 says the layout must not jump, and it only keeps the vertical position. Fix in Field.qml: keep the icon's slot while a hint shows (opacity 0 when not failed, not `visible: false`).
-- F4 (low): FIXED (a `required` field without a label logs an error at load, and "Required" is announced only with a label; source-reviewed, load-checked, not owner-accepted). Field.qml:36 and :44 add "Required" to the description even when the label is empty. ControlLabel.qml:56 and :59 hide the whole label row when its text is empty, and the asterisk (ControlLabel.qml:118-125) goes with it. A person sees no label and no mark, while a screen reader hears "Required". Fix: either Field refuses `required` without a label, or the mark shows without one. Choose one.
-- F5 (medium, shared): a host that binds only the field's `Accessible.name` leaves the hint and the error visible but out of the field's description (Field.qml:44). Fix in the host: bind `Accessible.description` to the Field's `accessibleDescription`.
-- F6 (low): FIXED (`failed` and the hint row use a trimmed message; source-reviewed, load-checked, not owner-accepted). Field.qml:42 treats whitespace as an error. The result is a lone danger icon with no text (Field.qml:72-83). Fix: `error.trim().length > 0`, and the same trim for `hint` (Field.qml:69).
-- F7 (low): ControlLabel's Prose is single-line and elides (Prose.qml:114, :118, role `label`). A long label is cut on screen, while the full name stays in `accessibleName` (Field.qml:43). Fix belongs to ControlLabel, which Slider also uses.
+- F2 (medium, shared): a host that binds only the field's `Accessible.name` leaves the hint and the error visible but out of the field's description (Field.qml:44). Fix in the host: bind `Accessible.description` to the Field's `accessibleDescription`.
+- F3 (low): ControlLabel's Prose is single-line and elides (Prose.qml:114, :118, role `label`). A long label is cut on screen, while the full name stays in `accessibleName` (Field.qml:43). Fix belongs to ControlLabel, which Slider also uses.
 
 Proposals (taste, owner decides):
 

@@ -39,7 +39,7 @@ It finishes one task: telling a person that work with no knowable end is still r
 - Icon scale from `Tokens.qml:42-45`: iconXs 12, iconSm 16, iconMd 20 (default), iconLg 24 (the unit's default).
 - Stroke, computed from `Spinner.qml:41-42` as `max(1, size × spinnerStrokeRatio)` with a ratio of 0.16 (`deep-night.json`): 12 → 1.92 px, 16 → 2.56 px, 20 → 3.20 px, 24 → 3.84 px. None is an integer. For a curve this is expected antialiasing, so it is not a finding.
 - Round caps fit the box. The radius is `centre − thickness/2` (line 48), so the outer edge of a round-capped stroke lands exactly on the box edge. Nothing clips, by arithmetic from lines 47-50.
-- Cancellation: `running: false` stops the rotation and repaints the unlit ring only (D1, fixed).
+- Cancellation: `running: false` stops the rotation and repaints the unlit ring only.
 
 ### Visual roles and palette pairs
 

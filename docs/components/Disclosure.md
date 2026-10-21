@@ -45,14 +45,14 @@ Failure and cancellation: `toggle()` refuses when disabled (Disclosure.qml:38). 
 ### Sizes, empty and long content
 
 - Heading height 32 px (Control `sm`). Width comes from the host (unit 380 px, `controlWidth`).
-- Body indent is the title's x (`titleLabel.x`): 24 px without the icon, 48 px with it, see D2.
+- Body indent is the title's x (`titleLabel.x`): 24 px without the icon, 48 px with it; the body follows the title.
 - Long title: the label is a Prose `label` role with `elide: ElideRight` (Prose.qml), so it truncates inside the row. Whether the natural width grows is H1.
 
 ### Visual roles, motion and reduced motion
 
 - Chevron `textMuted` (Disclosure.qml:69). Icon `text` (:80). Label Prose `label` role, colour `text` (Prose.qml). Badge `neutral` tint (Badge.qml). Focus ring `Style.accent` (StateLayer default `focusColor`). Palette pairs were not measured.
 - Chevron rotation 0 to 90 degrees over `Motion.fast`, 180 ms (Tokens.qml:49), easing `Motion.moveEasing` (InOutCubic, Motion.qml:128). Measured from source only.
-- Hover response: `Motion.hoverScale` on the chevron plus a `Style.tone` disc over the heading. Press response: `Motion.pressScale`. Both from tokens, see D3 and D4.
+- Hover response: `Motion.hoverScale` on the chevron plus a `Style.tone` disc over the heading. Press response: `Motion.pressScale`. Both from tokens.
 - Body: appears and disappears with no transition.
 - Reduced motion: `Motion.fast` becomes 80 ms (Motion.qml:56). The rotation still plays. See S1.
 
@@ -69,31 +69,8 @@ Failure and cancellation: `toggle()` refuses when disabled (Disclosure.qml:38). 
 
 ### Findings
 
-| id | pass | element | evidence (source) | expected (source) | actual | severity |
-| --- | --- | --- | --- | --- | --- | --- |
-| D1 | states | heading, disabled | disabled stops hover and press (StateLayer `hovered`, `pressed` need `enabled`); chevron keeps `textMuted` (Disclosure.qml:69), icon keeps `text` (:80), Prose label keeps `text` (Prose.qml colour binding), Badge keeps its tint (Badge.qml) | AGENTS "Disabled dims by colour": `Style.disabled(colour)` on every painted role | a disabled heading is drawn at full strength and reads as active; only the missing hover shows it is off | major |
-| D2 | alignment | body indent against title | title x is chevron 16 (Disclosure.qml:68) plus `space2` 8 (:63) = 24 px without the icon, and 16 + 8 + 16 + 8 = 48 px with it (:76-81); body indent is `space5` 24 px (:112) | body and title share one left edge (ui-design rhythm) | the default unit state (icon shown, unit.qml:13) puts the title at 48 px and the body at 24 px; the match at 24 px exists only without the icon | minor |
-| D3 | hover | heading, hover colour | `hoverTint` defaults to false in StateLayer and Disclosure.qml:93-103 never sets it; the only hover change is the chevron scale | AGENTS hover law: "grows slightly AND changes colour" | hovering changes the glyph size and no colour | minor |
-| D4 | tokens | hover and press numbers | Disclosure.qml:101 `hoverScale: 1.15` and :102 `pressScale: 0.88`; the library tokens are `motionHoverScale` 1.08 (Tokens.qml:61) and `motionPressScale` 0.94 (Tokens.qml:62); the component also writes `rotation: 90` (:70) | AGENTS "every number comes from Style or Motion" | the disclosure chevron grows more and presses deeper than every other control in the library | minor |
-| D5 | focus | ring against body | StateLayer focus ring reaches `spaceTight * 2` = 4 px outside the heading with a 2 px stroke inside that, so its outer edge sits at 4 px; body starts at 4 px (Disclosure.qml:42, :114) | ring keeps a gap from neighbouring content (AGENTS focus ring law) | with focus on the heading and the group open, the ring touches the top of the body with no clearance | minor |
-
-Status, source-reviewed and load-checked (one-scenario capture exited 0), never owner-accepted:
-
-- D1: fixed for the chevron, icon and label with `Style.disabled`. Open: the Badge stays at full strength; it needs `Badge.qml` to dim when its host is disabled.
-- D2: fixed. The owner's choice was not yet given, so the body follows the title (`Layout.leftMargin: titleLabel.x`); the owner may still prefer the chevron-only indent.
-- D3: fixed with `hoverTint: true`; the StateLayer is declared before the row so the disc paints under the label.
-- D4: fixed. `hoverScale` is the StateLayer default, `pressScale: Motion.pressScale`.
-- D5: fixed with `Layout.topMargin: Style.space2` on the body.
-
-Fixes as proposed, all inside `Disclosure.qml`:
-
-- D1: colour each painted role with `root.enabled ? c : Style.disabled(c)` for the chevron, icon and the Prose `color`; the Badge fix sits in `Badge.qml`.
-- D2: the owner chooses the rule. Either the body indents to the title (chevron plus icon plus gaps), or the body stays at the chevron indent and the mismatch is recorded as intended.
-- D3: `hoverTint: true` on the StateLayer, which paints a `Style.tone` disc at `focusRadius` over the heading, or an exemption recorded in this section.
-- D4: delete the two literals, which leaves the StateLayer defaults in place, and set `pressScale: Motion.pressScale`. The `rotation: 90` literal is a right angle, so it may stay.
-- D5: `Layout.topMargin: Style.space2` on `bodyHost`, which puts 8 px of clearance beyond the ring's outer edge.
-
-Only the Badge half of D1 needs a shared file.
+- D1 (minor, shared): a disabled heading dims the chevron, icon and label by colour, but the Badge stays at full strength. `Badge.qml` needs to dim when its host is disabled.
+- D2 (owner choice): the body indents to the title (`Layout.leftMargin: titleLabel.x`). The owner may prefer the chevron-only indent, which would put the body at 24 px against a 48 px title when the icon is shown.
 
 ### Hypotheses (not measured)
 
@@ -106,7 +83,6 @@ Only the Badge half of D1 needs a shared file.
 ### Source conflicts
 
 - S1: AGENTS says a one-shot position animation is removed under reduced motion, not shortened, and also says reduced motion shortens a duration (Motion.qml:56). The chevron is a rotation, not a position, so the code follows the shortening rule. review-animations standard 8 says to drop movement. The owner decides which rule governs a rotation.
-- S2: resolved by D4; the tokens line holds again.
 
 ### Hand-off to review-animations (motion verdict is theirs)
 

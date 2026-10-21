@@ -53,7 +53,7 @@ slot), `selected`, `disabled`, `interactive`, `danger`, `header`, `separator`, `
 | rest | no box: `Surface` opacity 0 (ListRow.qml:170-171) | implemented |
 | hover | `Style.tone` lift 0.4 on the surface, leading box to `rowHoverScale` (ListRow.qml:194, Motion.qml:52) | implemented |
 | press | tone lift 0.8, no scale: `pressScale` stays 1 (StateLayer.qml:59) | implemented |
-| focus | ring on StateLayer, only when the host binds `focused` (default false, the row takes no focus) | implemented, D7 fixed |
+| focus | ring on StateLayer, only when the host binds `focused` (default false, the row takes no focus) | implemented |
 | selected | accent at `opacitySelected` 0.12 over surface, accent name (ListRow.qml:160-169, Style.qml:135-139) | implemented |
 | disabled | colour through `Style.disabled`, row stops answering (ListRow.qml:94, 117) | implemented |
 | report-only | full strength, not a target (ListRow.qml:94, 247) | implemented |
@@ -70,7 +70,7 @@ slot), `selected`, `disabled`, `interactive`, `danger`, `header`, `separator`, `
   (workbench/units/ListRow.qml:25-32, 152-155), so a list that does not is not covered by this record.
 - Wheel: the row claims no wheel event (ListRow.qml and StateLayer.qml contain no wheel handler). Hosted
   content inside `expandedContent` is not examined.
-- Focus: `focused` defaults to false; the owning list binds it (D7).
+- Focus: `focused` defaults to false; the owning list binds it.
 - Accessibility routes: `Accessible.role` Button when selectable, StaticText otherwise; name `primary`;
   description `supporting` plus Expanded or Collapsed (ListRow.qml:128-134). Judged by a11y-audit.
 
@@ -83,10 +83,10 @@ slot), `selected`, `disabled`, `interactive`, `danger`, `header`, `separator`, `
   name textSm 12 at md and sm, textMd 14 at lg; supporting textXs 10 at md and sm, textSm 12 at lg.
 - Text column left edge (`contentInset`): 12 + 20 + 8 = 40 px at md with a leading visual; 12 px
   without one.
-- Empty: no leading visual hides the leading box unless `reserveLeading` is set (D1); a supporting line
+- Empty: no leading visual hides the leading box unless `reserveLeading` is set; a supporting line
   equal to the name (case-insensitive) hides; a trailing slot with no visible child that measures
-  wider than 0 hides (D2).
-- Long: name and supporting elide right (Prose.qml:118). The natural width is not constant; D6 is open.
+  wider than 0 hides.
+- Long: name and supporting elide right (Prose.qml:118). The natural width is not constant; D1 is open.
 - Failure and cancellation: a disabled or report-only row does not activate (ListRow.qml:94, 136-139).
   A drag past the threshold cancels the tap (StateLayer.qml:52). Collapsed expanded content takes no
   input (ListRow.qml:325).
@@ -119,7 +119,7 @@ Motion (values from Tokens.qml and Motion.qml):
 - Expansion reveal: 180 ms, InOutCubic, height only (ListRow.qml:328-331, Tokens.qml:49, Motion.qml:128).
 
 Reduced motion: durations clamp (micro 60 ms, fast 80 ms, Motion.qml:26, 56). The expansion reveal is
-removed (ListRow.qml:329). The hover scale is not clamped; see D9.
+removed (ListRow.qml:329). The hover scale is removed (`Motion.rowHoverScale` is 1).
 
 ### Pointer geometry
 
@@ -151,27 +151,12 @@ Popup corridor: not applicable to the row itself. A rollout that hosts it owns t
 
 ### Findings
 
-Source-backed defects are listed in the structured result with their fix. Redesign proposals and taste
-are in the structured result as P-items. The two source conflicts and the hypotheses are below.
-
-Fix status (source-reviewed and load-checked with one capture of `list-row`; not runtime-exercised, not
-owner-accepted):
-
-- D1 fixed: `reserveLeading` (default false) keeps the leading box for a row with no visual, so a list
-  that mixes rows chooses the stable edge; the default behaviour is unchanged. SC2 stays the owner's.
-- D2 fixed: the trailing slot shows only when a visible child has a width. The unit's always-present
-  empty Loader is now hidden outside the device variant, since a zero-width child in a Layout still
-  adds its spacing.
-- D3 fixed: the separator's y is rounded.
-- D5 fixed: a hovered or pressed row is at full strength.
-- D7 fixed: `focused` defaults to false and the host binds it.
-- D6 open: a constant natural width collapses `Menu.implicitWidth`, which sizes itself by the widest
-  row; `Menu` has to take its width from a constant first.
+- D1: a constant natural width collapses `Menu.implicitWidth`, which sizes itself by the widest row; `Menu` has to take its width from a constant first.
 
 Source conflicts (the owner rules):
 
 - SC2: the leading-box comment (ListRow.qml:16-22) says the box is reserved so the name's edge does not
-  move between rows; the AGENTS slot law says an empty slot takes no space. D1 carries the choice.
+  move between rows; the AGENTS slot law says an empty slot takes no space. `reserveLeading` carries the choice.
 
 Hypotheses (observed in source, not measured; not in the table):
 

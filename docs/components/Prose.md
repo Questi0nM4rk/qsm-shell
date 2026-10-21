@@ -13,7 +13,7 @@ not designed: input, labelling controls or truncation policy beyond elision; use
 
 ## UIX audit
 
-Evidence: source-reviewed; D1-D3 fixes load-checked by one offscreen capture of story `prose`. No live geometry, no owner acceptance.
+Evidence: source-reviewed. No live geometry, no owner acceptance.
 Read: `qml/QsmShell/Components/Prose.qml`, `workbench/units/Prose.qml`, `tokens/deep-night.json`,
 `qml/QsmShell/Style/Style.qml` and `AGENTS.md` (component laws, surface ladder).
 Caelestia sibling: `~/Clonned/caelestia/repo/components/StyledText.qml`.
@@ -52,8 +52,8 @@ control, which is deliberate: the caller picks the role.
 - Empty text: not run.
 - Long text: `body` wraps with no line limit (lines 114, 118); the other nine roles are
   `NoWrap` and elide right, so they end with an ellipsis only when the parent gives them a width.
-  See D2 and H1.
-- Failure: an unknown role string renders as `label` with no warning (lines 79 and 93). See D3.
+  See H1.
+- Failure: an unknown role string warns once per instance and role value and renders as `label`.
 - Cancellation: none; the type has no work to cancel.
 
 ### Visual roles and palette pairs
@@ -110,34 +110,6 @@ decision, justified in the Prose.qml header. Caelestia's `NativeRendering` is a 
 not a defect (H3).
 
 ### Findings
-
-Source-backed defects:
-
-- **D1** (fixed; source-reviewed, load-checked, not owner-accepted) `workbench/units/Prose.qml:13` and `:34`. The unit declares `property bool technical: false`
-  and binds `technical: root.technical` on the specimen, so the specimen's technical default
-  (`role === "reading"`, Prose.qml:61) is overridden by a constant false. A person who picks the
-  `reading` option sees the sans face, and the `technical` observable reports false. The harness
-  therefore shows a state the component does not produce on its own.
-  Fix: remove the explicit binding and make the technical control's options include an "auto"
-  option that assigns nothing (or assigns the role default), so the unit shows the component's own
-  default. Shared: false.
-  Severity: medium.
-- **D2** (fixed; source-reviewed, load-checked, not owner-accepted. Prose now always sets `ElideRight`, which Qt applies to a wrapping body only under `maximumLineCount` or an explicit height.) `qml/QsmShell/Components/Prose.qml:118` (with `:114`). For `body`, `elide` is `ElideNone`
-  whatever `maximumLineCount` is. A body capped by a caller ends at the cap with no ellipsis.
-  A host that caps it had to re-set
-  `elide: Text.ElideRight`, so the component's policy was patched by the host. A person sees the two-line app detail end mid-word unless that host line exists.
-  Fix: make elide follow the line limit in Prose, `ElideRight` when `maximumLineCount` is set and
-  `ElideNone` when it is not (check Qt's default for the unset value before writing the test). Then
-  the host line can go. Shared: false.
-  Severity: low.
-- **D3** (fixed; source-reviewed, load-checked, not owner-accepted. Warns once per instance and role value; the fallback render stays.) `qml/QsmShell/Components/Prose.qml:79` and `:93`. An unknown role string falls to the
-  `default` branches and renders at `textSm` in Medium weight, with no warning. A misspelt role such
-  as `"headline"` reads as a plain label, and nothing says why. This is the silent fallback the
-  implementation rule forbids; the library's own precedent is Style.size, which warns once
-  (Style.qml:264, `console.warn`).
-  Fix: warn once with the role name on the default branches, following the Style.size pattern.
-  Shared: false.
-  Severity: low.
 
 Redesign proposals (taste; owner decides):
 

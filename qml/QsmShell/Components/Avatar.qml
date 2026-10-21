@@ -44,10 +44,10 @@ Item {
     // The ring's empty part: a line of content, drawn in the band so it
     // reads on the overlay picture it circles.
     property color progressTrack: Style.overlay
-    // The ring is 6% of the diameter, at least 2px: thick enough to read as
-    // progress at every size, thin enough that the picture stays the subject.
-    // A proportion of the picture, so it scales with it, not a token.
-    property real ringWidth: Math.max(Style.spaceTight, Math.round(size * 0.06))
+    // The ring is 6% of the diameter, at least the indicator stroke: thick
+    // enough to read as progress at every size, thin enough that the picture
+    // stays the subject. A proportion of the picture, so it scales with it.
+    property real ringWidth: Math.max(Style.stroke(Style.indicatorWidth, root), Math.round(size * 0.06))
     // Air between the picture and its ring, so the two read as a thing and its
     // frame rather than as one thick border.
     property real ringGap: Style.spaceTight

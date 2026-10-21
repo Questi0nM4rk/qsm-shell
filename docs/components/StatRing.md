@@ -24,9 +24,9 @@ The task is a glanceable reading of one fraction: the arc's length and the numbe
 | Control | Values | Implemented |
 | --- | --- | --- |
 | form | open `-225/270`, closed `-90/360` | yes, `startAngle` and `sweepAngle` (`StatRing.qml:38-39`) |
-| value | 0..1, clamped | yes (`StatRing.qml:83`); `value < 0` is not a state (see SR-5) |
-| diameter | any number | yes, default `Style.ringDiameter`; no `size` preset (see SR-2) |
-| stroke and reading size | any number | yes; the stroke defaults to a proportion of the box (`Style.ringStrokeRatio`) and the reading to `Style.textXl` scaled by the box (see SR-1, SR-2) |
+| value | 0..1, clamped | yes (`StatRing.qml:83`); `value < 0` is not a state (see SR-2) |
+| diameter | any number | yes, default `Style.ringDiameter`; no `size` preset (see SR-1) |
+| stroke and reading size | any number | yes; the stroke defaults to a proportion of the box (`Style.ringStrokeRatio`) and the reading to `Style.textXl` scaled by the box (see SR-1) |
 | content | icon, reading, label | yes, as strings; the label is always the metadata role |
 | interaction states | rest only | by design (`StatRing.md` line 4); no hover, press, focus, selected or disabled |
 
@@ -43,9 +43,9 @@ The catalog holds one key, `stat-ring` (variant `open`, `workbench/stories.json:
 - Natural size: a constant `D x D` square (`StatRing.qml:45-46`). At defaults `D` = 150, stroke 8, reading 22 px.
 - Empty: with no label and no reading, the content column is empty and `Accessible.name` is `""` (see H3).
 - Long: the reading and the label are `Prose` roles that do not wrap and elide on the right (`Prose.qml`, `elide: Text.ElideRight` for every role but `body`). The column is `min(D, D) - 2 x stroke - Style.space2` wide: 126 px at defaults, which holds about nine 22 px monospace glyphs (assumed advance 0.6 em).
-- Failure: `NaN` draws no arc, since `NaN > 0.005` is false. A negative value clamps to zero, and both hosts substitute zero before the ring sees it (see SR-5).
+- Failure: `NaN` draws no arc, since `NaN > 0.005` is false. A negative value clamps to zero, and both hosts substitute zero before the ring sees it (see SR-2).
 - Cancellation: none; there is no action to cancel.
-- Small diameter: fails (see SR-1).
+- Small diameter: reading and icon scale with the live box and snap to the type and icon scales; the column is the inscribed square of the hole, `sqrt(2) x (box/2 - 1.25 x stroke)`, and the icon is dropped when it would not fit.
 
 ### Visual roles and palette pairs
 
@@ -78,35 +78,14 @@ None. No `Behavior`, no `Animation` (grep of `StatRing.qml`). The arc redraws on
 
 Defects are source-backed and each cites the file and line. Proposals are redesign or taste and carry no defect weight.
 
-**SR-1 (major, shared=false): the ring does not scale its content, so a small ring overflows and truncates.**
-- Status: SR-1 fixed (source-reviewed, load-checked): reading and icon scale with the live box and snap to the type and icon scales; the column is the inscribed square of the hole, `sqrt(2) x (box/2 - 1.25 x stroke)`. The icon is dropped when it would not fit that square. Stroke still does not scale (SR-2), so the smallest ring's reading and label rows stay close to the inner edge.
-- Evidence: `StatRing.qml:59` gives a column of `52 - 16 - 8` = 28 px at `D` 52. The reading is 22 px monospace, about 40 px for "42%", so it elides (`:118-126`). The icon is also fixed at 22 px (`:115`), and the stack is at least 58 px tall (22 + 2 + 22 + 2 + 10). That is taller than the 52 px box, so the icon's top sits about 5 px above the painted ring edge at 12 o'clock (inner radius 16, outer 24). `clip: true` (`:108`) does not contain it, because the column is as tall as its content. The record's own claim at line 8 ("never overflows the component") is false at this size.
-- Expected: content scales with the ring, and a content box at small sizes fits the inner hole. The inner hole is 32 px at `D` 52, and its inscribed square is 22.6 px.
-- Actual: `workbench/units/StatRing.qml:43-47`, the `sm` option, shows a truncated reading and an icon across the top arc.
-- Fix: in `StatRing.qml`, derive the icon and reading from `D` times the md ratio (22/150) and snap them with `Style.textNear` and `Style.iconNear`. Take the column width from the inscribed square of the inner circle, `sqrt(2) x (D/2 - 1.25 x stroke)`, not from `D - 2 x stroke - space2`.
-
-**SR-2 (major, shared=true): no size preset, so the `lg` ring is hollow with tiny text.**
+**SR-1 (major, shared=true): no size preset, so the `lg` ring is hollow with tiny text.**
 - Evidence: `StatRing.qml` takes the diameter from `Style.ringDiameter`, derives the stroke from the box (`Style.ringStrokeRatio`) and scales the reading with it, but `tokens/deep-night.json` has no `sizes.StatRing` and `AGENTS.md` requires every sized type to resolve a preset through `Style.size`. `workbench/units/StatRing.qml` takes `lg` to 380 by stating the diameter.
 - Expected: one scale per instance, with a `size` preset and a stroke and reading that scale with it.
 - Actual: a host states `diameter` by hand; there is no preset name.
 - Fix: add `sizes.StatRing` to `tokens/deep-night.json`, add a `size` property resolved by `Style.size("StatRing", size)`, and keep `diameter` as the escape hatch. Reaching 380 needs the display and hero steps, because `Style.textNear` stops at `textXl`, so a `Style` change is needed too.
 
-**SR-3 (minor, shared=false): the icon is sized from the type scale, not the icon scale.**
-- Status: SR-3 fixed (source-reviewed, load-checked): the glyph is `Style.iconNear(readingSize)`, 20 at defaults.
-- Evidence: `StatRing.qml:115` sets `size: Math.min(root.readingSize, root._contentWidth)`. At defaults that is 22 px. `Tokens` icon steps are 12, 16, 20, 24, so 22 is off the scale.
-- Expected: glyphs snap to the icon scale (`Style.iconNear`).
-- Actual: a glyph 2 px larger than its neighbours at the same scale (icon.md is 20).
-- Fix: `Style.iconNear(root.readingSize)`, which resolves to 20 at defaults.
-
-**SR-4 (minor, shared=false): the unit's value options contradict the reading.**
-- Status: SR-4 fixed (source-reviewed, load-checked): the unit derives the reading from the fraction; content options only choose whether it shows.
-- Evidence: `workbench/units/StatRing.qml:38-42` sets only `fraction`. The reading stays "42%" (`:11`, `:49`), so the `none` option shows an empty arc with "42%", and `full` shows a closed arc with "42%".
-- Expected: a fixture's reading and arc describe one intent (`AGENTS.md`, preview units).
-- Actual: a person judging the unit sees a reading that disagrees with its arc.
-- Fix: each value option also sets `reading`, for example "0%", "42%" and "100%".
-
-**SR-5 (minor, shared=false): an unknown reading is painted as zero.**
-- Status: SR-5 open: the no-data look is the owner's ruling (P1), so no form was invented; the host change stays outside qsm-shell.
+**SR-2 (minor, shared=false): an unknown reading is painted as zero.**
+- Status: open: the no-data look is the owner's ruling (P1); the host change stays outside qsm-shell.
 - Evidence: `StatRing.qml:83` clamps the value to 0..1, so a host that passes `Math.max(0, usage)` before the first reading shows an empty ring with "—" as the reading.
 - Expected: unmeasured is distinct from zero.
 - Actual: the arc is an empty track, the same drawing a measured 0 produces. Only the dash tells them apart.
@@ -114,13 +93,13 @@ Defects are source-backed and each cites the file and line. Proposals are redesi
 
 ### Proposals
 
-- P1: a no-data form for SR-5, for example a muted or dashed track. The look is the owner's ruling.
+- P1: a no-data form for SR-2, for example a muted or dashed track. The look is the owner's ruling.
 - P2: motion. The arc snaps on every sample, while `Meter.qml` eases its fill (`Behavior on width`, `Motion.fast`). Decide whether readings ease. If they do, the reduced-motion form shortens the duration, because a one-shot calms by getting shorter. Today the ring has no reduced-motion form.
 - P3: the comment at `StatRing.qml:54-58` says the column gives back "one rhythm step", but `:59` subtracts `Style.space2` (8 px), which is the second step (`space1` is 4). Decide the number, then the comment.
 - P4: the proof for the `0.75` inset (`:72`) and the `0.005` threshold (`:86`). `AGENTS.md` asks for the derivation in the comment. The inset puts the painted edge `stroke/4` inside the box, which is 2 px at defaults.
 - P5: `caelestia` (`components/controls/CircularProgress.qml`) draws the remainder with a gap sized from stroke and spacing, and an optional end dot. StatRing draws the track under the fill. The zero threshold stays: caelestia clamps to `1/360` and paints a dot at zero, which the comment at `StatRing.qml:83-86` rejects. Whether to add an end dot is taste.
 - P6: the label's role is fixed at metadata (10 px). A consumer cannot raise the label with the reading. Consider a role property or a slot.
-- P7: the unit's `sm` option is a 48 px diameter (Control `lg`). Rename it when SR-2 adds the presets.
+- P7: the unit's `sm` option is a 48 px diameter (Control `lg`). Rename it when SR-1 adds the presets.
 
 ### Source conflicts
 

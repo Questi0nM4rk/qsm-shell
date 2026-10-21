@@ -36,7 +36,7 @@ One continuous value the person sets by pointer, wheel or keyboard: one thumb, o
 
 - Pointer, single thumb: `pointerPath` MouseArea (Slider.qml:730-795). Track press jumps (749-772), thumb press grabs when grabThumb (758-761), drag (773-780), release and cancel commit (781-790), thumb double-click reported (791-794). Disabled for range (732), where Qt's handles take the press (640-658).
 - Label: ControlLabel `clicked` calls `activateLabel` (438, 159-164). The label is focusable and Enter/Space activate it (ControlLabel.qml:61, 74-93).
-- Wheel: MouseArea over the whole control, enabled only when wheelUnits > 0 (978-981). 120 units per notch, accumulated (968-1005). See SL-3.
+- Wheel: MouseArea over the whole control, enabled only when wheelUnits > 0 (978-981). 120 units per notch, accumulated (968-1005). A vertical wheel drives a horizontal slider, because `wheelUnits` is the host's opt-in and a mouse has only that axis.
 - Keyboard: focused handle or label. On-axis arrows step sliderKeyboardUnits (856-872, 5 units). PageUp/PageDown step sliderPageUnits (890-900, 20). Home/End go to min/max (901-910). N/O are the default decrease/increase (Interaction.qml:9-10; Slider.qml:75-76, 876-888). Holding repeats; release commits once (918-942). Host intercepts via keyPressed (74, 545, 852-853).
 - Focus: ring at the track, not the label, shown when root or either handle has visual focus (678-699). A pointer press focuses with MouseFocusReason (770-771).
 - Accessibility (source): no `Accessible` property is set on the slider or its handles (grep of Slider.qml). ControlLabel reports Accessible.Button when clickable and StaticText otherwise (ControlLabel.qml:65-67). Actions are increase, decrease, minimum, maximum, activate-label, each with an objectName (265-296). Tree not read, so name, role and state verdicts are not tested here and belong to a11y-audit.
@@ -45,14 +45,14 @@ One continuous value the person sets by pointer, wheel or keyboard: one thumb, o
 
 - Sizes from tokens `sizes.Slider` (sm 16, md 24, lg 40 thumb). Track thickness 4 / 16 / 28 (Slider.qml:117-118, rhythm of two thirds of the preset). Reserved cross extent 32 / 32 / 40 (409, 416-418). Natural main axis 260 horizontal, 180 vertical (415, 417).
 - Empty label: no padding (165-169, 422-425). Empty thumbText: no reading (621).
-- Long label: widens the natural size (SL-6).
+- Long label: widens the natural size (SL-1).
 - Long thumbText at sm: a 10px reading in a 16px thumb is not examined (623-626).
-- Pointer cancel: commits when the value changed (781-790). Focus loss during a key hold: no commit (SL-10).
+- Pointer cancel: commits when the value changed (781-790). Clearing a held-key gesture that moved emits `committed`.
 - Disabled: every painted role through Style.disabled (299-303). Pointer and keys ignored (219, 240, 850, 980).
 
 ### Visual roles and pairs
 
-Track is `overlay` (80), an inactive track per the ladder. Fill defaults to `accent` (79), see SL-5. Thumb is `text` (81) on a `band` ring (86), with `textOnPrimary` content (88). Focus is the `focus` role via StateLayer. No contrast value was measured, because no pixel channel was used.
+Track is `overlay` (80), an inactive track per the ladder. Fill defaults to `primary`. Thumb is `text` (81) on a `band` ring (86), with `textOnPrimary` content (88). Focus is the `focus` role via StateLayer. No contrast value was measured, because no pixel channel was used.
 
 ### Motion and reduced motion (source)
 
@@ -62,7 +62,7 @@ Track is `overlay` (80), an inactive track per the ladder. Fill defaults to `acc
 
 ### Pointer geometry (source)
 
-- Input shape: track presses hit the `pointerPath` band, whose height is the track thickness (694-698, 734). Thumb presses hit the thumb rectangle (550-557). Whether Qt's own press covers the whole reserved box is unverified (H-1).
+- Input shape: track presses hit the `pointerPath`, which covers the whole cross band. Thumb presses hit the thumb rectangle (550-557).
 - Painted size: thumb 16 / 24 / 40, track 4 / 16 / 28.
 - Assumptions: horizontal, no label, D = 120 px fixed for comparison. Travel is 244 / 236 / 220 px (260 minus the thumb). Width model: W is the cross-axis extent of the press region, because the pointer travels along the track and a miss is vertical. Along-axis tolerance is the value step, not a width.
 - Label origins (assumed): left label at x = 0 (441-443), footprint its implicit width, gap rhythm(8 x s) = 4 / 8 / 12, hit box at least iconLg x s = 16 / 24 / 40 tall (ControlLabel.qml:132-133). Label weight is the label role, unmeasured.
@@ -83,20 +83,13 @@ ID = log2(1 + D/W) with D = 120. Band: log2(31), log2(8.5), log2(5.29). Reserved
 
 Defects, source-backed:
 
-- SL-1 fixed (source-reviewed, load-checked): growth is uncapped and overflows, as the comment said. Original finding: Slider.qml:403-405, 409, 560, 597-598. Hover growth is capped by `_growthRoom`, which is the reserved cross extent minus the thumb, divided by two. At lg that is (40 - 40) / 2 = 0, so a circle thumb does not grow on hover, and the thumb colour has no hover branch (602). A lg pill grows 2 px instead of the 8 px `_hoverGrowth` (402) gives. Slider.md line 3 and the AGENTS hover law (grow and change colour) say otherwise. Fix: reserve the growth room in the cross size (thumb + 2 x hover growth), or let growth overflow as 394-397 describes, and make the record match.
-- SL-2 fixed (source-reviewed, load-checked): `pointerPath` covers the available area, the whole cross band. H-1 is moot for the single thumb. Original finding: Slider.qml:694-698, 734, 407-409, 416-418, 720-729. The track press region is the track thickness (4 / 16 / 28 px), but the reserved cross extent is 32 / 32 / 40 px, and 407-408 says the control stays aimable. The comment at 720-729 says one press path, with Qt's press never running. The geometry does not guarantee it: presses outside the band take Qt's native press, which skips grabThumb and the double-click bookkeeping. Fix: make `pointerPath` cover the full cross band of the control, so every track press takes one path.
-- SL-3 resolved the second way (source-reviewed, load-checked): a vertical wheel driving a horizontal slider is kept, because `wheelUnits` is the host's opt-in and a mouse has only that axis; the comment and this record now say so. Owner ruling needed if an on-axis-only wheel is wanted instead. Original finding: Slider.qml:983-988, 991-993. The comment says the wheel is on-axis, but the code uses `angleDelta.y` for both orientations. On a horizontal slider with wheelUnits > 0, a vertical wheel changes the value and the event is consumed, because `accepted` is only handed back when delta is 0. Whether a consumer that sets wheelUnits sits in a scroller is not checked. Fix: take delta from the axis only (y when vertical, x when horizontal) and hand back when it is 0. If the owner wants vertical wheel on horizontal sliders, the comment is what changes.
-- SL-4 fixed (source-reviewed, load-checked): `accessibleName` names root and thumbs; the tree was not read, so the 4.1.2 verdict stays a11y-audit's. Original finding: Slider.qml (no Accessible property; labelAccessibleName used only at 292, 434). The slider and its handles have no accessible name, so a screen reader announces a value with no name. Criterion 4.1.2 is a11y-audit's verdict and is not tested here. Fix: add `accessibleName` defaulting to labelText, and set `Accessible.name` on the root and the handles.
-- SL-5 fixed (source-reviewed, load-checked): fill defaults to `primary` and the unit follows; owner ruling needed if accent was accepted on purpose. Original finding: Slider.qml:79; workbench/units/Slider.qml:54. The default fill is `accent`. Style.qml:38-39 and the surface ladder say `primary` is the active part of a track, and `accent` is for focus, selection and primary action, never passive metrics. Fix: default `fill` to Style.primary, and the unit's fill to match. Owner ruling needed if accent was accepted on purpose.
-- SL-6 (medium), Slider.qml:165-169, 413-415, 422-423; ControlLabel.qml:62, 109-116. A long label widens the natural size, because label width enters both the padding and implicitWidth, and ControlLabel has no elide or width cap. This violates the component's definition of done, which says natural size is constant and long content elides. Fix: cap the label's width in ControlLabel and elide. Touches ControlLabel, so shared.
-- SL-7 (low), ControlLabel.qml:132-133 with sizeScale from Slider.qml:437 and 106. A clickable label's hit box is iconLg x sizeScale, which is 16 px tall at sm. The ux-audit floor for a pointer is 24 x 24. The ControlLabel comment says "at least one large icon", which the scaling undercuts. Fix: floor the hit box at the unscaled iconLg. Touches ControlLabel, so shared.
-- SL-8 (low), Slider.qml:582. The thumb shadow uses a literal `Qt.rgba(0, 0, 0, .45)`. Style.shadow exists (Style.qml:59, token colorShadow) and the opacity tokens are 0.28. The alpha is a number outside the tokens and does not follow a theme. Fix: take the colour from Style.shadow and the opacity from a named token. Adding a token touches tokens/*, so shared.
-- SL-9 fixed (source-reviewed, load-checked): wrapped in Style.iconNear. Original finding: Slider.qml:140. `thumbIconSize` is not snapped to the icon scale. At thumbSize 30 it is 22 px, which is not on the icon scale of 12, 16, 20, 24 (icon tokens). Fix: wrap in Style.iconNear.
-- SL-10 fixed (source-reviewed, load-checked): clearing a gesture that moved emits `committed`. Original finding: Slider.qml:944-956, 944-952. Clearing held-key state on focus loss resets `_keyMoved` without emitting `committed`, and the key release may never arrive. A value moved by a held key can then end with no commit, even though the event contract says committed ends the gesture (Slider.qml:172-175, Slider.md line 12). Fix: emit committed when clearing a gesture that moved.
-- SL-11 fixed (source-reviewed, load-checked): the unit has a `value` control with first, middle, last. Original finding: workbench/units/Slider.qml:12-13, 71-101. The unit never shows value at min or max, so the can-increase and can-decrease states at the bounds are never reached in the window. Fix: add a value control with first, middle and last options.
+- SL-1 (medium), Slider.qml:165-169, 413-415, 422-423; ControlLabel.qml:62, 109-116. A long label widens the natural size, because label width enters both the padding and implicitWidth, and ControlLabel has no elide or width cap. This violates the component's definition of done, which says natural size is constant and long content elides. Fix: cap the label's width in ControlLabel and elide. Touches ControlLabel, so shared.
+- SL-2 (low), ControlLabel.qml:132-133 with sizeScale from Slider.qml:437 and 106. A clickable label's hit box is iconLg x sizeScale, which is 16 px tall at sm. The ux-audit floor for a pointer is 24 x 24. The ControlLabel comment says "at least one large icon", which the scaling undercuts. Fix: floor the hit box at the unscaled iconLg. Touches ControlLabel, so shared.
+- SL-3 (low), Slider.qml:582. The thumb shadow uses a literal `Qt.rgba(0, 0, 0, .45)`. Style.shadow exists (Style.qml:59, token colorShadow) and the opacity tokens are 0.28. The alpha is a number outside the tokens and does not follow a theme. Fix: take the colour from Style.shadow and the opacity from a named token. Adding a token touches tokens/*, so shared.
 
 Source conflicts (owner ruling):
 
+- A vertical wheel drives a horizontal slider (the code uses `angleDelta.y` for both orientations), while the comment says the wheel is on-axis. Owner ruling if an on-axis-only wheel is wanted instead.
 - BACKLOG R2/R3 says the unit does not answer label clicks. Source does answer: `onLabelClicked` (unit:57-60), `activate-label` in actionHandlers (unit:25) and in integration (unit:105). The unit's default is labelClickable false (unit:18), so the default story's label is a caption and a click does nothing. That holds only in the caption state, and the label control switches it (unit:93-96). Status: not reproduced in source; it needs a runtime check.
 - Slider.qml:38-41 says the component never recolours a part for a state. AGENTS requires hover to grow and change colour. The thumb has no hover colour, so the two disagree.
 - Slider.qml:86-88 paints a band-coloured ring around the thumb. The ladder says layers are separated by a step, never by a line. The ring is a gap, not a line, but the owner should rule on it.
@@ -109,7 +102,6 @@ Proposals (taste, not defects):
 
 Hypotheses (unmeasured):
 
-- H-1: Qt's native press covers the whole reserved box, which would make SL-2 milder than it reads. Unverified.
 - H-2: Thumb hover (`node.hovered`, Slider.qml:559) may not fire while `pointerPath` sits above the handle. Unverified.
 - H-3: A pill's grab target is 4 px wide (Slider.qml:551, 597), so horizontal pill presses land on the band only. Unverified.
 

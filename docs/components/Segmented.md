@@ -62,12 +62,6 @@ group conventions; Caelestia `Tabs.qml`; `docs/adr/0001-controls-on-templates.md
 
 ## UIX audit
 
-Fix status: defects 2, 3, 4 and 5 are fixed (source-reviewed, load-checked), never owner-accepted;
-the findings below describe the state before those fixes. Defect 3 trade-off for the owner:
-`step()` reads the old `currentIndex` until the host answers, so a host that answers late
-makes a fast key repeat step from a stale index. Defect 5 leaves the badge's 10 px text fixed:
-scaling it needs a `Badge` change (shared).
-
 Evidence: source-reviewed only. Runtime-exercised: none. Owner-accepted: none recorded by this
 audit. Contrast and geometry figures are computed from `tokens/deep-night.json` and the `Style`,
 `Motion` and `Badge` formulas; they are not sampled from a render, and blending or layer effects
@@ -85,13 +79,13 @@ glanceable selector; the thumb marks the current choice.
 | Item | Status |
 | --- | --- |
 | `options` (string, or `label`, `icon`, `name`, `badge`, `disabled`) | implemented; empty options render an empty track, no fixture |
-| `currentIndex` (host-owned) | implemented, but `select()` writes it first (defect 3) |
+| `currentIndex` (host-owned) | implemented; `select()` only reports `selected(index)` and the host answers |
 | `enabled`, `size` (`sm` 32, `md` 40, `lg` 52 via `Style.size`), `barHeight` | implemented |
 | `tabNavigation`, `wrapNavigation` | implemented; `tabNavigation` with `wrapNavigation: false` is a trap (defect 1) |
 | `selected(index)` | implemented, emitted after the local write |
 | actions `previous`, `next`, `first`, `last` | implemented, same route as keys |
 | rest, hover, pressed, focus, disabled | all five present through `StateLayer` and `tone` |
-| selected, selected-and-unavailable | selected present; unavailable pill does not dim (defect 2) |
+| selected, selected-and-unavailable | selected present; an unavailable selected pill dims with `Style.disabled` |
 | wheel | no route; nothing answers it, and the record says so |
 | loading, error, cancel | not applicable: no input state; a drag off a segment cancels by the tap threshold, not runtime-checked |
 
@@ -110,7 +104,7 @@ options, long labels, icon-only, badge.
   Tab and Backtab step only with `tabNavigation` (124-130). Space and Enter reach `onClicked` only
   on a segment that holds focus by mouse; the bar itself handles neither (hypothesis H5).
 - Focus: the ring sits outside the selected segment, and only while the bar has focus (313). A
-  segment with no selection gets no ring (defect 4).
+  segment with no selection gets the ring on the first available segment.
 - Accessibility: bar `PageTabList`, segments `PageTab` with `Accessible.selected` (49, 234-237).
   Segment names come from the label or `option.name`. The bar has no default name; both consumers
   set one (`Panel sections`, `Power profile`).
@@ -132,9 +126,9 @@ Preset values use `s = barHeight / 40`, `pad = rhythm(8 s)`, `gap = rhythm(4 s)`
   will elide. No fixture shows it.
 - Empty: no options means an empty track with no thumb (`visible` needs `currentIndex >= 0`,
   line 165). Nothing says the group is empty.
-- Failure: a host that refuses a choice leaves the thumb on the clicked option (defect 3).
+- Failure: a host that refuses a choice leaves the thumb where it was.
 - Badge: the chip is `rhythm(badgeHeight * s)` high (12, 16, 20 at sm, md, lg) with `Badge`'s fixed 10 px
-  text (defect 5).
+  text (defect 4).
 
 ### Visual roles and palette pairs (computed from tokens)
 
@@ -143,12 +137,12 @@ Preset values use `s = barHeight / 40`, `pad = rhythm(8 s)`, `gap = rhythm(4 s)`
 | muted label on track (`textMuted` on `surface`) | 6.61 | passes 4.5 |
 | hovered label on track (`text` on `surface`) | 10.53 | passes |
 | selected label on thumb (`accent` on accent 12 % over `surface`) | 5.25 | passes 4.5 at 12 px |
-| selected thumb against track | 1.30 | fails 3:1 for a state indicator (defect 6) |
+| selected thumb against track | 1.30 | fails 3:1 for a state indicator (defect 2) |
 | selected label against unselected label (`accent` vs `textMuted`) | 1.03 | selection rests on the thumb |
 | focus ring (`accent`) against track | 6.82 | passes 3:1 |
 | neutral badge text on its tint | 6.56 | passes 4.5 at 10 px |
 | selected badge text on its tint | 5.18 | passes 4.5 at 10 px |
-| disabled selected label on thumb | 1.21 | defect 2 |
+| disabled selected label on thumb | 1.21 | the dimmed pair of an unavailable selected option |
 | disabled unselected label on track | 1.55 | inactive, exempt; see proposals |
 
 Motion: thumb glide `Behavior on x`, `Motion.fast` 180 ms, `Motion.standardEasing` (OutCubic),
@@ -191,43 +185,14 @@ Defects (source-reviewed, file and line cited):
    exit; a host leaves only through its own keys, which this library does not provide. Fix: when `step()` returns false at an end, leave the event
    unaccepted so focus moves on, or name one exit key in the contract. The owner decides which,
    since the contract asks for focus to stay in the group.
-2. **A selected, unavailable option loses its label in its own pill** (major, shared: false; fixed,
-   source-reviewed, load-checked: the pill reads the selected option's own availability and dims
-   with `Style.disabled`; pill (55, 45, 64) and dimmed accent label (101, 83, 113) are 1.88:1,
-   computed, the same dim as any unavailable label, and the pill reads 1.20:1 against the track).
-   `Segmented.qml` 173-174: the thumb reads `root.enabled` only, so the pill keeps the accent
-   at full strength. Lines 220-222: the label is `Style.disabled(accent)` = (101, 82, 113) on the
-   thumb (84, 72, 95), 1.21:1. Person sees: the current choice reads as an empty, full-strength
-   pill with a faint word inside it. Fix: the thumb reads the selected option's own availability,
-   and the disabled pill and label are chosen as a pair with a stated ratio.
-3. **The clicked option moves the thumb before the host answers** (major, source-conflict with
-   the record's own line 6, shared: false; fixed, source-reviewed, load-checked: `select()` no
-   longer writes `currentIndex`; the unit's `host: refuses` control reaches it). `Segmented.qml` 92-98: `select()` calls
-   `setCurrentIndex(index)` before `selected(index)`. The comment at 83-91 says a host binding is
-   kept but not re-run, so a binding whose inputs did not change stays stale. A host that
-   binds `currentIndex` to `profiles.indexOf(root.profile)` and calls `setProfile` on `selected`
-   hits it: if the profile does not change, the binding never runs again,
-   and the thumb stays on the clicked profile while the old one remains active. Fix: remove the
-   local write; the host's answer moves the thumb. The cost is that `step()` then reads a stale
-   index when a host answers late; state that trade-off with the owner.
-4. **No visible focus when nothing is selected** (medium, shared: false; fixed, source-reviewed,
-   load-checked: the ring goes to the first available segment while nothing is picked). `Segmented.qml` 313: the
-   ring is drawn only on the selected segment; line 165 hides the thumb at `currentIndex < 0`.
-   A host's binding can return -1 when its model reports a value outside the options. Person sees: Tab into the bar, and nothing marks where focus is. Fix: when nothing is
-   selected, ring the first enabled segment, as `Segmented.md` line 37 already promises.
-5. **The badge fills a sm segment and does not scale** (minor, shared: false; fixed in the chip
-   height only, source-reviewed, load-checked: the chip is `rhythm(badgeHeight * s)`, 12, 16, 20 px
-   at sm, md, lg, leaving 2, 4, 4 px of air; the 10 px text is `Badge`'s and still fixed; the unit's
-   `badge: count` control reaches it). `Segmented.qml` 227
-   gives a sm item 24 px; `Badge.qml` 53 fixes the badge at 16 px, so its tinted pill touches the
-   thumb's top and bottom edges. At lg the badge stays 16 px with 10 px text while the label grows
-   to 14 px. This breaks the component law that connected parts scale with the instance. Fix: pass
-   a size into `Badge`, and give sm a dot or a clear inset.
-6. **The selected thumb is 1.30:1 against the track** (medium, source-conflict, shared: true). The
+2. **The selected thumb is 1.30:1 against the track** (medium, source-conflict, shared: true). The
    thumb at 12 percent accent is the only strong cue of the chosen option, because the label colour
    differs from its neighbours by 1.03:1. Non-text 1.4.11 asks 3:1 for a state indicator. The owner
    accepted the look ("No new motion or colour"), so this is the owner's ruling. Fix options are
    `opacity.selected` in tokens or a non-colour cue such as an edge.
+
+3. **A late-answering host steps from a stale index** (minor, shared: false). `select()` does not write `currentIndex`, so `step()` reads the old index until the host answers, and a fast key repeat steps from it. This is the trade-off for the owner against the thumb moving before the host answers.
+4. **The badge text does not scale** (minor, shared: true). The chip is `rhythm(badgeHeight * s)` (12, 16, 20 px at sm, md, lg), but its 10 px text is `Badge`'s and fixed; scaling it needs a `Badge` change.
 
 Redesign proposals (taste, not defects):
 
@@ -247,10 +212,9 @@ Redesign proposals (taste, not defects):
 
 Source conflicts:
 
-- Line 6 says the host owns `currentIndex`; `select()` writes it (defect 3).
 - Lines 9-10 say the type serves panel tabs and value choices; the roles are tab roles
   (criterion 4.1.2, a11y-audit).
-- Owner-accepted look against the 1.4.11 cue (defect 6).
+- Owner-accepted look against the 1.4.11 cue (defect 2).
 
 Hypotheses (not measured, not in the table):
 

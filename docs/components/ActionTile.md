@@ -72,7 +72,7 @@ The resting body is 1.30:1 against band, the ladder's step.
 - Body colour: `Surface` `Behavior on color` at `Motion.micro` 130 ms (Surface.qml, end of file).
 - Size: StateLayer `response` `Behavior` (duration `press` 80 ms if pressed, else `micro` 130 ms). Hover target 1.08 (`Motion.hoverScale`, Motion.qml:46 from `Tokens.motionHoverScale`). Press target `Motion.pressScale` (defect 1, fixed).
 - Reduced motion: `Motion.micro` 60 ms and `press` 40 ms under `Style.reducedMotion`. The 1.08 hover scale is not affected by reduced motion (defect 4).
-- Icon and label colour: `Behavior on color` at `Motion.micro`, same curve as the body (defect 2, fixed).
+- Icon and label colour: `Behavior on color` at `Motion.micro`, same curve as the body.
 
 ### Pointer geometry
 

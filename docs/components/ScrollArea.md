@@ -69,12 +69,12 @@ Fitting content shows neither fade nor mark (`ScrollCue.qml:71`, `:104`, `:117`)
 - Mark opacity: `Behavior` with `Motion.medium` (260 ms, `tokens/deep-night.json:57`) and
   `Motion.standardEasing` (`Easing.OutCubic`, `Motion.qml:120`), `ScrollCue.qml:83-85`. Reduced
   motion shortens the duration to 100 ms and keeps the opacity change (`Motion.qml:58`).
-- Fades: no transition at all. The `visible` bindings flip in one frame (SA-3).
+- Fades: no transition at all. The `visible` bindings flip in one frame (SA-2).
 - Movement: the native Flickable flick and bounds. Nothing in this component animates it.
 - review-animations, source only: standard 1 holds for the mark; standard 2 is open for the mark's
   fade on every flick (C-3); standard 4 holds (260 ms, under 300); standard 5 holds (no scale);
   standard 7 holds (opacity only); standard 8 holds (`Motion.qml:58`); standards 3, 6, 9 and 10 do
-  not apply to this surface. Verdict: not approved, because SA-3 is a jarring change.
+  not apply to this surface. Verdict: not approved, because SA-2 is a jarring change.
 
 ### Pointer geometry
 
@@ -107,33 +107,13 @@ Defects, each cited to a line and to the person's experience:
   keyboard. Lines 38-55 contain no `activeFocusOnTab`, no key handler and no Accessible property.
   The unit rows are `Prose` and not focusable (`workbench/units/ScrollArea.qml:27-41`). Cites
   WCAG 2.1.1; the a11y-audit conformance row is not run. Fix: the viewport takes focus when it
-  overflows, Up, Down, PageUp, PageDown, Home and End call one scroll function (SA-2), and the ring
+  overflows, Up, Down, PageUp, PageDown, Home and End call one scroll function (`scrollToStart()` and `scrollToEnd()` exist), and the ring
   comes from `StateLayer`.
-- **SA-2**, minor, FIXED (source-reviewed, load-checked; not owner-accepted), `workbench/units/ScrollArea.qml:75-88`, shared: false. The unit writes
-  `view.contentY` and `view.contentX` directly, so no component function performs the action. In
-  the fitting case, `to-end` (`:82`) assigns `contentHeight - height`, which is negative (rows 4 is
-  160 px in 468 px, so -308). The Flickable does not clamp an assignment, so the content drops and
-  leaves blank space above it until `settle` runs (`:88`). Fix: add `scrollToStart()` and
-  `scrollToEnd()` to `ScrollArea.qml`, clamped to 0 and `max(0, contentExtent - viewport)`, listed
-  in `actions`; the unit calls them. Clamping on assignment is source-based and not runtime-checked.
-- **SA-3**, minor, OPEN, deferred: needs a change in `ScrollCue.qml` (opacity `Behavior` on both fades), `qml/QsmShell/Components/ScrollCue.qml:104` and `:117`, shared: false. The
+- **SA-2**, minor, needs a change in `ScrollCue.qml` (opacity `Behavior` on both fades), `qml/QsmShell/Components/ScrollCue.qml:104` and `:117`, shared: false. The
   fades switch on and off in one frame, with no `Behavior`. On the first pixel of scroll an opaque
   strip of 0.3 x 64 = 19 px appears over the content, and it disappears in one frame at the end.
   Compare the mark, which has a `Behavior` (`:83`). Fix: give both fades an opacity `Behavior` from
   a `Motion` token, or record the snap as deliberate under P-5.
-- **SA-4**, minor, FIXED (source-reviewed, load-checked; not owner-accepted), `workbench/units/ScrollArea.qml:15` against `qml/QsmShell/Components/ScrollArea.qml:27`,
-  shared: false. The unit paints the band ground but does not pass `fadeColor`, so the default
-  surface fades paint 19 px opaque surface bars at each edge of the preview. A host scrolling over the
-  band passes `fadeColor: Style.band`. The unit should match that. Fix: pass
-  `fadeColor: Style.band` in the unit, per AGENTS ("a consumer scrolling over a different ground
-  states its own").
-- **SA-5**, minor, FIXED (source-reviewed, load-checked; not owner-accepted), `qml/QsmShell/Components/ScrollArea.qml:44-45` and `:52-53`, shared: false.
-  The content extent is `childrenRect.width` and `childrenRect.height`, which are the size of the
-  bounding box, not its bottom or right edge. Content whose first child starts below the origin
-  (a top inset) is short by that offset, so its last rows can never be scrolled into view. The
-  unit starts its rows at zero, so the unit does not show it. Fix: extent = `childrenRect.y +
-  childrenRect.height` (and the x form), applied to `contentHeight`, `contentWidth` and the host
-  sizes. Qt's `childrenRect` semantics are source-based, not runtime-checked.
 
 Proposals (taste and owner decisions, not defects):
 
@@ -151,12 +131,11 @@ Proposals (taste and owner decisions, not defects):
   scrollbars are common; state it as a choice, not a defect.
 - **P-5**: the mark's fade on every flick (`ScrollCue.qml:83`) is an animation on an action that
   happens many times a day (C-3). Either remove the `Behavior` and snap, or keep it as a deliberate
-  exception; SA-3 needs the same decision for the fades.
+  exception; SA-2 needs the same decision for the fades.
 
 Source conflicts, recorded and not resolved here:
 
-- **C-1**: resolved by SA-2: the component now lists `scrollToStart` and `scrollToEnd` in `actions`.
-- **C-2**: this record's line 9 says "viewport-sized with no preset". AGENTS requires a natural size
+- **C-1**: this record's line 9 says "viewport-sized with no preset". AGENTS requires a natural size
   that is a constant (definition of done, item 5). The two cannot both hold.
 - **C-3**: review-animations standard 2 gives no animation to actions of 100 or more a day. The
   cue's own comment (`ScrollCue.qml:80-82`) justifies the mark's motion during scroll.

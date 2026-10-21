@@ -13,8 +13,6 @@ not designed: dismissal, transient toast behaviour, progress or form input; use 
 
 ## UIX audit
 
-Fix status: C-01, C-02, C-03 and C-05 are fixed (source-reviewed, qmllint-checked; no capture or window run, so not load-checked or runtime-exercised). C-04 is open. Owner-accepted: none.
-
 Evidence: source-reviewed only. No Workbench session, capture, item-tree dump or accessibility tree was taken, so every geometry value below is derived from the source and `tokens/deep-night.json` and marked *derived*. Runtime-exercised: none. Owner-accepted: none.
 
 Read: `Callout.qml`, `Card.qml`, `Prose.qml`, `SvgIcon.qml`, `Capsule.qml` (lines 25-85 and 160-185), `workbench/units/Callout.qml`, the `callout` story in `workbench/stories.json`, `tokens/deep-night.json`. Consumers: none.
@@ -25,7 +23,7 @@ A persistent inline message for a condition of the surface it sits in that is st
 
 ### Controls, states, routes
 
-- Tones `info`, `success`, `warning`, `danger` are implemented (`Callout.qml:40-57`). Any other string falls to `info` (finding C-05).
+- Tones `info`, `success`, `warning`, `danger` are implemented (`Callout.qml:40-57`). Any other string logs an error and draws as `info`.
 - `title`, `body`, `icon` override are implemented. Title and body collapse when empty (`Callout.qml:103`, `:109`).
 - `actions` is the default slot, a `RowLayout` (`Callout.qml:38`, `:114-119`).
 - Not designed: dismissal, progress, form input (line 12 above).
@@ -40,8 +38,8 @@ A persistent inline message for a condition of the surface it sits in that is st
 
 - Sizes: no size preset. Height is content plus `2 x space3` (`Callout.qml:59`). Width is the consumer's; the unit sets `Style.controlWidth` (380, `workbench/units/Callout.qml:26`). Icon box `iconMd` 20 (`Callout.qml:94`). Rule `markThickness` 3 (`Callout.qml:78`).
 - Empty: with title and body empty and the action hidden, the card height is the icon box plus padding, 20 + 24 = 44 px (*derived*).
-- Long: the body wraps (`Prose.qml:114`, `WordWrap`). The title elides (`Prose.qml:118`, `ElideRight`). The natural width follows the copy (finding C-01).
-- Failure: an unknown tone or an unknown icon name fails silently (C-05).
+- Long: the body wraps (`Prose.qml:114`, `WordWrap`). The title elides (`Prose.qml:118`, `ElideRight`). The natural width is constant; the host sets `width`.
+- Failure: an unknown tone logs an error and draws as info; an unknown icon name renders nothing.
 - Cancellation: none. The message has no action of its own to cancel.
 
 ### Visual roles and palette pairs
@@ -78,11 +76,7 @@ None. `Callout.qml`, `Card.qml`, `Prose.qml` and `SvgIcon.qml` declare no animat
 
 | id | pass | element | evidence (source) | expected | actual | severity |
 | --- | --- | --- | --- | --- | --- | --- |
-| C-01 | 3 natural size | root `implicitWidth` | `Callout.qml:60` sums `content.implicitWidth`; the widest child is the body `Prose` (`WordWrap`, no width set, `Prose.qml:114`), whose implicit width is its unwrapped line (*derived* from Qt Text sizing, not run) | AGENTS.md law and DoD 5: natural size constant; long content wraps or elides, never grows the control | Natural width follows the longest body line when the consumer sets no width. The unit hides this by setting `width` (`workbench/units/Callout.qml:26`) | major (fixed, source-reviewed) |
-| C-02 | 3 geometry | leading rule at both corners | `Callout.qml:61` radius 12; `:68` `clip: true`; `:73-80` rule is full height, 3 px wide. The 12 px arc meets x = 0 at y = 12 and x = 3 at y ≈ 4 (*derived* from the circle). Item `clip` clips to the item's rectangle, not its radius (Qt Quick documentation). The comment at `:64-67` says clipping fixes this | rule stays inside the rounded silhouette | A 3 px coloured spur at each corner, above y = 12 and below the bottom arc, paints outside the card body | minor (fixed, source-reviewed) |
-| C-03 | 2 spacing | body to action gap; empty action slot | `Callout.qml:99` ColumnLayout spacing 4 plus `:117` `Layout.topMargin` 4 gives 8 px between body and action. With `actionable` false the Capsule is still a child (`workbench/units/Callout.qml:34` sets `visible` only), so `:117` keeps the 4 px margin and the zero-height `actionHost` still takes one spacing | `Callout.md` line 4: action section collapses when empty; one 4 px gap (`space1`) | 8 px where 4 is intended, and 8 px of phantom space below the body when no action is shown | minor (fixed, source-reviewed) |
 | C-04 | 4 colour, 6 tokens | tint alpha | `Callout.qml:62` `Qt.rgba(..., 0.1)`, a literal | AGENTS.md: no numbers in a component; DoD 6; this record line 10: no local colours or measurements | Literal 0.1; no matching token (opacity set holds `badgeTint` 0.18 and `selected` 0.12) | minor |
-| C-05 | failure | tone and icon mapping | `Callout.qml:44-46`, `:54-56` default branches: unknown tone maps to info. `SvgIcon.qml:23-27`: an unknown icon name renders nothing | implementation rule, errors: fail loud, never a silent second path | `tone: "dager"` renders as the calm info message with the info glyph; a mistyped `icon` shows an empty mark | minor (fixed, source-reviewed) |
 
 No defect in: spacing (all gaps from tokens, `Callout.qml:59`, `:85-89`), radius (one `radiusMd`, `:61`; the Capsule's `radiusMd` is not nested near a corner), type roles, shadow and glow (both off, `:27-28`), reserved space (none).
 
@@ -121,17 +115,11 @@ No defect in: spacing (all gaps from tokens, `Callout.qml:59`, `:85-89`), radius
 | 4.1.2 | not tested | Retry role and name in source; the message itself has none (H-01) |
 | 4.1.3 | not tested | no alert role or live region (H-02) |
 
-### Source conflicts
-
-- SC-01: natural width (resolved in favour of the constant by C-01). `Callout.md` line 9 says content "never grows beyond its text and slots". AGENTS.md DoD 5 and the law "Natural size is a constant" say the opposite. Owner rules which; C-01 is the consequence of the record's reading.
-
 ### Hypotheses (not measured)
 
 - H-01: a screen reader gets no tone. Nothing in `Callout`, `Card`, `Prose` or `SvgIcon` names a severity, so the tone reaches assistive technology only through the words of title and body. Depends on Qt's default accessibility for `Text`. Needs human trial: focus the unit's message in the live window with a screen reader running and read it aloud. Pass: the spoken output names the severity or the title states it.
 - H-02: a message that appears because a condition changed is not announced. No alert role or live region exists in the component. Needs human trial: trigger a state change while a screen reader runs. Pass: the message is announced without focus moving.
 - H-03: body contrast depends on the backdrop. The card is 0.9 opaque over whatever is behind it (`Card.qml:10`, `:20`). Every ratio above assumes `band` behind it.
-- H-04: the corner spur (C-02) is derived from geometry. Confirm with one crop of a corner in the live window.
-- H-05: C-01 depends on Qt's implicit width for wrapped text with no width set. Confirm by reading the tree's `implicitWidth` for a long body.
 
 ### Proposals (taste and redesign; owner decides)
 

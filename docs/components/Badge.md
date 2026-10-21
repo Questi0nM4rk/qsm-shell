@@ -25,14 +25,14 @@ Unit controls (`workbench/units/Badge.qml`): tone (six values), weight (tinted, 
 
 - Implemented: all six tones, both weights, text, icon, dot, and hiding when empty (`Badge.qml:62`).
 - Not implemented, by design: hover, press, focus, disabled. A `Rectangle` cannot take focus.
-- Long reading: implemented as growth (BADGE-02).
-- Unknown tone: throws, naming the value (BADGE-03, fixed).
+- Long reading: implemented as growth, see BADGE-02.
+- Unknown tone: throws `Badge: unknown tone "<value>"`, no fallback.
 
 ### Routes
 
 - Pointer: none. The component has no input handler; the host owns hover and press.
 - Keyboard and focus: none. The component is not a tab stop and draws no focus ring, which is correct for a non-interactive marker.
-- Accessibility: StaticText with `accessibleName` or `text` (BADGE-04, fixed). Criterion verdicts belong to a11y-audit and are not tested here.
+- Accessibility: StaticText with `accessibleName` or `text`. Criterion verdicts belong to a11y-audit and are not tested here.
 - Wheel: none.
 
 ### Sizes, empty, long, failure
@@ -43,7 +43,7 @@ Unit controls (`workbench/units/Badge.qml`): tone (six values), weight (tinted, 
 - Empty: hidden (`Badge.qml:62`). Whitespace-only text shows an empty pill (H3).
 - Long: width follows content (BADGE-02).
 - Above 99: numeric text shows `99+` (`Badge.qml:50-51`). Non-numeric text is untouched.
-- Failure: unknown tone (BADGE-03). Cancellation: none.
+- Failure: an unknown tone throws. Cancellation: none.
 
 ### Visual roles and palette pairs
 
@@ -69,7 +69,7 @@ The dot on band is 8.6 to 9.4 against the layer. On overlay the lowest, info, is
 
 - `Behavior on color` (fill) and `Behavior on _ink` (reading), `ColorAnimation` with `Motion.micro` (130 ms, `Motion.qml:26`, `tokens/deep-night.json:54`) and `Motion.standardEasing` (`Motion.qml:120`, OutCubic).
 - Reduced motion: 60 ms, the colour still settles (`Motion.qml:26`). It shortens and does not remove the change.
-- Review-animations verdict: Approve; BADGE-06 is fixed in source. The feel is not judged from code; it needs a slow-motion check at 2 to 5 times the duration, frame by frame.
+- Review-animations verdict: Approve. The feel is not judged from code; it needs a slow-motion check at 2 to 5 times the duration, frame by frame.
 
 ### Pointer geometry
 
@@ -81,12 +81,7 @@ Source-backed defects:
 
 - BADGE-01, medium, shared. The tinted weight fails 4.5 on `surface` for all six tones (4.09 to 4.39) and on `overlay` (3.29 to 3.53). Evidence: contrast table above, `Badge.qml:61`, `Badge.qml:85`, `tokens/deep-night.json:84`. A person on a card sees a faint 10 px tinted label. Fix: a per-tone tinted text colour mixed toward `text` until 4.5 holds on `overlay`, or a lower tint, both as tokens.
 - BADGE-02, medium, shared. Width follows content with no ceiling (`Badge.qml:56-59`), so the `Prose` ElideRight (`Prose.qml:118`) never fires. A long reading stretches the chip across its row and moves its siblings. This breaks AGENTS.md definition of done item 5. Fix: a maximum width from a token, with the text elided inside it.
-- BADGE-03, low, fixed (source-reviewed, load-checked). An unknown tone silently becomes neutral (`Badge.qml:33-40`, default at 39). A typo such as `danger` misspelt renders grey, so the state is lost with no signal. Against the implementation rule's one-path, fail-loud rule. Fix: fail loud through the project error system, naming the bad value. Now an unknown tone throws `Badge: unknown tone "<value>"` from `_tone`; there is no fallback.
-- BADGE-04, medium, fixed (source-reviewed, load-checked). No accessible name anywhere in `Badge.qml`. The icon-only form (`Badge.qml:74-79`) and the dot (`Badge.qml:25-27`, `71`) give a screen reader nothing. Whether the `Prose` text is exposed is unknown until the tree is read (H4). Fix: a role and a name from `text`, plus a host-supplied `accessibleName` for dot and icon. Now `Accessible.role` StaticText, name from `accessibleName` else `text`, ignored when hidden; a visible dot or icon-only badge without `accessibleName` warns.
-- BADGE-05, low, fixed (source-reviewed, load-checked). Dot is documented as presence only (`Badge.qml:25-26`), but `Badge.qml:61` still colours it by tone, so a red dot and a grey dot mean different states. That is the hue-only meaning the header rules against (`Badge.qml:13-14`). Fix: when `dot` is set, use a fixed neutral tone, or state the exception in the comment. Now `dot` ignores `tone` and is always `textMuted` (`_hue`).
-- BADGE-06, low, fixed (source-reviewed, load-checked). The fill animates over 130 ms (`Badge.qml:61`, `64-66`) while the text colour `_prose` (`Badge.qml:45`, `Prose` colour at `86`) switches at once. On a tone change or a fill toggle, the text sits on a half-faded fill. Fix: animate the text colour with the same `Motion.micro` behaviour. Now the reading follows `_ink`, which carries the same `Motion.micro` behaviour.
-- BADGE-07, low, shared. A literal `2` in the dot size (`Badge.qml:53`) is a measurement typed in a component. Fix: a dot-size token in the `Style` set.
-- BADGE-08, low, fixed (source-reviewed, load-checked). The unit has no long reading and no count above 99 (`workbench/units/Badge.qml:44-48`, reading fixed at `"3"`). Long and overflow cases cannot be reached in the window, so BADGE-02 and the `99+` cap are invisible to the owner. Fix: add a long reading and a `"120"` option to the presence control. The presence control now has `count 120` and `long`.
+- BADGE-03, low, shared. A literal `2` in the dot size (`Badge.qml:53`) is a measurement typed in a component. Fix: a dot-size token in the `Style` set.
 
 Redesign proposals:
 

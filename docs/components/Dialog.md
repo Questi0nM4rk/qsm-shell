@@ -21,42 +21,42 @@ named. Channels available: source and tokens. Channels missing: live geometry, c
 ### Purpose and consequence
 
 - The task it finishes: a consequence the person cannot continue past without answering.
-- Consequence when it fails: a click on its own text closes it (D1); a destructive confirm receives
-  the first Enter (D2); a long body pushes its buttons off the window (D3).
+- Consequence when it fails: a click on its own text closes it, a destructive confirm receives the
+  first Enter, or a long body pushes its buttons off the window.
 
 ### Controls, states, implemented
 
 - Expected from the header contract: `open`, `title`, `body`, `tone` (`neutral`, `danger`,
   `warning`), default `actions` slot, `returnFocusTo`, `dialogWidth`, `dismissRequested`, `closed`.
 - Implemented: all of them. `warning` has a mark and colour in source (Dialog.qml 46-48, 176).
-- Not exercised by the story: `warning`, empty title, empty body, zero actions, long title, long
-  body, `dialogWidth` override. The unit's `controls` declare `tone` as `danger` and `neutral` only.
+- Not exercised by the story: empty title, empty body, zero actions, long title, `dialogWidth`
+  override. The unit's `controls` declare the three tones and a long body.
 - Card-level hover and press: none. The actions own their five states through `Capsule`.
 
 ### Routes
 
 - Pointer: Capsule click activates through StateLayer (Capsule.qml, `onClicked`). Scrim click reports
-  `dismissRequested`. A click on the card's non-control area also reports it (D1). Wheel: no card
-  target; the Scrim is the wheel's target while shown (see SC1).
-- Keyboard: on open, focus enters the first item in declaration order (Dialog.qml 77-79), which is
-  the destructive action in the unit (D2). Tab and Shift+Tab are held by `head` and `tail`
-  (Dialog.qml 154-157, 208-211). Return, Enter and Space activate a Capsule (Capsule.qml, key handlers).
-  Escape reports `dismissRequested` (Dialog.qml 147) only while focus is inside the card.
-- Focus return: captured at open (Dialog.qml 97-106), restored at close (108). See D7.
-- Screen reader: no role or name is set on the card, title or body. Grep for `Accessible` in
-  `Dialog.qml`, `Scrim.qml` and `Card.qml` returns nothing. The actions name themselves through
-  Capsule (`Accessible.Button`, name = label). The rest is for a11y-audit.
+  `dismissRequested`. The card absorbs presses on its text and padding, so they never dismiss. Wheel:
+  the body's `ScrollArea` takes it; elsewhere the Scrim is the target while shown (see SC1).
+- Keyboard: on open, focus enters the first action in declaration order (the safe one in the unit,
+  Keep); with no action the card takes it. Tab and Shift+Tab are held by `head` and `tail`. Return, Enter and Space activate a Capsule (Capsule.qml, key handlers).
+  Escape reports `dismissRequested` only while open.
+- Focus return: captured at open, restored at close. The consumer passes `returnFocusTo` a control
+  that survives the action; Dialog guesses no fallback.
+- Screen reader: the card is `Accessible.Dialog` named by `title`. The actions name themselves through
+  Capsule (`Accessible.Button`, name = label). The criteria are for a11y-audit.
 
 ### Sizes, empty, long, failure, cancellation
 
 - Width: fixed `dialogWidth`, default `Style.controlWidth` = 380 (Tokens.qml 86).
-- Height: content-driven, `content.implicitHeight + space5 * 2` (Dialog.qml 124), with no maximum (D3).
-- Empty title: the title row and its mark hide together (Dialog.qml 171; D8).
-- Empty body: hidden. Zero actions: focus lands on the `tail` sentinel (D5).
+- Height: content-driven up to the window minus `space6` per side; the body scrolls in a `ScrollArea`
+  between the fixed title and actions.
+- Empty title: the title row shows for a title or a tone mark.
+- Empty body: hidden. Zero actions: the card takes focus.
 - Long title: `Prose` heading is `NoWrap` and `ElideRight` (Prose.qml 114, 118), so it truncates.
-  Long body: `WordWrap` with `ElideNone` (Prose.qml 114, 118), so it grows the card (D3).
+  Long body: `WordWrap` with `ElideNone`, scrolled inside the capped card.
 - Failure: the component has no failure state. The consumer decides what a refused dismissal means.
-- Cancellation: Escape and scrim report intent; the consumer closes. Close restores focus (D7).
+- Cancellation: Escape and scrim report intent; the consumer closes. Close restores focus.
 
 ### Visual roles and palette pairs
 
@@ -88,9 +88,9 @@ named. Channels available: source and tokens. Channels missing: live geometry, c
   motion keeps the scale and shortens only the duration. The verdict is review-animations; the
   reduced-motion form is a11y-audit's (2.3.3 is AAA).
 - Scrim opacity: `Motion.medium` with the same curves (Scrim.qml 38-43).
-- Exit: `enabled` flips at once (Dialog.qml 67), so the Capsule labels and fills change to disabled
-  colours for the 260 ms fade (Capsule.qml 65-66, 92-93; `Motion.micro` colour change). The scrim
-  stops catching at the same moment (Scrim.qml 47). See D4.
+- Exit: pointer and key answering are gated on `open`, the painted colours stay until the fade ends,
+  and a shield `MouseArea` catches the pointer during the fade. Tab can still reach a fading action
+  for the 260 ms.
 
 ### Pointer geometry
 
@@ -104,7 +104,7 @@ from the card centre. Width model: the Capsule width is icon 20 + gap 8 + label 
 | target | input shape | painted | size (estimate) | D (px) | W (px) | ID (bits) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Scrim | whole window | band at 0.55 | window | n/a | n/a | n/a |
-| card non-control area | card rectangle (not absorbed, D1) | card, radius 20 | 380 x 165 | n/a | n/a | n/a: dismisses |
+| card non-control area | card rectangle (absorbs presses) | card, radius 20 | 380 x 165 | n/a | n/a | n/a: no action |
 | Keep (secondary) | Capsule rectangle | radius 12 | 86 x 40 | 41 | 40 (height) | 1.03 |
 | Remove (destructive) | Capsule rectangle | radius 12 | 100 x 40 | 122 | 40 (height) | 2.02 |
 | Remove, dominant x approach | as above | as above | as above | 122 | 100 (width) | 1.16 |
@@ -118,79 +118,16 @@ row is the case for a horizontal one.
 - Landing tolerance: 40 px high, above the 24 px WCAG 2.5.8 floor on both axes (source size, not
   measured).
 - Neighbour interference: Remove's left edge is 8 px from Keep's right edge (0.2 W). Any landing more
-  than 8 px past Keep's right edge is on the destructive action. The gap is the system's common value;
-  the cost is the destructive default (D2), not the gap alone.
-- Popup corridor and timing: not applicable, no hover-driven open. Open and close each 260 ms; clicks
-  during the close fade are not caught (D4).
-
-### Fix status
-
-Source-reviewed and load-checked (one capture load, exit 0, no QML error); runtime behaviour and owner acceptance are not claimed.
-
-- D1 fixed: the card carries a `MouseArea` that takes every press, declared before the content.
-- D2 fixed: `RightToLeft` is gone, a filler `Item` leads `actionHost`, actions are declared in reading order (the unit declares Keep first).
-- D3 fixed: the card height is capped at the window minus `space6` per side and the body is in a `ScrollArea` between the fixed title and actions.
-- D4 fixed: `enabled: root.open` is gone; a shield `MouseArea` catches the pointer after `open` drops, focus inside the fading card moves to the card, and Escape reports only while open. Tab can still reach a fading action for the 260 ms.
-- D5 fixed: the first-focus target is rejected when it is `tail`, so the card takes focus.
-- D6 fixed: the card sets `Accessible.role: Accessible.Dialog` and `Accessible.name: root.title`; a11y-audit still rules the criterion.
-- D7 resolved by contract, no code: the consumer passes `returnFocusTo` a surviving control (header contract and the `actions` line above).
-- D8 fixed: the title row shows for a title or a mark, and the mark follows the tone alone.
-- D9 fixed: tones map explicitly (`neutral`, `danger`, `warning`); an unknown tone logs `console.error` and draws neutral without a mark.
-
-The Findings below describe the state before these fixes. The unit now declares Keep before Remove, adds the `warning` tone and a long-body control.
+  than 8 px past Keep's right edge is on the destructive action. The gap is the system's common value.
+- Popup corridor and timing: not applicable, no hover-driven open. Open and close each 260 ms; the
+  shield catches clicks during the close fade.
 
 ### Findings
 
-Defects (source-reviewed; file and line cited; consequence is what a person sees):
-
-- D1, major, Dialog.qml 119-.: The card has no pointer handler, so a press on its title, body or
-  padding is not accepted by it and falls through to Scrim.qml 45-52, which reports `dismissed`.
-  Person sees: the dialog closes when they click its text. Fix: a `MouseArea { anchors.fill: parent;
-  acceptedButtons: Qt.AllButtons }` as the card's first child, with no handler, so it takes presses
-  and the Scrim never sees them. Capsules declared later stay on top. Shared: no.
-- D2, major, Dialog.qml 200 and 77-79; workbench/units/Dialog.qml 37-47: `layoutDirection:
-  Qt.RightToLeft` puts the first declared action on the right, but focus follows declaration order.
-  The unit declares Remove first, so the dialog opens with Remove focused, and Enter removes the
-  device. Tab then goes to Keep on the left, against the visual order. The header's "trailing edge
-  last" and Dialog.md's "reading order" both assume the opposite. Fix: drop `RightToLeft`, add
-  `Item { Layout.fillWidth: true }` as the first child of `actionHost` so the leading space fills, and
-  have consumers declare actions in reading order. Which action takes focus first is P1. Shared: no.
-- D3, medium, Dialog.qml 124: The implicit height has no maximum and nothing scrolls. A long body
-  pushes the title above and the actions below the window edge; both sit outside the viewport and
-  the pointer cannot reach them. Fix: cap the card's height to the parent with a margin, and put the
-  body in a scroll container (ScrollArea) that keeps the title and actions fixed. Shared: no.
-- D4, minor, Dialog.qml 67; Scrim.qml 47; Capsule.qml 65-66, 92-93: `enabled: root.open` turns
-  the card's content disabled on the first frame of close, so buttons grey out during the 260 ms fade
-  while the card is still visible. Scrim.qml 47 also drops the catch at the same moment, so a click
-  during the fade reaches the surface behind. Person sees: buttons dim as the dialog leaves, and a
-  click there reaches the ground. Fix: keep pointer and key answering gated on `root.open` but keep
-  the painted colours and the catch until the fade ends (the owner chooses the mechanism). Shared: no.
-- D5, minor, Dialog.qml 77-79: With zero actions, `head.nextItemInFocusChain(true)` returns `tail`,
-  which passes the `_holds` test, so focus lands on the invisible sentinel and never on the card.
-  Person sees: no focus indicator; Tab cycles on nothing. Fix: `if (first && first !== tail &&
-  root._holds(first))`, so the card takes focus (it has `focus: true`). Shared: no.
-- D6, minor, Dialog.qml 119- (no `Accessible` in the file): the card declares no role and no name, so
-  a screen reader gets no dialog announcement and no title. Dialog.md says it does. Fix:
-  `Accessible.role: Accessible.Dialog` and `Accessible.name: root.title` on the card. This is
-  a11y-audit's to rule; it is listed here because the source has no such attribute. Shared: no.
-- D7, minor, Dialog.qml 108: On close, `root._returnTo.forceActiveFocus()` runs with no check.
-  An invisible or disabled item refuses focus silently (the file's own comment at 100-104 says so for
-  the open side), and a destroyed item becomes null with no fallback. Person sees: when the confirm
-  removes the row that opened the dialog, focus leaves the window and the next Tab starts at the top.
-  Fix: the consumer passes `returnFocusTo` to a control that survives the action, and Dialog.md says
-  so. Dialog does not guess a fallback (one path). Shared: no.
-- D8, minor, Dialog.qml 171: The title row, which holds the tone mark, is hidden when the title is
-  empty. A danger dialog with no title loses its mark, and the header says severe dialogs carry one.
-  Fix: show the mark on `tone !== "neutral"` separately from the title. Shared: no.
-- D9, minor, Dialog.qml 46-48, 176: Any tone other than `danger` gets the triangle mark, and any tone
-  other than `danger` or `warning` takes the accent colour. A typo or a new tone shows a warning
-  triangle in lilac. Fix: map each named tone explicitly; an unknown tone is an error in the consumer,
-  not a second look. Shared: no.
-
 Proposals (taste or design; the owner decides):
 
-- P1: Focus the safe action first in a destructive dialog. The fix for D2 makes this a declaration
-  order choice: cancel declared first puts Keep at focus.
+- P1: Focus the safe action first in a destructive dialog. Focus follows declaration order, so
+  declaring cancel first puts Keep at focus.
 - P2: No visible close control exists, so Escape and a scrim click are the only exits by pointer
   without a Cancel. Consider an optional close glyph in the title row.
 - P3: Under `Style.reducedMotion`, drop the scale term and keep only the opacity fade.
@@ -201,12 +138,10 @@ Proposals (taste or design; the owner decides):
 Source conflicts (the owner decides which wins):
 
 - SC1: Dialog.md says "the card keeps its own targets and wheel passes through to content". The card
-  has no wheel target and no scroll (D3), and AGENTS.md records that a MouseArea consumes the wheel
+  has no wheel target of its own, and AGENTS.md records that a MouseArea consumes the wheel
   unless `accepted = false`, so the Scrim takes it. The doc claim is not supported by the source.
-- SC2: Dialog.md says "the action row trails in reading order". Dialog.qml 200 reverses the visual
-  order without reversing focus (D2).
-- SC3: Dialog.md says "title and body are heading and body text". Source sets no role on either (D6).
-- SC4: AGENTS.md component law 5: "Natural size is a constant. Long content scrolls or elides, never
+- SC2: Dialog.md says "title and body are heading and body text". Source sets no role on either.
+- SC3: AGENTS.md component law 5: "Natural size is a constant. Long content scrolls or elides, never
   grows the control." Dialog's height is content-driven (Dialog.qml 124). The law is written for
   controls; whether a dialog falls under it is the owner's ruling.
 

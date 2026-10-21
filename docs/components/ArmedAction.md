@@ -30,11 +30,11 @@ window. The first trigger changes no data. A non-destructive command fires on th
 | `destructive` (default true) | yes; false makes `trigger()` fire at once | ArmedAction.qml:25, :42 |
 | `timeout` (default 3000 ms) | yes; restarts on arm, expiry calls `disarm()` | :28, :69-70 |
 | `armed` (read-only) | yes; bound to `state.armed` | :30, :63-64 |
-| `confirmLabel` | removed; hosts own the armed wording (D2 fixed) | n/a |
+| `confirmLabel` | removed; hosts own the armed wording | n/a |
 | disarmed to armed | yes | :47-48 |
-| armed to fired | yes; clears armed and stops the timer, emits `fired` and not `disarmed` (D1 fixed) | :41-47 |
+| armed to fired | yes; clears armed and stops the timer, emits `fired` and not `disarmed` | :41-47 |
 | armed to disarmed (timeout, `disarm()`) | yes | :54-59 |
-| destructive changed while armed | disarms (D4 fixed) | :26 |
+| destructive changed while armed | disarms | :26 |
 | extend or pause the window | not offered | n/a |
 
 ### Routes
@@ -93,36 +93,12 @@ content column); label weight is the `metadata` role, not measured. No human ave
 
 ### Findings
 
-Defects (source-backed):
-
-- D1, minor, **fixed (source-reviewed, load-checked)**, `ArmedAction.qml:42-45` with `:59`. Confirming calls `disarm()`, which emits
-  `disarmed`. The signal comment at `:37-38` says `disarmed` means "armed and then abandoned", so
-  this contradicts it (the one source conflict in the file). What a person sees: nothing visual,
-  since the tile reverts in the same frame either way. A consumer that listens to `disarmed` reports
-  a confirmed removal as abandoned. Fix: on the armed branch clear `state.armed` and
-  stop the timer without emitting, and keep `disarm()` as the emitting path.
-- D2, polish, **fixed (source-reviewed, load-checked)**, `ArmedAction.qml:31-34`. `confirmLabel` is never read: `ArmedAction`'s
-  `confirmLabel` is set only in `workbench/units/ArmedAction.qml:22`, which shows the hard-coded
-  text at `:37` instead. A host sets that wording on the tile, not on the arm. What a person sees: nothing; changing the wording in one place changes nothing. Fix:
-  delete the property and its comment, and let the unit and consumers own their wording.
-- D3, polish, **fixed (source-reviewed, load-checked)**, `ArmedAction.qml:51-53`. The comment says "Leaving the control abandons the intent",
-  as if the component did it. It has no pointer and must not manage dismissal (AGENTS.md). Consumers
-  do it. A host written from this comment
-  without exit wiring keeps an armed tile until the 3000 ms timer. Fix: say the host calls `disarm()`
-  on leave.
-- D4, minor, **fixed (source-reviewed, load-checked)**, `ArmedAction.qml:25`. Changing `destructive` to false while armed does not disarm. The
-  unit's "safe" option (`workbench/units/ArmedAction.qml:43`) leaves "Armed: confirm remove" on
-  screen for up to 3 s while a click fires at once. Fix: an `onDestructiveChanged` that calls
-  `disarm()`. Reachable in the unit; production hosts were not read for it.
-
 Proposals (design, not defects):
 
 - P1: a host that closes its surface on Escape leaves an armed tile armed until its timer runs out.
   Calling `disarm()` before closing would end the intent where the user ended the surface. Host change.
 - P2: The unit cannot show leave-to-disarm because it has no pointer route. Give it an exit hook in
   the harness, not in the component.
-
-Source conflicts: D1 only, within the file (see above).
 
 Hypotheses (unmeasured):
 

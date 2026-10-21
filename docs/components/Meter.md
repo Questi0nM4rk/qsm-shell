@@ -52,35 +52,17 @@ Token values, WCAG contrast (source-reviewed, not sampled):
 | breached fill `warning` on `band` | 9.13:1 | |
 | disabled | not computed | `Style.disabled` blends toward `band` by `opacityDisabled` (`Style.qml:107-113`); that value was not read |
 
-Track is `overlay`, which matches AGENTS. The fill is `accent`, which does not (M-2).
+Track is `overlay`, which matches AGENTS. The fill is `primary`, the active part of a track; the owner confirms the role.
 
 ### Motion and its reduced-motion form
 
 - Fill extent: `Behavior on width` and `height`, `Motion.fast` (180 ms) with `Motion.moveEasing` (`Easing.InOutCubic`, `Motion.qml:128`), `Meter.qml:70-75`.
 - Fill colour: `Behavior on color`, `Motion.micro` (130 ms) with `Motion.standardEasing` (`Easing.OutCubic`, `Motion.qml:120`), `Meter.qml:76-78`.
-- Reduced motion: `fast` becomes 80 ms and `micro` 60 ms (`Motion.qml:26, 56`). The fill still moves (M-4).
+- Reduced motion: `fast` becomes 80 ms and `micro` 60 ms (`Motion.qml:26, 56`). The value Behavior is disabled under `Style.reducedMotion`; the colour Behavior stays.
 
 ### Pointer geometry
 
 Not applicable. The component has no input shape: no `MouseArea`, no handler, nothing to hit. So D, W, ID, landing tolerance, neighbour interference and any popup corridor have no subject. Modelled for reference only, if a host made the track seekable with the painted band as its grab zone: the width model is Shannon, ID = log2(1 + D/W). With W = 4 px (the cross size the unit paints) and D = 100 px (assumed approach, not measured), ID = log2(1 + 100/4) = 4.70 bits. Label origin: none, the host owns any label. Weights: none assumed.
-
-### Fix status
-
-All fixed: source-reviewed and load-checked, not owner-accepted.
-
-- M-2 fixed: default `fill` is `Style.primary`. Owner to confirm the role.
-- M-3 fixed: the Behavior is on the private `_shown` fraction, not on width and height; a host resize moves the fill with the track.
-- M-4 fixed by removal, following the AGENTS law "a one-shot position animation is REMOVED under reduced motion": the value Behavior is disabled under `Style.reducedMotion`, the colour Behavior stays. `Motion.qml` still says it shortens; owner rules whether the law or that comment wins.
-- M-5 fixed: fill extent is `Math.round`ed.
-
-### Findings
-
-| id | pass | element | evidence (source) | expected | actual | severity |
-| --- | --- | --- | --- | --- | --- | --- |
-| M-2 | 4 colour roles | `Meter.qml:33`; `docs/components/Meter.md:4` | AGENTS: accent "never passive metrics"; `Style.qml:38-42` makes `primary` the active part of a track; `Style.qml:47` "a passive readout never spends the accent" | fill `primary` (source-conflict: Meter.md also says accent, and it records the code, not AGENTS) | fill is `accent`, lilac, on every default reading | medium |
-| M-3 | 9 polish (motion) | `Meter.qml:70-75` on `width` and `height` | a `Behavior` fires on any change of the property value, including a binding re-evaluated by a host resize (mechanism from Qt semantics, not run) | only a value change animates | a host that resizes the meter makes the fill glide for 180 ms while the track snaps | low |
-| M-4 | motion, reduced motion | `Meter.qml:70-72`; `Motion.qml:56` | AGENTS: "Reduced motion shortens a DURATION" and "A one-shot position animation is REMOVED under reduced motion, not shortened"; `Motion.qml:22-23` "shortens every duration rather than removing the animation"; review-animations standard 8: drop movement | owner rules which one applies (source-conflict) | 80 ms fill slide under reduced motion | medium |
-| M-5 | 3 geometry (integer) | `Meter.qml:63-64` | qml-ui: "Round computed sizes"; a fractional width blurs the cap | integer width at rest | `parent.width * fraction`, e.g. 0.08 of 380 = 30.4 px, so the rounded cap sits at a fractional x | low |
 
 ### Proposals (not defects)
 
@@ -94,8 +76,7 @@ All fixed: source-reviewed and load-checked, not owner-accepted.
 
 ### Source conflicts
 
-- Fill role: `Meter.md:4` and `Meter.qml:33` (accent) against AGENTS "accent never passive metrics" and `Style.qml:47` (M-2).
-- Reduced motion: AGENTS "shortens a duration" against AGENTS "a one-shot position animation is REMOVED, not shortened", against `Motion.qml:22-23`, against review-animations standard 8 (M-4). Owner ruling needed.
+- Reduced motion: AGENTS "shortens a duration" against AGENTS "a one-shot position animation is REMOVED, not shortened", against `Motion.qml:22-23`, which still says it shortens, against review-animations standard 8. The Meter follows the removal law. Owner ruling needed.
 
 ### Hypotheses (not measured)
 
@@ -111,4 +92,4 @@ Live geometry (channel 2): not read. Captures, zoom, region stats and pixel samp
 
 ### Motion verdict (review-animations, source-reviewed)
 
-Hold: neither Block nor Approve. No Block trigger: no keyboard animation, no scale from zero, no ease-in, durations inside the bounds (180 and 130 ms, under 300), and interruption holds because a `Behavior` retargets from the current value. Open: reduced motion keeps movement (M-4), and the fill glides on a host resize (M-3). The feel cannot be judged from code; the check is a frame-by-frame run with the duration raised 2 to 5 times, in a real window, when the owner asks for one.
+Hold: neither Block nor Approve. No Block trigger: no keyboard animation, no scale from zero, no ease-in, durations inside the bounds (180 and 130 ms, under 300), and interruption holds because a `Behavior` retargets from the current value. The feel cannot be judged from code; the check is a frame-by-frame run with the duration raised 2 to 5 times, in a real window, when the owner asks for one.

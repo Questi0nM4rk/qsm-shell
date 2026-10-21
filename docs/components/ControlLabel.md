@@ -29,12 +29,12 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 | `activate(): bool` and action `activate` | one guarded operation for pointer, keys and assistive tech | yes, `:34-42` |
 | `clicked` | the intent signal | yes, `:32`, `:40` |
 | rest | `textMuted` | yes, `:57` |
-| hover | grows and changes colour | yes, `hoverTint` on the StateLayer (CL-2 fixed, source-reviewed, load-checked) |
-| press | scales or changes colour | nothing (CL-1) |
+| hover | grows and changes colour | yes, `hoverTint` on the StateLayer |
+| press | scales or changes colour | yes, `Motion.pressScale` on the StateLayer (CL-1) |
 | focus | keyboard ring only | yes, through StateLayer: `StateLayer.qml:152`, `:174-181` |
 | disabled | colour through `Style.disabled` | yes, `:57` |
 | empty text and icon | no intent, no Tab stop | yes, `:56`, `:59`, `:61` |
-| long text | elides | when the host bounds the width; natural width stays the full text (CL-4 fixed in the component, source-reviewed, load-checked; Field and TextField still pending, see deferred) |
+| long text | elides | when the host bounds the width; natural width stays the full text |
 
 ### Routes, the real ones
 
@@ -48,9 +48,9 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 
 - md: text 12 (`Tokens.qml:36`), glyph 16 (`:43`), hit target 24 (`:45`), gap 4 (`:21`).
 - `sizeScale`: text through `textNear(12 s)`, glyph through `iconNear(16 s)`, gap through `rhythm(4 s)` (`:98`, `:105`, `:115`). The hit target is `iconLg * sizeScale`, unsnapped (`:132-133`), see P-4.
-- Icon only, no text: the caption hides, the glyph remains, the accessible name is empty (CL-5).
+- Icon only, no text: the caption hides, the glyph remains, the accessible name is empty unless the caller passes one.
 - Neither icon nor text: `visible` false, no focus (`:59`, `:61`).
-- Long text: nothing bounds the width, so the row's implicit width grows with the text (CL-4).
+- Long text: the natural width is the full text; a host that gives the label less width makes the caption elide.
 - Failure: none on the label itself. Failed state belongs to Field (`Field.qml:44`).
 - Cancellation: a held key is cancelled as above. A pointer press is cancelled by `ReleaseWithinBounds`.
 
@@ -64,10 +64,10 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 ### Motion and reduced motion (review-animations)
 
 - No animation of its own. Inherited through StateLayer: hover scale to `Motion.hoverScale` 1.08 (`Tokens.qml:61`, `StateLayer.qml:113`, `:126-131`) over `Motion.micro` 130 ms, OutCubic (`Tokens.qml:47`, `Motion.qml:120`). Focus ring fades in over 130 ms (`StateLayer.qml:159-161`).
-- Press: `pressScale` stays 1 (`StateLayer.qml:59`), so a press produces no motion (CL-1).
-- Reduced motion: `Motion.press` falls to 40 ms and `Motion.micro` to 60 ms (`Motion.qml:24`, `:26`). `hoverScale` is not gated (`Motion.qml:46`), so the hover movement still plays (CL-3).
-- Standards: 1 justified by state indication. 2 keyboard ring fade on Tab (SC-1). 3 ease-out for a move, which is correct. 4 durations under 300 ms; animate's table was not loaded, so not checked against it. 5 press scale missing (CL-1). 6 retargets through `Behavior`. 7 only scale and opacity animate. 8 fails on hover movement (CL-3). 9 no press motion to be asymmetric. 10 no local curve.
-- Verdict for this item: Block. Reduced motion is not handled for the hover movement, and the focus ring fade awaits the owner's ruling (SC-1).
+- Press: `Motion.pressScale` through the StateLayer (CL-1).
+- Reduced motion: `Motion.press` falls to 40 ms and `Motion.micro` to 60 ms (`Motion.qml:24`, `:26`). `Motion.hoverScale` is 1, so the hover movement is removed.
+- Standards: 1 justified by state indication. 2 keyboard ring fade on Tab (SC-1). 3 ease-out for a move, which is correct. 4 durations under 300 ms; animate's table was not loaded, so not checked against it. 5 press scale present, but it also animates keyboard presses (CL-1). 6 retargets through `Behavior`. 7 only scale and opacity animate. 8 holds. 9 no press motion to be asymmetric. 10 no local curve.
+- Verdict for this item: Block. The press scale animates keyboard presses (CL-1) and the focus ring fade awaits the owner's ruling (SC-1).
 
 ### Pointer geometry
 
@@ -85,21 +85,14 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 
 Source-backed defects:
 
-- CL-1 (major, shared): a press shows nothing. The hit target has no press response (`ControlLabel.qml:132-143`, `StateLayer.qml:59`, `:113`), so the press changes nothing until the click fires on release. Fix: set `pressScale: Motion.pressScale` on the StateLayer at `ControlLabel.qml:132-143`. That also animates keyboard presses, because `manualPressOverride` drives `pressed` (`StateLayer.qml:83`, `ControlLabel.qml:136`), which breaks review-animations standard 2. So the full fix makes StateLayer's `response` (`:113`) follow the pointer press only, keeping `pressed` for colour. This needs StateLayer, hence shared.
-- CL-2 (minor, fixed: source-reviewed, load-checked): hover does not change colour. AGENTS requires hover to grow and change colour. The StateLayer has no `hoverTint` (`ControlLabel.qml:132-143`), and the tint paints only with it (`StateLayer.qml:118-119`). Fix: `hoverTint: root.clickable` on the StateLayer at `ControlLabel.qml:132-143`.
-- CL-3 (minor, source-conflict): reduced motion keeps the hover movement. `Motion.hoverScale` is not gated (`Motion.qml:46`), while the Motion header says reduced motion shortens durations rather than removing animation (`Motion.qml:20-21`). review-animations standard 8 says drop movement, keep colour and opacity. Fix, pending the owner's ruling: `hoverScale: Style.reducedMotion ? 1 : Tokens.motionHoverScale` at `Motion.qml:46`. Shared.
-- CL-4 (major, fixed in the label: source-reviewed, load-checked; Field must give the label its column width and TextField must bound its leading slot, neither done): a long caption grows the control instead of eliding. `ControlLabel.qml:62-63` takes the implicit size from the row, and nothing bounds the Prose, so `ElideRight` (`Prose.qml:118`) never engages. AGENTS requires long content to scroll or elide, never to grow the control. A person sees a long Field caption run past the field's right edge (`Field.qml:52-56` gives the label no width), and a long leading label in a TextField shrink the text area (`TextField.qml:177-178` reads the slot's implicit width). Fix: bound the Prose by the width the host gives the label (`root.width` minus icon, gap and required mark), so elision engages. Field then gives the label its column width. Not shared.
-- CL-5 (minor, fixed: source-reviewed, load-checked; route to a11y-audit): an icon-only clickable label has an empty accessible name. `accessibleName` defaults to `text` (`ControlLabel.qml:26`), and the Button role is set regardless (`:65-66`). A screen reader announces a nameless button. A caller that passes a name is fine. Fix: warn once when `clickable && text === "" && accessibleName === ""`, failing loud. Not shared.
-- CL-6 (minor, fixed: source-reviewed, load-checked; route to a11y-audit): the required mark is not in the accessible name or description. The `*` is visual only (`ControlLabel.qml:118-125`), and the name is `accessibleName` (`:66`). Field puts "Required" on its own accessible description (`Field.qml:44`), not on the label. Fix: set `Accessible.description` to "Required" on the label when `required`. Not shared.
+- CL-1 (major, shared): the press scale also animates keyboard presses, because `manualPressOverride` drives `pressed` (`StateLayer.qml:83`, `ControlLabel.qml:136`), which breaks review-animations standard 2. The fix makes StateLayer's `response` follow the pointer press only, keeping `pressed` for colour. This needs StateLayer, hence shared.
 
 Source conflicts (owner ruling):
 
 - SC-1: review-animations standard 2 says keyboard-initiated actions get no animation, while `StateLayer.qml:159-161` fades the focus ring in on every keyboard focus, and AGENTS requires the keyboard ring. Decide whether focus traversal counts as an action.
-- SC-2 is CL-3.
 
 Hypotheses (unmeasured):
 
-- H-1 (resolved by the CL-4 change: the icon Loader is `visible: active`, source-reviewed, load-checked): a text-only label started about 4 px in. `Row` spacing applies before the zero-width inactive icon `Loader` (`ControlLabel.qml:98-108`), and this would show in Field captions and the unit's `icon: none` state. Check: dump `Prose.x` with `icon` empty.
 - H-2: a disabled action still reports the Button role, because `:65` ignores `enabled`. Check: the disabled state in the accessibility tree (a11y-audit).
 - H-3: below `sizeScale` 1 the hit target shrinks under the 24 px WCAG 2.5.8 floor, because `:132-133` scales `iconLg` by `sizeScale`. Whether a host reaches `sizeScale` below 1 depends on the Field and Slider size presets.
 - H-4: `required` as a property name (`:24`) is a QML contextual keyword. The parse was not checked, because qmllint was not run.
@@ -113,4 +106,4 @@ Redesign proposals (taste, not defects):
 
 Not examined: runtime (no capture, no Workbench, no tests run); the text footprint width; the contrast of `textMuted` against the band; glyph rendering (offscreen does not rasterise `SvgIcon`); touch targets (pointer only); Slider label clicks (BACKLOG R2 and R3: the Slider unit does not answer them).
 
-Routes: a11y-audit owns CL-5, CL-6 and H-2. ui-audit owns the contrast ratio. ux-audit owns H-3.
+Routes: a11y-audit owns H-2. ui-audit owns the contrast ratio. ux-audit owns H-3.

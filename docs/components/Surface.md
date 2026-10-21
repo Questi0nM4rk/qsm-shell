@@ -32,7 +32,7 @@ hover, press, selected and disabled look for one body. It has no input, no size 
 - Inputs: `base` (default `Style.surface`), `accent` (`Style.accent`), `hovered`, `pressed`,
   `selected`, `snapEdge` (`""`), `enabled` (inherited). `radius` is not declared: a body is square
   unless its host sets it.
-- Output: `contentColor`, animated with the fill (SURF-04); a host reads it and never assigns it.
+- Output: `contentColor`, animated with the fill; a host reads it and never assigns it.
 - States implemented in `Style.tone`: rest; hovered (lift 0.4, Style.qml:131); pressed (lift 0.8,
   Style.qml:129); selected (accent at `opacitySelected` 0.12 over base, Style.qml:138-140, Tokens.qml:70);
   disabled (`Style.disabled`, opacity 0.35, Style.qml:107-114, Tokens.qml:69).
@@ -77,7 +77,7 @@ Computed in this audit from token values, not sampled from a render. Token value
 Motion: `Behavior on color` with `ColorAnimation` over `Motion.micro`, easing `Motion.standardEasing`
 (Surface.qml:42-44). `Motion.micro` is 130 ms (Tokens.qml:47), 60 ms under reduced motion
 (Motion.qml:26). Standard easing is `Easing.OutCubic` (Motion.qml:120). Reduced motion shortens the
-duration and removes nothing. `contentColor` has its own `Behavior` with the same animation (SURF-04, not observed on screen). The timing verdict belongs
+duration and removes nothing. `contentColor` has its own `Behavior` with the same animation (not observed on screen). The timing verdict belongs
 to review-animations and is not issued here.
 
 ### Pointer geometry
@@ -92,25 +92,6 @@ to review-animations and is not issued here.
   `anchors.centerIn` (workbench/units/Surface.qml:29) and takes its weight from the Prose role
   `label` (Prose.qml role mapping).
 - Landing tolerance, neighbour interference, popup corridor and timing: not applicable.
-
-### Defects
-
-- SURF-02 (medium) [fixed: source-reviewed, load-checked; not owner-accepted]: the unit offers pointer states as controls. workbench/units/Surface.qml:36-43
-  exposes `hover` and `press` as options. AGENTS.md says hover, press and focus are never control
-  options. The owner sees toggles that set the flags directly, not a pointer route, and Surface has
-  no pointer route of its own to show. Fix: delete those two groups (:36-43); wrap the body in a
-  StateLayer in the unit and let the pointer set `hovered` and `pressed` through it.
-- SURF-03 (low) [fixed: source-reviewed, load-checked; not owner-accepted]: selected content does not follow the body in the unit. workbench/units/Surface.qml:28-32
-  sets no `color` on the Prose, and Prose.qml:65 binds Style.text. The unit's selection toggle
-  (:44-47) tints the body accent while the label stays near-white, so the contract "content follows
-  it" is not shown. Fix: `color: body.contentColor` on that Prose.
-- SURF-04 (low) [fixed: source-reviewed, load-checked; not owner-accepted]: text and fill change at different times. Surface.qml:29-31 makes `contentColor`
-  change at once, and Surface.qml:42-44 eases only `color`, over 130 ms (Tokens.qml:47). On selection
-  the label jumps to accent while the fill is still settling. Fix: make `contentColor` a plain
-  property with its own `Behavior` using the same ColorAnimation, then verify in a live window (not
-  done here).
-- SURF-05 (low) [fixed: source-reviewed, load-checked; not owner-accepted]: the unit shows a square body. workbench/units/Surface.qml:15-17 sets no `radius`,
-  and a host sets one. The owner judges a shape production never shows. Fix: `radius: Style.radiusMd` on the unit body.
 
 ### Proposals
 

@@ -24,7 +24,7 @@ The task is to find a notification in the history by application or text, then r
 
 ### Controls and states
 
-- Properties: `entries`, `dnd`, `view`, `query`, `maxListHeight` (`:26`), `swatchFor`, `fadeColor` (`:58`).
+- Properties: `entries`, `dnd`, `view`, `query`, `maxListHeight` (`:26`), `swatchFor`, `fadeColor` (required).
 - Signals: `dismissRequested`, `activated`, `actionTriggered`, `hoverChanged`, `dndToggled`, `clearRequested`, `escaped`, `selectionClaimed`, `keyPressed`.
 - Functions: `focusField`, `beginVisit`, `moveSelection`, `toggleSelected`, `removeSelected`, `moveAction`, `activateSelected`.
 - Implemented: the Unread and All views, the three empty states (`All caught up`, `Nothing here`, `No matches`), search, app grouping, cursor restore, DND on and off (glyph colour changes only).
@@ -41,7 +41,7 @@ The task is to find a notification in the history by application or text, then r
 ### Sizes, empty, long, failure
 
 - Header: the search field is `TextField` md, `Style.size("TextField", "md")` = 40 (`tokens/deep-night.json`). Each `IconButton` is `size: "md"`: a 40 px box with a 20 px glyph and 10 px padding on each side.
-- List height is `clamp(contentHeight, 64, maxListHeight)` (`:333-334`). The 64 is `Style.space6 * 2` (`space.6` = 32). The 420 is a property default.
+- List height is `clamp(contentHeight, floor, maxListHeight)`. The floor is `notificationCollapsedHeight * 2 + space2` (80 at the default tokens), two collapsed rows. The 420 is a property default.
 - Long content: the list scrolls (ListView clip, `StopAtBounds`). A card preview clamps at `notificationPreviewHeight` 80 (card `:427`).
 - Empty: `EmptyState` is centred in the list box (`:412-420`).
 - Failure: none in this component.
@@ -81,23 +81,13 @@ Model: one-dimensional Fitts in Shannon form, ID = log2(1 + D/W). W is the targe
 
 ### Findings
 
-Defects are source-backed. Status below is source-reviewed and load-checked (one offscreen capture of `notification-center`, exit 0, no QML error); none is owner-accepted.
+Defects are source-backed. Status is source-reviewed; none is owner-accepted.
 
 - **nc-01 (major), OPEN (deferred, needs `NotificationCard.qml`): keyboard cannot mark an unread row seen.** `NotificationCenter.qml:216` (`activateSelected` falls to `toggleSelected`) never reaches `NotificationCard`'s `activated` (card `:595`, body click only). The AT press action runs only the primary action, so `markRead` never runs from the keyboard. The unread row stays in the Unread view and keeps the bell count. Fix: give the card an `activate()` that its body click and the centre's Enter both call. The owner decides whether Enter on an unread row marks it read, expands it, or both. This is the law "pointer, keyboard and programmatic routes call the same function".
-- **nc-02 (major), the resting story shows the empty state.** *fixed (source-reviewed, load-checked): two live fixtures carry `read: false`, the archived one `read: true`; `view` is a unit control (Unread, All) synced both ways with the centre; the unit answers `activated` by marking the entry read.* `workbench/units/NotificationCenter.qml:18-46` has no `read` key on any entry. `view` defaults to `unread` (`:36`), so the filter at `:225-226` keeps nothing, and the empty state `All caught up` (`:416-417`) shows at rest. Fix: set `read: false` on one or two fixtures, and expose `view` as a unit control.
-- **nc-03 (major), section labels are not padded.** *fixed (source-reviewed, load-checked): the section label is an `Item` that holds the card text column as `x` and `space2` as top inset.* `NotificationCenter.qml:362-370` sets `leftPadding` and `topPadding` on `Prose`, and `Prose.qml:38` is a plain `Text` with no padding property (grep for `Padding` in that file finds nothing). Qt drops the binding and reports it, so the label sits at x 0 instead of the app-name column at x 45 (the same 45 the card's headline uses). The arithmetic is 8 + 3 + 2 + 8 + 16 + 8 = 45 on both sides; the unlabelled Qt report is unverified because nothing was run. Fix: wrap the `Prose` in an `Item` that holds the padding, or set `anchors.leftMargin` on the label.
-- **nc-04 (major), Clear history is instant, irreversible, and sits 8 px from DND.** *fixed (source-reviewed, load-checked): Clear moved to the view row, away from DND, and runs through `ArmedAction`; armed shows `Style.danger` and the name `Confirm clear history`. The host still runs `clearArchive` on `clearRequested`.* The trash `IconButton` (`:300-305`) is the same 40x40 target as DND, with the same glyph colour (`Style.text`) and no danger cue. A host that answers `clearRequested` at once has no undo in the source. Fix: route Clear through the library's `ArmedAction` (`Components/ArmedAction.qml`, not read here) so a second press confirms, and move it away from the toggle. The host still runs `clearArchive`.
-- **nc-05 (minor), the scroll fade defaults to the wrong ground.** *fixed (source-reviewed, load-checked): `fadeColor` is `required`; the unit sets `Style.band`. Callers must now state it.* `NotificationCenter.qml:50-58` says the fade "MUST come from the consumer", then sets `property color fadeColor: Style.surface`. The unit draws on `Style.band` (`:48`) and never sets `fadeColor`, so any overflow in the unit fades a surface-coloured strip over band (a 1.30:1 step from the tokens). The fixture does not overflow today, so this is latent. Fix: make `fadeColor` `required` and have the unit set `Style.band`.
-- **nc-06 (minor), search matches the word "undefined".** *fixed (source-reviewed, load-checked): the search text uses `entry.body ?? ""`.* `NotificationCenter.qml:230` builds the search text with `${entry.body}`. The card treats `body` as optional (`entry.body ?? ""`), so an entry without a body is searched as `undefined`. Typing "undefined" lists entries with no body. Fix: `${entry.body ?? ""}`.
-- **nc-07 (minor), the list floor does not match its comment or the record.** *fixed (source-reviewed, load-checked): the floor is `notificationCollapsedHeight * 2 + space2` (80 at the default tokens); the comment and this record agree.* `:24-25` and the record's `size:` line say the floor is "two rows' worth". The code at `:333` floors at 64 px. Two collapsed rows with the 8 px gap are 36 + 8 + 36 = 80 px, and a row with body text is taller still. One notification therefore leaves 28 px of empty box under it. Fix: compute the floor from `notificationCollapsedHeight` and `space2`, or correct the comment and the record.
-- **nc-08 (minor), the workbench unit is taller than its story window.** *fixed (source-reviewed, load-checked): the unit is `Style.controlWidth` (380) tall, inside the 500 px story viewport; not measured in the live window.* `workbench/units/NotificationCenter.qml:49-50` sets `implicitHeight: Style.controlWidth * 2` (760). `workbench/stories.json:1032-1035` declares a 500 px viewport. If the harness uses that viewport as the window, the lower 260 px of the list is cut off. Not run, so unverified against the harness.
-- **nc-09 (minor), the unit cannot reach action navigation.** *fixed (source-reviewed, load-checked): `runAction` and `integration.actions` gain `move-action-next`, `move-action-previous` and `focus-field`.* The record's `actions:` line names `moveAction` and `focusField`. The unit's `runAction` (`:121-128`) lacks both, so Tab through a card's actions cannot be driven in the workbench.
 
 Source conflicts (the owner decides which wins):
 
 - AGENTS.md "Definition of done" item 6 says every number comes from `Style` or `Motion`. The component law on property defaults says a call site passes a different value and the library keeps one default. `maxListHeight: 420` (`:26`) fits the second law and breaks the first. A `Style` token would make the fix shared.
-- The record's `actions:` and `size:` lines say two-row floor and Capsule controls. The code uses 64 px (`:333`) and `IconButton` (`:290`, `:300`). The record was not updated when the code changed.
-- The `fadeColor` comment (`:50-57`) forbids a default, and the line after it (`:58`) sets one.
 
 Proposals (taste, not defects):
 
@@ -105,8 +95,7 @@ Proposals (taste, not defects):
 
 Hypotheses (observed in the arithmetic, not measured):
 
-- H1: the empty state (an icon of 24, a 14 px title line, an 8 px gap, and a 12 px body line, about 70 to 75 px in total) is taller than the 64 px floor (`:333`). It would overflow by a few pixels on each side if a host sized the panel to content. Both current hosts give the centre a fixed height, so this is not reached. The line heights are unverified.
-- H2: the section label and card text align at 45 px only while `SelectionMark` is 5 px wide when `strong` (`markThickness + spaceTight`). A change to the tick width moves every label against its card.
-- H3: the DND on-state reads at 8.87:1, computed. Its rendered pixel is not sampled.
+- H1: the section label and card text align at 45 px only while `SelectionMark` is 5 px wide when `strong` (`markThickness + spaceTight`). A change to the tick width moves every label against its card.
+- H2: the DND on-state reads at 8.87:1, computed. Its rendered pixel is not sampled.
 
 Not examined: rendered pixels and any capture; the Segmented badge colour and track; the search placeholder contrast; dark, high-contrast, and scale variants (only deep-night tokens were read); keyboard keys beyond Up, Down, Enter, Tab and Delete; the accessibility tree; a real pointer; a host's rollout geometry; `ArmedAction`'s API.

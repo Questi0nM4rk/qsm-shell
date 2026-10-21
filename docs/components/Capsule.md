@@ -118,45 +118,13 @@ The WCAG 1.4.11 verdict on the ring is a11y-audit's.
 - Neighbour interference: row spacing is the host's, not read. Grown hover boxes of two neighbours overlap
   in a gap below 0.04 H: sm 1.28 px, md 1.60 px, lg 1.92 px (hypothesis H5).
 
-### Fix status
-
-Fixed, source-reviewed and load-checked (qmllint, one-scenario capture), not owner-accepted: D2, D3, D4,
-D5, D7, D9, D10. D4 took the first option (reveal the body on hover and press for ghost and destructive)
-as a placeholder for the owner's ruling. Callers whose `active` is a toggle must set `checkable: true` to be announced as toggles. Open: D1, S1.
-
 ### Findings
 
-Defects (source-backed; the record names the line that proves each):
+Defects (source-backed; the record names the line that proves each). Callers whose `active` is a toggle set `checkable: true` to be announced as toggles.
 
 - D1, major: a long label widens the control. Capsule.qml:74 has `implicitWidth` from content with no cap.
   A person sees a long player name or status text push the pill wider than its neighbours. AGENTS: natural size is a constant. Fix: cap the label at a
   Style-owned width (a size token is needed, so shared).
-- D2, medium: `active` is not exposed to the accessibility tree (Capsule.qml:52-53). Hosts use it as a
-  toggle. A screen reader gets
-  "button" and the name only. Fix: expose checkable and checked where the host marks a toggle. The criterion
-  verdict is a11y-audit's.
-- D3, low: a glyph-only capsule has an empty accessible name (Capsule.qml:53; the pill radius at :35). No
-  caller uses it. Fix: refuse an empty label, or require a host-supplied name; no silent empty name.
-- D4, medium: quiet variants answer the pointer weakly. Destructive keeps its danger label on hover
-  (Capsule.qml:64-65, no hover branch) and its body stays at opacity 0 when hovered (:97-99). Press returns
-  the growth to 1 with no colour change for ghost or destructive (StateLayer.qml:113). AGENTS: hover grows
-  and changes colour. Fix needs an owner decision: reveal the body on hover and press for quiet variants
-  (changes the ghost rule in the comment at :57), or lift the label colour for both on hover and press.
-- D5, medium, no current caller: `primary` is not filled. Capsule.qml:92-93 passes `variant === "primary"` as
-  the selected state, so its body is the active tint (accent 12 %). Its label is text (:64-65). It differs
-  from `active` only in label colour (5.07 against 7.83, table above). Surface ladder: primary is the one
-  filled action. Fix: fill with `Style.primary` and `Style.textOnPrimary` (Style.qml:43-44); selected only
-  for `active`.
-- D7, low: the detail reading is accent (Capsule.qml:157). AGENTS: accent belongs to focus, selection and
-  primary action, never passive metrics. No caller sets `detail`. Fix: use the muted role for a reading.
-- D9, low, record: docs/components/Capsule.md:4 and :6 say the focus ring and target are "the outer pill".
-  Labelled capsules use radiusBody (Capsule.qml:35). The
-  record is stale, not the code. Fix: correct the two words in the existing record, owner to confirm.
-- D10, major, known issue R2/R3 confirmed: `controls` holds only `state` enabled and disabled
-  (workbench/units/Capsule.qml:26-31). Not reachable in the window: `active`, the three sizes, the four
-  variants, `detail`, a long label, glyph-only. stories.json:439 describes "active state with detail text",
-  and the unit never sets `detail`. Fix: add controls for active, size and variant; add the detail
-  composition the story names.
 
 Source conflicts (owner rules):
 
@@ -169,11 +137,12 @@ Proposals (taste):
 
 - Label size: sm labels are 10 px (Capsule.qml:149), the metadata step, while the label role defaults to 12 px
   (Prose.qml default branch). Consider 12 px for sm with the 32 px height. Measure first.
+- Quiet variants: ghost and destructive reveal the body on hover and press. The alternative is a label colour lift for both. Owner ruling.
 - Quiet press: a press could morph the corner, as caelestia's ButtonBase.qml `pressedRadius` does, instead of
-  colour. Fits D4.
+  colour.
 - Space fires on key press. Qt Quick Controls fire Space on release. Decide with a11y-audit.
 - Overloaded `active`: hosts use it for power-on, scan in progress and an armed warning. Separate identity
-  from status before the toggle exposure (D2) lands.
+  from status before a toggle exposure.
 
 Hypotheses (not measured):
 

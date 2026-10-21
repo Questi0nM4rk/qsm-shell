@@ -45,32 +45,32 @@ Channels available: source only. The capture and live-geometry channels were not
 | rest | text, app glyph or image, timestamp | yes | 214-265, 351-417 |
 | hover | popup: expansion; list: bodied lift | yes; the boxless list has no hover change (see P8) | 91, 299 |
 | press | colour change on the body | title colour only; bodied body via `Surface.pressed` | 406-407, 300 |
-| focus | keyboard ring, outside the body | yes, `StateLayer` ring driven by `activeFocus` (F1 fixed) | 614 |
+| focus | keyboard ring, outside the body | yes, `StateLayer` ring driven by `activeFocus` | 614 |
 | disabled | colour dimmed through `Style.disabled` | yes | 392, 406, 438, 496 |
 | selected | list tick (boxless) or body (bodied) | yes | 324-332, 301 |
 | unread | accent dot | yes; not in the accessible name (H3) | 394-401 |
 | empty body | collapsed height, no detail | yes | 252-261 |
 | long body | two-line preview; popup scrolls the expanded body | yes | 444, 470-472, 475-521 |
 | archived | time shows `archivedAt`; no action row | yes | 92, 232, 525 |
-| image or swatch failure | visible fallback | yes, the glyph stays until the image is ready (F4 fixed) | 359-374 |
+| image or swatch failure | visible fallback | yes, the glyph stays until the image is ready | 359-374 |
 
 Public controls: `entry` (required), `alwaysExpanded`, `draggable`, `inputEnabled`, `primaryActionEnabled`, `showActions`, `bodied`, `bodyRadius`, `expandOnHover`, `unread`, `activatable`, `selected`, `actionFocusIndex`, `hostExpanded`, `swatch`, `animateEntrance`. Actions: `activatePrimary()`, `dismiss()`, `activateAction(id)`. Signals: `dismissed`, `expandRequested`, `actionTriggered`, `primaryTriggered`, `activated`. The unit exercises only default-action, body, record and input. It does not show `showActions`, `bodied`, `selected`, `unread`, `swatch` or the list expansion.
 
 ### Routes
 
 - **Pointer.** Body tap runs `activatePrimary()` when primary is available (`layer`, 580-596), and `activated` runs for an unread center row (595). A leading-column click emits `expandRequested` in list mode only (601-612). Middle click dismisses (626-630). A horizontal swipe past 40% of width dismisses (642-672). A vertical drag past 20 px sets the card's internal drag expansion (664-666). The wheel over an expanded body scrolls it and passes through at either end (507-520).
-- **Keyboard.** Tab stop when primary is available (614). Enter and Space run `activatePrimary()` (616-624). There are no arrow keys and no dismiss key. The focus ring follows `activeFocus` (F1 fixed). Action-row focus belongs to the list host (75, 542-550).
+- **Keyboard.** Tab stop when primary is available (614). Enter and Space run `activatePrimary()` (616-624). There are no arrow keys and no dismiss key. The focus ring follows `activeFocus`. Action-row focus belongs to the list host (75, 542-550).
 - **Accessibility.** Primary available: role Button, name `label: summary` (112-115). Otherwise: StaticText, name `app: summary`. Description is the body (116). AT press runs `activatePrimary()` (117). Action labels are Buttons (544-546). The metadata description is the absolute time (414-415).
 - **Route equivalence.** Body tap (586-593), Enter and Space (616-624), and AT press (117) all call `activatePrimary()`, which checks `enabled`, `visible`, `inputEnabled` and `primaryActionAvailable` before reporting (178-183). Confirmed in source.
 
 ### Sizes, empty, long, failure, cancellation
 
 - Width is 380 (`Style.notificationWidth`, token `geometry.notificationWidth`). The center overrides it with a list-width binding.
-- Heights from token arithmetic: no body 36; one-line preview 68; two-line preview 80 (the cap; see F3); expanded `36 + 4 + min(content, 96) + 8`, giving 68 for one line, 88 for two, 108 for three, 128 for four, and 144 from five lines, where the popup scrolls inside 96 px.
+- Heights from token arithmetic: no body 36; one-line preview 68; two-line preview 80 (the cap; see F1); expanded `36 + 4 + min(content, 96) + 8`, giving 68 for one line, 88 for two, 108 for three, 128 for four, and 144 from five lines, where the popup scrolls inside 96 px.
 - Lead column is 45 px (`headline.x + 24`, with `headline.x` = 21). The tick reserves 5 px even when hidden (`SelectionMark.qml:34`).
 - Summary is NoWrap with ElideRight (`Prose` title role). App name is capped to `(380 - 16 - 36) / 3` = 109 px (line 391) and elides.
 - Long body wraps and elides in the preview. Long expanded body is an unknown line count (H2).
-- Failure: a missing or undecodable image leaves an empty box (F4). An image or swatch removes the urgency glyph (F2).
+- Failure: the image shows only at `Image.Ready`, otherwise the urgency glyph shows. An image or swatch slot with critical or low urgency shows the urgency glyph as an `iconXs` badge on its corner.
 - Cancellation: `freezePresentation` holds height and entrance progress during retirement (151-161). A swipe below 40% springs back (638).
 
 ### Visual roles and palette pairs (token values)
@@ -86,7 +86,7 @@ Public controls: `entry` (required), `alwaysExpanded`, `draggable`, `inputEnable
 | low-urgency glyph `textMuted` on `band` | 8.61 | 3 | pass |
 | disabled text: `textMuted` blended 0.35 to `band` (#5e5568) on `band` | 2.26 | exempt (inactive) | dims by design |
 
-Focus ring: no colour, no pair, not drawn (F1). The swatch border is `textMuted` on an entry-supplied fill, so no pair can be computed.
+Focus ring: `StateLayer` ring, `accent` (no pair computed). The swatch border is `textMuted` on an entry-supplied fill, so no pair can be computed.
 
 ### Motion and reduced motion
 

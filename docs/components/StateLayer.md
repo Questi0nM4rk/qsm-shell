@@ -49,7 +49,7 @@ Routes:
   only while `Interaction.pointerSelects` is true (l. 106-108).
 - Wheel: no handler takes it, so the wheel passes to ancestors. Source only.
 - Keyboard: none of its own. The unit's Space and Return call `activate()` on the body.
-- Focus: read from the host, or from the parent (see defect SL-1).
+- Focus: read from the host's `visualFocus`, or from a plain parent's `activeFocus`.
 - Screen reader: none on the layer. The unit's body declares role Button and the name
   "State layer sample", a placeholder. a11y-audit owns the test.
 - Cancellation: a drag past `DragThreshold` cancels the tap, so no `clicked`. `activate()` returns
@@ -68,8 +68,7 @@ Visual roles and palette pairs (source values from `deep-night.json`):
 
 Motion (the verdict is review-animations'): response 130 ms (`Motion.micro`), 80 ms when pressed
 (`Motion.press`), `OutCubic`. Reduced motion gives 60 ms and 40 ms (`Motion.qml` l. 24, 26). The
-scale itself does not depend on `reducedMotion` (see SL-C2 in the conflicts). The ring fades in over
-130 ms and does not fade out (SL-4).
+hover scale is 1 under reduced motion (`Motion.hoverScale`). The ring fades in and out over 130 ms.
 
 ### Pointer geometry (modelled, not measured)
 
@@ -95,50 +94,18 @@ scale itself does not depend on `reducedMotion` (see SL-C2 in the conflicts). Th
 
 Defects (source-backed; each cites its file and line):
 
-- SL-1 (major, `qml/QsmShell/Components/StateLayer.qml` l. 72). For an unhosted layer, `focused`
-  reads `(root.parent as T.Control)?.visualFocus`. The comment at l. 64-66 says a plain item follows
-  its parent. In the unit the parent is a `Rectangle`, the cast gives null, and `focused` stays
-  false while the body holds keyboard focus (`activeFocusOnTab`). What a person sees: Tab onto the
-  sample and no ring appears. A host works around the gap by passing `focused:
-  root.activeFocus`. Fix: `property bool focused: _hosted ? (host.visualFocus ?? false) : (root.parent?.activeFocus ?? false)`.
-  Shared: yes (the component file). Untested.
-- SL-2 (major, `workbench/units/StateLayer.qml`, body `color:`; fixed, source-reviewed and load-checked, not owner-accepted). The body colour is
-  `enabled ? Style.surface : Style.disabled(Style.surface)` and never reads `layer.hovered` or
-  `layer.pressed`. `hoverTint` is off. What a person sees in the story: hover grows the sample by
-  8% and changes no colour; press changes nothing. The component's own header (l. 6-13) says colour
-  comes from the body through `Style.tone`. Fix: `color: enabled ? Style.tone(Style.surface, layer.hovered, layer.pressed, false, true, Style.accent) : Style.disabled(Style.surface)`.
-  Shared: no (unit file). The body now reads `Style.tone` with `layer.hovered` and `layer.pressed`.
-- SL-3 (minor, `StateLayer.qml` l. 175-181). The comment says a press that does not take focus clears
-  the mark. The code clears only when `!root.focused` after release. A control that already holds
-  keyboard focus keeps `focused` true, so `_pointerFocus` stays true. What a person sees: Tab to a
-  control, click it, and the ring vanishes and stays off while focus stays. Fix: set
-  `_pointerFocus = !root.focused` on press, so only a press that takes focus hides the ring, and keep
-  the release clear. Shared: yes. Untested; the order of press and focus change in Qt is unverified.
-- SL-4 (minor, `StateLayer.qml` l. 152 and 157-161). `visible` and `opacity` both follow the focus
-  condition. `visible` goes false at once, so the 130 ms opacity Behavior never plays on loss: the
-  ring snaps off. What a person sees: a snap, not a fade. The verdict is review-animations'. Fix:
-  drop `visible` and let `opacity` carry the state, or bind `visible` to `opacity > 0`. Shared: yes.
-- SL-5 (minor, `StateLayer.qml` l. 83 and 93-98). `pressed` reads only the tap or the host, and
+- SL-1 (minor, `StateLayer.qml` l. 83 and 93-98). `pressed` reads only the tap or the host, and
   `activate()` never sets it. A keyboard press in an unhosted layer fires `clicked` with no pressed
   state. What a person sees: Space on the focused sample logs the intent and shows no press. Fix:
   add `press()` and `release()` functions, listed in `actions`, that drive an internal flag the
   key handler on the host can call, so keyboard and pointer share one route. Shared: yes.
-- SL-6 (minor, `StateLayer.qml` l. 148-150 with the rule at l. 144-146). The ring is anchored to the
-  layer, not to the target. With the unit's 2 px layer outset, the ring sits 4 px off the body edge
-  (layer outset 2 px plus the stroke's 2 px), twice the `spaceTight` gap the comment states. A host
-  that sizes the layer to its target gets the stated 2 px. What a person sees: the unit's ring floats
-  further from the sample than the comment's rule. Fix: anchor the ring to the target, or state that
-  the gap is measured from the layer. Shared: yes.
 
 Source conflicts (the owner rules):
 
-- SL-C1: the record says focus draws "a one-pixel accent ring"; the code draws `Style.spaceTight`
-  (2 px in the default tokens, `Tokens.qml` l. 27, `StateLayer.qml` l. 155). The record needs to
+- SL-C1: the record says focus draws "a one-pixel accent ring"; the code draws a `Style.indicatorWidth` stroke
+  at a `spaceTight` gap. The record needs to
   change, or the code does.
-- SL-C2: AGENTS says reduced motion shortens durations and never removes a state response. qsm-uix's
-  a11y guidance says reduced motion drops movement and keeps colour. Hover growth is a scale, so
-  the two sources disagree. Ungated values: `Motion.qml` l. 46, `StateLayer.qml` l. 56 and 113.
-- SL-C3: the record says the geometry "follows caelestia `components/StateLayer.qml`". Caelestia's
+- SL-C2: the record says the geometry "follows caelestia `components/StateLayer.qml`". Caelestia's
   file is a `MouseArea` overlay with an 8% state opacity, a press ripple and no scale, and no focus
   ring (l. 1-60 read). The hover scale is an owner decision (the header quotes it), not a
   caelestia pattern. The record claim needs narrowing. `ButtonBase.qml` was not read.

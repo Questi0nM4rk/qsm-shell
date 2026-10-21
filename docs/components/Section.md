@@ -42,8 +42,7 @@ group is named. It is the wrong type for a collapsible, selectable or scrolling 
 - Focus ring: drawn by StateLayer for keyboard focus only (`StateLayer.qml:64-72`). Section draws
   none.
 - Accessibility: the action is `Accessible.Button` named by its label (`Capsule.qml:52-53`).
-  Section and Prose set no Accessible property (grep: 0 matches), so the title does not label the
-  group. See S-1.
+  The root is `Accessible.Grouping` named by the title; screen-reader behaviour is not driven.
 
 ### Sizes, long content, failure, cancellation
 
@@ -53,7 +52,7 @@ group is named. It is the wrong type for a collapsible, selectable or scrolling 
   (`Capsule.qml:73`, `Tokens.qml:84`).
 - Gaps: none outside the group; heading to body 4px and rows 4px (`space1`).
 - Long title: NoWrap and ElideRight, so it elides only when its row is constrained. Its full width
-  still counts toward the natural width. See S-2.
+  still counts toward the natural width. See S-1.
 - Failure and cancellation: none. `Capsule.activate` is a no-op while disabled (`Capsule.qml:78-81`).
 
 ### Visual roles and palette pairs
@@ -109,14 +108,9 @@ Defects (source-backed, each with a concrete fix):
 
 | id | pass | element | evidence (source-reviewed) | expected (source) | actual | severity |
 | --- | --- | --- | --- | --- | --- | --- |
-| S-1 (fixed, source-reviewed, load-checked) | structure; the criterion is a11y-audit's | group title | `Section.qml:16-37`; no Accessible property in Section or Prose | `Section.md:8`: the title labels the group | nothing names the group; the title is plain text to an assistive tool | minor |
-| S-2 | geometry | group natural width | `Section.qml:33-37`: title Prose is `fillWidth` with no `Layout.preferredWidth`; its full text width counts toward the natural width | `Section.md:10`: long content elides, not grows | in a parent that sizes the group from its natural width, a long title widens the group past its column | minor |
-| S-3 (fixed, source-reviewed, load-checked) | source rule (`AGENTS.md`, comments) | comment | `Section.qml:6-15` narrates the past and a consumer that no longer exists | comments explain non-obvious mechanics only | history in source; the one-consumer claim is unverified | minor |
+| S-1 | geometry | group natural width | `Section.qml:33-37`: title Prose is `fillWidth` with no `Layout.preferredWidth`; its full text width counts toward the natural width | `Section.md:10`: long content elides, not grows | in a parent that sizes the group from its natural width, a long title widens the group past its column | minor |
 
-Fixes: S-1 (fixed: `Accessible.Grouping` with `Accessible.name: root.title` on the root
-ColumnLayout; screen-reader behaviour not driven). S-2, set
-`Layout.preferredWidth: 0` on the title Prose at `Section.qml:34` and keep `fillWidth`, so the
-title takes only the free space. S-3 (fixed: the history comment is deleted, the one mechanic stays). All three are in `Section.qml`; none needs a shared file. S-2 is open.
+Fix for S-1: set `Layout.preferredWidth: 0` on the title Prose at `Section.qml:34` and keep `fillWidth`, so the title takes only the free space. It stays in `Section.qml`; no shared file.
 
 Proposals (taste and design, no defect claimed):
 

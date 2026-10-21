@@ -41,12 +41,12 @@ Lets a person pick one entry from a short list and sends that entry to the host'
 | --- | --- | --- | --- |
 | `currentIndex` | host-owned (`Menu.qml:24-25`) | yes, but the component writes it | M-1 |
 | `model`, `delegate`, `content` | consumer | yes | |
-| `orientation` | vertical and horizontal | horizontal body yes, `implicitWidth` no | M-7; no consumer uses horizontal |
+| `orientation` | vertical and horizontal | yes; horizontal `implicitWidth` is the sum of row widths plus spacing | a horizontal menu's rows contribute their label width until `ListRow` offers a constant; no consumer uses horizontal |
 | `spacing` (`space1`), `radius` (`childRadius`) | consumer | yes | |
 | `activated(index)`, `step`, `activateCurrent`, `rowAt`, `rowCount`, `resync` | listed | yes | |
 | `actions`: step-previous, step-next, activate-current | listed | yes | enabled follows `root.enabled` and selectability (`Menu.qml:42-44`) |
 | `enabled: false` | disabled state | keys and activation refuse; no visual state | M-4 |
-| `currentIndex: -1` | no cursor | thumb hidden (`Menu.qml:77`); no focus cue | M-3 |
+| `currentIndex: -1` | no cursor | thumb hidden (`Menu.qml:77`); no row holds focus | |
 | zero rows | empty | 0 by 0, nothing drawn (`Menu.qml:37-39`); the consumer supplies the text | P5 |
 | failure, cancel | none | none; Escape is not handled here (dismissal is the host's, per AGENTS) | |
 
@@ -57,7 +57,7 @@ Sizes: the Menu has no `size`. Rows take the ListRow size table (`Style.size("Li
 - **Pointer.** A row's `StateLayer` tap calls `ListRow.activate()` (`StateLayer.qml:170`, `ListRow.qml:195`), which emits `activated`; the Menu handler sets `currentIndex` then emits `activated(index)` (`Menu.qml:150-151`). Hover lifts the row body (`ListRow.qml:159-171`), and the thumb's hover lift applies only when the hovered row is current (`Menu.qml:74`). Hover does not move the cursor; `ListRow.hoveredEntered` (`ListRow.qml:126`) exists and the Menu does not use it (P3).
 - **Keyboard.** Up and Down step a vertical menu (`Menu.qml:211-212`); Left and Right a horizontal one (`213-214`); Return and Enter activate with auto-repeat filtered (`215-216`). Return calls `activateCurrent()` (`204-209`), which calls the same `row.activate()` as the pointer, so one gesture yields one activation. The pointer also moves the cursor and the keyboard does not, which is M-1. Home, End, typeahead: absent (P1, P2).
 - **Wheel.** The Menu has no wheel handler; wheel events reach the `ScrollArea` that owns overflow.
-- **Focus.** The Menu is a `FocusScope` with `focus: true` and no `activeFocusOnTab`. On focus-in and on every cursor change it moves focus to the current selectable row (`_focusCurrent`), so `ListRow.focused` (its own `activeFocus`) lights the ring; with no selectable current row no row keeps focus. See M-3 and C1.
+- **Focus.** The Menu is a `FocusScope` with `focus: true` and no `activeFocusOnTab`. On focus-in and on every cursor change it moves focus to the current selectable row (`_focusCurrent`), so `ListRow.focused` (its own `activeFocus`) lights the ring; with no selectable current row no row keeps focus. Hosts inside a clipping ScrollArea leave `2 * Style.spaceTight` of room for the ring. See C1.
 - **Accessibility.** The Menu has no `Accessible` block. Rows report `Button` and a name (`ListRow.qml:128-129`), not the current state. Handed to a11y-audit (below), not ruled here.
 
 ### Pointer geometry
@@ -105,26 +105,9 @@ The focus colour is `accent`; its ratio against the adjacent band is not measure
 | --- | --- | --- | --- | --- | --- | --- |
 | M-1 | `Menu.qml:199`, `:150` | The Menu writes the host-owned `currentIndex` on a keyboard step and on a row click, which replaces any host binding. This is the qss-bcn issue, confirmed. | `Menu.qml:24-25` declares the selection consumer-owned. `workbench/units/Menu.qml:30` binds `currentIndex: root.currentIndex`, and the unit's selection controls (`units/Menu.qml:84-88`) write through it. After the first step or click the binding is gone, so later control changes stop moving the thumb. | `step()` and the row handler emit `moved(int index)` and never assign `currentIndex`. Keep `activated(index)`. Hosts bind `currentIndex` and answer `moved`. Consumers that bind nothing lose keyboard stepping, so each host must wire it: the unit and `MenuInteractions.qml`. | true | major |
 | M-2 | `Menu.qml:163`, `:152` | The Menu writes each row's consumer-owned `selected` (`ListRow.qml:46`) and `paintsSelection` (`ListRow.qml:85`). | `_applySelection` runs on every resync and every cursor change (`Menu.qml:157, 224`). No in-repo binding to a row's `selected` was found in the files read, so the harm is latent. | The Menu drives a Menu-owned `current` property on `ListRow` for the prose tint and the thumb, leaving `selected` to the consumer. `paintsSelection` is set once by the Menu, not per change. | false | minor |
-| M-3 | `Menu.qml:47`, `:48`; `ListRow.qml:69`; `StateLayer.qml:152` | Focus inside the Menu has no visible state. The Menu keeps focus on its root, and each row's ring needs the row's own `activeFocus`. | With `currentIndex: -1` nothing shows where focus is. With a current row, the thumb is the only cue. The composition works around this with `row.forceActiveFocus()` (`MenuInteractions.qml:117`). Once rows receive focus, `clip: true` (`Menu.qml:48`) crops the ring at the flush left and right edges, because rows run to the Menu width (`Menu.qml:170`). | The Menu forwards focus to `rowAt(currentIndex)` on focus-in and on each step, so the layer draws its ring. Make room for the ring: rows inset by `spaceTight` or `clip: false`, with overflow still bounded by the owner's `ScrollArea`. | false | major |
 | M-4 | `Menu.qml:182`, `:192`; `ListRow.qml:94`, `:117-120` | A disabled Menu shows no disabled state. Only the keyboard path checks `root.enabled`. | Rows read `disabled` and `interactive`, never the Menu's `enabled`, so the rows keep full strength. Pointer input is probably cut by Qt's inherited `enabled`; this assumes that and needs a runtime check. | `ListRow.proseColor` reads the inherited `enabled` and uses `Style.disabled` when false. No write from the Menu is needed. | false | major |
-| M-6 | `Menu.qml:30`, `:69`, `:170`; `ListRow.qml:89`; `Style.qml:413-418`, `:428-431` | The thumb's corner radius does not follow its real inset (concentric rule). | `radiusBody` gives 12 px (`ListRow.qml:89`), but the thumb has zero horizontal inset because it spans the full row (`Menu.qml:69`, `ListRow.qml:162`). The band radius is `childRadius(root)` (`Menu.qml:30`), which is 0 in the unit (`Style.qml:413-418` returns 0 when the parent has no radius). So the unit shows a square band with 12 px rounded thumb corners. | Radius from the actual inset: `Style.childRadius(thumb)`, or inset the thumb by `space3` horizontally so the 16 px curve is concentric. | false | minor |
-| M-7 | `Menu.qml:38` vs `:92`, `:48` | `implicitWidth` takes the maximum row width whatever the orientation. | In horizontal mode the body is the sum of columns (`Menu.qml:92`) and the root clips it (`:48`). A horizontal Menu in an implicitly sized parent shows only its widest row. No consumer uses horizontal. | A horizontal branch: sum of row `implicitWidth` plus `spacing`. | false | minor |
-| M-8 | `Menu.qml:38`; `ListRow.qml:149` | The natural width grows with the longest label. | `ListRow.implicitWidth` includes the full text width (`ListRow.qml:149`), and the Menu takes the maximum. AGENTS Definition of done 5 says natural size is a constant. `Prose.qml` was not read, so whether the label elides is unknown. | The row contributes a constant width and the label elides; the Menu's `implicitWidth` stays constant. | false | minor |
-| M-9 | `Menu.qml:141-159`, `:102-103` | The cursor is an index, not an identity, so removing an entry above it moves the thumb to the next entry. | `_resync` keeps the numeric `currentIndex` and re-points nothing. A host calls `Qt.callLater(menu.resync)` on each structure change. Source-backed; not run. | `_resync` keeps the current row's consumer key (object identity dies with the delegate), re-resolves its index, and clamps when the row is gone. | false | minor |
 
-### Fix status
-
-Source-reviewed and load-checked (`qmllint` clean, one-scenario `menu` capture exits 0). Not runtime-exercised, not owner-accepted.
-
-| id | status | what changed, or what is left |
-| --- | --- | --- |
-| M-2 | not fixed, deferred | needs a Menu-owned `current` on `ListRow` (`ListRow.qml`, not this change's file). Until then the Menu still writes `selected`; the `paintsSelection` write now happens only when the row still paints its own. |
-| M-3 | fixed (source-reviewed, load-checked) | `Menu` is a `FocusScope`; `_focusCurrent` forwards focus to the current row on focus-in and every cursor change; `clip` removed so the ring is not cropped. Hosts inside a clipping ScrollArea must leave `2 * Style.spaceTight` of room. |
-| M-4 | not fixed, deferred | the fix is in `ListRow.proseColor` and the glyph colour (`ListRow.qml`). |
-| M-6 | fixed (source-reviewed, load-checked) | the thumb radius is `Style.childRadius(thumb)`, its real inset. The unit gives its Menu `Style.insetRadius(Style.space3)`, the curve a Menu inset by `space3` in a rollout has, so band, thumb and row agree. The row's own hover body and focus ring still take `ListRow.selectionRadius`. |
-| M-7 | fixed (source-reviewed, load-checked) | horizontal `implicitWidth` is the sum of row widths plus spacing. |
-| M-8 | fixed for a vertical menu (source-reviewed, load-checked) | `implicitWidth` is `Style.controlWidth`; the label elides in the row (`Prose` elides right). A horizontal menu's rows still contribute their label width until `ListRow` offers a constant. |
-| M-9 | fixed (source-reviewed, load-checked) | `_resync` keeps the cursor on the same row object, then on its `objectName`, then clamps; row removal resyncs after the item has left the body. While the Menu writes `currentIndex` itself (M-1), this can replace a host binding. |
+While the Menu writes `currentIndex` itself (M-1), `_resync` (which keeps the cursor on the same row object, then on its `objectName`, then clamps) can replace a host binding. M-2 needs a Menu-owned `current` on `ListRow`; until then the Menu writes `selected`, and the `paintsSelection` write happens only when the row still paints its own. M-4 is a `ListRow.proseColor` and glyph colour change.
 
 ### Proposals (taste and design, not defects)
 
@@ -137,7 +120,7 @@ Source-reviewed and load-checked (`qmllint` clean, one-scenario `menu` capture e
 
 ### Source conflicts (owner ruling)
 
-- C1. Focus owner. `Menu.md` line 8 says "the container holds focus for its rows". `Menu.qml:47` keeps focus on the root. `MenuInteractions.qml:117` moves focus to the row. Which owns focus must be decided before M-3 is fixed.
+- C1. Focus owner. `Menu.md` line 8 says "the container holds focus for its rows", but the Menu is a `FocusScope` that moves focus to the current row, so the row holds it. The owner rules which is intended.
 - C2. Leading box. `ListRow.qml:17-19` says the leading box has one size so the name never moves. `ListRow.qml:259` hides the box without an icon, so the text starts at 44 px with an icon and 12 px without (`ListRow.qml:109-111`). Mixed lists shift their names.
 
 ### Hypotheses (observed in source, not measured)

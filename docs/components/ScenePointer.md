@@ -40,7 +40,7 @@ while the hand is still travelling toward it. A consumer sees the popout's behav
 - Sizes: none. The type paints nothing and has no size preset.
 - Empty and long content: not applicable.
 - Failure: a malformed area throws `ScenePointerAreaError` from `contains()`, checked before the
-  pointer is tested. See D1.
+  pointer is tested.
 - Cancellation: none in this type. The keep-open grace timer belongs to Rollout
   (`Rollout.qml:136-145`), so this type holds no timer, which is correct.
 
@@ -87,15 +87,7 @@ while the hand is still travelling toward it. A consumer sees the popout's behav
 
 Source-backed defects:
 
-- D1 (medium), fixed (source-reviewed, load-checked; not owner-accepted). `contains()` now accepts only
-  `Qt.rect` values and `triangleArea()` results and throws `ScenePointerAreaError` otherwise, even
-  while the pointer is outside. Original defect: `ScenePointer.qml:20-22`. A malformed area is treated as a rectangle, and every
-  comparison against `undefined` is false, so `contains()` returns false with no error. What a
-  person sees: a popout does not open from a trigger whose area was written with a typo (for
-  example `w` for `width`), or closes mid-travel, and nothing reports why. Fix: accept only
-  `Qt.rect` values and `triangleArea` results, and fail loudly on any other shape with a named
-  error. Shared: no.
-- D2 (low). `workbench/units/ScenePointer.qml:39-41`. The fixture card carries a `StateLayer`
+- D1 (low). `workbench/units/ScenePointer.qml:39-41`. The fixture card carries a `StateLayer`
   (hover and press) and no action, so a press highlight appears on something that does nothing.
   What a person sees in the unit: press feedback that promises an action. Fix: remove the
   StateLayer from the fixture, or make the card's press show the reader's `inside`. Shared: no.

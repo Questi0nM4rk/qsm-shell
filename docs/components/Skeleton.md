@@ -83,10 +83,6 @@ Defects (source-backed, file and line cited):
   height from its Prose role; the code does not, which is a source conflict with the record. Fix: one
   owner of a role's line box in `Style`, read by both `Prose` and `Skeleton`. Shared, because the fix
   touches `qml/QsmShell/Style/*`.
-- SK-2 (fixed: the unit offers the role group only while `shape` is `line`; source-reviewed, load-checked, not owner-accepted), `workbench/units/Skeleton.qml` lines 50-57 as audited. The six `role` options are offered in every shape,
-  but the component reads `role` only in the line state (line 39). In block state a person who clicks
-  "hero" or "metadata" sees nothing change. Fix: show the role group only when `shape` is `line`, or
-  say in the unit that it is inert in block. Not shared (unit file).
 
 Proposals (taste, design, or consumer concerns):
 

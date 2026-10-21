@@ -90,7 +90,7 @@ Style.qml:107-112), opaque, with no opacity on a composite. This matches the AGE
   sweep is 3600 ms (ProgressBar.qml:65). Travel is 1.3 times the track width, 494 px at 380 px: 274 px/s
   normal, 137 px/s reduced. Loops infinite, InOutCubic at both ends.
 - Reduced motion: the loop period lengthens, as AGENTS requires. The determinate settle
-  is removed, not shortened (PB-4, fixed).
+  is removed under reduced motion, not shortened.
 - The lead animates `width`, which review-animations standard 7 names (proposal 8).
 
 The timing verdict is review-animations'. The values above come from the tokens only.
@@ -126,12 +126,7 @@ Defects, source-backed:
   `enabled`, while the colour dims at `:59`. A disabled indeterminate bar keeps travelling at 274 px/s
   as though work is running. AGENTS: motion communicates state. Fix: gate the sweep on `root.enabled`
   (hide the band when disabled). shared=false.
-- **PB-4** (minor, fixed: source-reviewed, load-checked; not owner-accepted) `ProgressBar.qml:44-46`. The `Behavior on width` is not gated by reduced motion.
-  AGENTS says a one-shot position animation is removed under reduced motion, not shortened. The law
-  text names sliders, so applying it to the lead is a reading. review-animations standard 8 asks for
-  movement to be dropped. The lead still slides in 80 ms (Motion.qml:56). Fix: `enabled:
-  !Style.reducedMotion` on the Behavior. shared=false.
-- **PB-5** (polish, open: the mask's GPU cost is unmeasured and measuring is not allowed in this pass) `ProgressBar.qml:30` (`clip: true`, rectangular) with the sweep at `:52-58`
+- **PB-4** (polish; the mask's GPU cost is unmeasured) `ProgressBar.qml:30` (`clip: true`, rectangular) with the sweep at `:52-58`
   (`radius: parent.radius`). At thickness 6 px the track's end is a 3 px radius. When the sweep's cap is
   1 px outside the start edge, the band spans ±2.24 px about the centreline at x=0 while the track spans
   0 px, so the band overhangs the rounded end for a few frames at entry and exit. Visible at zoom only.

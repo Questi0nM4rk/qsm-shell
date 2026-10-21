@@ -27,7 +27,7 @@ reader to the wrong key. It labels a shortcut and takes no input.
 
 - Input: `combo` (required string). It splits on `+`, trims each part and drops empty parts
   (`Kbd.qml:21`, `Kbd.qml:29`).
-- Public controls: none. The unit declares a `combo` group: short, modifiers, long (KBD-D4, fixed).
+- Public controls: none. The unit declares a `combo` group: short, modifiers, long.
 - Valid states: the resting shape only. Hover, press, focus, selected and disabled are not defined.
 
 ### Routes
@@ -52,7 +52,7 @@ reader to the wrong key. It labels a shortcut and takes no input.
 - Empty: a `combo` of `""` or of only `+` yields no parts. Kbd renders at zero size with no
   placeholder. Not designed.
 - Long: Kbd takes the width its host gives it. Caps shrink to `space5` and their text elides; the joins keep
-  their width. A host that sets no width still gets natural width (KBD-D1, fixed; see its note).
+  their width. The bound applies once the host sets Kbd's `width`; until then it grows to its natural width.
 - Failure: a malformed bind is repaired silently by the filter (`Kbd.qml:29`): `SUPER ++ Q` renders
   as `SUPER + Q`, and nothing reports it.
 - Cancellation: none. No asynchronous work.
@@ -84,10 +84,8 @@ Visual and layout (ui-audit):
 
 | id | pass | element | evidence (source, computed) | expected (source) | actual | severity |
 | --- | --- | --- | --- | --- | --- | --- |
-| KBD-D1 (fixed, source-reviewed, load-checked) | layout | combo row, cheat sheet | `Kbd.qml:45` width has no maximum. Host example: a combo column 190 wide with a description 12 px after it; overlap begins when Kbd is wider than the column | AGENTS component law DoD 5: long content scrolls or elides, never grows the control | a combo wider than its column draws under the description text | major |
-| KBD-D3 | token | cap fill | `Style.qml:58` `keycap = lift(band, 0.9)`, computed 1.90:1 on band; fill #524a5a. Deep-night `overlay` is #4c4357 (`tokens/deep-night.json`). `Style.qml:146-147` says "No role is derived from it" | AGENTS surface ladder: three steps, nothing derived | a fourth, derived fill; this record (line 10) names `overlay`, the code uses `keycap` (`Kbd.qml:48`) | minor |
+| KBD-D1 | token | cap fill | `Style.qml:58` `keycap = lift(band, 0.9)`, computed 1.90:1 on band; fill #524a5a. Deep-night `overlay` is #4c4357 (`tokens/deep-night.json`). `Style.qml:146-147` says "No role is derived from it" | AGENTS surface ladder: three steps, nothing derived | a fourth, derived fill; this record (line 10) names `overlay`, the code uses `keycap` (`Kbd.qml:48`) | minor |
 | KBD-D2 | accessibility name | root | `Kbd.qml` has no `Accessible.*`; the host sets the name | record line 8: "the combo text is the announcement" | the type announces nothing by itself | minor (name and role are a11y-audit's to rule on) |
-| KBD-D4 (fixed, source-reviewed, load-checked) | workbench coverage | unit controls | `workbench/units/Kbd.qml:24` `controls: []`; the one `kbd` key is variant `combo` (`workbench/stories.json`, key `kbd`); `docs/BACKLOG.md:48-49` (R2/R3) | AGENTS DoD 7: the unit exposes coherent examples and supported states | no long combo, and no empty combo, is reachable in the review | minor |
 
 Source conflicts:
 
@@ -95,12 +93,10 @@ Source conflicts:
   AGENTS.md, "Surface ladder and borders", lists four, and `Kbd.qml` draws no border. Code and
   AGENTS agree; the record is the outlier. Remove the clause.
 - SC-2: this record, line 9, says caps "size to their content". AGENTS DoD 5 forbids that for a
-  component. The record states a behaviour the binding law rules out (KBD-D1).
+  component. The record states a behaviour the binding law rules out.
 
 Redesign proposals (no fix committed):
 
-- P1: bound the cap row. The owner chooses between eliding the widest cap, wrapping the join onto
-  a second line, or clipping. The consumer's column policy decides too.
 - P2: choose the fill. `Style.overlay` is a ladder role and sits at 1.90:1 on band, the same as
   `keycap`. Use it and drop the derived token, or keep the step as a named role. Owner's call.
 - P3: `Kbd.qml:54` overrides Prose's reading size (`textSm` by default, `Prose.qml`) with `textXs`.
@@ -112,9 +108,6 @@ Redesign proposals (no fix committed):
   a11y-audit to judge.
 - P6: sizing. Kbd has no size preset, so caps stay 20 px when a consumer scales text. Decide whether
   Kbd is a sized type under AGENTS "one scale per instance".
-- P7 (done): unit controls for KBD-D4, options setting `variant` (the `combo` binding at
-  `workbench/units/Kbd.qml:12` then follows): short `SUPER + Q`, modifiers `SUPER + SHIFT + Q`, long
-  `SUPER + CTRL + ALT + SHIFT + PRINTSCREEN + ENTER`.
 
 Hypotheses (unmeasured):
 
@@ -123,19 +116,8 @@ Hypotheses (unmeasured):
   window.
 - H2: the `+` separator's vertical position depends on RowLayout's default alignment, which
   `Kbd.qml:39-43` does not set. It may sit off the cap's centre. Needs a tree dump.
-- H3: whether shipped binds exceed 202 px (KBD-D1) cannot be computed without font metrics for
+- H3: whether shipped binds exceed 202 px cannot be computed without font metrics for
   10 px DemiBold. Needs the measured width of the longest real bind.
-
-Fix status:
-
-- KBD-D1: `Kbd.qml` now shrinks its caps and elides their text when the host gives it less width than
-  the caps need. Source-reviewed and load-checked (qmllint clean, the `kbd` capture exits 0 and
-  renders the resting combo). The long case, the shrink floor and the ellipsis are not measured in a
-  live window. The bound applies only once the host sets Kbd's `width`;
-  until then it still grows to its natural width.
-- KBD-D4: the unit offers short, modifiers and long combos, and bounds Kbd to half of
-  `Style.controlWidth` (about a host's combo column) so the long one shows the elision. Empty is
-  not offered; it needs the owner's decision (P4).
 
 Not examined:
 
