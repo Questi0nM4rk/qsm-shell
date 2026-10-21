@@ -55,8 +55,15 @@ Item {
     // does not have, and this one was written down and unreachable.
     activeFocusOnTab: enabled
 
+    // A swatch always has a name: the host's reading, else the colour's own
+    // value, else what an empty slot is. The name was the reading alone, and no
+    // desktop call site passes one.
     Accessible.role: Accessible.Button
-    Accessible.name: root.reading
+    Accessible.name: root.reading.length > 0 ? root.reading
+        : root.empty ? qsTr("Empty colour slot") : root.sample.toString()
+    // `selected` is a fact a screen reader has to hear, not only a ring.
+    Accessible.checkable: true
+    Accessible.checked: root.selected
 
     signal clicked
 
@@ -82,8 +89,8 @@ Item {
     }
 
     readonly property color _seen: _over(Style.surface)
-    readonly property color _seenLight: _over("#ffffff")
-    readonly property color _seenDark: _over("#c0c0c0")
+    readonly property color _seenLight: _over(Style.checkerLight)
+    readonly property color _seenDark: _over(Style.checkerDark)
 
     // WCAG relative luminance: sRGB has to be linearised first, and skipping
     // that is why mid-tones get the wrong answer.
@@ -115,6 +122,15 @@ Item {
         ? Style.text
         : Style.band
 
+    // WCAG 1.4.3 for text. On a mid-tone neither ink reaches it (the better of
+    // the two bottoms out at 3.7:1), and a reading nobody can read is the one
+    // failure this swatch exists to prevent. Then the reading sits on a band
+    // plate and takes the theme's text ink, which reads on band by the ladder.
+    readonly property real _readable: 4.5
+    readonly property bool _plated: !root.empty && root.reading.length > 0
+        && (root._worst(root.ink) < root._readable
+            || readingMetrics.advanceWidth > root.size - Style.spaceTight * 2)
+
     // One route in: pointer, Space, Return and callers share it, guarded here
     // so no route fires while unavailable. The host still owns `selected`
     // and what the click means.
@@ -133,6 +149,19 @@ Item {
     // being two layers. The sample keeps its alpha, so a translucent sample
     // still reveals the check beneath it instead of turning into an opaque
     // fake.
+    // Selected is identity: an accent ring OUTSIDE the face with a gap, so a
+    // pale or accent sample keeps its own edge and the ring keeps 3:1 against
+    // the host (WCAG 1.4.11), which an ink ring chosen against the sample alone
+    // did not. The keyboard ring steps out beyond it while selected.
+    readonly property real _selStroke: Style.markThickness - 1
+    readonly property real _selReach: Style.spaceTight + root._selStroke
+
+    // Hover growth is capped to about one pixel a side: a fixed ratio let a
+    // 52px face overhang its footprint by 2px, and it is movement, so reduced
+    // motion drops it.
+    readonly property real _hoverScale: Style.reducedMotion ? 1
+        : 1 + Math.min(Motion.hoverScale - 1, Style.spaceTight / root.size)
+
     function _paint(c: color): color {
         if (root.enabled)
             return c;
@@ -186,7 +215,7 @@ Item {
                         height: face.height / 4
                         x: (index % 4) * width
                         y: Math.floor(index / 4) * height
-                        color: root._paint((index + Math.floor(index / 4)) % 2 === 0 ? "#ffffff" : "#c0c0c0")
+                        color: root._paint((index + Math.floor(index / 4)) % 2 === 0 ? Style.checkerLight : Style.checkerDark)
                     }
                 }
             }
@@ -227,59 +256,89 @@ Item {
             border.color: root._paint(Style.textMuted)
         }
 
-        // The selection ring is drawn LAST, over the sample.
-        //
-        // It used to be the root's own `border`, which a Rectangle paints behind
-        // its children — so the opaque sample filling the root covered it, and
-        // `clip: true` finished the job. The advertised ring was never once
-        // visible. It is still a ring rather than a mark ON the swatch, because a
-        // mark drawn on top changes the thing being sampled.
+        // The reading is fitted to the face, never cut: a plate wider than the
+        // face (bounded a little beyond the footprint) beats an elided hex. On
+        // a plate the ink is the theme's text, which reads on band.
         Rectangle {
-            objectName: "swatchRing"
-            anchors.fill: parent
-            color: "transparent"
-            radius: Style.radiusSm
-            border.width: root.selected ? Style.markThickness - 1 : 0
-            // The ring is drawn in the ink this swatch already measured, not in
-            // the accent: an accent ring on an accent-coloured swatch is
-            // invisible, and a colour tool shows arbitrary colours by definition.
-            // Same law as the reading — contrast against the SAMPLE, never a
-            // fixed colour that happens to work on most of them.
-            border.color: root._paint(root.empty ? Style.accent : root.ink)
-
-            Behavior on border.width {
-                NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-            }
-        }
-
-        Prose {
-            anchors.fill: parent
-            anchors.margins: Style.spaceTight
             visible: !root.empty && root.reading.length > 0
-            role: "reading"
-            font.pixelSize: Style.textXs
-            color: root._paint(root.ink)
-            text: root.reading
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
+            anchors.centerIn: parent
+            width: Math.min(readingText.implicitWidth + Style.spaceTight * 2,
+                root.width + Style.space1)
+            height: readingText.implicitHeight + Style.spaceTight
+            radius: Style.radiusSm
+            color: root._plated ? root._paint(Style.band) : "transparent"
+
+            Prose {
+                id: readingText
+                anchors.fill: parent
+                anchors.leftMargin: Style.spaceTight
+                anchors.rightMargin: Style.spaceTight
+                role: "reading"
+                font.pixelSize: Style.textXs
+                color: root._paint(root._plated ? Style.text : root.ink)
+                text: root.reading
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
         }
     }
 
-    // The layer covers the whole TARGET for the pointer and grows the face;
-    // the keyboard ring is the layer's, the one every control wears.
+    TextMetrics {
+        id: readingMetrics
+        font: readingText.font
+        text: root.reading
+    }
+
+    Rectangle {
+        objectName: "swatchRing"
+        anchors.fill: face
+        anchors.margins: -root._selReach
+        color: "transparent"
+        radius: Style.radiusSm + root._selReach
+        border.width: root._selStroke
+        border.color: root._paint(Style.accent)
+        opacity: root.selected ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
+    }
+
+    // The keyboard ring is its own layer sized to the FACE, because StateLayer
+    // rings its parent and the pointer target is 44px: ringed there, it floated
+    // 4 to 14px off a smaller swatch. Declared below the pointer layer so the
+    // hand cursor stays the pointer layer's.
+    StateLayer {
+        anchors.fill: face
+        anchors.margins: root.selected ? -root._selReach : 0
+        target: null
+        clickable: false
+        interactive: root.enabled
+        focused: root.focused && !root._pointerFocus
+        focusRadius: Style.radiusSm + (root.selected ? root._selReach : 0)
+    }
+
+    // The layer covers the whole TARGET for the pointer and moves the face.
+    // Pressing pushes the face in: a colour change would alter the very colour
+    // being sampled.
     StateLayer {
         anchors.fill: parent
         target: face
         interactive: root.enabled
-        focused: root.focused
-        focusRadius: Style.radiusSm
-        hoverScale: Motion.hoverScale
+        hoverScale: root._hoverScale
+        pressScale: Motion.pressScale
         onClicked: {
+            root._pointerFocus = true;
             root.forceActiveFocus();
             root.activate();
         }
     }
 
+    // A click focuses without ringing; the ring is for the keyboard.
+    property bool _pointerFocus: false
+    onActiveFocusChanged: if (!root.activeFocus) root._pointerFocus = false
+
     Keys.onSpacePressed: root.activate()
     Keys.onReturnPressed: root.activate()
+    Keys.onEnterPressed: root.activate()
 }
