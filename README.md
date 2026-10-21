@@ -2,7 +2,7 @@
 
 # `qsm-shell`
 
-**Qt 6 components and design tokens for a Quickshell desktop on Hyprland, built for my own setup.**
+**A calm, compact Qt 6 component library for Quickshell desktops: components, design tokens and one edge shader.**
 
 [![last commit](https://img.shields.io/github/last-commit/Questi0nM4rk/qsm-shell)](https://github.com/Questi0nM4rk/qsm-shell/commits)
 [![license](https://img.shields.io/badge/license-GPL--3.0-blue)](./LICENSE)
@@ -24,11 +24,10 @@ Capsule {
 
 ## Why it exists
 
-I like building my own stuff and owning the tools I use, and that includes the desktop I look at all day.
 Ready-made shell configs mix their look, their state and their services into one block, so changing one thing means reading all of it.
 This library keeps only the vocabulary a shell draws with: components, tokens and one edge shader.
 It refuses to own services, state or compositor wiring; the application that uses it does.
-It would have no reason to exist if I stopped writing my own shell.
+It would have no reason to exist if shells could share a vocabulary some other way.
 
 ## Quickstart
 
@@ -58,8 +57,16 @@ docs/                      usage, component notes, decisions, backlog
 ```
 
 `Style` reads each value from your theme object first and from the generated default second.
-Sizes are preset names such as `size: "md"`, which your theme can extend.
+Sizes are preset names such as `size: "md"`, which your theme can extend; a type without its own size table shares the `Control` ladder.
 The application owns state and passes it in through slots and actions.
+
+## Public API
+
+`Style`, `Motion`, the components in `qmldir` and the `Style.backend` object a theme installs. Nothing else is imported.
+
+Look is a set of roles, not numbers a call site picks: three surface steps (`band`, `surface`, `overlay`, each 1.30:1 on the one below, generated from the band alone),
+`Style.glyphAlone(box)` and `glyphBeside(box)` for icons, `Style.stroke(n, dpr)` for whole-device-pixel lines,
+`Style.radiusBody` for a body inside a rollout, and `Style.recede(colour)` for "not the current one".
 
 ## Numbers
 
@@ -84,7 +91,7 @@ Commits include agent-authored work under my identity; design, orchestration and
   not warning-free. Open items are in [docs/BACKLOG.md](docs/BACKLOG.md).
 - Experimental: `npm run preview` and `npm run capture` need `qsm-workbench`, which is not published yet.
 - Consumers use the public API only (`Style`, `Motion`, the components and `Style.backend`); the library knows nothing about any one of them.
-- Written for one person and one setup. No stability promise for the API.
+- No stability promise for the API.
 
 ## License
 

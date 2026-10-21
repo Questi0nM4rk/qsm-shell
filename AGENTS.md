@@ -3,8 +3,8 @@
 Reusable QML components for Qt 6 and Quickshell desktops, a standalone library
 with its own owner: it knows nothing about the applications that consume it,
 and the API stays usable by any of them without inheriting one consumer's
-policy. Everything is judged by one question: does the feature work in a live window, and does every pixel of it
-follow the design sources.
+policy. Everything is judged by one question: does the feature work in a live
+window, and does every pixel of it follow the design sources.
 
 ## Direction
 
@@ -264,8 +264,9 @@ follow the design sources.
 ## Surface ladder and borders
 
 Three neutral steps, each 1.30:1 on the one below, and nothing is derived:
-a theme generates all three from one seed (the default's come from
-`scripts/ladder.mjs`) and a component reads a role.
+a theme types the band only and `ladder()` in `scripts/ladder.mjs` is the one
+owner of the two steps above it (a consumer's theme calls the same function),
+and a component reads a role.
 Lightness is the only separation between containers: no hairline, no card
 border, no rim, no shadow does that job. A line inside is content (a track, a
 meter), never an edge. The silhouette itself keeps its edge separation
