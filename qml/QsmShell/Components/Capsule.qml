@@ -28,18 +28,19 @@ T.Control {
     property alias label: label.text
     property string detail: ""
     property color accentColor: Style.accent
-    property color surfaceColor
+    // The rung the body rests on: `surface` over the band, `overlay` when the
+    // capsule sits on a surface card (a body the colour of its ground is no
+    // body at all).
+    property color base: Style.surface
     // One control radius across a row of controls; only a glyph-only capsule
     // is a pill.
-    property real radius: root.label.length === 0 ? Style.radiusPill : Style.radiusBody
+    property real radius: root._glyphOnly ? Style.radiusPill : Style.radiusBody
 
-    // ── the two axes ────────────────────────────────────────────────────
     // ghost | secondary | primary | destructive
     property string variant: "secondary"
     // A Control preset name: xs | sm | md | lg
     property string size: "md"
 
-    // ── consumer-owned state ────────────────────────────────────────────
     // The control is ON: a toggle engaged, a filter applied.
     property bool active: false
     // The host marks a capsule that is a toggle, so a screen reader hears
@@ -49,16 +50,22 @@ T.Control {
     // The name a screen reader speaks when there is no label. A glyph-only
     // capsule must carry one; the label wins when it exists.
     property string accessibleName: ""
-    readonly property bool focused: root.activeFocus
+    // What a host would otherwise have to derive. (`hovered` and `visualFocus`
+    // are the control's own.)
+    readonly property bool pressed: stateLayer.pressed
 
     signal clicked
 
+    // T.Control and not T.AbstractButton: the button template owns `icon` as a
+    // group property, and the glyph here is its name.
     focusPolicy: Qt.StrongFocus
+    hoverEnabled: true
 
     Accessible.role: Accessible.Button
     Accessible.name: root._name
     Accessible.checkable: root.checkable
     Accessible.checked: root.checkable && root.active
+    Accessible.onPressAction: root.activate()
 
     readonly property string _name: root.label.length > 0 ? root.label : root.accessibleName
     Component.onCompleted: {
@@ -69,30 +76,39 @@ T.Control {
     readonly property real _box: Style.size("Capsule", root.size)
     // One scale per instance: every measurement is md's times this.
     readonly property real _s: root._box / Style.size("Capsule", "md")
+    readonly property bool _glyphOnly: root.label.length === 0 && root.detail.length === 0
     readonly property bool _quiet: variant === "ghost" || variant === "destructive"
-    readonly property color _accent: variant === "destructive" ? Style.danger : accentColor
-    // Selected is identity (AGENTS.md, surface ladder): the accent tint on the
-    // body AND accent content. Tint alone left an ON capsule telling only by
-    // a shade of its surface.
-    // A quiet capsule paints no body at rest and shows one under the pointer
-    // (`_bodyOpacity` below), so hover and press are visible on every variant.
-    // A ghost also rests muted and brightens its label on hover. Primary is the
-    // one filled action: its body is `primary` and its content `textOnPrimary`.
     readonly property bool _primary: variant === "primary"
+    readonly property color _accent: variant === "destructive" ? Style.danger : accentColor
+
+    // What the content sits on. A quiet capsule at rest paints no body, so its
+    // ground is the host's: the band, which is also what `disabled` blends to.
+    readonly property bool _bodyShown: !root._quiet || root.active || stateLayer.hovered || stateLayer.pressed
+    readonly property color _ground: root._bodyShown ? body._fill : Style.band
+
+    // Selected is identity (AGENTS.md, surface ladder): the accent tint on the
+    // body AND accent content. A ghost rests muted and brightens under the
+    // pointer; primary is the one filled action, `textOnPrimary` on `primary`.
+    // A reading is supporting information, never the accent.
     readonly property color _proseBase: _primary ? Style.textOnPrimary
         : variant === "destructive" ? Style.danger : active ? _accent
         : variant === "ghost" && !stateLayer.hovered ? Style.textMuted : Style.text
-    readonly property color _prose: root.enabled ? _proseBase : Style.disabled(_proseBase)
-    // A reading is supporting information, never the accent: that is for
-    // focus, selection and the primary action.
-    readonly property color _reading: _primary ? Style.textOnPrimary : Style.textMuted
+    readonly property color _readingBase: _primary ? Style.textOnPrimary : Style.textMuted
+    // The label settles with the body's fill, or it would land before it.
+    property color _prose: root.enabled ? Style.legible(root._proseBase, root._ground) : Style.disabled(root._proseBase)
+    Behavior on _prose {
+        ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+    }
 
     // ONE padding value, used by BOTH the width and the content margins, so a
-    // small capsule is never narrower than its own contents ask for.
-    readonly property real contentInset: Style.rhythm(Style.space4 * root._s)
+    // small capsule is never narrower than its own contents ask for. A
+    // glyph-only capsule is the box itself, its glyph centred.
+    readonly property real contentInset: root._glyphOnly ? 0 : Style.rhythm(Style.space4 * root._s)
 
     implicitHeight: root._box
-    implicitWidth: content.implicitWidth + leftPadding + rightPadding
+    // A label longer than a control is wide elides; a host may set `width` for less.
+    implicitWidth: root._glyphOnly ? root._box
+        : Math.min(content.implicitWidth + leftPadding + rightPadding, Style.controlWidth)
     leftPadding: contentInset
     rightPadding: contentInset
 
@@ -105,82 +121,75 @@ T.Control {
         T.Action { text: root._name; enabled: root.enabled; onTriggered: root.activate() }
     ]
 
-    // The state matrix is the ladder's (`Style.tone`): ON and "asks loudly"
-    // are both the accent's identity over the surface. Hover grows the
-    // capsule (StateLayer) AND lifts its colour; a press only recolours it.
-    // Disabled dims each role through the state matrix; opacity would make the
-    // card, glyph and text show through one another as a composite.
-    surfaceColor: Style.tone(root._primary ? Style.primary : Style.surface, stateLayer.hovered,
-        stateLayer.pressed, root.active && !root._primary, root.enabled, root._accent)
-    // A quiet variant at rest paints NOTHING, which is the difference between
-    // a control that sits on the surface and one that is part of it. Under the
-    // pointer it takes the lifted surface, so the colour answers hover and
-    // press as well as the growth. The body fades rather than the colour, so
-    // the colour never passes through a translucent black.
-    property real _bodyOpacity: root._quiet && !root.active && !stateLayer.hovered && !stateLayer.pressed ? 0 : 1
-
-    Behavior on surfaceColor {
-        ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-    }
-    Behavior on _bodyOpacity {
-        NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
-    }
-
-    // Flat: a button's growth is its depth, not a shadow and an edge line.
-    background: Card {
+    // Hover grows the capsule (StateLayer) AND lifts its colour; a press only
+    // recolours it. A quiet variant at rest paints nothing, so it is part of
+    // the surface that holds it; the body fades rather than the colour, so the
+    // colour never passes through a translucent black.
+    background: Surface {
+        id: body
         x: -stateLayer.growth
         y: -stateLayer.growth
         width: root.width + 2 * stateLayer.growth
         height: root.height + 2 * stateLayer.growth
-        glow: false
-        shadow: false
+        base: root._primary ? Style.primary : root.base
+        accent: root._accent
+        hovered: stateLayer.hovered
+        pressed: stateLayer.pressed
+        selected: root.active && !root._primary
         radius: root.radius
-        surfaceColor: root.surfaceColor
-        opacity: root._bodyOpacity
+        opacity: root._bodyShown ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+        }
     }
 
-    contentItem: RowLayout {
-        id: content
-        spacing: Style.space2
+    // The group sits centred in a capsule wider than its content, and a
+    // narrower one shrinks the label to an ellipsis.
+    contentItem: Item {
+        implicitWidth: content.implicitWidth
+        implicitHeight: content.implicitHeight
 
-        // Every child spans the row and centres its own content in it.
-        //
-        // WHY, and it is not obvious: a RowLayout aligns text on its BASELINE
-        // by default, and an icon has no baseline to share. Left to that, the
-        // label sat half a pixel below the centre of the pill while the icon
-        // sat exactly on it — measured, not guessed — and half a pixel is
-        // enough to read as "the text is not centred". Filling the height and
-        // centring inside it takes both the baseline rule and the rounding of
-        // each item's implicit height out of the answer.
-        SvgIcon {
-            id: icon
-            // A layout skips an invisible child AND its spacing, so a
-            // text-only pill closes up around the missing glyph instead of
-            // carrying an icon-sized hole and a gap.
-            visible: icon.name.length > 0
-            Layout.alignment: Qt.AlignVCenter
-            size: Style.glyphBeside(root._box)
-            color: root._prose
-        }
-        Prose {
-            id: label
-            Layout.fillHeight: true
-            verticalAlignment: Text.AlignVCenter
-            role: "label"
-            color: root._prose
-            // The label scales with the box: a small control with a body-sized
-            // label is not a small control. Everything else about the role
-            // stays the role's.
-            font.pixelSize: Style.textNear(Style.textSm * root._s)
-        }
-        Prose {
-            Layout.fillHeight: true
-            verticalAlignment: Text.AlignVCenter
-            visible: root.detail.length > 0
-            role: "reading"
-            font.pixelSize: Style.textXs
-            color: root.enabled ? root._reading : Style.disabled(root._reading)
-            text: root.detail
+        RowLayout {
+            id: content
+            x: Math.max(0, Math.round((parent.width - width) / 2))
+            width: Math.min(implicitWidth, parent.width)
+            height: parent.height
+            spacing: Style.space2
+
+            // Every child spans the row and centres its own content in it: a
+            // RowLayout aligns text on its BASELINE and an icon has none, which
+            // sat the label half a pixel below the pill's centre.
+            SvgIcon {
+                id: icon
+                // A layout skips an invisible child AND its spacing, so a
+                // text-only pill closes up around the missing glyph.
+                visible: icon.name.length > 0
+                Layout.alignment: Qt.AlignVCenter
+                size: Style.glyphBeside(root._box)
+                color: root._prose
+            }
+            Prose {
+                id: label
+                visible: label.text.length > 0
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                verticalAlignment: Text.AlignVCenter
+                role: "label"
+                color: root._prose
+                // The label scales with the box: a small control with a
+                // body-sized label is not a small control.
+                font.pixelSize: Style.textNear(Style.textSm * root._s)
+            }
+            Prose {
+                Layout.fillHeight: true
+                verticalAlignment: Text.AlignVCenter
+                visible: root.detail.length > 0
+                // A value, so the technical face; supporting, so not bold.
+                role: "metadata"
+                technical: true
+                color: root.enabled ? root._readingBase : Style.disabled(root._readingBase)
+                text: root.detail
+            }
         }
     }
 
@@ -190,7 +199,6 @@ T.Control {
         id: stateLayer
         anchors.fill: parent
         interactive: root.enabled
-        focused: root.focused
         focusRadius: root.radius
         hoverScale: Motion.capsuleHoverScale
         onClicked: {
@@ -199,7 +207,13 @@ T.Control {
         }
     }
 
-    Keys.onReturnPressed: event => { event.accepted = true; root.activate() }
-    Keys.onEnterPressed: event => { event.accepted = true; root.activate() }
-    Keys.onSpacePressed: event => { event.accepted = true; root.activate() }
+    // One dispatcher, and a held key does not click again: a toggle would
+    // flicker at the key-repeat rate.
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            event.accepted = true;
+            if (!event.isAutoRepeat)
+                root.activate();
+        }
+    }
 }
