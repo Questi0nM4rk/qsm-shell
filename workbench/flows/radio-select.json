@@ -16,6 +16,7 @@
     { "type": "expectEvent", "event": "selection-requested", "origin": "component", "payload": { "index": 0 } },
     { "type": "expect", "observable": "selected", "equals": 0 },
     { "type": "key", "target": "first", "key": "Tab" },
+    { "type": "expect", "observable": "keyboard-focus", "equals": 1 },
     { "type": "key", "target": "second", "key": "Space" },
     { "type": "expectEvent", "event": "selection-requested", "origin": "component", "payload": { "index": 1 } },
     { "type": "expect", "observable": "selected", "equals": 1 },
