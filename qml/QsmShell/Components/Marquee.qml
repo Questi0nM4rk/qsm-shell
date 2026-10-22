@@ -137,9 +137,13 @@ Item {
             from: 0
             to: -root._travel
             // The pace is the text's length, not a fixed duration: a long
-            // title and a short one must scroll at the same READING speed.
+            // title and a short one must scroll at the same READING speed,
+            // and constant motion is linear. An ease-in-out ramped the speed
+            // from 0 to twice the pace within one pass (0.1 to 5.9 px a
+            // 50 ms step at a 3.1 px mean), so the words sped up as they
+            // were being read.
             duration: Math.max(Motion.large, root._travel * Motion.readingPace)
-            easing.type: Motion.moveEasing
+            easing.type: Easing.Linear
         }
         PauseAnimation { duration: root.dwell }
         NumberAnimation {
@@ -149,7 +153,7 @@ Item {
             // Back at the pace it came: a rewind far faster than the reading
             // pass is the text being yanked home.
             duration: Math.max(Motion.medium, root._travel * Motion.readingPace)
-            easing.type: Motion.moveEasing
+            easing.type: Easing.Linear
         }
     }
 }
