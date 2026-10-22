@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "key": "rollout-hover-keepopen",
+  "target": { "story": "rollout-hover" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "mode", "option": "hover-open" },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "hit-active", "equals": false },
+    { "type": "expect", "observable": "wants-open", "equals": false },
+    { "type": "pointer", "target": "trigger", "event": "move", "x": 0.5, "y": 0.5 },
+    { "type": "await", "observable": "triggered", "equals": true },
+    { "type": "expect", "observable": "wants-open", "equals": true },
+    { "type": "await", "observable": "hit-active", "equals": true },
+    { "type": "pointer", "target": "panel", "event": "move", "x": 0.5, "y": 0.9 },
+    { "type": "await", "observable": "triggered", "equals": false },
+    { "type": "expect", "observable": "hovered", "equals": true },
+    { "type": "expect", "observable": "keep-open", "equals": true },
+    { "type": "expect", "observable": "hit-active", "equals": true },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.05, "y": 0.95 },
+    { "type": "await", "observable": "hovered", "equals": false },
+    { "type": "expect", "observable": "keep-open", "equals": true },
+    { "type": "await", "observable": "wants-open", "equals": false },
+    { "type": "await", "observable": "hit-active", "equals": false },
+    { "type": "awaitIdle" },
+    { "type": "pointer", "target": "trigger", "event": "move", "x": 0.5, "y": 0.5 },
+    { "type": "await", "observable": "hit-active", "equals": true },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.05, "y": 0.95 },
+    { "type": "await", "observable": "hit-active", "equals": false }
+  ]
+}

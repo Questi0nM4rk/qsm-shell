@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "key": "rollout-quiet-pointer-keyboard",
+  "target": { "story": "rollout-hover" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "quiet", "equals": false },
+    { "type": "expect", "observable": "focus-within", "equals": false },
+    { "type": "pointer", "target": "quiet", "event": "click" },
+    { "type": "expectEvent", "event": "quiet-changed", "origin": "component", "payload": { "checked": true } },
+    { "type": "expect", "observable": "quiet", "equals": true },
+    { "type": "expect", "observable": "quiet-keyboard-focus", "equals": false },
+    { "type": "expect", "observable": "focus-within", "equals": true },
+    { "type": "key", "target": "quiet", "key": "Space" },
+    { "type": "expectEvent", "event": "quiet-changed", "origin": "component", "payload": { "checked": false } },
+    { "type": "expect", "observable": "quiet", "equals": false },
+    { "type": "action", "name": "toggle-quiet" },
+    { "type": "expect", "observable": "quiet", "equals": true },
+    { "type": "control", "group": "actions", "option": "disabled" },
+    { "type": "expect", "observable": "quiet-enabled", "equals": false },
+    { "type": "control", "group": "actions", "option": "enabled" },
+    { "type": "expect", "observable": "quiet-enabled", "equals": true },
+    { "type": "action", "name": "toggle-quiet" },
+    { "type": "expect", "observable": "quiet", "equals": false }
+  ]
+}

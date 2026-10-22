@@ -504,7 +504,7 @@
         500
       ],
       "title": "ScenePointer / Default",
-      "description": "Pointer affordance for scene-level interactions.",
+      "description": "Hover reader for a scene: rectangle and triangle containment, native or injected.",
       "tags": [
         "scene",
         "input"

@@ -37,7 +37,7 @@ Rectangle {
     }
 
     ShellBorder {
-        id: border
+        id: shellBorder
         anchors.fill: parent
         fullscreen: root.fullscreen
         pointer: scenePointer
@@ -46,15 +46,15 @@ Rectangle {
 
     Item {
         id: band
-        width: root.horizontal ? (root.edge === "left" ? border.leftEdge : border.edge) : Style.size("Control", "md")
-        height: root.horizontal ? Style.size("Control", "md") : border.edge
+        width: root.horizontal ? (root.edge === "left" ? shellBorder.leftEdge : shellBorder.edge) : Style.size("Control", "md")
+        height: root.horizontal ? Style.size("Control", "md") : shellBorder.edge
         x: root.edge === "right" ? root.width - width : root.edge === "left" ? 0 : (root.width - width) / 2
         y: root.edge === "bottom" ? root.height - height : root.edge === "top" ? 0 : (root.height - height) / 2
     }
 
     Rollout {
         id: rollout
-        host: border
+        host: shellBorder
         rolloutId: "sound"
         edges: [root.edge]
         anchorItem: band
@@ -130,7 +130,7 @@ Rectangle {
 
     Rollout {
         id: childPanel
-        host: border
+        host: shellBorder
         rolloutId: "alarms"
         edges: [root.edge]
         parentRollout: rollout
@@ -240,9 +240,27 @@ Rectangle {
         actions: Object.keys(root.actionHandlers),
         idle: () => [rollout, childPanel].every(item =>
             !item.animating && !(item.keepOpen && !item.hovered)),
+        targets: ({
+            scene: () => root,
+            trigger: () => band,
+            panel: () => rollout,
+            quiet: () => quietToggle,
+            alarms: () => alarmsToggle,
+            details: () => detailsButton
+        }),
         observables: {
             "hit-active": () => root.activeRollout.hitActive,
-            capsules: () => border.fullscreenCapsuleEntries.length,
+            triggered: () => rollout.triggered,
+            hovered: () => rollout.hovered,
+            "keep-open": () => rollout.keepOpen,
+            "wants-open": () => rollout.wantsOpen,
+            "focus-within": () => rollout.focusWithin,
+            "child-visible": () => childPanel.visible,
+            "child-hit-active": () => childPanel.hitActive,
+            "quiet-enabled": () => quietToggle.enabled,
+            "quiet-keyboard-focus": () => quietToggle.visualFocus,
+            "alarms-keyboard-focus": () => alarmsToggle.visualFocus,
+            capsules: () => shellBorder.fullscreenCapsuleEntries.length,
             "attached-left": () => rollout.attached("left"),
             "attached-right": () => rollout.attached("right"),
             "attached-top": () => rollout.attached("top"),
@@ -256,10 +274,10 @@ Rectangle {
             "reveal-progress": () => rollout.revealProgress,
             "settled-body": () => rollout.settledBodyRect,
             "viewport-rect": () => rollout.viewportRect,
-            "bulge-count": () => border.bulgeEntries.length,
-            "region-count": () => Object.keys(border.rolloutRegions).length,
-            "registration-ready": () => root.activeRollout.rolloutId in border.bulgeRegions
-                && root.activeRollout.rolloutId in border.rolloutRegions
+            "bulge-count": () => shellBorder.bulgeEntries.length,
+            "region-count": () => Object.keys(shellBorder.rolloutRegions).length,
+            "registration-ready": () => root.activeRollout.rolloutId in shellBorder.bulgeRegions
+                && root.activeRollout.rolloutId in shellBorder.rolloutRegions
         },
         runAction: name => Object.prototype.hasOwnProperty.call(root.actionHandlers, name)
             ? root.actionHandlers[name]() : false

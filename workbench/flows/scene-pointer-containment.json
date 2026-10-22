@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "key": "scene-pointer-containment",
+  "target": { "story": "scene-pointer" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "pointer", "target": "card", "event": "move", "x": 0.5, "y": 0.5 },
+    { "type": "await", "observable": "over-card", "equals": true },
+    { "type": "expect", "observable": "inside", "equals": true },
+    { "type": "pointer", "target": "card", "event": "move", "x": 0.1, "y": 0.1 },
+    { "type": "await", "observable": "over-corner", "equals": true },
+    { "type": "pointer", "target": "card", "event": "move", "x": 0.9, "y": 0.9 },
+    { "type": "await", "observable": "over-corner", "equals": false },
+    { "type": "expect", "observable": "over-card", "equals": true },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.02, "y": 0.02 },
+    { "type": "await", "observable": "over-card", "equals": false },
+    { "type": "expect", "observable": "inside", "equals": true }
+  ]
+}

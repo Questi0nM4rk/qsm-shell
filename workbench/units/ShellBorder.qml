@@ -88,10 +88,11 @@ Item {
 
     readonly property var integration: ({
         events: [],
-        actions: ["add-capsule", "remove-capsule"],
+        actions: ["add-capsule", "remove-capsule", "fill-slots", "clear-slots"],
         idle: () => !(rollout.offsetScale > 0 && rollout.offsetScale < 1),
         observables: {
             bulges: () => border.bulgeEntries.length,
+            "painted-bulges": () => border.paintedBulges,
             "hit-regions": () => border.maskRects.length,
             capsules: () => border.fullscreenCapsuleEntries.length,
             revealed: () => root.revealed,
@@ -106,6 +107,17 @@ Item {
             }
             if (name === "remove-capsule") {
                 border.unregisterFullscreenCapsule("capsule");
+                return true;
+            }
+            if (name === "fill-slots") {
+                for (let i = 0; i < border.maxBulgeSlots; i++)
+                    border.registerBulge("slot-" + i, Qt.rect(8 + i * 12, 200, 8, 8),
+                        Qt.vector4d(0, 0, 0, 0), 1, Qt.vector4d(1, 0, 0, 1), 1, 0, 0, true, 1);
+                return true;
+            }
+            if (name === "clear-slots") {
+                for (let i = 0; i < border.maxBulgeSlots; i++)
+                    border.unregisterBulge("slot-" + i);
                 return true;
             }
             return false;
