@@ -89,8 +89,10 @@ ColumnLayout {
                 color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                 rotation: root.expanded ? 90 : 0
 
+                // A toggle from the keyboard (the ring is showing) snaps: an
+                // action the hand repeats gets no animation.
                 Behavior on rotation {
-                    enabled: !Style.reducedMotion
+                    enabled: !Style.reducedMotion && !root.focused
                     NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
                 }
             }
