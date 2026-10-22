@@ -36,7 +36,11 @@ window, and does every pixel of it follow the design sources.
   there. A worktree is for genuinely parallel or throwaway work only; whatever
   comes out of one is reviewed by the agent and merged into main before the
   owner ever sees it. Never hand over work that exists only in a scratch
-  directory, and never leave it there for the owner to find.
+  directory, and never leave it there for the owner to find. Parallel
+  branches merge one at a time through an integration worktree: every story
+  captures, no flow that passed fails, and a consumer started fresh from that
+  tree loads clean, before main moves. Two family branches that each passed
+  alone broke every story together (two `Style.snap` definitions).
 - The least code that works. The least documentation that keeps the next
   session honest. A line of either needs a reason.
 - The owner tests and judges ONE item at a time. Prepare it, explain its task
@@ -233,6 +237,10 @@ window, and does every pixel of it follow the design sources.
 
 ## Measured platform facts
 
+- **A consumer's hot reload can fail where a fresh start loads.** A changed
+  inline component (`component Ring` in `Spinner`) read "Ring is not a type"
+  on Quickshell's reload and the consumer silently kept its old generation;
+  a fresh process loaded it. Judge a library change by a fresh start.
 - A capture proves a scene rendered, never that it looks right. The same
   static scenario gives a different sha256 every run (GPU noise) and an
   animated one lands on a different phase. Pixel-diffing is struck out.
