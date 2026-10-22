@@ -9,8 +9,9 @@ import qs.QsmShell.Style
 //
 //     background: Surface { base: Style.surface; hovered: root.hovered; selected: root.checked }
 //
-// `pressed` is for bodies that cannot grow (rows, text); a control that grows
-// through StateLayer leaves it false. `contentColor` is what text and glyphs
+// `pressed` is the body's press colour, for any body: a control that grows
+// through StateLayer passes the layer's `pressed` and the body only recolours
+// (a press never resizes it). `contentColor` is what text and glyphs
 // on this body wear: accent while selected (held at `contrastText` on the
 // lifted fill), the text role otherwise, dimmed with the body. Hosts read it
 // and never assign it.
@@ -35,13 +36,9 @@ Rectangle {
         ? (root.selected ? Style.legible(root.accent, root._fill) : Style.text)
         : Style.disabled(root.selected ? root.accent : Style.text)
 
-    readonly property bool _edgeKnown: ["", "left", "right", "top", "bottom"].includes(snapEdge)
-    on_EdgeKnownChanged: _checkEdge()
-    Component.onCompleted: _checkEdge()
-    function _checkEdge() {
-        if (!_edgeKnown)
-            console.error(`Surface: unknown snapEdge "${snapEdge}" -- expected left, right, top, bottom or ""`);
-    }
+    readonly property var _edges: ["", "left", "right", "top", "bottom"]
+    onSnapEdgeChanged: Style.expect("Surface", "snapEdge", snapEdge, root._edges)
+    Component.onCompleted: Style.expect("Surface", "snapEdge", snapEdge, root._edges)
 
     // Each corner names its radius outright: a corner assigned -1 rendered
     // square, so every Surface lost its rounding.

@@ -116,7 +116,7 @@ Item {
         gradient: Gradient {
             orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
             GradientStop { position: 0; color: root.fadeColor }
-            GradientStop { position: 0.4; color: Qt.alpha(root.fadeColor, 0.36) }
+            GradientStop { position: 0.4; color: Qt.alpha(root.fadeColor, Style.scrollCueFadeOpacity) }
             GradientStop { position: 1; color: Qt.alpha(root.fadeColor, 0) }
         }
     }
@@ -129,7 +129,7 @@ Item {
         gradient: Gradient {
             orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
             GradientStop { position: 0; color: Qt.alpha(root.fadeColor, 0) }
-            GradientStop { position: 0.6; color: Qt.alpha(root.fadeColor, 0.36) }
+            GradientStop { position: 0.6; color: Qt.alpha(root.fadeColor, Style.scrollCueFadeOpacity) }
             GradientStop { position: 1; color: root.fadeColor }
         }
     }

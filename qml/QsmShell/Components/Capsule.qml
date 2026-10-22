@@ -201,19 +201,20 @@ T.Control {
         interactive: root.enabled
         focusRadius: root.radius
         hoverScale: Motion.capsuleHoverScale
+        bodyGrows: true
+        manualPressOverride: keys.held
         onClicked: {
             root.forceActiveFocus()
             root.activate()
         }
     }
 
-    // One dispatcher, and a held key does not click again: a toggle would
-    // flicker at the key-repeat rate.
-    Keys.onPressed: event => {
-        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-            event.accepted = true;
-            if (!event.isAutoRepeat)
-                root.activate();
-        }
+    // A held key acts once, on release: a toggle would flicker at the
+    // key-repeat rate.
+    ActivationKeys {
+        id: keys
+        available: root.enabled
+        onActivated: root.activate()
     }
+    Keys.forwardTo: [keys]
 }

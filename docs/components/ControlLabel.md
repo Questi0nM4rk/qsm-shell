@@ -7,7 +7,7 @@ pointer: a clickable label overflows a hit box of at least icon size around its 
 keyboard: actionable labels alone join Tab/Backtab traversal; Enter, Return and Space activate once per press. Focus or availability/content loss cancels a held activation.
 screen reader: actionable labels expose Button press and caller-owned `accessibleName` (defaults to text); passive labels remain supporting caption text. The required mark is a non-colour channel.
 size: `sizeScale` from the owning control scales text, glyph and gap through the Style helpers; the hit box never moves neighbouring content.
-tokens: textSm, iconSm, iconLg, space1, textMuted, danger, radiusSm and StateLayer; no local colours or measurements.
+tokens: textSm, iconSm, targetFloor, space1, textMuted, danger, radiusSm and StateLayer; no local colours or measurements.
 motion: StateLayer response only when clickable; no local animation.
 expected: public, pointer, keyboard and accessibility activation share one guarded operation; disabled, caption and empty-label cases report no intent. Actionable labels are keyboard reachable without changing layout footprint; passive captions add no Tab stop.
 not designed: input, validation copy or layout; use Field, the control itself or the host for those.
@@ -47,7 +47,7 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 ### Sizes, empty, long content, failure, cancellation
 
 - md: text 12 (`Tokens.qml:36`), glyph 16 (`:43`), hit target 24 (`:45`), gap 4 (`:21`).
-- `sizeScale`: text through `textNear(12 s)`, glyph through `iconNear(16 s)`, gap through `rhythm(4 s)`. The hit target is `iconLg * max(1, sizeScale)`: it grows with the scale and never drops under the 24 px floor (sm, 0.8: 24 px, was 19.2).
+- `sizeScale`: text through `textNear(12 s)`, glyph through `iconNear(16 s)`, gap through `rhythm(4 s)`. The hit target is `targetFloor * max(1, sizeScale)`: it grows with the scale and never drops under the 24 px floor (sm, 0.8: 24 px, was 19.2).
 - Icon only, no text: the caption hides, the glyph remains, the accessible name is empty unless the caller passes one.
 - Neither icon nor text: `visible` false, no focus (`:59`, `:61`).
 - Long text: the natural width is the full text; a host that gives the label less width makes the caption elide.
@@ -63,11 +63,10 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 
 ### Motion and reduced motion (review-animations)
 
-- No animation of its own. Inherited through StateLayer: hover scale to `Motion.hoverScale` 1.08 (`Tokens.qml:61`, `StateLayer.qml:113`, `:126-131`) over `Motion.micro` 130 ms, OutCubic (`Tokens.qml:47`, `Motion.qml:120`). Focus ring fades in over 130 ms (`StateLayer.qml:159-161`).
+- No animation of its own. Inherited through StateLayer: hover scale to `Motion.hoverScale` 1.08 (`Tokens.qml:61`, `StateLayer.qml:113`, `:126-131`) over `Motion.micro` 130 ms, OutCubic (`Tokens.qml:47`, `Motion.qml:120`). The focus ring appears at once.
 - Press: `Motion.pressScale` for a pointer press; a held key shows the tint only.
 - Reduced motion: `Motion.press` falls to 40 ms and `Motion.micro` to 60 ms (`Motion.qml:24`, `:26`). `Motion.hoverScale` is 1, so the hover movement is removed.
-- Standards: 1 justified by state indication. 2 keyboard ring fade on Tab (SC-1). 3 ease-out for a move, which is correct. 4 durations under 300 ms; animate's table was not loaded, so not checked against it. 5 press scale on a pointer press only. 6 retargets through `Behavior`. 7 only scale and opacity animate. 8 holds. 9 no press motion to be asymmetric. 10 no local curve.
-- Verdict for this item: the focus ring fade awaits the owner's ruling (SC-1).
+- Standards: 1 justified by state indication. 2 the keyboard ring appears at once. 3 ease-out for a move, which is correct. 4 durations under 300 ms; animate's table was not loaded, so not checked against it. 5 press scale on a pointer press only. 6 retargets through `Behavior`. 7 only scale and opacity animate. 8 holds. 9 no press motion to be asymmetric. 10 no local curve.
 
 ### Pointer geometry
 
@@ -82,10 +81,6 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 - Popup corridor and timing: not applicable. The label is not a popup and has no hover delay or keep-open logic.
 
 ### Findings
-
-Source conflicts (owner ruling):
-
-- SC-1: review-animations standard 2 says keyboard-initiated actions get no animation, while `StateLayer.qml:159-161` fades the focus ring in on every keyboard focus, and AGENTS requires the keyboard ring. Decide whether focus traversal counts as an action.
 
 Hypotheses (unmeasured):
 

@@ -18,7 +18,7 @@ Item {
         anchors.centerIn: parent
         checked: root.checked
         size: root.size
-        Accessible.name: "Do not disturb"
+        accessibleName: "Do not disturb"
         onToggleRequested: next => {
             root.checked = next
             root.eventRecorder?.("intent", "toggle-requested", { checked: next })

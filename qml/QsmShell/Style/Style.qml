@@ -52,6 +52,13 @@ QtObject {
     readonly property color success: backend?.success ?? Tokens.colorSuccess
     readonly property color warning: backend?.warning ?? Tokens.colorWarning
     readonly property color danger: backend?.danger ?? Tokens.colorDanger
+    // The status set by name, for every component that takes a `tone`: neutral
+    // is the muted reading colour, accent what is current. A name outside it
+    // is not a tone (see `expect`).
+    readonly property var tones: ({
+        neutral: root.textMuted, accent: root.accent, info: root.info,
+        success: root.success, warning: root.warning, danger: root.danger
+    })
     // The floating shadow is read by DataCapsule alone, for the one body with
     // nothing behind it but a client; nothing in the frame draws a shadow.
     // A key's cap measured against the BAND: 0.9 above it, which is what the
@@ -119,6 +126,9 @@ QtObject {
     // A scroll mark shows while the list moves and all but disappears at rest.
     readonly property real scrollCueActiveOpacity: backend?.scrollCueActiveOpacity ?? Tokens.opacityScrollCueActive
     readonly property real scrollCueRestOpacity: backend?.scrollCueRestOpacity ?? Tokens.opacityScrollCueRest
+    // The edge fade's strength at its knee, 40 % of the way in from the
+    // edge: steepest at the edge, so the row being cut dissolves.
+    readonly property real scrollCueFadeOpacity: backend?.scrollCueFadeOpacity ?? Tokens.opacityScrollCueFade
     // The edge separation of the melt silhouette: a slight
     // line of this colour exactly at the merged shape's edge, fading inward
     // into the fill, drawn by the shader on top of the flat fill. Strength is
@@ -132,8 +142,10 @@ QtObject {
     // dimmed composite is a stack of translucent layers: a thumb at 0.35
     // shows the 0.35 fill straight through itself and the two stop being two
     // things. This blends one colour toward the band by the same
-    // `opacityDisabled` fraction and keeps it opaque, so the layers stay
-    // layers and every part still hides what is behind it.
+    // `opacityDisabled` fraction and keeps its alpha, so the layers stay
+    // layers and every opaque part still hides what is behind it, while a
+    // translucent one (a selected tint, a transparent body) stays translucent
+    // instead of painting an opaque box on the layer it sits on.
     //
     //     color: enabled ? c : Style.disabled(c)
     //
@@ -154,26 +166,39 @@ QtObject {
         return Qt.rgba(bg.r + (c.r - bg.r) * k,
                        bg.g + (c.g - bg.g) * k,
                        bg.b + (c.b - bg.b) * k,
-                       1);
+                       c.a);
+    }
+
+    // The colour as it ships: each channel on its 8-bit step, opaque.
+    function _shipped(c: color): color {
+        return Qt.rgba(Math.round(c.r * 255) / 255, Math.round(c.g * 255) / 255,
+                       Math.round(c.b * 255) / 255, 1);
+    }
+
+    // The smallest fraction in [0, 1] at which `reaches(fraction)` holds, for a
+    // measure that only rises with it (contrast against the band as a colour
+    // is blended toward `text`). Twenty halvings land within a quarter of an
+    // 8-bit step. When it never holds the answer is 1.
+    function _bisect(reaches: var): real {
+        let lo = 0, hi = 1;
+        for (let i = 0; i < 20; i++) {
+            const mid = (lo + hi) / 2;
+            if (reaches(mid))
+                hi = mid;
+            else
+                lo = mid;
+        }
+        return hi;
     }
 
     // The smallest share of muted text that, blended toward the band, still
     // measures `contrastText` against it, as the 8-bit colour that ships.
-    // Contrast falls monotonically as the blend approaches the band, so
-    // twenty halvings land within a quarter of an 8-bit step. Muted text below
-    // the floor even undimmed never moves `hi`, so the answer is 1.
+    // Contrast falls monotonically as the blend approaches the band, so the
+    // search holds. Muted text below the floor even undimmed never reaches it,
+    // so the answer is 1.
     function _recedeShare(): real {
-        const shipped = c => Qt.rgba(Math.round(c.r * 255) / 255, Math.round(c.g * 255) / 255,
-                                     Math.round(c.b * 255) / 255, 1);
-        let lo = 0, hi = 1;
-        for (let i = 0; i < 20; i++) {
-            const mid = (lo + hi) / 2;
-            if (contrast(shipped(root._towardBand(root.textMuted, mid)), root.band) < root.contrastText)
-                lo = mid;
-            else
-                hi = mid;
-        }
-        return hi;
+        return root._bisect(share => contrast(root._shipped(root._towardBand(root.textMuted, share)),
+                                              root.band) >= root.contrastText);
     }
 
     // THE state matrix, once. A body on a layer answers hover, press, selection
@@ -184,7 +209,7 @@ QtObject {
     // came out. `Surface` binds this for the common case; a component with
     // its own Rectangle calls it directly.
     //
-    //     color: Style.tone(Style.surface, hovered, pressed, selected, enabled)
+    //     color: Style.tone(Style.surface, hovered, pressed, selected, enabled, Style.accent)
     //
     function tone(base: color, hovered: bool, pressed: bool, selected: bool, enabled: bool, accent: color): color {
         let c = selected ? root.selected(base, accent) : base;
@@ -222,15 +247,8 @@ QtObject {
         const seen = _over(c, root.band);
         const target = contrast(seen, root.band) + by;
         const t = root.text;
-        let lo = 0, hi = 1;
-        for (let i = 0; i < 20; i++) {
-            const mid = (lo + hi) / 2;
-            if (contrast(_over(Qt.rgba(t.r, t.g, t.b, mid), seen), root.band) < target)
-                lo = mid;
-            else
-                hi = mid;
-        }
-        return _over(Qt.rgba(t.r, t.g, t.b, hi), c);
+        const share = root._bisect(mid => contrast(_over(Qt.rgba(t.r, t.g, t.b, mid), seen), root.band) >= target);
+        return _over(Qt.rgba(t.r, t.g, t.b, share), c);
     }
 
     // `fg` as it is while it reads on `bg`, otherwise pulled toward `text` just
@@ -238,21 +256,13 @@ QtObject {
     // hover or press has lifted is the case: 5.25:1 at rest, 4.24:1 hovered,
     // 3.58:1 pressed.
     function legible(fg: color, bg: color): color {
-        const shipped = c => Qt.rgba(Math.round(c.r * 255) / 255, Math.round(c.g * 255) / 255,
-                                     Math.round(c.b * 255) / 255, 1);
-        const seen = shipped(_over(bg, root.band));
-        if (contrast(shipped(fg), seen) >= root.contrastText)
+        const seen = root._shipped(_over(bg, root.band));
+        if (contrast(root._shipped(fg), seen) >= root.contrastText)
             return fg;
         const t = root.text;
-        let lo = 0, hi = 1;
-        for (let i = 0; i < 20; i++) {
-            const mid = (lo + hi) / 2;
-            if (contrast(shipped(_over(Qt.rgba(t.r, t.g, t.b, mid), fg)), seen) < root.contrastText)
-                lo = mid;
-            else
-                hi = mid;
-        }
-        return shipped(_over(Qt.rgba(t.r, t.g, t.b, hi), fg));
+        const share = root._bisect(mid => contrast(root._shipped(_over(Qt.rgba(t.r, t.g, t.b, mid), fg)), seen)
+            >= root.contrastText);
+        return root._shipped(_over(Qt.rgba(t.r, t.g, t.b, share), fg));
     }
 
     // `top` laid over `base`, both with their own alpha. Qt.tint mixes the
@@ -330,6 +340,21 @@ QtObject {
     readonly property int radius2xl: backend?.radius2xl ?? Tokens.radius2xl
     readonly property int radiusPill: backend?.radiusPill ?? Tokens.radiusPill
 
+    // THE report for a name a component does not know (a tone, a role, a
+    // mode). QML cannot throw out of a binding, so a value outside its set is
+    // said once on the error stream, naming what was expected, and the
+    // component draws its default. Never the quiet kind: a misspelt name must
+    // not pass for a deliberate choice.
+    //
+    //     onModeChanged: Style.expect("Marquee", "mode", mode, ["once", "never"])
+    //
+    function expect(component: string, property: string, value: string, allowed: var): bool {
+        if (allowed.includes(value))
+            return true;
+        console.error(`${component}: unknown ${property} "${value}" -- expected ${allowed.map(name => name === "" ? '""' : name).join(", ")}`);
+        return false;
+    }
+
     // The table an unknown name already warned about, so a consumer typo
     // reports once rather than once per binding re-evaluation.
     readonly property var _warnedSizes: ({})
@@ -350,7 +375,7 @@ QtObject {
         const key = type + "." + name;
         if (!root._warnedSizes[key]) {
             root._warnedSizes[key] = true;
-            console.warn(`Style.size: no "${name}" preset for "${type}" -- falling back to "md"`);
+            console.error(`Style.size: no "${name}" preset for "${type}" -- falling back to "md"`);
         }
         return root._preset(type, "md");
     }
@@ -469,6 +494,10 @@ QtObject {
     }
 
     // ── control and surface geometry ────────────────────────────────────
+    // The least a pointer target is, each way (WCAG 2.5.8). A control paints
+    // what it likes and answers on at least this square: the one number a
+    // toggle, a slider and a clickable label read, so they never retune apart.
+    readonly property int targetFloor: backend?.targetFloor ?? Tokens.geometryTargetFloor
     // The Blueprint's pointer-target floor. A swatch paints a compact face
     // but answers on this square, so palette siblings never share a hit zone.
     readonly property int swatchTarget: backend?.swatchTarget ?? Tokens.geometrySwatchTarget
@@ -502,6 +531,13 @@ QtObject {
     // Full compact message composition: headline plus two readable body lines.
     readonly property int notificationPreviewHeight: backend?.notificationPreviewHeight
         ?? Tokens.geometryNotificationPreviewHeight
+    // How tall a notification list may grow before it scrolls: the default of
+    // the host's own `maxListHeight`.
+    readonly property int notificationListMaxHeight: backend?.notificationListMaxHeight
+        ?? Tokens.geometryNotificationListMaxHeight
+    // A bitmap (a glyph, a photograph) is rasterised at this multiple of its
+    // box, so a 1.25 or 2 scale never resamples a soft edge.
+    readonly property int rasterScale: backend?.rasterScale ?? Tokens.geometryRasterScale
     // Long message content scrolls inside this fixed expanded viewport.
     readonly property int notificationBodyViewportHeight: backend?.notificationBodyViewportHeight
         ?? Tokens.geometryNotificationBodyViewportHeight

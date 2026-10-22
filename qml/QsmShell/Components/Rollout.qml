@@ -515,11 +515,14 @@ Item {
         state.px = cx;
         state.py = cy;
         const speed = Math.sqrt(vx * vx + vy * vy);
+        // Below this many px/s the edge is not moving: no stretch is asked
+        // for, and the shape may settle exactly to rest.
+        const restSpeed = 5.0;
 
         let t00 = 1;
         let t01 = 0;
         let t11 = 1;
-        if (speed > 5.0) {
+        if (speed > restSpeed) {
             const stretch = 1 + Math.min((speed / 1000) * deformScale, Motion.rolloutDeformLimit);
             const compress = 1 / stretch;
             const c = vx / speed;
@@ -545,7 +548,7 @@ Item {
             && Math.abs(n11 - 1) < 0.002;
         const slow = Math.abs(state.v00) < 0.05 && Math.abs(state.v01) < 0.05
             && Math.abs(state.v11) < 0.05;
-        if (nearRest && slow && speed < 5.0) {
+        if (nearRest && slow && speed < restSpeed) {
             n00 = 1;
             n01 = 0;
             n11 = 1;

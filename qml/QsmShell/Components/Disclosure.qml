@@ -56,8 +56,13 @@ ColumnLayout {
         Accessible.expandable: true
         Accessible.expanded: root.expanded
         Accessible.onPressAction: root.toggle()
-        Keys.onReturnPressed: event => { event.accepted = true; root.toggle() }
-        Keys.onEnterPressed: event => { event.accepted = true; root.toggle() }
+        // A held key toggles once, on release, not at the key-repeat rate.
+        ActivationKeys {
+            id: keys
+            available: root.enabled
+            onActivated: root.toggle()
+        }
+        Keys.forwardTo: [keys]
 
         // Declared before the row so the hover disc paints under the label.
         StateLayer {
@@ -71,6 +76,7 @@ ColumnLayout {
             focusRadius: Style.radiusSm
             hoverTint: true
             pressScale: Motion.pressScale
+            manualPressOverride: keys.held
         }
 
         // The content sits a step in from the body's edges, so the chevron and

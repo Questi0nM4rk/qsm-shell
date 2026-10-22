@@ -70,12 +70,10 @@ ColumnLayout {
     // A misspelt trend or good must not pass for a plausible reading, so it is
     // reported and drawn as nothing rather than as a fallback glyph.
     function _checkTrend(): void {
-        if (!_trendKnown)
-            console.error(`Stat: unknown trend "${trend}" -- expected "", "up", "down" or "flat"`);
+        Style.expect("Stat", "trend", trend, _trends);
     }
     function _checkGood(): void {
-        if (!_goodKnown)
-            console.error(`Stat: unknown good "${good}" -- expected "up", "down" or "none"`);
+        Style.expect("Stat", "good", good, _goods);
     }
     Component.onCompleted: {
         _checkTrend();
@@ -104,6 +102,7 @@ ColumnLayout {
             muted: !root._measured
             font.weight: root._measured ? Style.weightBold : Style.weightRegular
             text: root._measured ? root.value : "—"
+            Accessible.ignored: true
         }
         // The unit is half the reading's size and sits on its baseline: "72"
         // and "%" at one size makes the unit compete with the number.
@@ -114,6 +113,7 @@ ColumnLayout {
             technical: true
             muted: true
             text: root.unit
+            Accessible.ignored: true
         }
         SvgIcon {
             Layout.alignment: Qt.AlignVCenter
@@ -152,6 +152,7 @@ ColumnLayout {
             Layout.fillWidth: true
             role: "metadata"
             text: root.label
+            Accessible.ignored: true
         }
     }
 }

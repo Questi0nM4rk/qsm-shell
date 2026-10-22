@@ -148,7 +148,7 @@ Item {
         id: portrait
         anchors.fill: ground
         source: root.source
-        sourceSize: Qt.size(root.size * 2, root.size * 2)
+        sourceSize: Qt.size(root.size * Style.rasterScale, root.size * Style.rasterScale)
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         visible: false
@@ -197,13 +197,19 @@ Item {
             radius: Style.radiusPill
             color: root.ground
         }
-        Badge {
+        // Built only with a status: "" is not a tone.
+        Loader {
             anchors.fill: parent
-            // Badge throws on an unknown tone, and "" is one.
-            tone: root.status.length > 0 ? root.status : "neutral"
-            dot: true
-            filled: true
-            accessibleName: root.statusLabel
+            active: root.status.length > 0
+            sourceComponent: Badge {
+                tone: root.status
+                dot: true
+                filled: true
+                accessibleName: root.statusLabel
+                // A named avatar already speaks its status as its description;
+                // a nameless one is ignored, so the dot speaks for it.
+                Accessible.ignored: root.name.length > 0
+            }
         }
     }
 }

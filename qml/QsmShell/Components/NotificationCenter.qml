@@ -22,7 +22,7 @@ ColumnLayout {
     property bool dnd: false
     // The panel-height policy input: how tall the list may grow before it
     // scrolls. The floor (two rows' worth) is the centre's own opinion.
-    property real maxListHeight: 420
+    property real maxListHeight: Style.notificationListMaxHeight
     // A rule the library cannot see (an application name, say) deciding an
     // entry's card carries a colour instead of a glyph. Optional: an entry
     // that already carries its own `swatch` field needs no function here.
@@ -300,7 +300,7 @@ ColumnLayout {
                 { label: "All" }
             ]
             currentIndex: root.view === "unread" ? 0 : 1
-            Accessible.name: "Notification views"
+            Accessible.name: qsTr("Notification views")
             onSelected: index => {
                 root.view = index === 0 ? "unread" : "all";
                 root.expandedKey = "";
@@ -312,7 +312,7 @@ ColumnLayout {
         // names are the accessible labels.
         IconButton {
             icon: "moon"
-            accessibleName: "Do not disturb"
+            accessibleName: qsTr("Do not disturb")
             selected: root.dnd
             size: "md"
             Accessible.checkable: true
@@ -328,13 +328,15 @@ ColumnLayout {
             id: clearButton
             Layout.alignment: Qt.AlignVCenter
             icon: clearAction.armed ? "check" : "trash-2"
-            accessibleName: clearAction.armed ? "Confirm clear history" : "Clear history"
+            accessibleName: clearAction.armed ? qsTr("Confirm clear history") : qsTr("Clear history")
             color: clearAction.armed ? Style.danger : Style.text
             size: "md"
             hoverEnabled: true
             onClicked: clearAction.trigger()
             onHoveredChanged: if (!hovered) clearAction.disarm()
             onActiveFocusChanged: if (!activeFocus) clearAction.disarm()
+            // Escape takes the question back; unarmed, it is left to the center.
+            Keys.onEscapePressed: event => event.accepted = clearAction.cancel()
 
             ArmedAction {
                 id: clearAction
@@ -374,7 +376,7 @@ ColumnLayout {
             model: historyModel
             boundsBehavior: Flickable.StopAtBounds
             Accessible.role: Accessible.List
-            Accessible.name: "Notifications"
+            Accessible.name: qsTr("Notifications")
 
             // Model replacement temporarily resets the numeric cursor; only
             // user navigation updates the stable identity during that handoff.

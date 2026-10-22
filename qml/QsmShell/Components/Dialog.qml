@@ -49,18 +49,13 @@ FocusScope {
         danger: { color: Style.danger, icon: "circle-alert" },
         warning: { color: Style.warning, icon: "alert-triangle" }
     })
-    readonly property bool _toneKnown: _tones[tone] !== undefined
-    readonly property color _tone: (_tones[tone] ?? _tones.neutral).color
-    readonly property string _mark: (_tones[tone] ?? _tones.neutral).icon
+    readonly property var _spec: _tones[tone] ?? _tones.neutral
+    readonly property color _tone: root._spec.color
+    readonly property string _mark: root._spec.icon
 
-    // QML cannot throw out of a binding, so an unknown tone is reported on the
-    // error stream and drawn as neutral, with no mark.
-    on_ToneKnownChanged: _checkTone()
-    Component.onCompleted: _checkTone()
-    function _checkTone(): void {
-        if (!_toneKnown)
-            console.error(`Dialog: unknown tone "${tone}" -- expected neutral, danger or warning`);
-    }
+    // An unknown tone is reported (`Style.expect`) and drawn as neutral, with no mark.
+    onToneChanged: Style.expect("Dialog", "tone", tone, Object.keys(root._tones))
+    Component.onCompleted: Style.expect("Dialog", "tone", tone, Object.keys(root._tones))
 
     // Where focus goes back to. A consumer that knows (it owns the opening
     // control) states it; otherwise the dialog reads whatever held focus at
@@ -157,6 +152,8 @@ FocusScope {
 
     Card {
         id: card
+        // Stands alone over its scrim: nothing around it paints an edge.
+        glow: true
 
         // Never wider than the window leaves room for: a dialog that outgrows a
         // small output would clip its own actions.

@@ -1,5 +1,7 @@
 module qs.QsmShell.Components
 StateLayer 1.0 StateLayer.qml
+ActivationKeys 1.0 ActivationKeys.qml
+LabelSlot 1.0 LabelSlot.qml
 Prose 1.0 Prose.qml
 Badge 1.0 Badge.qml
 Spinner 1.0 Spinner.qml

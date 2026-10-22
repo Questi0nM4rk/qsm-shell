@@ -94,22 +94,14 @@ FocusScope {
         selected: true
         opacity: shown ? 1 : 0
 
-        // The keyboard's mark, one ring that travels with the thumb: outside
-        // the body by a gap and a stroke, concentric with it. A row whose host
-        // already paints its own ring (`focused`) keeps the only one.
-        Rectangle {
-            readonly property real _stroke: Style.stroke(Style.indicatorWidth, thumb)
-            readonly property real _reach: _stroke * 2
+        // The keyboard's mark, the one ring every control wears, travelling
+        // with the thumb. A row whose host already paints its own ring
+        // (`focused`) keeps the only one.
+        StateLayer {
             anchors.fill: parent
-            anchors.margins: -_reach
-            radius: thumb.radius + _reach
-            color: "transparent"
-            border.width: _stroke
-            border.color: Style.focus
-            visible: opacity > 0
-            opacity: root.activeFocus && thumb.shown && !thumb.row.focused ? 1 : 0
-
-            Behavior on opacity { NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+            clickable: false
+            focused: root.activeFocus && thumb.shown && !thumb.row.focused
+            focusRadius: thumb.radius
         }
 
         // Slides between rows that exist; the first appearance and reduced

@@ -14,7 +14,9 @@ T.Control {
     // A toggle that is on: the accent tint over the layer and an accent glyph,
     // the identity every selected body wears; the host owns the state.
     property bool selected: false
-    property string accessibleName: icon
+    // What a screen reader speaks. A glyph's file name is not a word, so there
+    // is no default: the host states one, or the console says so.
+    property string accessibleName: ""
     readonly property real _box: Style.size("IconButton", root.size)
     readonly property int _glyph: Style.glyphAlone(root._box)
     // play.svg is the polygon 6,3 20,12 6,21 on a 24 box: its centroid is
@@ -24,8 +26,6 @@ T.Control {
     property real opticalOffset: root.icon === "play" ? Style.snap(root._glyph / 18, root) : 0
     readonly property color glyphColor: root.selected ? Style.accent : root.color
     readonly property color paintedColor: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
-    // A key is down: the button reads as pressed until it is released.
-    property bool _keyHeld: false
     signal clicked
 
     focusPolicy: Qt.StrongFocus
@@ -37,6 +37,11 @@ T.Control {
     Accessible.role: Accessible.Button
     Accessible.name: root.accessibleName
     Accessible.onPressAction: root.activate()
+
+    Component.onCompleted: {
+        if (root.Accessible.name.length === 0)
+            console.warn("IconButton: \"" + root.icon + "\" has no accessibleName -- a screen reader hears an unnamed button")
+    }
 
     function activate(): void {
         if (root.enabled)
@@ -62,13 +67,14 @@ T.Control {
     }
 
     // Under the glyph, and under the hover disc: the selected tint over a
-    // transparent base stays a translucent accent on whatever ground it sits.
+    // transparent base stays a translucent accent on whatever ground it sits,
+    // disabled included (the blend keeps the tint's alpha, so it never paints
+    // an opaque box on the card behind it).
     Rectangle {
         z: -2
         anchors.fill: parent
         radius: Style.radiusPill
-        color: root.enabled ? Style.selected(Qt.rgba(0, 0, 0, 0), Style.accent)
-            : Style.disabled(Style.selected(Style.band, Style.accent))
+        color: Style.tone(Qt.rgba(0, 0, 0, 0), false, false, true, root.enabled, Style.accent)
         opacity: root.selected ? 1 : 0
 
         Behavior on opacity {
@@ -84,36 +90,17 @@ T.Control {
         hoverTint: true
         pressScale: Motion.pressScale
         focusRadius: Style.radiusPill
-        manualPressOverride: root._keyHeld
+        manualPressOverride: keys.held
         onClicked: {
             root.forceActiveFocus()
             root.activate()
         }
     }
 
-    // Space, Return and Enter act on release, as a native button does: the
-    // press shows, a held key repeats nothing, and losing focus mid-press
-    // cancels it.
-    function _isActivationKey(key: int): bool {
-        return key === Qt.Key_Space || key === Qt.Key_Return || key === Qt.Key_Enter;
+    ActivationKeys {
+        id: keys
+        available: root.enabled
+        onActivated: root.activate()
     }
-    // Held down, a key repeats a release and a press of its own (`isAutoRepeat`);
-    // neither is the key coming up.
-    Keys.onPressed: event => {
-        if (!root._isActivationKey(event.key))
-            return;
-        event.accepted = true;
-        if (!event.isAutoRepeat)
-            root._keyHeld = root.enabled;
-    }
-    Keys.onReleased: event => {
-        if (!root._isActivationKey(event.key) || !root._keyHeld)
-            return;
-        event.accepted = true;
-        if (event.isAutoRepeat)
-            return;
-        root._keyHeld = false;
-        root.activate();
-    }
-    onActiveFocusChanged: if (!root.activeFocus) root._keyHeld = false
+    Keys.forwardTo: [keys]
 }

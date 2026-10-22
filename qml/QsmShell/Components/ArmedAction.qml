@@ -56,6 +56,18 @@ QtObject {
         root.disarmed();
     }
 
+    // Escape takes the question back. Disarms and says whether there was a
+    // question to take back, so a host accepts the key only when it answered
+    // it, and an unarmed Escape still reaches the surface:
+    //
+    //     Keys.onEscapePressed: event => event.accepted = guard.cancel()
+    function cancel(): bool {
+        if (!root._armed)
+            return false;
+        root.disarm();
+        return true;
+    }
+
     property bool _armed: false
 
     property Timer _timer: Timer {

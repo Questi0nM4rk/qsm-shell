@@ -30,7 +30,6 @@ T.Control {
     property real sizeScale: 1
 
     signal clicked()
-    property bool _keyActivationHeld: false
     readonly property bool _available: root.enabled && root.clickable && root.hasContent
     readonly property list<T.Action> actions: [T.Action { objectName: "activate"; text: root.accessibleName; enabled: root._available; onTriggered: root.activate() }]
 
@@ -41,14 +40,9 @@ T.Control {
         return true
     }
 
-    function cancelKeyActivation(): void {
-        root._keyActivationHeld = false
-    }
-
     function updateAvailability(): void {
         if (root._available)
             return
-        root.cancelKeyActivation()
         if (root.activeFocus)
             root.focus = false
     }
@@ -70,7 +64,11 @@ T.Control {
 
     Accessible.role: clickable && hasContent ? Accessible.Button : Accessible.StaticText
     Accessible.name: root.accessibleName
-    Accessible.description: root.required ? "Required" : ""
+    // What a screen reader hears for a required label, once, for every host
+    // that frames a control with one (`Field` reads it). A label with nothing
+    // to show hides its mark, so it says nothing either.
+    readonly property string requiredNote: root.required && root.hasContent ? qsTr("Required") : ""
+    Accessible.description: root.requiredNote
     Accessible.onPressAction: root.activate()
 
     property bool _nameWarned: false
@@ -82,32 +80,17 @@ T.Control {
     }
 
     Component.onCompleted: checkName()
-    onActiveFocusChanged: if (!activeFocus) cancelKeyActivation()
     onEnabledChanged: updateAvailability()
     onClickableChanged: { updateAvailability(); checkName() }
     onAccessibleNameChanged: checkName()
     onHasContentChanged: updateAvailability()
 
-    Keys.onPressed: event => {
-        if (!root._available || (event.key !== Qt.Key_Enter && event.key !== Qt.Key_Return && event.key !== Qt.Key_Space))
-            return
-        event.accepted = true
-        if (event.isAutoRepeat || root._keyActivationHeld)
-            return
-        root._keyActivationHeld = true
+    ActivationKeys {
+        id: keys
+        available: root._available
+        onActivated: root.activate()
     }
-
-    Keys.onReleased: event => {
-        if (event.key !== Qt.Key_Enter && event.key !== Qt.Key_Return && event.key !== Qt.Key_Space)
-            return
-        event.accepted = true
-        if (event.isAutoRepeat)
-            return
-        const activate = root._keyActivationHeld && root.activeFocus && root._available
-        root.cancelKeyActivation()
-        if (activate)
-            root.activate()
-    }
+    Keys.forwardTo: [keys]
 
     Row {
         id: row
@@ -152,20 +135,20 @@ T.Control {
         // above it, the disc covered the icon and the text for as long as the
         // pointer was over them.
         z: -1
-        // The target, not the footprint: at least one large icon each way,
+        // The target, not the footprint: at least `Style.targetFloor` each way,
         // centred, so a two-line-tall hit box costs the layout nothing. It
         // grows with the scale and never shrinks below the 24 px floor
         // (measured at sm, 0.8: 19.2 px).
         anchors.centerIn: parent
-        width: Math.max(parent.width, root.clickable ? Style.iconLg * Math.max(1, root.sizeScale) : 0)
-        height: Math.max(parent.height, root.clickable ? Style.iconLg * Math.max(1, root.sizeScale) : 0)
+        width: Math.max(parent.width, root.clickable ? Style.targetFloor * Math.max(1, root.sizeScale) : 0)
+        height: Math.max(parent.height, root.clickable ? Style.targetFloor * Math.max(1, root.sizeScale) : 0)
         hoverTint: root.clickable
         interactive: root._available
         // A label has no body to recolour, so a pointer press is acknowledged
         // by the label pushing in, the way a bare glyph's is. A held key only
         // recolours: keyboard-initiated actions do not animate.
-        pressScale: root._keyActivationHeld ? 1 : Motion.pressScale
-        manualPressOverride: root._keyActivationHeld
+        pressScale: keys.held ? 1 : Motion.pressScale
+        manualPressOverride: keys.held
         // The exclusive grab keeps a surrounding passive row tap from firing.
         gesturePolicy: TapHandler.ReleaseWithinBounds
         focusRadius: Style.radiusSm

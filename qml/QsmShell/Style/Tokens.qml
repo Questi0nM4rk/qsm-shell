@@ -84,6 +84,7 @@ QtObject {
     readonly property real opacityBadgeTint: 0.12
     readonly property real opacityScrollCueActive: 0.8
     readonly property real opacityScrollCueRest: 0.6
+    readonly property real opacityScrollCueFade: 0.36
     readonly property real opacityEdgeStrength: 0.5
     readonly property real opacityAreaFill: 0.18
     readonly property real opacityRingTrack: 0.18
@@ -100,7 +101,10 @@ QtObject {
     readonly property int geometryNotificationCollapsedHeight: 48
     readonly property int geometryNotificationPreviewHeight: 92
     readonly property int geometryNotificationBodyViewportHeight: 96
+    readonly property int geometryNotificationListMaxHeight: 420
+    readonly property int geometryRasterScale: 2
     readonly property int geometrySwatchTarget: 44
+    readonly property int geometryTargetFloor: 24
     readonly property int geometrySpinBoxWidth: 140
     readonly property int geometryHairline: 1
     readonly property int geometryIndicatorWidth: 2

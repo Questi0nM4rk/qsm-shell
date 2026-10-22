@@ -11,6 +11,8 @@
     "tasks"
   ],
   "uncovered": [
-    "Fuzzy.qml"
+    "ActivationKeys.qml",
+    "Fuzzy.qml",
+    "LabelSlot.qml"
   ]
 }

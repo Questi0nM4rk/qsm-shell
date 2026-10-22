@@ -371,7 +371,7 @@ T.RangeSlider {
     // ring of fill colour around the thumb, no straight edge, and at either
     // bound the ring is the track's own end cap.
     readonly property real _capReach: !root._pill && root.thickness > root.thumbSize ? root.thickness / 2 : 0
-    readonly property real _hitFloor: Style.size("Control", "xs")
+    readonly property real _hitFloor: Style.targetFloor
     readonly property real _hitMain: Math.max(root._thumbMain, root._hitFloor)
     readonly property real _hitCross: Math.max(root._thumbCross, root._hitFloor)
     readonly property real _mainSpan: root.vertical ? root.availableHeight : root.availableWidth
@@ -422,7 +422,7 @@ T.RangeSlider {
 
     // At least a comfortable hit target across the axis, whatever the track's
     // thickness: a 4px track with a 16px thumb still has to be aimable.
-    readonly property real _crossSize: Math.max(Style.size("Control", "xs"), root.thickness, root._thumbCross)
+    readonly property real _crossSize: Math.max(root._hitFloor, root.thickness, root._thumbCross)
 
     // The main axis is a constant PLUS what the label takes, so the track
     // keeps its natural length whatever sits beside it.

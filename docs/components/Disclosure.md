@@ -4,9 +4,9 @@ A collapsible heading over an indented content slot; the host owns `expanded` an
 states: expanded and collapsed; the chevron rests at a right angle when open and flat when closed, and collapsed content is not laid out at all.
 actions: enumerated `toggle()` reports `toggled(!expanded)`; the native heading button, Space, Enter/Return, accessibility and callers share it. `expanded` never changes inside the component.
 pointer: the whole heading is the target with a StateLayer swell on the chevron; wheel does nothing and propagates.
-keyboard: tab reaches an enabled heading and Space and Return share the toggle route; the focus mark forwards to the StateLayer.
+keyboard: tab reaches an enabled heading; Space, Return and Enter read as pressed while held and toggle once on release (ActivationKeys); the focus mark forwards to the StateLayer.
 screen reader: one named button heading that is `expandable` and `expanded`; the badge is its description.
-size: heading at Control sm height (32 px) with its content inset `space2` each side; the body hangs from the title's left edge and stops at the content's right edge, 12 px below the heading; long titles elide rather than growing the heading.
+size: one size, no preset axis: a heading is a rule over a group, not a control a surface scales; it is Control sm tall (32 px) with its content inset `space2` each side; the body hangs from the title's left edge and stops at the content's right edge, 12 px below the heading; long titles elide rather than growing the heading.
 tokens: the Control size table, space1, space2, iconSm, Motion.pressScale, radiusSm, text roles and Badge; no local colours or measurements.
 motion: `Motion.fast` chevron rotation plus StateLayer hover and press swell; the rotation is removed (the chevron snaps) under reduced motion and when the keyboard ring shows, so a key toggle never animates.
 source: compared caelestia `ButtonBase.qml`'s StateLayer activation; rejected its internal toggle state and palette. Qt's native AbstractButton supplies heading input/focus while the host keeps expansion.

@@ -120,12 +120,6 @@ Item {
     readonly property real _selStroke: Style.stroke(Style.indicatorWidth, root)
     readonly property real _selReach: root._selStroke + Style.stroke(Style.hairline, root)
 
-    // Hover growth is capped to about one pixel a side: a fixed ratio let a
-    // 52px face overhang its footprint by 2px, and it is movement, so reduced
-    // motion drops it.
-    readonly property real _hoverScale: Style.reducedMotion ? 1
-        : 1 + Math.min(Motion.hoverScale - 1, Style.spaceTight / root.size)
-
     // Disabled dims each painted role by COLOUR, never by composite opacity:
     // opacity on the stack applies to every child separately, so a dimmed
     // translucent sample would show its own fill through itself and stop being
@@ -144,8 +138,6 @@ Item {
     readonly property var _darkCells: Array.from({ length: root._cells * root._cells }, (_, i) => i)
         .filter(i => (Math.floor(i / root._cells) + i % root._cells) % 2 === 1)
 
-    readonly property real _dpr: root.Window.window?.devicePixelRatio ?? 1
-
     // The TARGET: the layout footprint, never below the floor, so palette
     // siblings never receive overlapping hit zones. The face stays `size`
     // and sits centred inside it.
@@ -162,8 +154,8 @@ Item {
         height: width
         // Centred on a whole device pixel: `anchors.centerIn` rounds to a
         // whole LOGICAL pixel, which at 1.25 puts an edge between two rows.
-        x: Math.round((root.width - width) / 2 * root._dpr) / root._dpr
-        y: Math.round((root.height - height) / 2 * root._dpr) / root._dpr
+        x: Style.snap((root.width - width) / 2, root)
+        y: Style.snap((root.height - height) / 2, root)
 
         // A light rounded ground with dark cells on top: no mask, so the
         // corner is the rectangle's own, anti-aliased by the scene graph.
@@ -284,7 +276,9 @@ Item {
         extent: root.size
         interactive: root.enabled
         focused: false
-        hoverScale: root._hoverScale
+        // Hover growth stays within the 4 px between dense palette faces: a
+        // fixed ratio let a 52px face overhang its footprint by 2px.
+        growthCap: Motion.hoverGrowthWithin(Style.space1)
         pressScale: Motion.pressScale
         onClicked: {
             root._pointerFocus = true;

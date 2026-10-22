@@ -151,8 +151,11 @@ Item {
     readonly property color proseColor: {
         if (root.disabled)
             return Style.disabled(Style.text);
+        // A selected name wears what its body says: accent held at
+        // `contrastText` on the lifted fill, never the raw accent, which falls
+        // to 4.25:1 hovered and 3.57:1 pressed.
         const ink = root.danger ? Style.danger
-            : root._normal && root.selected ? root.selectedColor
+            : root._normal && root.selected ? (rowSurface.selected ? rowSurface.contentColor : root.selectedColor)
             : Style.text;
         return root.receded ? Style.recede(ink) : ink;
     }
@@ -204,11 +207,11 @@ Item {
     // as a smudge, so it is laid over the surface it belongs on. Invisible at
     // rest: a list paints no box around a row nobody is touching.
     Surface {
+        id: rowSurface
         readonly property bool _selectedHere: root._normal && root.selected && root.paintsSelection
         width: parent.width
         height: root._headingHeight
         radius: root.selectionRadius
-        base: Style.surface
         accent: root.selectedColor
         hovered: root.hovered
         pressed: root.pressed
