@@ -42,19 +42,31 @@ Item {
         .filter(id => !root.entryFilter || root.entryFilter(id))
         .map(id => rolloutRegions[id])
 
+    // Registries are reassigned, never mutated, so every binding over them re-evaluates.
+    function _with(registry, id, entry) {
+        return Object.assign({}, registry, { [id]: entry });
+    }
+
+    function _without(registry, id) {
+        const next = Object.assign({}, registry);
+        delete next[id];
+        return next;
+    }
+
+    // The shader holds eight slots per registry; a ninth entry stays registered
+    // (and in the input mask) but is not painted, so say so once when it arrives.
+    function _warnOnOverflow(registry, id, slots, what) {
+        if (!(id in registry) && Object.keys(registry).length >= slots)
+            console.warn("ShellBorder: " + what + " \"" + id + "\" is beyond the " + slots + " painted slots");
+    }
+
     function registerRolloutRegion(id, rect) {
-        const next = Object.assign({}, rolloutRegions);
-        next[id] = rect;
-        rolloutRegions = next;
+        rolloutRegions = _with(rolloutRegions, id, rect);
     }
 
     function unregisterRolloutRegion(id) {
-        if (!(id in rolloutRegions))
-            return;
-
-        const next = Object.assign({}, rolloutRegions);
-        delete next[id];
-        rolloutRegions = next;
+        if (id in rolloutRegions)
+            rolloutRegions = _without(rolloutRegions, id);
     }
 
     // Bulge registry: a SECOND registration mechanism next to
@@ -69,6 +81,7 @@ Item {
         .filter(id => !root.entryFilter || root.entryFilter(id))
         .map(id => bulgeRegions[id])
     readonly property int maxBulgeSlots: 8
+    readonly property int paintedBulges: Math.min(bulgeEntries.length, maxBulgeSlots)
 
     // Native fullscreen paint is a separate silhouette set. It deliberately
     // has no frame operand: only detached allowlisted capsules reach this set.
@@ -92,20 +105,16 @@ Item {
         .map(id => fullscreenCapsules[id])
     readonly property int maxFullscreenCapsuleSlots: 8
 
-    // `paint` defaults to true, so every existing caller (a Rollout's own
-    // detached capsule) is byte-for-byte the pre-flag behaviour.
     function registerFullscreenCapsule(id, rect, radius, paint = true) {
-        const next = Object.assign({}, fullscreenCapsules);
-        next[id] = { rect: rect, radius: radius, paint: paint !== false };
-        fullscreenCapsules = next;
+        if (paint !== false)
+            _warnOnOverflow(fullscreenCapsules, id, maxFullscreenCapsuleSlots, "fullscreen capsule");
+        fullscreenCapsules = _with(fullscreenCapsules, id,
+            { rect: rect, radius: radius, paint: paint !== false });
     }
 
     function unregisterFullscreenCapsule(id) {
-        if (!(id in fullscreenCapsules))
-            return;
-        const next = Object.assign({}, fullscreenCapsules);
-        delete next[id];
-        fullscreenCapsules = next;
+        if (id in fullscreenCapsules)
+            fullscreenCapsules = _without(fullscreenCapsules, id);
     }
 
     // The shader's slot accessors read the PAINTED view, not every hole: an
@@ -207,19 +216,10 @@ Item {
     // Half the thinnest band the given edge bits touch, as a fraction of the
     // melt reach. 1 when nothing thinner than the reach is involved.
     function weldCap(bits) {
-        let thinnest = Infinity;
-        if (bits & 1)
-            thinnest = Math.min(thinnest, root.leftEdge);
-        if (bits & 2)
-            thinnest = Math.min(thinnest, root.edge);
-        if (bits & 4)
-            thinnest = Math.min(thinnest, root.edge);
-        if (bits & 8)
-            thinnest = Math.min(thinnest, root.edge);
-        if (!isFinite(thinnest))
-            return 1;
-
-        return Math.max(0.05, Math.min(1, (thinnest / 2) / root.meltSmoothing));
+        const thinnest = Math.min(bits & 1 ? root.leftEdge : Infinity,
+            bits & 14 ? root.edge : Infinity);
+        return isFinite(thinnest)
+            ? Math.max(0.05, Math.min(1, (thinnest / 2) / root.meltSmoothing)) : 1;
     }
 
     // `edgeBits` and `seamBits` are DIFFERENT QUESTIONS and must stay separate.
@@ -274,8 +274,8 @@ Item {
             ? { rect: rect, radius: radius ?? Qt.vector4d(0, 0, 0, 0),
                 edgeBits: edgeBits ?? 0, blendCap: 1 }
             : root.snapToEdges(rect, radius ?? Qt.vector4d(0, 0, 0, 0), edgeBits ?? 0);
-        const next = Object.assign({}, bulgeRegions);
-        next[id] = {
+        _warnOnOverflow(bulgeRegions, id, maxBulgeSlots, "silhouette");
+        bulgeRegions = _with(bulgeRegions, id, {
             rect: root.overlapSeams(snapped.rect, seamBits ?? 0),
             radius: snapped.radius,
             blend: (blend === undefined ? 1 : blend) * snapped.blendCap,
@@ -284,41 +284,32 @@ Item {
             outness: outness === undefined ? 1 : Math.max(0, Math.min(1, outness)),
             originBits: edgeBits ?? 0,
             edgeBits: snapped.edgeBits | (seamBits ?? 0)
-        };
-        bulgeRegions = next;
+        });
     }
 
     function unregisterBulge(id) {
-        if (!(id in bulgeRegions))
-            return;
-
-        const next = Object.assign({}, bulgeRegions);
-        delete next[id];
-        bulgeRegions = next;
+        if (id in bulgeRegions)
+            bulgeRegions = _without(bulgeRegions, id);
     }
 
     function bulgeRectAt(index) {
-        return index < root.bulgeEntries.length ? root.bulgeEntries[index].rect : Qt.rect(0, 0, 0, 0);
+        return root.bulgeEntries[index]?.rect ?? Qt.rect(0, 0, 0, 0);
     }
 
     function bulgeRadiusAt(index) {
-        return index < root.bulgeEntries.length ? root.bulgeEntries[index].radius : Qt.vector4d(0, 0, 0, 0);
+        return root.bulgeEntries[index]?.radius ?? Qt.vector4d(0, 0, 0, 0);
     }
 
     // Low side bits are the seam bits; high side bits extend the origin's fill.
     function bulgeParamAt(index) {
-        return index < root.bulgeEntries.length
-            ? Qt.vector4d(root.bulgeEntries[index].minEig ?? 1, root.bulgeEntries[index].blend,
-                (root.bulgeEntries[index].edgeBits ?? 0)
-                    + (root.bulgeEntries[index].originBits ?? 0) * 16,
-                root.bulgeEntries[index].outness ?? 1)
+        const entry = root.bulgeEntries[index];
+        return entry
+            ? Qt.vector4d(entry.minEig, entry.blend, entry.edgeBits + entry.originBits * 16, entry.outness)
             : Qt.vector4d(1, 1, 0, 1);
     }
 
     function bulgeDeformAt(index) {
-        return index < root.bulgeEntries.length
-            ? (root.bulgeEntries[index].deform ?? Qt.vector4d(1, 0, 0, 1))
-            : Qt.vector4d(1, 0, 0, 1);
+        return root.bulgeEntries[index]?.deform ?? Qt.vector4d(1, 0, 0, 1);
     }
 
     // Fullscreen: consumers gate their own instant-hide on this and Rollout
@@ -374,18 +365,14 @@ Item {
         id: meltShader
         visible: true
         anchors.fill: parent
-        // Qt keeps a ShaderEffect binary cached by URL. State-qualify the URL
-        // so entering native fullscreen reloads the capsule-capable qsb rather
-        // than retaining a shader compiled before hot reload.
-        fragmentShader: Qt.resolvedUrl("../shaders/edgemelt.frag.qsb?fullscreen="
-            + (root.fullscreen ? "1" : "0"))
+        fragmentShader: Qt.resolvedUrl("../shaders/edgemelt.frag.qsb")
 
         property size resolution: Qt.size(root.width, root.height)
         property real leftEdge: root.leftEdge
         property real edge: root.edge
         property real viewportRadius: root.viewportRadius
         property real smoothFactor: root.meltSmoothing
-        property int occupied: Math.min(root.bulgeEntries.length, root.maxBulgeSlots)
+        property int occupied: root.paintedBulges
         property vector4d fillColor: Qt.vector4d(root.band.r, root.band.g,
             root.band.b, root.band.a)
         // The edge separation rides the same merged silhouette.
