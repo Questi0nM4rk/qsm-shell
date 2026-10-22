@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "key": "radio-pointer-states",
+  "target": { "story": "radio" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "selected", "option": "none" },
+    { "type": "expect", "observable": "hovered", "equals": -1 },
+    { "type": "expect", "observable": "target-height", "equals": 24 },
+    { "type": "pointer", "target": "first", "event": "move", "x": 0.6, "y": 0.02 },
+    { "type": "await", "observable": "hovered", "equals": 0 },
+    { "type": "pointer", "target": "first", "event": "press", "x": 0.6, "y": 0.02 },
+    { "type": "await", "observable": "pressed", "equals": 0 },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.02, "y": 0.02 },
+    { "type": "await", "observable": "pressed", "equals": -1 },
+    { "type": "pointer", "target": "scene", "event": "release", "x": 0.02, "y": 0.02 },
+    { "type": "expect", "observable": "selected", "equals": -1 },
+    { "type": "pointer", "target": "third", "event": "click", "x": 0.6, "y": 0.9 },
+    { "type": "expectEvent", "event": "selection-requested", "origin": "component", "payload": { "index": 2 } },
+    { "type": "expect", "observable": "selected", "equals": 2 },
+    { "type": "expect", "observable": "keyboard-focus", "equals": -1 }
+  ]
+}
