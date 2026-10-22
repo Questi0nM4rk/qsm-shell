@@ -11,6 +11,9 @@ T.Control {
     // glyph follows the box, so a call site never states either.
     property string size: "md"
     property color color: Style.text
+    // A toggle that is on: the accent tint over the layer and an accent glyph,
+    // the identity every selected body wears; the host owns the state.
+    property bool selected: false
     property string accessibleName: icon
     readonly property real _box: Style.size("IconButton", root.size)
     readonly property int _glyph: Style.glyphAlone(root._box)
@@ -19,7 +22,8 @@ T.Control {
     // left of centre, so the glyph shifts right by its size / 18.
     // Whole pixels, because a fractional offset blurs the triangle's edges.
     property int opticalOffset: root.icon === "play" ? Math.round(root._glyph / 18) : 0
-    readonly property color paintedColor: root.enabled ? root.color : Style.disabled(root.color)
+    readonly property color glyphColor: root.selected ? Style.accent : root.color
+    readonly property color paintedColor: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
     signal clicked
 
     focusPolicy: Qt.StrongFocus
@@ -51,6 +55,21 @@ T.Control {
             name: root.icon
             size: root._glyph
             color: root.paintedColor
+        }
+    }
+
+    // Under the glyph, and under the hover disc: the selected tint over a
+    // transparent base stays a translucent accent on whatever ground it sits.
+    Rectangle {
+        z: -2
+        anchors.fill: parent
+        radius: Style.radiusPill
+        color: root.enabled ? Style.selected(Qt.rgba(0, 0, 0, 0), Style.accent)
+            : Style.disabled(Style.selected(Style.band, Style.accent))
+        opacity: root.selected ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
         }
     }
 

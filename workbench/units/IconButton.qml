@@ -9,6 +9,7 @@ Item {
     property string variant: ""
     property var eventRecorder: null
     property string size: "md"
+    property bool selected: false
 
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
@@ -19,6 +20,7 @@ Item {
         icon: "check"
         accessibleName: "Apply"
         size: root.size
+        selected: root.selected
         onClicked: root.eventRecorder?.("intent", "clicked", {})
     }
 
@@ -32,6 +34,10 @@ Item {
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
             { label: "disabled", set: { enabled: false } }
+        ] },
+        { label: "toggle", options: [
+            { label: "off", set: { selected: false } },
+            { label: "on", set: { selected: true } }
         ] }
     ]
     readonly property var integration: ({

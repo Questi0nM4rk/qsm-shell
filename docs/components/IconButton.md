@@ -2,6 +2,7 @@
 
 A compact, named action for dense shell controls; the caller supplies the glyph and owns the effect.
 states: rest, hover, press, focus and disabled; hover and press use the shared StateLayer response, focus rings the complete hit target, disabled blends every painted role through Style.disabled.
+selected: a toggle that is on (`selected: true`, host-owned) wears the accent tint over its layer at `opacitySelected` and an accent glyph; the tint is the box, so the on state is told apart without colour.
 actions: pointer click, Space, Enter and the `actions` entry all call `activate()` and emit clicked; callers never synthesize pointer events.
 pointer: the whole padded body is the target and reports a pointing cursor; wheel does nothing and propagates.
 keyboard: T.Control tab focus and activation; focus remains visible until it leaves.
