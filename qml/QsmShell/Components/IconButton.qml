@@ -17,9 +17,11 @@ T.Control {
     // play.svg is the polygon 6,3 20,12 6,21 on a 24 box: its centroid is
     // (6 + 20 + 6) / 3 = 10.67, which is (12 - 10.67) / 24 = 1/18 of the box
     // left of centre, so the glyph shifts right by its size / 18.
-    // Whole pixels, because a fractional offset blurs the triangle's edges.
-    property int opticalOffset: root.icon === "play" ? Math.round(root._glyph / 18) : 0
+    // Whole DEVICE pixels, because a fractional offset blurs the triangle's edges.
+    property real opticalOffset: root.icon === "play" ? Style.snap(root._glyph / 18, root) : 0
     readonly property color paintedColor: root.enabled ? root.color : Style.disabled(root.color)
+    // A key is down: the button reads as pressed until it is released.
+    property bool _keyHeld: false
     signal clicked
 
     focusPolicy: Qt.StrongFocus
@@ -30,6 +32,7 @@ T.Control {
 
     Accessible.role: Accessible.Button
     Accessible.name: root.accessibleName
+    Accessible.onPressAction: root.activate()
 
     function activate(): void {
         if (root.enabled)
@@ -62,13 +65,36 @@ T.Control {
         hoverTint: true
         pressScale: Motion.pressScale
         focusRadius: Style.radiusPill
+        manualPressOverride: root._keyHeld
         onClicked: {
             root.forceActiveFocus()
             root.activate()
         }
     }
 
-    Keys.onReturnPressed: event => { event.accepted = true; root.activate() }
-    Keys.onEnterPressed: event => { event.accepted = true; root.activate() }
-    Keys.onSpacePressed: event => { event.accepted = true; root.activate() }
+    // Space, Return and Enter act on release, as a native button does: the
+    // press shows, a held key repeats nothing, and losing focus mid-press
+    // cancels it.
+    function _isActivationKey(key: int): bool {
+        return key === Qt.Key_Space || key === Qt.Key_Return || key === Qt.Key_Enter;
+    }
+    // Held down, a key repeats a release and a press of its own (`isAutoRepeat`);
+    // neither is the key coming up.
+    Keys.onPressed: event => {
+        if (!root._isActivationKey(event.key))
+            return;
+        event.accepted = true;
+        if (!event.isAutoRepeat)
+            root._keyHeld = root.enabled;
+    }
+    Keys.onReleased: event => {
+        if (!root._isActivationKey(event.key) || !root._keyHeld)
+            return;
+        event.accepted = true;
+        if (event.isAutoRepeat)
+            return;
+        root._keyHeld = false;
+        root.activate();
+    }
+    onActiveFocusChanged: if (!root.activeFocus) root._keyHeld = false
 }

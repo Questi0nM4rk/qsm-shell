@@ -20,12 +20,6 @@ Rectangle {
     // keyboard is on. Wider, not brighter: brightness is already spoken for.
     property bool strong: false
     property color markColor: Style.accent
-    // What a SHOWN-but-not-strong mark reads at. A list cursor is either gone
-    // or fully present, so this defaults to 1. A mark that never leaves (a notification's urgency tick,
-    // present on every row and only THICKENING on select) needs a third,
-    // dimmer level for "here, but not the current one" — brightening it too
-    // would spend the same signal `strong` already owns.
-    property real restOpacity: 1
 
     width: Style.stroke(root.strong ? Style.markThickness + Style.indicatorWidth : Style.markThickness, root)
     height: root.shown ? Style.markHeight : 0
@@ -37,21 +31,19 @@ Rectangle {
     // column wherever its position falls between two.
     antialiasing: false
     color: root.markColor
-    opacity: root.shown ? (root.strong ? 1 : root.restOpacity) : 0
+    opacity: root.shown ? 1 : 0
 
-    // It grows in and shrinks away, and the two are not the same motion: an
-    // arrival lands, a departure gets out of the way.
+    // It grows in and shrinks away on one curve. The mark that leaves must
+    // clear the row as fast as the next one lands: an exit that eased in
+    // (`Motion.exitEasing`) would hold the old mark at full height while the
+    // new one arrives. (A Behavior reads its duration and easing before a
+    // `shown ? a : b` binding in them has re-evaluated, so a branch on
+    // `shown` here never ran: the departure always took the arrival's curve.)
     Behavior on height {
-        NumberAnimation {
-            duration: Motion.micro
-            easing.type: root.shown ? Motion.emphasizedEasing : Motion.exitEasing
-        }
+        NumberAnimation { duration: Motion.micro; easing.type: Motion.emphasizedEasing }
     }
     Behavior on opacity {
-        NumberAnimation {
-            duration: Motion.micro
-            easing.type: root.shown ? Motion.standardEasing : Motion.exitEasing
-        }
+        NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
     }
     // Widening is neither an arrival nor a departure: both ends already exist.
     Behavior on width {

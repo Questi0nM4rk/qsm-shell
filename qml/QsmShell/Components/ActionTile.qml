@@ -27,6 +27,10 @@ T.Control {
     required property string label
     // Text shown while `armed`; when empty the armed state reuses `label`.
     property string confirmLabel: ""
+    // A Control preset name. The footprint is the tile's own (`Style.tileWidth`
+    // by `Style.tileHeight` at md) times the preset's share of md, snapped to
+    // the rhythm, and the glyph, label and gap follow it.
+    property string size: "md"
     property bool selected: false
     property bool armed: false
     // The tile's resting glyph and label wear the danger colour: the one
@@ -35,11 +39,20 @@ T.Control {
     property bool danger: false
     property color accent: Style.accent
     property color armedColor: Style.danger
-    property real buttonWidth: Style.tileWidth
-    property real buttonHeight: Style.tileHeight
-    // Keyboard focus. Defaults to this item's own, so a control that takes
-    // focus rings without wiring; a list that owns focus for its rows binds it.
-    property bool focused: root.activeFocus
+    readonly property real _scale: Style.size("ActionTile", root.size) / Style.size("ActionTile", "md")
+    property real buttonWidth: Style.rhythm(Style.tileWidth * root._scale)
+    property real buttonHeight: Style.rhythm(Style.tileHeight * root._scale)
+    // Keyboard focus, which is when the ring shows. Defaults to this tile's own
+    // visual focus (Tab, Backtab, a shortcut), so a click or a host's
+    // forceActiveFocus() never rings it; a list that owns focus for its rows
+    // binds it.
+    property bool focused: root.visualFocus
+    // The most a side may grow on hover, for a set whose tiles sit `gap` apart:
+    // pass `Motion.hoverGrowthWithin(gap)`. The focus ring follows the growth,
+    // so the room a tile needs is its growth plus the ring.
+    property real growthCap: Infinity
+    // A key is down: the tile reads as pressed until it is released.
+    property bool _keyHeld: false
     signal entered
     signal exited
     signal activated
@@ -51,6 +64,8 @@ T.Control {
 
     Accessible.role: Accessible.Button
     Accessible.name: root.shownLabel
+    Accessible.selected: root.selected
+    Accessible.onPressAction: root.activate()
 
     readonly property bool _filled: armed || selected
     readonly property color _baseColor: _filled ? Style.textOnPrimary : danger ? armedColor : Style.text
@@ -85,8 +100,8 @@ T.Control {
     contentItem: Item {
         Column {
             anchors.centerIn: parent
-            spacing: Style.space1
-            SvgIcon { anchors.horizontalCenter: parent.horizontalCenter; name: root.icon; size: Style.iconLg; color: root.stateColor
+            spacing: Style.rhythm(Style.space1 * root._scale)
+            SvgIcon { anchors.horizontalCenter: parent.horizontalCenter; name: root.icon; size: Style.iconNear(Style.iconLg * root._scale); color: root.stateColor
                 Behavior on color { ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
             }
             Prose {
@@ -94,7 +109,7 @@ T.Control {
                 // Narrower than the body so ElideRight has a width to act on.
                 width: Math.min(implicitWidth, root.buttonWidth - 2 * Style.space1)
                 role: "metadata"
-                font.pixelSize: Style.textSm
+                font.pixelSize: Style.textNear(Style.textSm * root._scale)
                 color: root._filled || root.danger ? root.stateColor : root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                 text: root.shownLabel
                 Behavior on color { ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
@@ -108,6 +123,9 @@ T.Control {
         interactive: root.enabled
         focused: root.focused
         focusRadius: Style.radiusBody
+        manualPressOverride: root._keyHeld
+        bodyGrows: true
+        growthCap: root.growthCap
         onClicked: {
             root.forceActiveFocus()
             root.activate()
@@ -115,9 +133,30 @@ T.Control {
         onHoveredChanged: { if (hovered) root.entered(); else root.exited(); }
     }
 
-    // A tile is a button, and a button answers a key. Every route shares
-    // `activate()`, so the disabled guard lives in exactly one place.
-    Keys.onSpacePressed: event => { event.accepted = true; root.activate() }
-    Keys.onReturnPressed: event => { event.accepted = true; root.activate() }
-    Keys.onEnterPressed: event => { event.accepted = true; root.activate() }
+    // A tile is a button, and a button answers a key: Space, Return and Enter
+    // read as pressed while held and act once on release, and a held key
+    // repeats nothing, so one hold can never arm a tile and then confirm it
+    // (a held key repeats a release and a press of its own, `isAutoRepeat`,
+    // and neither is the key coming up). Every route shares `activate()`, so
+    // the disabled guard lives in exactly one place.
+    function _isActivationKey(key: int): bool {
+        return key === Qt.Key_Space || key === Qt.Key_Return || key === Qt.Key_Enter;
+    }
+    Keys.onPressed: event => {
+        if (!root._isActivationKey(event.key))
+            return;
+        event.accepted = true;
+        if (!event.isAutoRepeat)
+            root._keyHeld = root.enabled;
+    }
+    Keys.onReleased: event => {
+        if (!root._isActivationKey(event.key) || !root._keyHeld)
+            return;
+        event.accepted = true;
+        if (event.isAutoRepeat)
+            return;
+        root._keyHeld = false;
+        root.activate();
+    }
+    onActiveFocusChanged: if (!root.activeFocus) root._keyHeld = false
 }

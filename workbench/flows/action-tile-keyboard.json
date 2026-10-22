@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "key": "action-tile-keyboard",
+  "target": { "story": "action-tile" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "pointer", "target": "logout", "event": "click" },
+    { "type": "expect", "observable": "armed-role", "equals": "logout" },
+    { "type": "expect", "observable": "focus-role", "equals": "" },
+    { "type": "key", "target": "logout", "key": "Escape" },
+    { "type": "expect", "observable": "armed-role", "equals": "" },
+    { "type": "expect", "observable": "fired-count", "equals": 0 },
+    { "type": "key", "target": "logout", "key": "Space" },
+    { "type": "expect", "observable": "armed-role", "equals": "logout" },
+    { "type": "expect", "observable": "shutdown-label", "equals": "Shut down" },
+    { "type": "key", "target": "logout", "key": "Enter" },
+    { "type": "expect", "observable": "fired-role", "equals": "logout" },
+    { "type": "expect", "observable": "fired-count", "equals": 1 },
+    { "type": "expect", "observable": "armed-role", "equals": "" },
+    { "type": "expect", "observable": "focus-role", "equals": "" },
+    { "type": "key", "target": "logout", "key": "Escape" },
+    { "type": "expect", "observable": "fired-count", "equals": 1 }
+  ]
+}

@@ -27,7 +27,7 @@ QtObject {
     // short enough that a forgotten arm does not fire on a stray later click.
     property int timeout: 3000
 
-    readonly property bool armed: state.armed
+    readonly property bool armed: root._armed
 
     signal fired
     // Armed and then abandoned (timeout or disarm()), never on a confirmed
@@ -35,13 +35,13 @@ QtObject {
     signal disarmed
 
     function trigger(): void {
-        if (!root.destructive || state.armed) {
-            state.armed = false;
+        if (!root.destructive || root._armed) {
+            root._armed = false;
             timer.stop();
             root.fired();
             return;
         }
-        state.armed = true;
+        root._armed = true;
         timer.restart();
     }
 
@@ -49,17 +49,14 @@ QtObject {
     // no pointer, and an "armed" that outlives the pointer is a trap laid for
     // the next click. Emits `disarmed`; a confirmed fire does not.
     function disarm(): void {
-        if (!state.armed)
+        if (!root._armed)
             return;
-        state.armed = false;
+        root._armed = false;
         timer.stop();
         root.disarmed();
     }
 
-    property QtObject _state: QtObject {
-        id: state
-        property bool armed: false
-    }
+    property bool _armed: false
 
     property Timer _timer: Timer {
         id: timer

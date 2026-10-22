@@ -264,7 +264,7 @@ window, and does every pixel of it follow the design sources.
   On a 1.25 monitor a Quickshell window reads 2 from `Screen` and 1.25 from
   `Window.window.devicePixelRatio` once mapped. A line snapped to the `Screen`
   grid paints two device rows instead of one wherever y * 1.25 has a fraction of
-  .25. `Style.stroke(n, item)` reads the window's ratio itself.
+  .25. `Style.stroke`, `Style.snap` and `Style.snapDown` (item in, device pixels out) read the window's ratio.
 - **`clip: true` shaves a child's hover growth.** A control that grows on
   hover cannot sit inside a clipping ancestor sized to it.
 - **A `Rectangle` radius does not round its children, and `clip` does not
@@ -583,7 +583,7 @@ Earned, each from a specific failure. Break one and name which.
   radius-0 Rectangle.** A square Rectangle's edges snap to the device grid,
   so a height from `Style.stroke(n, item)` paints the same rows wherever it
   sits; at a fractional scale any other height paints two rows here and
-  three there. The WINDOW's ratio is read once, inside `Style.stroke`, from
+  three there. The WINDOW's ratio is read once, inside `Style` (`stroke`, `snap`, `snapDown`), from
   the item that paints the line: a caller passes the item and never a ratio,
   and never reads `Screen.devicePixelRatio` (see Measured platform
   facts). A bar whose only curve is its ends (a selection mark, a scroll cue,

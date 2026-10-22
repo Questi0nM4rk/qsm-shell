@@ -1,1 +1,24 @@
-{"key":"selection-mark-current","steps":[{"equals":true,"observable":"shown","type":"expect"},{"equals":false,"observable":"strong","type":"expect"},{"equals":false,"observable":"dimmed","type":"expect"},{"group":"emphasis","option":"strong","type":"control"},{"equals":true,"observable":"strong","type":"expect"},{"group":"rest","option":"dim","type":"control"},{"equals":true,"observable":"dimmed","type":"expect"},{"group":"visibility","option":"hidden","type":"control"},{"equals":false,"observable":"shown","type":"expect"},{"group":"visibility","option":"shown","type":"control"},{"equals":true,"observable":"shown","type":"expect"}],"target":{"story":"selection-mark"},"version":1}
+{
+  "version": 1,
+  "key": "selection-mark-current",
+  "target": { "story": "selection-mark" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "current", "equals": 1 },
+    { "type": "await", "observable": "second-height", "equals": 18 },
+    { "type": "expect", "observable": "first-height", "equals": 0 },
+    { "type": "expect", "observable": "third-height", "equals": 0 },
+    { "type": "expect", "observable": "strong-wider", "equals": false },
+    { "type": "control", "group": "current", "option": "third" },
+    { "type": "await", "observable": "third-height", "equals": 18 },
+    { "type": "await", "observable": "second-height", "equals": 0 },
+    { "type": "control", "group": "emphasis", "option": "strong" },
+    { "type": "await", "observable": "strong-wider", "equals": true },
+    { "type": "control", "group": "current", "option": "none" },
+    { "type": "await", "observable": "third-height", "equals": 0 },
+    { "type": "control", "group": "current", "option": "first" },
+    { "type": "await", "observable": "first-height", "equals": 18 },
+    { "type": "control", "group": "emphasis", "option": "normal" },
+    { "type": "await", "observable": "strong-wider", "equals": false }
+  ]
+}

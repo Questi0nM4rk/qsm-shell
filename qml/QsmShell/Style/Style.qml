@@ -379,6 +379,33 @@ QtObject {
         return root.iconNear(Math.max(box * root.glyphBesideRatio, root.iconSm));
     }
 
+    // The WINDOW's pixel ratio, read here and nowhere else: `Screen` reports
+    // the output's integer scale, which is not the window's on a 1.25 monitor.
+    // Every caller is right per monitor and none passes a ratio. An item with
+    // no window yet reads 1 and is re-read when it gets one.
+    function _ratio(item: Item): real {
+        return item?.Window.window?.devicePixelRatio ?? 1;
+    }
+
+    // THE whole DEVICE pixel. A length, or a position, that is not a whole
+    // number of device pixels puts an edge between two of them: a rectangle
+    // smears over a partial column and a glyph is resampled. `snap` is the
+    // logical length nearest `px` that is a whole device count, `snapDown` the
+    // largest one not above it (a share of a track that must not overflow it;
+    // a thousandth of a pixel of float error is forgiven).
+    //
+    //     x: Style.snap((parent.width - width) / 2, this)
+    //
+    function snap(px: real, item: Item): real {
+        const dpr = root._ratio(item);
+        return Math.round(px * dpr) / dpr;
+    }
+
+    function snapDown(px: real, item: Item): real {
+        const dpr = root._ratio(item);
+        return Math.floor(px * dpr + 0.001) / dpr;
+    }
+
     // THE thickness of a line, in whole DEVICE pixels. A square Rectangle's
     // edges snap to the device grid, so one of logical height h at y paints
     // round((y + h) * dpr) - round(y * dpr) rows. When h * dpr is a whole
@@ -387,14 +414,10 @@ QtObject {
     // the logical thickness nearest `n` that is a whole device count, never
     // under one pixel.
     //
-    // The ratio is the WINDOW's, read here from the item that paints the line
-    // and nowhere else, so every caller is right per monitor and none passes
-    // it. An item with no window yet reads 1 and is re-read when it gets one.
-    //
     //     height: Style.stroke(Style.hairline, root)
     //
     function stroke(n: real, item: Item): real {
-        const dpr = item?.Window.window?.devicePixelRatio ?? 1;
+        const dpr = root._ratio(item);
         return Math.max(1, Math.round(n * dpr)) / dpr;
     }
 

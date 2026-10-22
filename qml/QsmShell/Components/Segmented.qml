@@ -43,10 +43,8 @@ T.TabBar {
     // not split evenly would otherwise give every pill and hover body a
     // fractional width and soft edges. What does not split falls into the
     // track's trailing air, less than one pixel per segment.
-    readonly property real _pixelRatio: root.Window.window?.devicePixelRatio ?? 1
-    readonly property real _segmentWidth: Math.floor((root.width - root._pad * 2
-        - root._gap * Math.max(0, root.options.length - 1)) / Math.max(1, root.options.length)
-        * root._pixelRatio + 0.001) / root._pixelRatio
+    readonly property real _segmentWidth: Style.snapDown((root.width - root._pad * 2
+        - root._gap * Math.max(0, root.options.length - 1)) / Math.max(1, root.options.length), root)
 
     // Qt counts only Tab and a shortcut as visual focus, so focus that arrived
     // another way (a surface the pointer opened, a host's own forceActiveFocus)

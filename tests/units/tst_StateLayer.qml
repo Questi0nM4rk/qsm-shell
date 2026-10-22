@@ -30,7 +30,6 @@ TestCase {
         StateLayer {
             id: activeLayer
             anchors.fill: parent
-            target: activeHost
         }
     }
     SignalSpy { id: activeClicked; target: activeLayer; signalName: "clicked" }
@@ -43,7 +42,6 @@ TestCase {
         StateLayer {
             id: inactiveLayer
             anchors.fill: parent
-            target: inactiveHost
             interactive: false
         }
     }
@@ -56,7 +54,6 @@ TestCase {
         StateLayer {
             id: hoverOnlyLayer
             anchors.fill: parent
-            target: hoverOnlyHost
             clickable: false
         }
     }
@@ -169,6 +166,22 @@ TestCase {
         compare(activeLayer.focused, true, "host focus did not propagate to StateLayer.focused");
     }
 
+    function test_a_pointer_never_rings_the_host_it_focused() {
+        probe.forceActiveFocus();
+        mouseMove(probe, 340, 220);
+        mouseClick(activeHost, 80, 32);
+        activeHost.forceActiveFocus(Qt.MouseFocusReason);
+        compare(activeLayer.focused, true, "the host holds focus");
+        compare(activeLayer.ringShown, false, "a click rang the host");
+        mousePress(activeHost, 80, 32);
+        compare(activeLayer.ringShown, false, "the next press on the pointer-focused host rang it");
+        mouseRelease(activeHost, 80, 32);
+        compare(activeLayer.ringShown, false, "the release rang the host");
+        probe.forceActiveFocus();
+        activeHost.forceActiveFocus(Qt.TabFocusReason);
+        compare(activeLayer.ringShown, true, "a keyboard arrival did not ring the host");
+    }
+
     T.AbstractButton {
         id: hostButton
         x: 20; y: 200; width: 120; height: 32
@@ -178,7 +191,6 @@ TestCase {
         StateLayer {
             id: hostedLayer
             anchors.fill: parent
-            target: hostButton
             host: hostButton
         }
     }
@@ -199,7 +211,10 @@ TestCase {
         hostButton.enabled = true;
 
         // The press above gave hostButton active focus (StrongFocus includes
-        // ClickFocus), and the ring follows focus however it arrived.
+        // ClickFocus) and no ring: the ring is for keyboard focus only.
+        compare(hostedLayer.focused, false);
+        probe.forceActiveFocus();
+        hostButton.forceActiveFocus(Qt.TabFocusReason);
         tryCompare(hostedLayer, "focused", true, 500);
         probe.forceActiveFocus();
         tryCompare(hostedLayer, "focused", false, 500);
