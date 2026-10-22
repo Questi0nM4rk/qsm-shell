@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "key": "menu-pointer",
+  "target": { "story": "menu" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "await", "observable": "thumb-matches-row", "equals": true },
+    { "type": "pointer", "target": "power-off", "event": "move" },
+    { "type": "expect", "observable": "current-index", "equals": 1 },
+    { "type": "pointer", "target": "power-off", "event": "click" },
+    { "type": "expect", "observable": "current-index", "equals": 3 },
+    { "type": "expectEvent", "event": "row-activated", "origin": "component", "payload": { "id": "power-off" } },
+    { "type": "expect", "observable": "activated-index", "equals": 3 },
+    { "type": "expect", "observable": "activations", "equals": 1 },
+    { "type": "pointer", "target": "lock", "event": "click" },
+    { "type": "expect", "observable": "current-index", "equals": 1 },
+    { "type": "expect", "observable": "activations", "equals": 2 },
+    { "type": "expect", "observable": "focus", "equals": "" },
+    { "type": "control", "group": "size", "option": "lg" },
+    { "type": "await", "observable": "row-height", "equals": 56 },
+    { "type": "await", "observable": "thumb-matches-row", "equals": true },
+    { "type": "control", "group": "size", "option": "sm" },
+    { "type": "await", "observable": "row-height", "equals": 32 },
+    { "type": "await", "observable": "thumb-matches-row", "equals": true },
+    { "type": "control", "group": "label", "option": "long" },
+    { "type": "expect", "observable": "row-height", "equals": 32 },
+    { "type": "control", "group": "size", "option": "md" },
+    { "type": "await", "observable": "row-height", "equals": 40 },
+    { "type": "control", "group": "selection", "option": "power-off" },
+    { "type": "await", "observable": "thumb-matches-row", "equals": true },
+    { "type": "expect", "observable": "group-name", "equals": "Session" }
+  ]
+}
