@@ -208,11 +208,11 @@ T.Control {
         // Gated on `enabled`: `hoverEnabled` is unconditional here, so a
         // disabled field under the pointer still reports `hovered`, and the
         // dim must come off the REST colour, not the lifted one.
-        x: -layer.growth
-        y: -layer.growth
-        width: root.width + 2 * layer.growth
-        height: root.height + 2 * layer.growth
-        radius: Style.radiusBody + layer.growth
+        x: -fieldLayer.growth
+        y: -fieldLayer.growth
+        width: root.width + 2 * fieldLayer.growth
+        height: root.height + 2 * fieldLayer.growth
+        radius: Style.radiusBody + fieldLayer.growth
         hovered: root.enabled && (root.focused || (root.hovered && !input.readOnly))
         enabled: root.enabled
         // This border means one thing: this field FAILED. Invisible otherwise.
@@ -474,7 +474,7 @@ T.Control {
     // enabled cascade come from the control itself, so there is one source of
     // every state. The background applies `growth`.
     StateLayer {
-        id: layer
+        id: fieldLayer
         objectName: "textFieldLayer"
         anchors.fill: parent
         host: root
