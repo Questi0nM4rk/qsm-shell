@@ -29,10 +29,17 @@ Item {
     property int dwell: Motion.readingDwell
 
     readonly property bool overflows: label.implicitWidth > width
+    // Whether the text is moving now, and how far left of rest it has got.
+    readonly property bool travelling: pass.running
+    readonly property real offset: -label.x
     readonly property real _travel: Math.max(0, label.implicitWidth - width)
     readonly property var _modes: ["once", "always", "hover", "never"]
     // Reduced motion rests every mode as an ellipsis: a loop calms by getting
     // slower, and a scrolling title has no slower form that is still readable.
+    // The pointer still reaches the rest of the text: under reduced motion a
+    // hover PLACES it at the far end, with no travel, and leaving puts it back.
+    readonly property bool _peek: Style.reducedMotion && root.overflows
+        && root.mode !== "never" && hover.hovered
     readonly property bool _wanted: root.overflows && root.mode !== "never"
         && !Style.reducedMotion
         && (root.mode === "always"
@@ -43,6 +50,10 @@ Item {
     implicitWidth: Style.controlWidth
     implicitHeight: label.implicitHeight
     clip: true
+
+    // One name for the whole line, whatever part of it is on screen.
+    Accessible.role: Accessible.StaticText
+    Accessible.name: root.text
 
     QtObject {
         id: run
@@ -83,10 +94,18 @@ Item {
         width: root.width
         // While it is travelling the text must be whole; at rest an ellipsis
         // is the honest mark for "there is more".
-        elide: root._wanted ? Text.ElideNone : Text.ElideRight
+        elide: root._wanted || root._peek ? Text.ElideNone : Text.ElideRight
+        Accessible.ignored: true
     }
 
     HoverHandler { id: hover }
+
+    Binding {
+        target: label
+        property: "x"
+        value: -root._travel
+        when: root._peek
+    }
 
     NumberAnimation {
         id: settle
@@ -98,6 +117,7 @@ Item {
     }
 
     SequentialAnimation {
+        id: pass
         running: root._wanted && root._travel > 0
         loops: root.mode === "always" ? Animation.Infinite : 1
         onFinished: run.pending = false
