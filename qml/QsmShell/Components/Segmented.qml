@@ -48,6 +48,17 @@ T.TabBar {
         - root._gap * Math.max(0, root.options.length - 1)) / Math.max(1, root.options.length)
         * root._pixelRatio + 0.001) / root._pixelRatio
 
+    // Qt counts only Tab and a shortcut as visual focus, so focus that arrived
+    // another way (a surface the pointer opened, a host's own forceActiveFocus)
+    // never rings. The first key pressed in the group is keyboard use: the ring
+    // shows from then until focus leaves or a click picks.
+    property bool _keyUsed: false
+    readonly property bool _ringed: root.visualFocus || (root._keyUsed && root.activeFocus)
+    onActiveFocusChanged: {
+        if (!root.activeFocus)
+            root._keyUsed = false;
+    }
+
     // The thumb glides only for a choice made with the pointer. A key, an
     // action or a host that moves the selection answers where the choice
     // already is: a glide there delays the state the person just asked for.
@@ -140,6 +151,7 @@ T.TabBar {
                 && (event.modifiers === Qt.NoModifier || event.modifiers === Qt.ShiftModifier)) {
             root.step(event.key === Qt.Key_Backtab || event.modifiers === Qt.ShiftModifier ? -1 : 1);
             root.forceActiveFocus();
+            root._keyUsed = true;
             event.accepted = true;
             return;
         }
@@ -148,12 +160,15 @@ T.TabBar {
         const forward = root.mirrored ? Qt.Key_Left : Qt.Key_Right;
         if (event.key === forward || event.key === (forward === Qt.Key_Right ? Qt.Key_Left : Qt.Key_Right)) {
             root.step(event.key === forward ? 1 : -1);
+            root._keyUsed = true;
             event.accepted = true;
         } else if (event.key === Qt.Key_Home) {
             root.first();
+            root._keyUsed = true;
             event.accepted = true;
         } else if (event.key === Qt.Key_End) {
             root.last();
+            root._keyUsed = true;
             event.accepted = true;
         }
     }
@@ -254,6 +269,7 @@ T.TabBar {
         Accessible.name: tab.labelText || String(tab.option?.name ?? "")
         Accessible.selected: tab.selectedSegment
         onClicked: {
+            root._keyUsed = false;
             root._pointerChoice = true;
             root.select(tab.index);
             root._pointerChoice = false;
@@ -340,7 +356,7 @@ T.TabBar {
             // the ring marks the picked segment, or the first available one
             // while nothing is picked; a segment that takes focus itself
             // rings whether or not it is picked.
-            focused: tab.visualFocus || (tab.index === root._ringIndex && root.visualFocus)
+            focused: tab.visualFocus || (tab.index === root._ringIndex && root._ringed)
         }
     }
 }

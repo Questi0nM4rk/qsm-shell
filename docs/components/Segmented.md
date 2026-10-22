@@ -105,7 +105,9 @@ options, long labels, icon-only, badge.
   Tab and Backtab step only with `tabNavigation` (124-130). Space and Enter reach `onClicked` only
   on a segment that holds focus by mouse; the bar itself handles neither (hypothesis H5).
 - Focus: the ring sits outside the selected segment, and only while the bar has focus (313). A
-  segment with no selection gets the ring on the first available segment.
+  segment with no selection gets the ring on the first available segment. Focus that arrived
+  by the pointer or a host's own `forceActiveFocus` is not Qt's visual focus, so the first key
+  pressed in the group turns the ring on (`_keyUsed`) until focus leaves or a click picks.
 - Accessibility: bar `PageTabList`, segments `PageTab` with `Accessible.selected` (49, 234-237).
   Segment names come from the label or `option.name`. The bar has no default name; both consumers
   set one (`Panel sections`, `Power profile`).
