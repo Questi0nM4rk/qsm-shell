@@ -503,9 +503,9 @@ TestCase {
         // A literal, and the one place one is right: comparing against
         // `Style.disabled` alone passes even if the blend is wrong, as long
         // as both sides are wrong the same way. Deep-night's surface is
-        // #2d2036, its background #1c0e27 and `opacityDisabled` 0.35, so
+        // #3b3145, its band #271e30 and `opacityDisabled` 0.35, so
         // retuning any of them moves this number and the message says which.
-        compare(String(Style.disabled(Style.surface)), "#30273a",
+        compare(String(Style.disabled(Style.surface)), "#2e2537",
             "the disabled blend of Style.surface is not the measured deep-night value -- either "
             + "the arithmetic changed or the theme's surface / background / opacityDisabled did");
     }
