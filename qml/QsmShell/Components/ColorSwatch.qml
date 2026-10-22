@@ -1,31 +1,31 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Templates as T
 
 import qs.QsmShell.Style
 
-// A colour slot: the colour shown as itself with its value readable, or the
+// A colour slot: the colour shown as itself with a short reading on it, or the
 // empty state when there is no colour in it yet.
 //
-// Contrast against the sample is not a style choice: surfaces that each answer
-// "is this swatch light or dark?" their own way leave the hex on a pale swatch
-// unreadable. It is the difference between a swatch and a coloured square.
+// A colour has to survive its ground. A sample that falls short of the graphic
+// floor against a step of the ladder it may sit on (a swatch may equal its
+// ground) paints a hairline at its edge, the border that encodes what colour
+// cannot (AGENTS.md, borders). The ink of the reading is chosen by measuring
+// the sample, never by assuming the theme is dark.
 //
-// The checkerboard under a translucent colour is not decoration either: a
-// 20%-alpha swatch over the shell's own surface looks like a different opaque
-// colour, which is exactly the confusion a colour tool must not create.
+// The checkerboard under a translucent colour is not decoration: a 20%-alpha
+// swatch over the shell's own surface looks like a different opaque colour,
+// which is exactly the confusion a colour tool must not create.
 //
 // The painted FACE stays compact (`size`, what the callers chose) and is
-// centred in a TARGET that never drops below the Blueprint's floor, so a
-// 24px sample in a palette row still answers on a full target without its
-// hit zone overlapping a sibling's. Selection and focus belong to the face;
-// the target itself paints nothing.
+// centred in a TARGET that never drops below the Blueprint's floor, so a 24px
+// sample in a palette row still answers on a full target without its hit zone
+// overlapping a sibling's. Selection and focus belong to the face; the target
+// itself paints nothing.
 // NOT clipped. `clip` would shave the StateLayer's hover growth back to the
 // swatch's own bounds, so the swatch would answer a pointer by not moving.
-// The sample carries the corner itself instead; item clipping never rounds
-// the check's corners anyway (it is rectangular).
+// The sample, the check and the edge carry the corner themselves.
 Item {
     id: root
 
@@ -34,10 +34,11 @@ Item {
     // colour: transparent is a real sample and gets the alpha check, while an
     // empty slot has nothing to show and says so with an outline. A picker's
     // "click here to sample something" square is the case. `sample` stays
-    // required so a typo in a binding is still caught — an empty slot passes
+    // required so a typo in a binding is still caught -- an empty slot passes
     // "transparent" and this flag, which says what it means out loud.
     property bool empty: false
-    // Shown on the swatch. Empty draws the sample alone.
+    // Shown on the face, one line: what fits the face is read, the rest is
+    // elided. Empty draws the sample alone.
     property string reading: ""
     // The painted face's square side. The layout footprint is the face
     // widened to the target floor, never the other way round.
@@ -47,6 +48,8 @@ Item {
     property real target: Style.swatchTarget
     property bool selected: false
     property bool focused: root.activeFocus
+    // Keyboard focus, the only focus that rings: a click focuses without one.
+    readonly property bool visualFocus: root.focused && !root._pointerFocus
 
     // The keyboard handlers below need focus, so the swatch is a tab stop and
     // a pointer press moves focus here.
@@ -57,60 +60,24 @@ Item {
     Accessible.role: Accessible.Button
     Accessible.name: root.reading.length > 0 ? root.reading
         : root.empty ? qsTr("Empty colour slot") : root.sample.toString()
+    Accessible.description: root.reading.length > 0 && !root.empty ? root.sample.toString() : ""
     // `selected` is a fact a screen reader has to hear, not only a ring.
     Accessible.checkable: true
     Accessible.checked: root.selected
+    Accessible.onPressAction: root.activate()
 
     signal clicked
 
-    // The swatch decides its own ink so no call site has to, and it decides it
-    // by MEASURING rather than by assuming the theme is dark. The first
-    // version returned `Style.band` for a pale sample and `Style.text`
-    // for a dark one, which is only right while band is the dark one —
-    // under a light backend it hands a pale swatch pale ink.
-    //
-    // The sample is composited over what is actually BEHIND it first: a
-    // 20%-alpha colour is not the colour you would measure, and reading the
-    // raw value picks ink for a swatch nobody can see.
-    //
-    // Behind a translucent sample is the alpha check, not the surface — two
-    // colours, not one. Measuring against the surface picked pale ink that
-    // then sat on the check's white cells and vanished. So a translucent
-    // sample is measured against BOTH cells and the ink has to survive the
-    // worse of them.
-    function _over(ground: color): color {
-        return Qt.rgba(sample.r * sample.a + ground.r * (1 - sample.a),
-            sample.g * sample.a + ground.g * (1 - sample.a),
-            sample.b * sample.a + ground.b * (1 - sample.a), 1);
-    }
+    // What is actually SEEN behind the face: the sample itself, or a
+    // translucent one laid over each cell of the check, because the ink has to
+    // read on the worse of the two and an edge has to hold against both.
+    readonly property var _seen: root.sample.a < 1
+        ? [Qt.tint(Style.checkerLight, root.sample), Qt.tint(Style.checkerDark, root.sample)]
+        : [root.sample]
 
-    readonly property color _seen: _over(Style.surface)
-    readonly property color _seenLight: _over(Style.checkerLight)
-    readonly property color _seenDark: _over(Style.checkerDark)
-
-    // WCAG relative luminance: sRGB has to be linearised first, and skipping
-    // that is why mid-tones get the wrong answer.
-    function _luminance(channel: real): real {
-        return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
-    }
-    function _relative(sampled: color): real {
-        return 0.2126 * _luminance(sampled.r)
-            + 0.7152 * _luminance(sampled.g)
-            + 0.0722 * _luminance(sampled.b);
-    }
-    function _contrast(a: color, b: color): real {
-        const la = root._relative(a);
-        const lb = root._relative(b);
-        return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
-    }
-
-    // The worst contrast this ink would face on this swatch. Opaque: one
-    // ground. Translucent: the two check cells, and the ink must read on both.
+    // The worst contrast this ink would face on this swatch.
     function _worst(candidate: color): real {
-        return root.sample.a < 1
-            ? Math.min(root._contrast(root._seenLight, candidate),
-                root._contrast(root._seenDark, candidate))
-            : root._contrast(root._seen, candidate);
+        return Math.min(...root._seen.map(seen => Style.contrast(seen, candidate)));
     }
 
     // Whichever of the theme's two inks actually reads on this sample.
@@ -118,14 +85,20 @@ Item {
         ? Style.text
         : Style.band
 
-    // WCAG 1.4.3 for text. On a mid-tone neither ink reaches it (the better of
-    // the two bottoms out at 3.7:1), and a reading nobody can read is the one
-    // failure this swatch exists to prevent. Then the reading sits on a band
-    // plate and takes the theme's text ink, which reads on band by the ladder.
-    readonly property real _readable: 4.5
+    // On a mid-tone neither ink reaches the text floor (the better of the two
+    // bottoms out at 3.7:1), and a reading nobody can read is the one failure
+    // this swatch exists to prevent. Then the reading sits on a band plate,
+    // whose text ink reads on band by the ladder.
     readonly property bool _plated: !root.empty && root.reading.length > 0
-        && (root._worst(root.ink) < root._readable
-            || readingMetrics.advanceWidth > root.size - Style.spaceTight * 2)
+        && root._worst(root.ink) < Style.contrastText
+
+    // Whether the face paints its edge. A swatch cannot know its ground, so it
+    // measures against every step of the ladder it may sit on: a sample under
+    // the graphic floor against any of them gets the edge on all, and looks
+    // the same wherever a host puts it.
+    readonly property bool contained: !root.empty
+        && [Style.band, Style.surface, Style.overlay].some(ground =>
+            root._seen.some(seen => Style.contrast(seen, ground) < Style.contrastGraphic))
 
     // One route in: pointer, Space, Return and callers share it, guarded here
     // so no route fires while unavailable. The host still owns `selected`
@@ -139,18 +112,13 @@ Item {
         T.Action { text: root.reading; enabled: root.enabled; onTriggered: root.activate() }
     ]
 
-    // Disabled dims each painted role by COLOUR, never by composite opacity:
-    // opacity on the stack applies to every child separately, so a dimmed
-    // translucent sample would show its own fill through itself and stop
-    // being two layers. The sample keeps its alpha, so a translucent sample
-    // still reveals the check beneath it instead of turning into an opaque
-    // fake.
-    // Selected is identity: an accent ring OUTSIDE the face with a gap, so a
-    // pale or accent sample keeps its own edge and the ring keeps 3:1 against
-    // the host (WCAG 1.4.11), which an ink ring chosen against the sample alone
-    // did not. The keyboard ring steps out beyond it while selected.
+    // Selected is identity: an accent ring OUTSIDE the face with a hairline gap,
+    // so a pale or accent sample keeps its own edge and the ring keeps 3:1
+    // against the host (WCAG 1.4.11). The reach (gap plus stroke) stays under
+    // the 4 px between dense palette faces, so a selected ring never lies on a
+    // neighbour. The keyboard ring steps out beyond it while selected.
     readonly property real _selStroke: Style.stroke(Style.indicatorWidth, root)
-    readonly property real _selReach: root._selStroke * 2
+    readonly property real _selReach: root._selStroke + Style.stroke(Style.hairline, root)
 
     // Hover growth is capped to about one pixel a side: a fixed ratio let a
     // 52px face overhang its footprint by 2px, and it is movement, so reduced
@@ -158,6 +126,11 @@ Item {
     readonly property real _hoverScale: Style.reducedMotion ? 1
         : 1 + Math.min(Motion.hoverScale - 1, Style.spaceTight / root.size)
 
+    // Disabled dims each painted role by COLOUR, never by composite opacity:
+    // opacity on the stack applies to every child separately, so a dimmed
+    // translucent sample would show its own fill through itself and stop being
+    // two layers. The sample keeps its alpha, so a translucent sample still
+    // reveals the check beneath it instead of turning into an opaque fake.
     function _paint(c: color): color {
         if (root.enabled)
             return c;
@@ -165,84 +138,77 @@ Item {
         return Qt.rgba(d.r, d.g, d.b, c.a);
     }
 
+    // The check's grid: odd, so all four corner cells share a colour and the
+    // only curve is the ground's own.
+    readonly property int _cells: 5
+    readonly property var _darkCells: Array.from({ length: root._cells * root._cells }, (_, i) => i)
+        .filter(i => (Math.floor(i / root._cells) + i % root._cells) % 2 === 1)
+
+    readonly property real _dpr: root.Window.window?.devicePixelRatio ?? 1
+
     // The TARGET: the layout footprint, never below the floor, so palette
     // siblings never receive overlapping hit zones. The face stays `size`
     // and sits centred inside it.
     implicitWidth: Math.max(size, target)
     implicitHeight: Math.max(size, target)
 
-    // The FACE: the alpha check with the sample composited over it, masked to
-    // the swatch's own corner, plus the ring and the reading. Hover and press
-    // change this item's size by whole device pixels, which never moves the
-    // layout footprint.
-    //
-    // The check comes first, because without it a 20%-alpha colour reads as a
-    // different opaque colour, which is the one confusion a colour tool must
-    // not create. A Rectangle radius does not round it: item clipping is
-    // rectangular, so the check's corner cells sat square outside the sample's
-    // curve. `MultiEffect.maskSource` is the mechanism that actually cuts
-    // them, and it is applied to the pair so they cannot disagree.
-    //
-    // The mask stops at the pair. Everything that RESPONDS to a pointer — the
-    // rings, the reading, the state layer — is outside it, because a mask the
-    // size of the face would clip the hover growth back to nothing.
+    // The FACE: the alpha check under the sample, the edge, the empty outline
+    // and the reading. Hover and press change this item's size by whole device
+    // pixels, which never moves the layout footprint.
     Item {
         id: face
         objectName: "swatchFace"
         width: root.size + 2 * pointerLayer.growth
         height: width
-        anchors.centerIn: parent
+        // Centred on a whole device pixel: `anchors.centerIn` rounds to a
+        // whole LOGICAL pixel, which at 1.25 puts an edge between two rows.
+        x: Math.round((root.width - width) / 2 * root._dpr) / root._dpr
+        y: Math.round((root.height - height) / 2 * root._dpr) / root._dpr
 
-        Item {
-            id: facePair
+        // A light rounded ground with dark cells on top: no mask, so the
+        // corner is the rectangle's own, anti-aliased by the scene graph.
+        Rectangle {
             anchors.fill: parent
-            visible: false
-            layer.enabled: true
+            visible: !root.empty && root.sample.a < 1
+            radius: Style.radiusSm
+            color: root._paint(Style.checkerLight)
 
-            Item {
-                anchors.fill: parent
-                visible: root.sample.a < 1
+            Repeater {
+                model: root._darkCells
 
-                Repeater {
-                    model: 16
-
-                    delegate: Rectangle {
-                        required property int index
-                        width: face.width / 4
-                        height: face.height / 4
-                        x: (index % 4) * width
-                        y: Math.floor(index / 4) * height
-                        color: root._paint((index + Math.floor(index / 4)) % 2 === 0 ? Style.checkerLight : Style.checkerDark)
-                    }
+                delegate: Rectangle {
+                    required property int modelData
+                    width: face.width / root._cells
+                    height: width
+                    x: (modelData % root._cells) * width
+                    y: Math.floor(modelData / root._cells) * height
+                    color: root._paint(Style.checkerDark)
                 }
-            }
-
-            Rectangle {
-                objectName: "swatchSample"
-                anchors.fill: parent
-                color: root._paint(root.sample)
             }
         }
 
         Rectangle {
-            id: faceMask
-            anchors.fill: parent
-            radius: Style.radiusSm
-            color: "black"
-            visible: false
-            layer.enabled: true
-        }
-
-        MultiEffect {
+            objectName: "swatchSample"
             anchors.fill: parent
             visible: !root.empty
-            source: facePair
-            maskEnabled: true
-            maskSource: faceMask
+            radius: Style.radiusSm
+            color: root._paint(root.sample)
+        }
+
+        // The containment edge, INSIDE the face so the footprint and the
+        // hover growth stay what they were.
+        Rectangle {
+            objectName: "swatchEdge"
+            anchors.fill: parent
+            visible: root.contained
+            color: "transparent"
+            radius: Style.radiusSm
+            border.width: Style.stroke(Style.hairline, root)
+            border.color: root._paint(Style.textMuted)
         }
 
         // The empty slot: an outline and nothing else. Not a dashed border and not
-        // a plus glyph — both announce an action, and the slot is a place, with
+        // a plus glyph -- both announce an action, and the slot is a place, with
         // the action stated by whatever put it there.
         Rectangle {
             anchors.fill: parent
@@ -253,16 +219,16 @@ Item {
             border.color: root._paint(Style.textMuted)
         }
 
-        // The reading is fitted to the face, never cut: a plate wider than the
-        // face (bounded a little beyond the footprint) beats an elided hex. On
-        // a plate the ink is the theme's text, which reads on band.
+        // The reading is whole or absent: one that does not fit the face is not painted (an elided "P..." reads as a different
+        // value, and a plate wider than the face lies on the selection ring).
+        // The host sizes the face for what it reads; the name still carries it.
         Rectangle {
             visible: !root.empty && root.reading.length > 0
+                && width <= root.size - Style.spaceTight * 2
             anchors.centerIn: parent
-            width: Math.min(readingText.implicitWidth + Style.spaceTight * 2,
-                root.width + Style.space1)
+            width: readingText.implicitWidth + Style.spaceTight * 2
             height: readingText.implicitHeight + Style.spaceTight
-            radius: Style.radiusSm
+            radius: Style.radiusXs
             color: root._plated ? root._paint(Style.band) : "transparent"
 
             Prose {
@@ -271,19 +237,13 @@ Item {
                 anchors.leftMargin: Style.spaceTight
                 anchors.rightMargin: Style.spaceTight
                 role: "reading"
-                font.pixelSize: Style.textXs
+                font.pixelSize: Style.textNear(Style.textSm * root.size / Style.size("ColorSwatch", "md"))
                 color: root._paint(root._plated ? Style.text : root.ink)
                 text: root.reading
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
         }
-    }
-
-    TextMetrics {
-        id: readingMetrics
-        font: readingText.font
-        text: root.reading
     }
 
     Rectangle {
@@ -310,11 +270,12 @@ Item {
         anchors.margins: root.selected ? -root._selReach : 0
         clickable: false
         interactive: root.enabled
-        focused: root.focused && !root._pointerFocus
+        focused: root.visualFocus
         focusRadius: Style.radiusSm + (root.selected ? root._selReach : 0)
     }
 
-    // The layer covers the whole TARGET for the pointer and moves the face.
+    // The layer covers the whole TARGET for the pointer and moves the face; the
+    // ring above is the only one, so this layer never rings the target.
     // Pressing pushes the face in: a colour change would alter the very colour
     // being sampled.
     StateLayer {
@@ -322,6 +283,7 @@ Item {
         anchors.fill: parent
         extent: root.size
         interactive: root.enabled
+        focused: false
         hoverScale: root._hoverScale
         pressScale: Motion.pressScale
         onClicked: {
@@ -335,7 +297,16 @@ Item {
     property bool _pointerFocus: false
     onActiveFocusChanged: if (!root.activeFocus) root._pointerFocus = false
 
-    Keys.onSpacePressed: root.activate()
-    Keys.onReturnPressed: root.activate()
-    Keys.onEnterPressed: root.activate()
+    // One dispatcher, because a named handler beside `onPressed` still fires.
+    // A key is keyboard use, so it brings the ring back after a click; a held
+    // key does not repeat the action.
+    Keys.onPressed: event => {
+        if (event.key !== Qt.Key_Space && event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter)
+            return;
+        event.accepted = true;
+        if (event.isAutoRepeat)
+            return;
+        root._pointerFocus = false;
+        root.activate();
+    }
 }
