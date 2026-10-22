@@ -19,7 +19,6 @@ Rectangle {
         anchors.centerIn: parent
         width: Style.controlWidth / 2
         height: Style.size("Control", "md")
-        radius: Style.radiusMd
         hovered: stateLayer.hovered
         pressed: stateLayer.pressed
         selected: root.selected
@@ -53,6 +52,7 @@ Rectangle {
     readonly property var integration: ({
         events: [],
         actions: [],
+        targets: ({ body: () => stateLayer }),
         observables: {
             hovered: () => stateLayer.hovered,
             pressed: () => stateLayer.pressed,

@@ -21,10 +21,19 @@ Rectangle {
     property bool hovered: false
     property bool pressed: false
     property bool selected: false
+    // A bare Surface is a finished body, not a square: the room's body radius.
+    radius: Style.radiusBody
     // The wall this body sits flush against, "left", "right", "top" or
     // "bottom": the two corners on that side go square and the others keep
     // `radius`. A rail cell against the frame must not round into the wall.
     property string snapEdge: ""
+    readonly property bool _edgeKnown: ["", "left", "right", "top", "bottom"].includes(snapEdge)
+    on_EdgeKnownChanged: _checkEdge()
+    Component.onCompleted: _checkEdge()
+    function _checkEdge() {
+        if (!_edgeKnown)
+            console.error(`Surface: unknown snapEdge "${snapEdge}" -- expected left, right, top, bottom or ""`);
+    }
 
     property color contentColor: root.enabled
         ? (root.selected ? root.accent : Style.text)
