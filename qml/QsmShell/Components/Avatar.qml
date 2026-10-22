@@ -36,6 +36,12 @@ Item {
     property color background: Style.overlay
     // Empty = no dot. Otherwise a Badge tone.
     property string status: ""
+    // What the dot says in words ("Online"), for a screen reader: a hue alone
+    // reaches nobody who cannot see it.
+    property string statusLabel: ""
+    // The colour the avatar sits on. The dot is cut out of the picture in it,
+    // so it stays a dot over a light photograph.
+    property color ground: Style.band
 
     // How far through, 0..1, drawn as a ring around the picture. Below 0 there
     // is no ring and the item is exactly `size`.
@@ -89,6 +95,13 @@ Item {
     // that turns one on does not have to work out what to shrink.
     implicitWidth: size + _ringRoom
     implicitHeight: size + _ringRoom
+
+    // A picture of a person is named for them; a nameless one (album art) is
+    // decoration the host's own label already speaks.
+    Accessible.role: Accessible.Graphic
+    Accessible.name: root.name
+    Accessible.description: root.statusLabel
+    Accessible.ignored: root.name.length === 0
 
     StatRing {
         id: ring
@@ -156,6 +169,10 @@ Item {
         source: portrait
         maskEnabled: true
         maskSource: circleMask
+        // The defaults cut the mask at any coverage, so the rim of a round
+        // picture steps a whole pixel; this ramps the edge pixel instead.
+        maskThresholdMin: 0.5
+        maskSpreadAtMin: 1.0
     }
 
     // The dot is a fifth of the picture on the rhythm, centred on the rim at
@@ -163,20 +180,30 @@ Item {
     // rounded box is an arc of radius `_arc` whose centre is `size / 2 - _arc`
     // from the middle; on a circle that is the centre itself, on a square it
     // is the box corner.
-    // Built only with a status: Badge throws on an unknown tone, and "" is one.
-    Loader {
+    // The cut-out is one half step of `ground` all round the dot.
+    Item {
         readonly property real _arc: Math.min(root.radius, root.size / 2)
         readonly property real _offset: root.size / 2 - _arc + _arc * Math.SQRT1_2
 
+        visible: root.status.length > 0
         width: height
         height: Style.rhythm(root.size * 0.2)
         x: Math.round(root.width / 2 + _offset - width / 2)
         y: Math.round(root.height / 2 + _offset - height / 2)
-        active: root.status.length > 0
-        sourceComponent: Badge {
-            tone: root.status
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -Style.spaceTight
+            radius: Style.radiusPill
+            color: root.ground
+        }
+        Badge {
+            anchors.fill: parent
+            // Badge throws on an unknown tone, and "" is one.
+            tone: root.status.length > 0 ? root.status : "neutral"
             dot: true
             filled: true
+            accessibleName: root.statusLabel
         }
     }
 }
