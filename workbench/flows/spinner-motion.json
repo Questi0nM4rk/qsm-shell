@@ -5,9 +5,19 @@
   "steps": [
     { "type": "reset" },
     { "type": "expect", "observable": "running", "equals": true },
+    { "type": "await", "observable": "turning", "equals": true },
     { "type": "control", "group": "motion", "option": "stopped" },
     { "type": "expect", "observable": "running", "equals": false },
+    { "type": "expect", "observable": "turning", "equals": false },
     { "type": "control", "group": "motion", "option": "running" },
-    { "type": "expect", "observable": "running", "equals": true }
+    { "type": "expect", "observable": "turning", "equals": true },
+    { "type": "control", "group": "surface", "option": "hidden" },
+    { "type": "expect", "observable": "running", "equals": true },
+    { "type": "expect", "observable": "turning", "equals": false },
+    { "type": "control", "group": "surface", "option": "shown" },
+    { "type": "expect", "observable": "turning", "equals": true },
+    { "type": "control", "group": "size", "option": "xl" },
+    { "type": "expect", "observable": "size", "equals": 32 },
+    { "type": "expect", "observable": "turning", "equals": true }
   ]
 }
