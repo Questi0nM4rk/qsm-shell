@@ -1,7 +1,6 @@
 import QtQuick
 
 import qs.QsmShell.Components
-import qs.QsmShell.Style
 
 Item {
     id: root
@@ -9,6 +8,8 @@ Item {
     property string variant: ""
     property var eventRecorder: null
     property string size: "md"
+    property string glyph: "check"
+    property int clicks: 0
 
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
@@ -16,10 +17,13 @@ Item {
     IconButton {
         id: button
         anchors.centerIn: parent
-        icon: "check"
-        accessibleName: "Apply"
+        icon: root.glyph
+        accessibleName: root.glyph === "play" ? "Play" : "Apply"
         size: root.size
-        onClicked: root.eventRecorder?.("intent", "clicked", {})
+        onClicked: {
+            root.clicks++
+            root.eventRecorder?.("intent", "clicked", {})
+        }
     }
 
     readonly property var controls: [
@@ -29,6 +33,10 @@ Item {
             { label: "md", set: { size: "md" } },
             { label: "lg", set: { size: "lg" } }
         ] },
+        { label: "glyph", options: [
+            { label: "check", set: { glyph: "check" } },
+            { label: "play", set: { glyph: "play" } }
+        ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
             { label: "disabled", set: { enabled: false } }
@@ -37,11 +45,15 @@ Item {
     readonly property var integration: ({
         events: ["clicked"],
         actions: ["activate"],
-        keys: {
-            "Space": () => { button.activate(); return true },
-            "Enter": () => { button.activate(); return true }
+        targets: ({ button: () => button }),
+        observables: {
+            enabled: () => root.enabled,
+            clicks: () => root.clicks,
+            size: () => root.size,
+            glyph: () => root.glyph,
+            "accessible-name": () => button.Accessible.name,
+            "accessible-button": () => button.Accessible.role === Accessible.Button
         },
-        observables: { enabled: () => root.enabled },
         runAction: name => {
             if (name !== "activate")
                 return false
