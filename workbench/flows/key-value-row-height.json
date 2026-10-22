@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "key": "key-value-row-height",
+  "target": { "story": "key-value" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "glyph-shown", "equals": true },
+    { "type": "expect", "observable": "row-height", "equals": 16 },
+    { "type": "expect", "observable": "plain-row-height", "equals": 16 },
+    { "type": "control", "group": "glyph", "option": "cleared" },
+    { "type": "expect", "observable": "glyph-shown", "equals": false },
+    { "type": "expect", "observable": "row-height", "equals": 16 },
+    { "type": "control", "group": "label", "option": "long" },
+    { "type": "control", "group": "value", "option": "long" },
+    { "type": "expect", "observable": "value", "equals": "87% (about 3 hours 42 minutes remaining)" },
+    { "type": "expect", "observable": "row-height", "equals": 16 },
+    { "type": "expect", "observable": "row-width", "equals": 380 },
+    { "type": "control", "group": "glyph", "option": "set" },
+    { "type": "expect", "observable": "row-height", "equals": 16 },
+    { "type": "expect", "observable": "row-width", "equals": 380 }
+  ]
+}
