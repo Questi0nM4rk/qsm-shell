@@ -9,8 +9,13 @@ Rectangle {
     property string variant: ""
     property var eventRecorder: null
     property string toneName: variant.length > 0 ? variant : "info"
-    property string heading: "Output device is not available"
-    property string restMessage: "The dock was unplugged. Reconnect it, or pick another output."
+    readonly property string restHeading: "Output device is not available"
+    readonly property string restMessage: "The dock was unplugged. Reconnect it, or pick another output."
+    readonly property string longHeading: "The output device the session was using is not available any more"
+    readonly property string longMessage: "The dock was unplugged while audio was playing, so the session lost its output. "
+        + "Reconnect the dock to resume exactly where it stopped, pick another output from the list, "
+        + "or keep the sound muted until a device is available."
+    property string heading: root.restHeading
     property string message: root.restMessage
     property string mark: ""
     property bool actionable: true
@@ -50,8 +55,9 @@ Rectangle {
             { label: "danger", set: { toneName: "danger" } }
         ] },
         { label: "copy", options: [
-            { label: "with-body", set: { message: root.restMessage } },
-            { label: "title-only", set: { message: "" } },
+            { label: "with-body", set: { heading: root.restHeading, message: root.restMessage } },
+            { label: "title-only", set: { heading: root.restHeading, message: "" } },
+            { label: "long", set: { heading: root.longHeading, message: root.longMessage } },
             { label: "bare", set: { heading: "", message: "" } }
         ] },
         { label: "mark", options: [
@@ -66,11 +72,15 @@ Rectangle {
     readonly property var integration: ({
         events: ["clicked"],
         actions: ["activate"],
+        targets: ({ message: () => note, retry: () => recovery, scene: () => root }),
         observables: {
             tone: () => note.tone,
             title: () => note.title,
             body: () => note.body,
             icon: () => note.icon,
+            interrupts: () => note.Accessible.role === Accessible.AlertMessage,
+            "accessible-name": () => note.Accessible.name,
+            height: () => note.height,
             clicks: () => root.clicks
         },
         runAction: name => {

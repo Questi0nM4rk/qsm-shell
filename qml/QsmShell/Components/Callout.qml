@@ -20,12 +20,8 @@ import qs.QsmShell.Style
 // it. `title` and `body` carry the first two; the third goes in the action
 // slot, because a callout that only apologises has moved the problem to the
 // person without moving them any closer to solving it.
-Card {
+Rectangle {
     id: root
-
-    // Flat inside the surface that holds it.
-    glow: false
-    shadow: false
 
     // info | success | warning | danger
     property string tone: "info"
@@ -44,8 +40,9 @@ Card {
         danger: { color: Style.danger, icon: "circle-alert" }
     })
     readonly property bool _toneKnown: _tones[tone] !== undefined
-    readonly property color _tone: (_tones[tone] ?? _tones.info).color
-    readonly property string _icon: icon.length > 0 ? icon : (_tones[tone] ?? _tones.info).icon
+    readonly property var _kind: _tones[tone] ?? _tones.info
+    readonly property color _tone: _kind.color
+    readonly property string _icon: icon.length > 0 ? icon : _kind.icon
 
     // QML cannot throw out of a binding, so an unknown tone or icon is
     // reported on the error stream and drawn as info / nothing.
@@ -56,11 +53,17 @@ Card {
             console.error(`Callout: unknown tone "${tone}" -- expected info, success, warning or danger`);
     }
 
+    // What is wrong interrupts, what is merely so does not.
+    Accessible.role: tone === "warning" || tone === "danger" ? Accessible.AlertMessage : Accessible.Note
+    Accessible.name: root.title
+    Accessible.description: root.body
+
     implicitHeight: content.implicitHeight + Style.space3 * 2
     // Constant: long copy wraps and elides inside it; a host sets `width`.
     implicitWidth: Style.controlWidth
-    radius: Style.radiusMd
-    surfaceColor: Qt.tint(Style.surface, Qt.rgba(_tone.r, _tone.g, _tone.b, Style.calloutTintOpacity))
+    radius: Style.radiusBody
+    color: Qt.tint(Style.surface, Qt.rgba(_tone.r, _tone.g, _tone.b, Style.calloutTintOpacity))
+
     // The severity rule down the leading edge. It is the third channel — after
     // the mark and the hue — and the only one readable from the corner of an
     // eye that is looking somewhere else.
@@ -87,23 +90,33 @@ Card {
         anchors.bottomMargin: Style.space3
         spacing: Style.space3
 
+        // The mark centres on the first line of copy, whatever its height.
         SvgIcon {
+            readonly property real _firstLine: root.title.length > 0 ? titleText.implicitHeight
+                : root.body.length > 0 ? bodyText.implicitHeight : 0
             Layout.alignment: Qt.AlignTop
+            Layout.topMargin: _firstLine > 0 ? Math.round((_firstLine - size) / 2) : 0
             name: root._icon
             size: Style.iconMd
             color: root._tone
         }
         ColumnLayout {
             Layout.fillWidth: true
+            // Without copy the column's own ceiling is the action's width, and
+            // the row would centre it away from the mark.
+            Layout.maximumWidth: Infinity
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             spacing: 0
 
             Prose {
+                id: titleText
                 Layout.fillWidth: true
                 visible: root.title.length > 0
                 role: "title"
                 text: root.title
             }
             Prose {
+                id: bodyText
                 Layout.fillWidth: true
                 visible: root.body.length > 0
                 Layout.topMargin: root.title.length > 0 ? Style.space1 : 0
