@@ -14,5 +14,6 @@ not designed: the scrolled content, model delegates or scroll-to-item; a model l
 
 ## Measured
 
-Unit `scroll-short` (a viewport three rows tall): fade 0 / 20 px at the start, 20 / 0 at the end. Keyboard flow `scroll-area-keyboard`
-and wheel flow `scroll-area-wheel` pass offscreen and in a window.
+Unit `scroll-short` (a viewport three rows tall, 120 px): fade 0 / 20 px at the start, 20 / 0 at the end. Hit zone: the viewport rectangle,
+which is also the focus ring's body (the ring sits 4 px outside it). Keyboard flow `scroll-area-keyboard` and wheel flow `scroll-area-wheel`
+pass offscreen and in a window; Tab order and the accessibility tree were not read (no AT-SPI bus in the slot).
