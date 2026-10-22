@@ -69,7 +69,22 @@ FocusScope {
     property Item returnFocusTo: null
     property Item _returnTo: null
 
+    // A position on the device grid: the card is centred, and half of an odd
+    // remainder lands between two device pixels and blurs every edge.
+    readonly property real _dpr: Window.window?.devicePixelRatio ?? 1
+    function _snap(px: real): real {
+        return Math.round(px * root._dpr) / root._dpr;
+    }
+    // A size rounds UP, so the content never loses the fraction. A hundredth
+    // of a device pixel is float noise, not a reason to grow a whole one.
+    function _snapUp(px: real): real {
+        return Math.ceil(px * root._dpr - 0.01) / root._dpr;
+    }
+
     anchors.fill: parent
+    Accessible.role: Accessible.Dialog
+    Accessible.name: root.title
+    Accessible.description: root.body
     // `root.open` FIRST, and it is not redundant: the card fades in from zero,
     // so at the instant `open` flips, `card.opacity` is still 0. Reading only
     // the opacity left the dialog invisible for its first frame — and an
@@ -82,17 +97,17 @@ FocusScope {
     // and by `_release` (keys), and the controls keep their colours until the
     // card is gone. Once invisible they leave the tab order on their own.
 
-    // Move the keyboard to the first control IN the dialog, not to the card.
-    // The card is a plain surface: focusing it leaves the keyboard pointing at
-    // nothing, so the first Tab goes somewhere arbitrary and the person has no
-    // idea where they are. `head` is the tab trap's own sentinel, so "the
-    // thing after head" is by construction the first focusable control inside.
+    // Move the keyboard to the first ACTION, not to the card: the card is a
+    // plain surface, so focusing it leaves the keyboard pointing at nothing,
+    // and a scrolling body ahead of the actions would otherwise take the
+    // focus the safe action was declared to have. `actionHost` is not a stop
+    // itself, so the next one after it is by construction its first control.
     function _enterFocus(): void {
         if (!root.open)
             return;
-        const first = head.nextItemInFocusChain(true);
-        // With no action the chain from `head` runs straight into `tail`, which
-        // is a sentinel, not a control: the card takes focus instead.
+        const first = actionHost.nextItemInFocusChain(true);
+        // With no action the chain runs straight into `tail`, which is a
+        // sentinel, not a control: the card takes focus instead.
         if (first && first !== tail && root._holds(first))
             first.forceActiveFocus();
         else
@@ -142,31 +157,36 @@ FocusScope {
     }
 
     // Closed for real only when the fade ends, but no longer answering the
-    // moment `open` drops: it catches the pointer over the fading card and the
-    // fading scrim, which has already stopped catching.
+    // moment `open` drops: it catches the pointer over the fading card, whose
+    // controls still hold their colours.
     MouseArea {
         z: 1
         anchors.fill: parent
         enabled: !root.open
         acceptedButtons: Qt.AllButtons
+        onWheel: wheel => wheel.accepted = true
     }
 
     Card {
         id: card
 
-        anchors.centerIn: parent
-        width: root.dialogWidth
+        // Never wider than the window leaves room for: a dialog that outgrows a
+        // small output would clip its own actions.
+        width: Math.min(root.dialogWidth, root.width - Style.space6 * 2)
         // Capped to the window, so a long body scrolls under a fixed title and
-        // fixed actions instead of pushing them out of reach.
-        implicitHeight: Math.min(content.implicitHeight + Style.space5 * 2,
-            root.height - Style.space6 * 2)
+        // fixed actions instead of pushing them out of reach. Rounded UP to the
+        // device grid: the text's line height is fractional, and a card edge
+        // between two device pixels is a soft edge.
+        implicitHeight: root._snapUp(Math.min(content.implicitHeight + Style.space5 * 2,
+            root.height - Style.space6 * 2))
+        x: root._snap((root.width - width) / 2)
+        y: root._snap((root.height - height) / 2)
         radius: Style.radiusXl
         surfaceColor: Style.overlay
         focus: true
-        Accessible.role: Accessible.Dialog
-        Accessible.name: root.title
         opacity: root.open ? 1 : 0
-        scale: root.open ? 1 : 0.96
+        // Under reduced motion the card only fades: the settle is movement.
+        scale: root.open || Style.reducedMotion ? 1 : Motion.microPopScale
 
         // It arrives by settling into place rather than by sliding from an
         // edge: a modal has no origin on the surface, so a direction would be
@@ -193,6 +213,7 @@ FocusScope {
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
+            onWheel: wheel => wheel.accepted = true
         }
 
         // The trap, half of it. Tabbing BACKWARD off the first real control
@@ -244,6 +265,8 @@ FocusScope {
                     id: bodyText
                     width: parent.width
                     role: "body"
+                    // The body is what the person came to read.
+                    font.pixelSize: Style.textMd
                     muted: true
                     text: root.body
                 }
@@ -251,7 +274,10 @@ FocusScope {
             RowLayout {
                 id: actionHost
                 Layout.fillWidth: true
-                Layout.topMargin: Style.space2
+                // The answer sits a full inset below what it answers, the
+                // space the card keeps around everything: title and body read
+                // as one group, the actions as the next.
+                Layout.topMargin: Style.space5 - Style.space3
                 spacing: Style.space2
 
                 // The leading space is the filler, so a single button lands on
@@ -269,4 +295,5 @@ FocusScope {
             onActiveFocusChanged: if (activeFocus) head.nextItemInFocusChain(true).forceActiveFocus()
         }
     }
+
 }

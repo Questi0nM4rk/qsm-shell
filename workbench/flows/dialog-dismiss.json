@@ -1,1 +1,30 @@
-{"key":"dialog-dismiss","steps":[{"equals":true,"observable":"open","type":"expect"},{"equals":"danger","observable":"tone","type":"expect"},{"equals":0,"observable":"confirms","type":"expect"},{"name":"confirm","type":"action"},{"equals":1,"observable":"confirms","type":"expect"},{"event":"confirm-clicked","origin":"component","type":"expectEvent"},{"group":"tone","option":"neutral","type":"control"},{"equals":"neutral","observable":"tone","type":"expect"},{"group":"state","option":"closed","type":"control"},{"equals":false,"observable":"open","type":"expect"},{"equals":1,"observable":"closes","type":"expect"},{"event":"closed","origin":"component","type":"expectEvent"},{"group":"state","option":"open","type":"control"},{"equals":true,"observable":"open","type":"expect"}],"target":{"story":"dialog"},"version":1}
+{
+  "version": 1,
+  "key": "dialog-dismiss",
+  "target": { "story": "dialog" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "open", "equals": true },
+    { "type": "expect", "observable": "dialog-role", "equals": true },
+    { "type": "expect", "observable": "dialog-name", "equals": "Remove HDMI output?" },
+    { "type": "expect", "observable": "tone", "equals": "danger" },
+    { "type": "action", "name": "confirm" },
+    { "type": "expectEvent", "event": "confirm-clicked", "origin": "component" },
+    { "type": "expectEvent", "event": "closed", "origin": "component" },
+    { "type": "expect", "observable": "confirms", "equals": 1 },
+    { "type": "expect", "observable": "open", "equals": false },
+    { "type": "expect", "observable": "closes", "equals": 1 },
+    { "type": "await", "observable": "visible", "equals": false },
+    { "type": "action", "name": "invoke" },
+    { "type": "expect", "observable": "open", "equals": true },
+    { "type": "action", "name": "cancel" },
+    { "type": "expectEvent", "event": "cancel-clicked", "origin": "component" },
+    { "type": "expect", "observable": "cancels", "equals": 1 },
+    { "type": "expect", "observable": "confirms", "equals": 1 },
+    { "type": "expect", "observable": "open", "equals": false },
+    { "type": "control", "group": "tone", "option": "neutral" },
+    { "type": "expect", "observable": "tone", "equals": "neutral" },
+    { "type": "control", "group": "state", "option": "open" },
+    { "type": "expect", "observable": "open", "equals": true }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "key": "dialog-long-body",
+  "target": { "story": "dialog" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "state", "option": "closed" },
+    { "type": "await", "observable": "visible", "equals": false },
+    { "type": "control", "group": "body", "option": "long" },
+    { "type": "control", "group": "state", "option": "open" },
+    { "type": "await", "observable": "focus", "equals": "keep" },
+    { "type": "key", "target": "dialog", "key": "Backtab" },
+    { "type": "expect", "observable": "focus", "equals": "dialog" },
+    { "type": "key", "target": "dialog", "key": "Escape" },
+    { "type": "expect", "observable": "dismissals", "equals": 1 },
+    { "type": "expect", "observable": "open", "equals": false },
+    { "type": "await", "observable": "visible", "equals": false },
+    { "type": "control", "group": "state", "option": "open" },
+    { "type": "await", "observable": "focus", "equals": "keep" },
+    { "type": "key", "target": "dialog", "key": "Tab" },
+    { "type": "expect", "observable": "focus", "equals": "remove" },
+    { "type": "key", "target": "dialog", "key": "Tab" },
+    { "type": "expect", "observable": "focus", "equals": "dialog" },
+    { "type": "key", "target": "dialog", "key": "Tab" },
+    { "type": "expect", "observable": "focus", "equals": "keep" },
+    { "type": "key", "target": "dialog", "key": "Backtab" },
+    { "type": "key", "target": "dialog", "key": "Backtab" },
+    { "type": "expect", "observable": "focus", "equals": "remove" }
+  ]
+}
