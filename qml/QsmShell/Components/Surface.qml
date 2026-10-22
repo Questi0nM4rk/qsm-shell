@@ -11,8 +11,9 @@ import qs.QsmShell.Style
 //
 // `pressed` is for bodies that cannot grow (rows, text); a control that grows
 // through StateLayer leaves it false. `contentColor` is what text and glyphs
-// on this body wear: accent while selected, the text role otherwise, dimmed
-// with the body. Hosts read it and never assign it.
+// on this body wear: accent while selected (held at `contrastText` on the
+// lifted fill), the text role otherwise, dimmed with the body. Hosts read it
+// and never assign it.
 Rectangle {
     id: root
 
@@ -21,12 +22,19 @@ Rectangle {
     property bool hovered: false
     property bool pressed: false
     property bool selected: false
-    // A bare Surface is a finished body, not a square: the room's body radius.
-    radius: Style.radiusBody
     // The wall this body sits flush against, "left", "right", "top" or
     // "bottom": the two corners on that side go square and the others keep
     // `radius`. A rail cell against the frame must not round into the wall.
     property string snapEdge: ""
+
+    // A bare Surface is a finished body, not a square: the room's body radius.
+    radius: Style.radiusBody
+
+    readonly property color _fill: Style.tone(root.base, root.hovered, root.pressed, root.selected, root.enabled, root.accent)
+    property color contentColor: root.enabled
+        ? (root.selected ? Style.legible(root.accent, root._fill) : Style.text)
+        : Style.disabled(root.selected ? root.accent : Style.text)
+
     readonly property bool _edgeKnown: ["", "left", "right", "top", "bottom"].includes(snapEdge)
     on_EdgeKnownChanged: _checkEdge()
     Component.onCompleted: _checkEdge()
@@ -35,10 +43,6 @@ Rectangle {
             console.error(`Surface: unknown snapEdge "${snapEdge}" -- expected left, right, top, bottom or ""`);
     }
 
-    property color contentColor: root.enabled
-        ? (root.selected ? root.accent : Style.text)
-        : Style.disabled(root.selected ? root.accent : Style.text)
-
     // Each corner names its radius outright: a corner assigned -1 rendered
     // square, so every Surface lost its rounding.
     topLeftRadius: root.snapEdge === "left" || root.snapEdge === "top" ? 0 : root.radius
@@ -46,7 +50,7 @@ Rectangle {
     bottomLeftRadius: root.snapEdge === "left" || root.snapEdge === "bottom" ? 0 : root.radius
     bottomRightRadius: root.snapEdge === "right" || root.snapEdge === "bottom" ? 0 : root.radius
 
-    color: Style.tone(root.base, root.hovered, root.pressed, root.selected, root.enabled, root.accent)
+    color: root._fill
 
     Behavior on color {
         ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
