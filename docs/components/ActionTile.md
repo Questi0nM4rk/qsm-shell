@@ -38,3 +38,5 @@ At md, with tiles 8 px apart, hover grows the body 2.4 px per side (the cap; 3.2
 | `textOnPrimary` on selected `accent` | 8.87:1 |
 | `textOnPrimary` on armed fill, rendered | 9.21:1 |
 | `surface` on the scene ground, rendered | 1.50:1 |
+
+Every size's target is the tile (`drive geom target`: 56 x 44 at xs, 24 px floor passed) and tiles in a set keep 8 px between them at rest, 16 px before the destructive group.

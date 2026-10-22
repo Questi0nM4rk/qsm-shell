@@ -28,3 +28,5 @@ not designed: a label, loading, a toggled state and menus; Capsule, Segmented or
 | lg | 48 | 24 | 49.6 | 46.4 | 59.2 | 15.79:1 |
 
 Hover grows the disc 0.8 px per side (one device pixel), a press pulls it in 0.8 px, and the ring keeps 2.4 px of gap and 2.4 px of stroke outside it throughout. Hovered, the glyph reads 8.03:1 on the disc. The disc is 1.97:1 on the ground; it is a hover answer, not a boundary. The 24 px xs box meets the 24 px pointer floor of WCAG 2.5.8 at its edge.
+
+The hover zone measured from pixels (an 8 px pointer grid at md) is the 40 x 40 box: no halo, no gap. Every size's target passes the 24 px floor (`drive geom target`: 24 x 24 at xs) and the glyph is centred in its box to 0 px on both axes.
