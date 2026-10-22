@@ -18,11 +18,19 @@ Rectangle {
     // 0..1. Ignored while `indeterminate`.
     property real value: 0
     property bool indeterminate: false
-    property color fill: Style.accent
+    property color fill: Style.primary
     property color trackColor: Style.overlay
     property real thickness: Style.stroke(Style.trackThickness, root)
+    property string accessibleName: ""
 
     readonly property real _fraction: Math.max(0, Math.min(1, value))
+    // The band is a share of the track: long enough to read as motion on a
+    // short bar, short enough to read as "somewhere in it" on a long one.
+    readonly property real _bandShare: 0.3
+    readonly property color _paintedFill: enabled ? fill : Style.disabled(fill)
+    // Unknown work is only shown while there is work: a disabled bar is a
+    // still, dimmed track, never a band that keeps travelling.
+    readonly property bool _sweeping: indeterminate && enabled
 
     implicitHeight: thickness
     radius: Style.radiusPill
@@ -30,8 +38,15 @@ Rectangle {
     color: enabled ? trackColor : Style.disabled(trackColor)
     clip: true
 
+    // A bar with no total reports no value, so a screen reader announces the
+    // work and, when there is a total, the percentage.
+    Accessible.role: Accessible.ProgressBar
+    Accessible.name: root.accessibleName
+    Accessible.description: root.indeterminate ? "" : Math.round(root._fraction * 100) + "%"
+
     // Determinate: a lead that grows from the start edge.
     Rectangle {
+        objectName: "progressFill"
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         visible: !root.indeterminate
@@ -39,7 +54,7 @@ Rectangle {
         height: parent.height
         radius: parent.radius
         antialiasing: false
-        color: root.enabled ? root.fill : Style.disabled(root.fill)
+        color: root._paintedFill
 
         // Progress that snaps between readings reads as jitter rather than as
         // movement; it eases at both ends because neither end is an arrival.
@@ -50,18 +65,17 @@ Rectangle {
         }
     }
 
-    // Indeterminate: a short band crossing an otherwise empty track. The band
-    // is 30% of the track: long enough to read as motion on a short bar,
-    // short enough to read as "somewhere in it" on a long one.
+    // Indeterminate: a short band crossing an otherwise empty track.
     Rectangle {
         id: sweep
-        visible: root.indeterminate
+        objectName: "progressSweep"
+        visible: root._sweeping
         y: 0
-        width: parent.width * 0.3
+        width: parent.width * root._bandShare
         height: parent.height
         radius: parent.radius
         antialiasing: false
-        color: root.enabled ? root.fill : Style.disabled(root.fill)
+        color: root._paintedFill
 
         XAnimator {
             target: sweep
@@ -72,7 +86,7 @@ Rectangle {
             // Eased at both ends: a band at constant speed reads as a
             // conveyor belt, which suggests throughput rather than waiting.
             easing.type: Motion.moveEasing
-            running: root.indeterminate && root.visible
+            running: root._sweeping && root.visible
         }
     }
 }
