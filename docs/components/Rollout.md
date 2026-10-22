@@ -32,7 +32,7 @@ verification.
   comes from the host, with `Style.frameThickness` fallback and explicit inset
   overrides. Negative `edgeInset` selects automatic depth; a nonnegative value
   overrides both axes, while explicit `edgeInsetH`/`edgeInsetV` override one.
-   `padding` insets the full-size content slot. `deformScale` and `settleContent`
+   `padding` insets the full-size content slot. `radius` is the free corners' radius (default `Style.rolloutRadius`); a compact rollout may take a smaller one, and its bodies stay concentric when `radius` minus `padding` equals `Style.radiusBody`. `deformScale` and `settleContent`
    apply only to detached fullscreen compatibility, never attached geometry.
 - **Content:** default slot plus readonly `contentItem` access. Full body size
   never derives from clipped children. Content is stationary relative to its

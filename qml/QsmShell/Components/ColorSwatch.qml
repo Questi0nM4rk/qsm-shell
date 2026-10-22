@@ -42,6 +42,9 @@ Item {
     // The painted face's square side. The layout footprint is the face
     // widened to the target floor, never the other way round.
     property real size: Style.size("ColorSwatch", "md")
+    // The smallest footprint and hit zone. A dense palette sets it to the
+    // pointer floor so a grid is as tight as its faces.
+    property real target: Style.swatchTarget
     property bool selected: false
     property bool focused: root.activeFocus
 
@@ -165,8 +168,8 @@ Item {
     // The TARGET: the layout footprint, never below the floor, so palette
     // siblings never receive overlapping hit zones. The face stays `size`
     // and sits centred inside it.
-    implicitWidth: Math.max(size, Style.swatchTarget)
-    implicitHeight: Math.max(size, Style.swatchTarget)
+    implicitWidth: Math.max(size, target)
+    implicitHeight: Math.max(size, target)
 
     // The FACE: the alpha check with the sample composited over it, masked to
     // the swatch's own corner, plus the ring and the reading. Hover and press

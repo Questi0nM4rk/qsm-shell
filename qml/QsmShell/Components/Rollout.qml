@@ -58,6 +58,10 @@ Item {
     property real edgeInsetV: edgeInset >= 0 ? edgeInset
         : (host?.edge ?? Style.frameThickness)
     property real padding: 0
+    // The free corners' radius. A compact rollout may take a smaller one than
+    // the shell's; the bodies inside it stay concentric when this minus
+    // `padding` equals `Style.radiusBody`.
+    property real radius: Style.rolloutRadius
     required property real bodyWidth
     required property real bodyHeight
     // Allowlisted native-fullscreen surfaces use the same content but a
@@ -278,11 +282,11 @@ Item {
     }
 
     // Per-corner radius for the silhouette (CSS border-radius order: tl, tr,
-    // br, bl): rolloutRadius on free corners, 0 ONLY on the DECLARED
+    // br, bl): `radius` on free corners, 0 ONLY on the DECLARED
     // attached edge(s), CLAMPED to half the current size so a budding
     // window grows organically (caelestia clamps the same way).
     // Attached paint is the aperture; detached paint retains its full body.
-    readonly property real clampedRadius: Math.max(0, Math.min(Style.rolloutRadius,
+    readonly property real clampedRadius: Math.max(0, Math.min(root.radius,
         (_joined ? viewportRect.width : body.width) / 2,
         (_joined ? viewportRect.height : body.height) / 2))
     readonly property bool _childSpansCross: childRollout?.visible === true
