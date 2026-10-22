@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "key": "text-field-edit",
+  "target": { "story": "text-input" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "accessible-name", "equals": "Display name" },
+    { "type": "expect", "observable": "accessible-description", "equals": "Name" },
+    { "type": "expect", "observable": "focused", "equals": false },
+    { "type": "pointer", "target": "field", "event": "move", "x": 0.5, "y": 0.5 },
+    { "type": "expect", "observable": "hovered", "equals": true },
+    { "type": "pointer", "target": "field", "event": "click", "x": 0.5, "y": 0.5 },
+    { "type": "expect", "observable": "focused", "equals": true },
+    { "type": "expect", "observable": "keyboard-focused", "equals": false },
+    { "type": "action", "name": "select-all" },
+    { "type": "write", "target": "field", "text": "Grace Hopper" },
+    { "type": "expectEvent", "event": "edited", "origin": "component" },
+    { "type": "expect", "observable": "text", "equals": "Grace Hopper" },
+    { "type": "key", "target": "field", "key": "Enter" },
+    { "type": "expectEvent", "event": "accepted", "origin": "component" },
+    { "type": "expect", "observable": "accepted", "equals": 1 },
+    { "type": "key", "target": "field", "key": "Escape" },
+    { "type": "expectEvent", "event": "escaped", "origin": "component" },
+    { "type": "expect", "observable": "escaped", "equals": 1 },
+    { "type": "control", "group": "mode", "option": "read-only" },
+    { "type": "expect", "observable": "can-clear", "equals": false },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "expect", "observable": "can-accept", "equals": false },
+    { "type": "expect", "observable": "focused", "equals": false }
+  ]
+}

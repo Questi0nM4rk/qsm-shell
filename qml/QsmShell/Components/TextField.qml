@@ -114,6 +114,8 @@ T.Control {
     // the input latches `_pointerFocus` until the focus leaves.
     property bool _pointerFocus: false
     onFocusedChanged: if (!root.focused) root._pointerFocus = false
+    // The ring is showing: focus that did not come from the pointer.
+    readonly property bool keyboardFocused: root.focused && !root._pointerFocus
 
     // ── actions: the one route for pointer, keyboard and menus ──────────
     // The one semantic accept entry point: Return/Enter, the Accept action and
@@ -180,6 +182,17 @@ T.Control {
     // below, so a caller reaching for the public `forceActiveFocus()` gets a
     // caret rather than a control that swallowed the keyboard.
     focusPolicy: Qt.NoFocus
+
+    // A screen reader meets the INPUT, the item that holds the focus; the frame
+    // is only its box. Measured through AT-SPI: the input alone is in the tree
+    // (role "text", "password text" for a password), and its name and
+    // description were empty, so the field was announced as a nameless edit.
+    // The name and description a host or `Field` sets on this frame
+    // (`Accessible.name: ...`) are read by the input, and the frame steps out
+    // of the tree so the field is one node, not a named wrapper around an
+    // unnamed one. Qt has no invalid-entry state to set, so a failure is spoken
+    // through the description (`Field` puts its error there).
+    Accessible.ignored: true
 
     background: Surface {
         objectName: "textFieldSurface"
@@ -289,7 +302,9 @@ T.Control {
         Prose {
             id: placeholder
             anchors.fill: parent
-            visible: input.length === 0
+            // A composition in progress (a dead key, an input method) has no
+            // text yet but is not an empty field.
+            visible: input.length === 0 && input.preeditText.length === 0
             role: "label"
             muted: true
             // `muted` already names the grey; the disabled blend is the same
@@ -310,6 +325,15 @@ T.Control {
             // focusable thing here, so the tab stop lives on it -- it is
             // skipped automatically while disabled.
             activeFocusOnTab: true
+            Accessible.name: root.Accessible.name
+            // The placeholder describes the field when nothing better does.
+            // Qt withholds the accessible NAME of a password input (measured
+            // through AT-SPI on 6.12: "password text" with name "" whether one
+            // is set or not), so a password is named through its description.
+            Accessible.description: [
+                root._password ? root.Accessible.name : "",
+                root.Accessible.description !== "" ? root.Accessible.description : root.placeholder
+            ].filter(part => part !== "").join(", ")
 
             // Passive: sees the press that focuses the input without taking it.
             TapHandler {
@@ -394,6 +418,12 @@ T.Control {
         // steering never blinks out from under them mid-move. The blink period
         // is the platform's; a platform that turns blinking off reports zero
         // and the timer stays down.
+        //
+        // It never travels: it is where the text is. A travel animation chases
+        // every keystroke (measured at 60 fps while typing, the caret trailed
+        // the end of the text by up to 127 device px, about twelve characters,
+        // and caught up only after the last key), and typing is the one
+        // keyboard-driven action that happens all day.
         Rectangle {
             id: caret
             objectName: "textFieldCaret"
@@ -430,13 +460,6 @@ T.Control {
                 interval: caret.halfPeriod
                 onTriggered: caret.opacity = caret.opacity === 1 ? 0 : 1
             }
-
-            // A one-shot position animation is removed under reduced motion,
-            // not shortened.
-            Behavior on x {
-                enabled: !Style.reducedMotion
-                NumberAnimation { duration: Motion.press; easing.type: Motion.standardEasing }
-            }
         }
     }
 
@@ -458,7 +481,7 @@ T.Control {
         // The focus lives on the input, and a `T.Control` is not a focus
         // scope: measured, the frame's own `activeFocus` stays false while
         // the input holds it, so the layer's hosted default would never ring.
-        focused: root.focused && !root._pointerFocus
+        focused: root.keyboardFocused
         focusRadius: Style.radiusBody
         focusColor: root.failed ? Style.danger : Style.accent
     }
