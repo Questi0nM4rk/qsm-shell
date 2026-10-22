@@ -43,8 +43,22 @@ Item {
     implicitWidth: body.implicitWidth
     implicitHeight: body.implicitHeight
     focus: true
-    Keys.onLeftPressed: shiftMonth(-1)
-    Keys.onRightPressed: shiftMonth(1)
+    // Arrows and the page keys are one route with the buttons and the wheel,
+    // through one dispatcher. They reach here from the calendar itself or from
+    // a button inside it that has focus.
+    Keys.onPressed: event => {
+        const delta = event.key === Qt.Key_Left || event.key === Qt.Key_PageUp ? -1
+            : event.key === Qt.Key_Right || event.key === Qt.Key_PageDown ? 1 : 0;
+        if (delta === 0)
+            return;
+        event.accepted = true;
+        root.shiftMonth(delta);
+    }
+
+    // The month as a table of dated cells: a reader moves by cell and hears the
+    // full date, and which one is today, which the fill alone would not say.
+    Accessible.role: Accessible.Table
+    Accessible.name: Qt.formatDate(root.shown, "MMMM yyyy")
 
     ColumnLayout {
         id: body
@@ -66,7 +80,17 @@ Item {
             columnSpacing: Style.space1
             Repeater {
                 model: 7
-                Prose { required property int index; Layout.fillWidth: true; Layout.preferredHeight: Style.rhythm(implicitHeight); horizontalAlignment: Text.AlignHCenter; role: "reading"; muted: true; text: Qt.locale().standaloneDayName(index + 1, Locale.ShortFormat) }
+                Prose {
+                    required property int index
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Style.rhythm(implicitHeight)
+                    horizontalAlignment: Text.AlignHCenter
+                    role: "reading"
+                    muted: true
+                    text: Qt.locale().standaloneDayName(index + 1, Locale.ShortFormat)
+                    Accessible.role: Accessible.ColumnHeader
+                    Accessible.name: Qt.locale().standaloneDayName(index + 1, Locale.LongFormat)
+                }
             }
             Repeater {
                 model: 42
@@ -81,9 +105,13 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredWidth: root._cell
                     Layout.preferredHeight: root._cell
-                    Rectangle { anchors.centerIn: parent; width: Math.min(root._cell, Style.space5); height: width; radius: Style.radiusPill; color: parent.isToday ? Style.accent : "transparent" }
+                    readonly property string dateName: Qt.formatDate(cellDate, "dddd d MMMM yyyy") + (isToday ? ", " + qsTr("today") : "")
+                    Accessible.role: Accessible.Cell
+                    Accessible.name: dateName
+                    Rectangle { anchors.centerIn: parent; visible: parent.isToday; width: Math.min(root._cell, Style.space5); height: width; radius: Style.radiusPill; color: Style.accent }
                     Prose {
                         anchors.centerIn: parent
+                        Accessible.ignored: true
                         role: "reading"
                         font.weight: parent.isToday ? Style.weightBold : Style.weightRegular
                         text: parent.cellDate.getDate()

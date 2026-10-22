@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 
 import qs.QsmShell.Components
@@ -8,6 +10,7 @@ Item {
     property string variant: ""
     property var eventRecorder: null
     property string todayChoice: "this-month"
+    property string preset: "md"
     property int shifts: 0
     property int lastDelta: 0
 
@@ -27,6 +30,7 @@ Item {
 
         shown: new Date(2026, 7, 1)
         today: root.today
+        size: root.preset
 
         onMonthShifted: delta => {
             root.shifts++
@@ -40,17 +44,49 @@ Item {
             { label: "before", set: { todayChoice: "before" } },
             { label: "this-month", set: { todayChoice: "this-month" } },
             { label: "after", set: { todayChoice: "after" } }
+        ] },
+        { label: "size", options: [
+            { label: "sm", set: { preset: "sm" } },
+            { label: "md", set: { preset: "md" } }
         ] }
     ]
+
+    // The calendar's own parts, found by what they are: a button by its
+    // objectName, a day cell by the date it carries.
+    function descendants(item: Item): var {
+        return Array.from(item.children).reduce((all, child) => all.concat([child], root.descendants(child)), [])
+    }
+    function button(name: string): Item {
+        return root.descendants(calendar).find(item => item.objectName === name) ?? null
+    }
+    function cells(): var {
+        return root.descendants(calendar).filter(item => item.cellDate !== undefined)
+    }
 
     readonly property var integration: ({
         events: ["month-shifted"],
         actions: ["shift-previous", "shift-next"],
+        targets: ({
+            calendar: () => calendar,
+            scene: () => root,
+            previous: () => root.button("prevMonth"),
+            next: () => root.button("nextMonth")
+        }),
         observables: {
             shown: () => Qt.formatDate(calendar.shown, "yyyy-MM"),
             "today-marker": () => Qt.formatDate(calendar.today, "yyyy-MM-dd"),
             shifts: () => root.shifts,
-            "last-delta": () => root.lastDelta
+            "last-delta": () => root.lastDelta,
+            "accessible-name": () => calendar.Accessible.name,
+            "cell-count": () => root.cells().length,
+            // Exactly the marked day says it is today.
+            "today-announced": () => {
+                const all = root.cells()
+                const said = all.filter(cell => cell.dateName.endsWith(qsTr("today")))
+                return said.length === all.filter(cell => cell.isToday).length
+                    && said.every(cell => cell.isToday)
+            },
+            "cell-size": () => root.cells()[0].width
         },
         runAction: name => {
             if (name === "shift-previous") { calendar.shiftMonth(-1); return true }
