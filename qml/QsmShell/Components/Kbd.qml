@@ -28,9 +28,11 @@ RowLayout {
     // of caps is harder to scan than the text it replaced.
     property real minCapWidth: Style.space5
 
-    // Every width below is a whole number of device pixels, so no cap edge
-    // lands between two of them.
-    spacing: Style.snap(Style.spaceTight, root)
+    // Qt Layouts place a child on a whole LOGICAL pixel, and at a ratio of 1.25
+    // only a multiple of 4 is also a whole device pixel. So every width here is
+    // a step of the 4 px rhythm, and the caps and joins touch: the join's own
+    // slot carries the air around its "+".
+    spacing: 0
     clip: root.width < root.implicitWidth
 
     // The whole combo is one name; the caps and joins are not announced one by one.
@@ -49,20 +51,22 @@ RowLayout {
             // Shrinks with the host's width, never grows past its own.
             Layout.fillWidth: true
             Layout.maximumWidth: part.implicitWidth
-            spacing: root.spacing
+            spacing: 0
             Accessible.ignored: true
 
             Prose {
                 visible: part.index > 0
-                // The join keeps its width; only caps give way.
-                Layout.preferredWidth: Style.snap(implicitWidth, this)
-                Layout.minimumWidth: Layout.preferredWidth
+                // The join keeps its slot; only caps give way.
+                Layout.preferredWidth: Style.space4
+                Layout.minimumWidth: Style.space4
+                horizontalAlignment: Text.AlignHCenter
                 role: "metadata"
                 text: "+"
             }
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredWidth: Style.snap(Math.max(root.minCapWidth, cap.implicitWidth + Style.space2), this)
+                // The text and its insets, up to the next step of the rhythm.
+                Layout.preferredWidth: Math.ceil(Math.max(root.minCapWidth, cap.implicitWidth + Style.space2) / Style.space1) * Style.space1
                 Layout.maximumWidth: Layout.preferredWidth
                 // The floor leaves room for an ellipsis and the cap's insets.
                 Layout.minimumWidth: Math.min(Layout.preferredWidth, Style.space5)

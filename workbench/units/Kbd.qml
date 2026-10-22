@@ -41,6 +41,17 @@ Rectangle {
         ] }
     ]
 
+    // Every Text under `item` that Qt had to elide.
+    function _elided(item: Item): int {
+        let count = 0
+        for (const child of item.children) {
+            if (child.truncated === true)
+                count++
+            count += root._elided(child)
+        }
+        return count
+    }
+
     readonly property var integration: ({
         events: [],
         actions: [],
@@ -49,6 +60,8 @@ Rectangle {
             "kbd-name": () => caps.Accessible.name,
             "kbd-width": () => Math.round(caps.width),
             natural: () => Math.round(caps.width) === Math.round(caps.implicitWidth),
+            // How many caps show an ellipsis instead of their text.
+            elided: () => root._elided(caps),
             // How far the caps reach past the Kbd's own width, whether any are cut there, and whether it clips.
             overflow: () => Math.max(0, Math.round(caps.childrenRect.x + caps.childrenRect.width - caps.width)),
             cut: () => caps.childrenRect.x + caps.childrenRect.width - caps.width > 0.5,

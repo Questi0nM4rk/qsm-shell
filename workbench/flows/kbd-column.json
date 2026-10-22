@@ -7,6 +7,7 @@
     { "type": "expect", "observable": "combo", "equals": "SUPER + SHIFT + Q" },
     { "type": "expect", "observable": "kbd-name", "equals": "SUPER + SHIFT + Q" },
     { "type": "await", "observable": "natural", "equals": true },
+    { "type": "expect", "observable": "elided", "equals": 0 },
     { "type": "expect", "observable": "cut", "equals": false },
     { "type": "expect", "observable": "clipped", "equals": false },
     { "type": "control", "group": "column", "option": "narrow" },
@@ -17,15 +18,22 @@
     { "type": "await", "observable": "cut", "equals": true },
     { "type": "expect", "observable": "clipped", "equals": true },
     { "type": "control", "group": "column", "option": "natural" },
+    { "type": "await", "observable": "natural", "equals": true },
+    { "type": "await", "observable": "elided", "equals": 0 },
+    { "type": "expect", "observable": "cut", "equals": false },
     { "type": "control", "group": "combo", "option": "long" },
     { "type": "expect", "observable": "kbd-name", "equals": "SUPER + CTRL + ALT + SHIFT + PRINTSCREEN + ENTER" },
     { "type": "await", "observable": "natural", "equals": true },
+    { "type": "expect", "observable": "elided", "equals": 0 },
     { "type": "expect", "observable": "cut", "equals": false },
     { "type": "control", "group": "column", "option": "narrow" },
     { "type": "await", "observable": "cut", "equals": true },
     { "type": "expect", "observable": "clipped", "equals": true },
+    { "type": "control", "group": "column", "option": "natural" },
+    { "type": "await", "observable": "elided", "equals": 0 },
     { "type": "control", "group": "combo", "option": "short" },
     { "type": "expect", "observable": "kbd-name", "equals": "SUPER + Q" },
-    { "type": "await", "observable": "cut", "equals": false }
+    { "type": "await", "observable": "cut", "equals": false },
+    { "type": "expect", "observable": "elided", "equals": 0 }
   ]
 }
