@@ -85,6 +85,9 @@ QtObject {
     // theme that needs more states it; every derived strength below measures
     // against it.
     readonly property real contrastText: backend?.contrastText ?? Tokens.contrastText
+    // The contrast a graphic that identifies a control keeps against what it
+    // sits on (WCAG 1.4.11). A colour that falls short of it needs an edge.
+    readonly property real contrastGraphic: backend?.contrastGraphic ?? Tokens.contrastGraphic
     // "Not the one you are looking at." A list recedes its non-current rows so
     // the current one is the only thing at full strength; it is a different
     // number from `opacityDisabled`, because receding says "later" and

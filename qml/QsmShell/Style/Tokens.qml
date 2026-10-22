@@ -21,6 +21,7 @@ QtObject {
     readonly property color colorCheckerLight: "#ffffff"
     readonly property color colorCheckerDark: "#c0c0c0"
     readonly property real contrastText: 4.5
+    readonly property int contrastGraphic: 3
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
