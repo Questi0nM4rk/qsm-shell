@@ -5,9 +5,13 @@
   "steps": [
     { "type": "reset" },
     { "type": "expect", "observable": "visible-children", "equals": 2 },
+    { "type": "pointer", "target": "action", "event": "click", "x": 0.5, "y": 0.5 },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
     { "type": "control", "group": "header", "option": "untitled" },
     { "type": "expect", "observable": "visible-children", "equals": 2 },
     { "type": "action", "name": "activate" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
+    { "type": "pointer", "target": "action", "event": "click", "x": 0.5, "y": 0.5 },
     { "type": "expectEvent", "event": "clicked", "origin": "component" },
     { "type": "control", "group": "header", "option": "bare" },
     { "type": "expect", "observable": "visible-children", "equals": 1 }

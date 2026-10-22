@@ -57,6 +57,7 @@ Rectangle {
     readonly property var integration: ({
         events: ["clicked"],
         actions: ["activate"],
+        targets: ({ action: () => root.headingAction }),
         observables: {
             // The header hides itself, so what the group shows is measured, not
             // derived from the control that asked for it.

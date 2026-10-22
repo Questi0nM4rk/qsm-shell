@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "key": "scroll-area-wheel",
+  "target": { "story": "scroll-short" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "pointer", "target": "viewport", "event": "wheel", "dx": 0, "dy": -120 },
+    { "type": "await", "observable": "at-start", "equals": false },
+    { "type": "control", "group": "axis", "option": "horizontal" },
+    { "type": "control", "group": "viewport", "option": "full" },
+    { "type": "expect", "observable": "position", "equals": 0 },
+    { "type": "pointer", "target": "viewport", "event": "wheel", "dx": 0, "dy": -120 },
+    { "type": "expect", "observable": "position", "equals": 40 },
+    { "type": "pointer", "target": "viewport", "event": "wheel", "dx": 0, "dy": -240 },
+    { "type": "expect", "observable": "position", "equals": 120 },
+    { "type": "pointer", "target": "viewport", "event": "wheel", "dx": 0, "dy": 120 },
+    { "type": "expect", "observable": "position", "equals": 80 },
+    { "type": "action", "name": "to-start" },
+    { "type": "pointer", "target": "viewport", "event": "wheel", "dx": 0, "dy": 120 },
+    { "type": "expect", "observable": "position", "equals": 0 },
+    { "type": "action", "name": "to-end" },
+    { "type": "pointer", "target": "viewport", "event": "wheel", "dx": 0, "dy": -120 },
+    { "type": "expect", "observable": "at-end", "equals": true }
+  ]
+}

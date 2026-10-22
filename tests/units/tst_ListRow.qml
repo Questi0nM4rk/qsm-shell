@@ -207,7 +207,7 @@ TestCase {
     function test_the_row_itself_has_no_keyboard_route() {
         plainClicked.clear();
         plainRow.forceActiveFocus();
-        compare(plainRow.focused, true, "the row did not take keyboard focus");
+        compare(plainRow.activeFocus, true, "the row did not take active focus");
 
         keyClick(Qt.Key_Return);
         keyClick(Qt.Key_Space);

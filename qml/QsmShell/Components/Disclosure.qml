@@ -27,7 +27,8 @@ ColumnLayout {
     // A count or a state on the closed heading, so the group says something
     // about its contents without being opened.
     property string badge: ""
-    property bool focused: heading.visualFocus
+    // Keyboard focus on the heading, which is when its ring shows.
+    readonly property bool focused: heading.visualFocus
 
     default property alias content: bodyHost.data
 
@@ -51,9 +52,9 @@ ColumnLayout {
         onClicked: root.toggle()
         Accessible.role: Accessible.Button
         Accessible.name: root.title
-        Accessible.checkable: true
-        Accessible.checked: root.expanded
-        Accessible.description: root.expanded ? "Expanded" : "Collapsed"
+        Accessible.description: root.badge
+        Accessible.expandable: true
+        Accessible.expanded: root.expanded
         Accessible.onPressAction: root.toggle()
         Keys.onReturnPressed: event => { event.accepted = true; root.toggle() }
         Keys.onEnterPressed: event => { event.accepted = true; root.toggle() }
@@ -72,8 +73,13 @@ ColumnLayout {
             pressScale: Motion.pressScale
         }
 
+        // The content sits a step in from the body's edges, so the chevron and
+        // the badge are not pressed against the corners the disc rounds.
         RowLayout {
+            id: headingRow
             anchors.fill: parent
+            anchors.leftMargin: Style.space2
+            anchors.rightMargin: Style.space2
             spacing: Style.space2
 
             SvgIcon {
@@ -83,7 +89,10 @@ ColumnLayout {
                 color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                 rotation: root.expanded ? 90 : 0
 
+                // A toggle from the keyboard (the ring is showing) snaps: an
+                // action the hand repeats gets no animation.
                 Behavior on rotation {
+                    enabled: !Style.reducedMotion && !root.focused
                     NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
                 }
             }
@@ -114,7 +123,8 @@ ColumnLayout {
         id: bodyHost
         Layout.fillWidth: true
         // The body hangs from the title's left edge, wherever the icon puts it.
-        Layout.leftMargin: titleLabel.x
+        Layout.leftMargin: headingRow.anchors.leftMargin + titleLabel.x
+        Layout.rightMargin: headingRow.anchors.rightMargin
         Layout.topMargin: Style.space2
         visible: root.expanded
         spacing: Style.space1

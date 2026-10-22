@@ -365,6 +365,23 @@
       "docs": "docs/components/ScrollArea.md",
       "unit": "workbench/units/ScrollArea.qml"
     },
+    "scroll-short": {
+      "component": "scroll",
+      "variant": "short",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ScrollArea / Three rows",
+      "description": "Scrollable content in a viewport three rows tall; the edge fades stay inside it.",
+      "tags": [
+        "layout",
+        "scroll"
+      ],
+      "source": "qml/QsmShell/Components/ScrollArea.qml",
+      "docs": "docs/components/ScrollArea.md",
+      "unit": "workbench/units/ScrollArea.qml"
+    },
     "field": {
       "component": "field",
       "variant": "error",
@@ -1086,6 +1103,23 @@
       ],
       "title": "ScrollCue / Overflowing",
       "description": "Position cue attached to an overflowing list viewport.",
+      "tags": [
+        "scroll",
+        "layout"
+      ],
+      "source": "qml/QsmShell/Components/ScrollCue.qml",
+      "docs": "docs/components/ScrollCue.md",
+      "unit": "workbench/units/ScrollCue.qml"
+    },
+    "scroll-cue-short": {
+      "component": "scroll-cue",
+      "variant": "short",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ScrollCue / Three rows",
+      "description": "Position cue on a list viewport three rows tall; the edge fades stay inside it.",
       "tags": [
         "scroll",
         "layout"

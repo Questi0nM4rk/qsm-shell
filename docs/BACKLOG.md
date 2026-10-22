@@ -28,7 +28,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   implementation item.
 - NotificationCenter: live notification action targets, spoken output and
   appearance await owner review.
-- R2/R3: Slider's unit does not answer label clicks; horizontal ScrollCue and long
+- R2/R3: Slider's unit does not answer label clicks; long
   Kbd cases are missing from their review controls. Extend existing units with
   their owning milestone, not a new catalog or flow suite.
 - R4: include startup empty/one-point Sparkline data and Divider cases;

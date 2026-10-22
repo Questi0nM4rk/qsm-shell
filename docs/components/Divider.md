@@ -36,3 +36,7 @@ meaning).
 - Lightness alone separates containers (AGENTS.md, surface ladder). Whether a separator between rows is
   content or a forbidden line is the owner's ruling; the library draws it as content.
 - Vertical orientation is deferred: a rotated item is the only route to a vertical rule.
+
+## Measured
+
+Unit `divider` in a headless slot at scale 1.25: the rule is 0.8 logical px, which paints as exactly one device-pixel row (`#5e5568` on band `#271e30`, 2.26:1), centred in its item and inset 12 px each side in the surface case.

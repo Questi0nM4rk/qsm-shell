@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "key": "disclosure-pointer",
+  "target": { "story": "disclosure" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "expanded", "equals": true },
+    { "type": "pointer", "target": "disclosure", "event": "click", "x": 0.4, "y": 0.2 },
+    { "type": "expectEvent", "event": "toggled" },
+    { "type": "expect", "observable": "expanded", "equals": false },
+    { "type": "expect", "observable": "focused", "equals": false },
+    { "type": "key", "key": "Space", "target": "disclosure" },
+    { "type": "expect", "observable": "expanded", "equals": true },
+    { "type": "key", "key": "Enter", "target": "disclosure" },
+    { "type": "expect", "observable": "expanded", "equals": false },
+    { "type": "pointer", "target": "disclosure", "event": "click", "x": 0.97, "y": 0.2 },
+    { "type": "expect", "observable": "expanded", "equals": true },
+    { "type": "expect", "observable": "toggles", "equals": 4 },
+    { "type": "pointer", "target": "disclosure", "event": "click", "x": 0.4, "y": 0.2 },
+    { "type": "expect", "observable": "expanded", "equals": false },
+    { "type": "expect", "observable": "toggles", "equals": 5 }
+  ]
+}

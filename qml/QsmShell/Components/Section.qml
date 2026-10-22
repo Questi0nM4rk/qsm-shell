@@ -35,6 +35,7 @@ ColumnLayout {
             Layout.fillWidth: true
             role: "section"
             text: root.title
+            Accessible.role: Accessible.Heading
         }
         RowLayout {
             id: actionHost

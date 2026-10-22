@@ -24,6 +24,7 @@ Rectangle {
         spacing: Style.space1
 
         KeyValueRow {
+            id: first
             width: parent.width
             icon: root.glyph
             label: root.batteryLabel
@@ -31,6 +32,7 @@ Rectangle {
             valueColor: root.readingColor
         }
         KeyValueRow {
+            id: second
             width: parent.width
             label: "State"
             value: root.status
@@ -55,4 +57,16 @@ Rectangle {
             { label: "danger", set: { readingColor: Style.danger } }
         ] }
     ]
+
+    readonly property var integration: ({
+        events: [],
+        actions: [],
+        observables: {
+            "glyph-shown": () => first.icon.length > 0,
+            "row-height": () => first.height,
+            "plain-row-height": () => second.height,
+            "row-width": () => first.width,
+            value: () => first.value
+        }
+    })
 }
