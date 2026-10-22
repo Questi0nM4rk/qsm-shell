@@ -6,6 +6,7 @@ actions: none of its own; the consumer's recovery control rides the default `act
 pointer: none on the message itself; the slotted control keeps its own target and wheel passes through.
 keyboard: none on the message itself; the slotted control keeps its own tab stop and keys.
 screen reader: a group named by the title and described by the detail; the glyph is decoration and the slotted action names itself.
+reference: shadcn/ui's Empty keeps media, title and description in one header apart from the content that holds the action (https://ui.shadcn.com/docs/components/empty); the spacing follows that grouping.
 size: a column never wider than `controlWidth`, so a long title elides and a long detail wraps instead of pushing past the surface that holds it (a host sets no width). Spacing groups by proximity: glyph to title `space3`, title to detail `space1`, detail to action `space4`.
 tokens: space1, space3, space4, space2, iconLg, controlWidth, textMuted and Prose; no local colours or measurements.
 motion: none; an empty surface never implies interactivity through motion.
