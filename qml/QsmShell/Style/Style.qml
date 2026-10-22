@@ -446,22 +446,11 @@ QtObject {
         return Math.max(1, Math.round(n * dpr)) / dpr;
     }
 
-    // A position on the device grid, in the window's own ratio like `stroke`.
-    // Centring leaves half of an odd remainder, and at a fractional ratio that
-    // half lands between two device pixels, so every edge the item paints is
-    // soft. `snapUp` is for a size built from fractional line heights: it
-    // never loses the fraction, and a hundredth of a device pixel is float
-    // noise rather than a reason to grow a whole one.
-    //
-    //     x: Style.snap((parent.width - width) / 2, root)
-    //
-    function snap(px: real, item: Item): real {
-        const dpr = item?.Window.window?.devicePixelRatio ?? 1;
-        return Math.round(px * dpr) / dpr;
-    }
-
+    // `snapUp` is for a size built from fractional line heights: it never
+    // loses the fraction, and a hundredth of a device pixel is float noise
+    // rather than a reason to grow a whole one.
     function snapUp(px: real, item: Item): real {
-        const dpr = item?.Window.window?.devicePixelRatio ?? 1;
+        const dpr = root._ratio(item);
         return Math.ceil(px * dpr - 0.01) / dpr;
     }
 
