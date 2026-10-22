@@ -15,7 +15,7 @@ not designed: collapsing, selection or scrolling; use Disclosure, Menu or Scroll
 
 Unit `section` in a headless slot at scale 1.25, 380 px wide:
 
-- The heading row is as tall as its action (32 px with a `sm` Capsule, 70 px wide at the right edge); the title is 14 px, centred at y 9 of 32. Rows hang 4 px below it and 4 px apart (heading bottom 32, first row at 36).
+- The heading row is as tall as its action (32 px with a `sm` Capsule, 70 px wide at the right edge); the title is 14.4 px tall (18 device px, whole through Prose), centred at y 9 of 32 (a layout places it on a whole logical pixel). Rows hang 4 px below it and 4 px apart (heading bottom 32, first row at 36).
 - The action takes a native click (flow `section-header`, offscreen and in a window), also after the title is cleared; a group with no title and no action shows no heading and takes no space.
 - Hit zones: the action is the 70 x 32 px Capsule, above the 24 px floor; the title and the rows take no input.
 - The title is an `Accessible.Heading`; the group is a named `Accessible.Grouping`.
