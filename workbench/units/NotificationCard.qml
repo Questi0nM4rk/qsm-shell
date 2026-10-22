@@ -162,11 +162,14 @@ Rectangle {
 
     readonly property var integration: ({
         events: ["dismissed", "primary-triggered", "action-invoked", "expand-requested", "activated"],
-        actions: ["activate-primary", "dismiss", "first-action", "second-action"],
+        actions: ["focus", "activate-primary", "dismiss", "first-action", "second-action"],
         targets: ({
             card: () => card,
             scene: () => root
         }),
+        // Not mid-drag, not easing home, not opening: the card is where it rests.
+        idle: () => !card.dragActive && !card.expansionAnimating
+            && Math.abs(card.mapToItem(root, 0, 0).x - card.x) < 0.5,
         observables: {
             "primary-available": () => card.primaryActionAvailable,
             "primary-callback-count": () => root.callbackCount,
@@ -177,6 +180,8 @@ Rectangle {
             "fixture-outcome": () => root.outcome,
             expanded: () => card.expanded,
             hovered: () => card.hovered,
+            "dismiss-hovered": () => card.dismissHovered,
+            "dismiss-shown": () => card.dismissShown,
             pressed: () => card.primaryPressed,
             focused: () => card.activeFocus,
             archived: () => card.archived,
@@ -187,6 +192,11 @@ Rectangle {
             height: () => card.height
         },
         runAction: name => {
+            // The host grants the card keyboard focus, as a focus-capable popup host does.
+            if (name === "focus") {
+                card.forceActiveFocus()
+                return card.activeFocus
+            }
             if (name === "activate-primary")
                 return card.activatePrimary()
             if (name === "dismiss") {

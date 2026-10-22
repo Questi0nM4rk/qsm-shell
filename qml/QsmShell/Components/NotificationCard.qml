@@ -18,9 +18,9 @@ import qs.QsmShell.Style
 // (`appName`, `summary`). `urgency` is "low" | "normal" | "critical". `body`
 // is StyledText — the consumer is the one that sanitizes it before handing it
 // here. `archivedAt` present means the entry is a closed record: the card
-// shows its wall-clock time instead of a relative one and stops offering the
-// action row. `swatch`, present, is a colour the icon box shows AS the icon
-// instead of a fallback glyph — the card does not know or ask why.
+// shows its age and stops offering the action row. `swatch`, present, is a
+// colour the icon box shows AS the icon instead of a fallback glyph — the card
+// does not know or ask why.
 //
 // The card never mutates `entry` and never calls into anything outside
 // itself: hover is reported through `hovered`, an action press through
@@ -49,10 +49,11 @@ Item {
     // protocol's default action. The card owns the activation affordance only.
     property bool primaryActionEnabled: false
     property bool showDivider: false
-    // A list of cards opts in to bodied cards: each entry is its own
-    // `surface` body with a slight shadow, so neighbours never read as one
-    // run of text. The default stays boxless for the popup stack.
-    property bool bodied: false
+    // Each entry is its own `surface` body with a slight shadow, so neighbours
+    // never read as one run of text. False is the boxless row for a host that
+    // draws its own container: the list cursor is then a tick, and the host
+    // separates rows with `showDivider`.
+    property bool bodied: true
     // The bodied card's corner radius.
     property real bodyRadius: Style.radiusBody
     // Hover expands a popup, which nothing scrolls. Inside a scrolled list
@@ -61,9 +62,11 @@ Item {
     // (`expandRequested`), the rest of the card stays the card's action,
     // and an expanded body shows in full instead of scrolling inside itself.
     property bool expandOnHover: true
-    // The host says this entry has not been seen (a 6px accent dot by the
-    // app name) and whether a plain click on the body should report
-    // `activated` when there is no primary action to run.
+    // False when a heading above the card already names the app.
+    property bool showAppName: true
+    // The host says this entry has not been seen (a dot beside the app name)
+    // and whether a plain click on the body should report `activated` when
+    // there is no primary action to run.
     property bool unread: false
     property bool activatable: false
     // A list with its own cursor marks this card current: the accent tick
@@ -87,8 +90,11 @@ Item {
 
     readonly property bool verticalDrag: drag.active && Math.abs(drag.translation.y) > Math.abs(drag.translation.x)
     readonly property bool dragActive: drag.active
-    readonly property bool hovered: layer.hovered
-    readonly property bool primaryPressed: layer.pressed
+    // The pointer is anywhere over the card. It is read on the card itself:
+    // a handler on a layer stacked above another steals the hover from the one
+    // below, and the leading column and the dismiss button both sit above.
+    readonly property bool hovered: root.enabled && root.inputEnabled && cardHover.hovered
+    readonly property bool primaryPressed: root.pressZone === "body" && (root.primaryActionAvailable || root.activatable)
     readonly property bool expansionAnimating: expansionAnimation.running
     readonly property bool expanded: root.expansionFrozen ? root.frozenExpanded
         : root.alwaysExpanded || (root.expandOnHover && root.hovered) || root.hostExpanded || root._dragExpanded || (root.entry.paused ?? false)
@@ -113,9 +119,9 @@ Item {
         .filter(action => action.text.length > 0)
 
     Accessible.role: root.primaryActionAvailable ? Accessible.Button : Accessible.StaticText
-    Accessible.name: root.primaryActionAvailable
+    Accessible.name: (root.unread ? "Unread. " : "") + (root.primaryActionAvailable
         ? `${root.primaryActionLabel}: ${root.entry.summary}`
-        : `${root.entry.appName}: ${root.entry.summary}`
+        : `${root.entry.appName}: ${root.entry.summary}`)
     Accessible.description: String(root.entry.body ?? "")
     Accessible.onPressAction: root.activatePrimary()
 
@@ -209,11 +215,12 @@ Item {
     readonly property bool showsImage: !root.hasSwatch && iconImage.status === Image.Ready
     readonly property bool urgencyBadged: (root.hasSwatch || root.showsImage)
         && (root.entry.urgency === "critical" || root.entry.urgency === "low")
-    readonly property string iconName: root.entry.urgency === "critical" ? "alert-triangle"
-        : root.entry.urgency === "low" ? "moon"
-        : "bell"
-    // Urgency is carried by the glyph's shape first (triangle, moon, bell) and
+    // Urgency is carried by the glyph's shape first (triangle, bell, info) and
     // by its colour second: critical danger, low textMuted, normal plain text.
+    // The moon belongs to do-not-disturb alone.
+    readonly property string iconName: root.entry.urgency === "critical" ? "alert-triangle"
+        : root.entry.urgency === "low" ? "info"
+        : "bell"
     readonly property color glyphColor: root.entry.urgency === "critical" ? Style.danger
         : root.entry.urgency === "low" ? Style.textMuted
         : Style.text
@@ -259,6 +266,10 @@ Item {
     // height, and the text starts one gap past it.
     readonly property real pad: Style.space3
     readonly property real textColumn: Style.notificationTextColumn
+    // A body line sits on the 4px rhythm, and the expanded viewport is a whole
+    // number of lines so its last line is never cut through the middle.
+    readonly property real bodyLine: Style.rhythm(Style.textSm * Style.lineBody)
+    readonly property real bodyViewportHeight: Math.round(Style.notificationBodyViewportHeight / root.bodyLine) * root.bodyLine
     // A preview is as tall as its real lines; the token is the ceiling.
     readonly property real previewHeight: Math.min(Style.notificationPreviewHeight,
         root.pad + Style.iconLg + Style.space1 + bodyPreview.implicitHeight + root.pad)
@@ -266,7 +277,11 @@ Item {
             ? root.pad + Style.iconLg + Style.space1 + details.implicitHeight + root.pad
         : root.hasBody ? root.previewHeight
         : Style.notificationCollapsedHeight
-    readonly property bool leadHovered: leadLayer.hovered
+    readonly property bool leadHovered: leadHover.hovered
+    readonly property bool dismissHovered: dismissHover.hovered && dismissButton.visible
+    // The dismiss button takes the timestamp's place, so a card never changes
+    // width under the pointer. Keyboard focus reveals it too.
+    readonly property bool dismissShown: root.enabled && root.inputEnabled && (root.hovered || root.activeFocus)
 
     // A fixed reference instance (a preview, a list row re-entering from a
     // filter change) can skip the settle; a fresh arrival gets it.
@@ -296,14 +311,27 @@ Item {
         }
     }
 
+    // The words under the headline, shared by the preview and the full body.
+    component BodyText: Prose {
+        role: "body"
+        textFormat: Text.StyledText
+        color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+        lineHeight: root.bodyLine
+        lineHeightMode: Text.FixedHeight
+        // The card's description carries the body once.
+        Accessible.ignored: true
+    }
+
     Surface {
         id: body
         anchors.fill: parent
         visible: root.bodied
         radius: root.bodyRadius
         base: Style.surface
-        // Only a menu row takes the lift: a popup row answers hover by growing.
-        hovered: root.hovered && !root.expandOnHover
+        // A popup row answers hover by opening as well; the lift is the
+        // colour half of it, so a row with nothing more to show still says
+        // the pointer is on it.
+        hovered: root.hovered
         pressed: root.primaryPressed
         selected: root.selected
         enabled: root.enabled
@@ -370,6 +398,7 @@ Item {
                 anchors.fill: parent
                 visible: !root.leadHovered && root.showsImage
                 source: root.iconSource
+                sourceSize: Qt.size(width * 2, height * 2)
                 asynchronous: true
                 fillMode: Image.PreserveAspectFit
             }
@@ -383,16 +412,25 @@ Item {
             }
 
             // An image or swatch carries no urgency, so a critical or low
-            // entry keeps its glyph as a badge on the slot's corner.
-            SvgIcon {
+            // entry keeps its glyph as a badge on the slot's corner, on a disc
+            // of the card's own colour so it stands clear of what is under it.
+            Rectangle {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.rightMargin: -Style.spaceTight
-                anchors.bottomMargin: -Style.spaceTight
+                anchors.rightMargin: -Style.space1
+                anchors.bottomMargin: -Style.space1
+                width: Style.iconSm
+                height: width
+                radius: Style.radiusPill
                 visible: !root.leadHovered && root.urgencyBadged
-                name: root.iconName
-                size: Style.iconXs
-                color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+                color: root.bodied ? body.color : Style.band
+
+                SvgIcon {
+                    anchors.centerIn: parent
+                    name: root.iconName
+                    size: Style.iconXs
+                    color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+                }
             }
         }
 
@@ -410,6 +448,7 @@ Item {
             // and machine text.
             Prose {
                 id: appNameLabel
+                visible: root.showAppName
                 Layout.fillHeight: true
                 verticalAlignment: Text.AlignVCenter
                 role: "supporting"
@@ -423,7 +462,7 @@ Item {
                 height: width
                 radius: Style.radiusPill
                 color: Style.accent
-                Accessible.name: "unread"
+                Accessible.ignored: true
             }
             Prose {
                 Layout.fillWidth: true
@@ -431,24 +470,84 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 role: "title"
                 text: root.entry.summary
+                // A bodied card answers a press with its body; a boxless one has only its title.
                 color: !root.enabled ? Style.disabled(Style.text)
-                    : root.primaryPressed && root.primaryActionAvailable ? Style.accent : Style.text
+                    : root.primaryPressed && !root.bodied ? Style.accent : Style.text
             }
 
-            Prose {
-                role: "metadata"
-                technical: true
-                text: root.timestampText()
-                visible: text.length > 0
+            // The age, which the dismiss button replaces while the pointer is on
+            // the card; both take the one slot.
+            Item {
                 Layout.fillHeight: true
-                verticalAlignment: Text.AlignVCenter
-                Accessible.description: root.hasStamp
-                    ? Qt.formatDateTime(new Date(root.stampMs), "ddd d MMM hh:mm") : ""
-                color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+                Layout.preferredWidth: Math.ceil(Math.max(stamp.implicitWidth, Style.iconLg))
+
+                Prose {
+                    id: stamp
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "metadata"
+                    technical: true
+                    text: root.timestampText()
+                    opacity: root.dismissShown ? 0 : 1
+                    Accessible.description: root.hasStamp
+                        ? Qt.formatDateTime(new Date(root.stampMs), "ddd d MMM hh:mm") : ""
+                    color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                    }
+                }
+
+                // The same `dismiss()` as the swipe, the middle click and a
+                // host's Delete key; a disc one step above the card says it is
+                // pressable and the glyph is what it does.
+                Item {
+                    id: dismissButton
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Style.iconLg
+                    height: Style.iconLg
+                    opacity: root.dismissShown ? 1 : 0
+                    // Pressable the moment it is asked for, not once the fade has begun.
+                    visible: root.dismissShown || opacity > 0
+
+                    Accessible.role: Accessible.Button
+                    Accessible.name: "Dismiss"
+                    Accessible.onPressAction: root.dismiss()
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                    }
+
+                    Surface {
+                        anchors.fill: parent
+                        radius: Style.radiusPill
+                        base: Style.overlay
+                        hovered: root.dismissHovered
+                        pressed: root.pressZone === "dismiss"
+                        opacity: root.dismissHovered ? 1 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                        }
+                    }
+
+                    SvgIcon {
+                        anchors.centerIn: parent
+                        name: "x"
+                        size: Style.iconSm
+                        color: root.dismissHovered ? Style.text : Style.textMuted
+                    }
+
+                    HoverHandler {
+                        id: dismissHover
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                }
             }
         }
 
-        Text {
+        BodyText {
             id: bodyPreview
             anchors.left: headline.left
             anchors.right: headline.right
@@ -464,17 +563,8 @@ Item {
                 NumberAnimation { duration: Motion.fast; easing.type: Motion.emphasizedEasing }
             }
             text: root.entry.body ?? ""
-            textFormat: Text.StyledText
-            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
-            font.family: Style.fontFamily
-            font.pixelSize: Style.textSm
-            lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
-            lineHeightMode: Text.FixedHeight
-            wrapMode: Text.WordWrap
             maximumLineCount: root.previewLines
-            elide: Text.ElideRight
             clip: true
-            Accessible.role: Accessible.StaticText
         }
 
         ColumnLayout {
@@ -495,40 +585,35 @@ Item {
             Item {
                 id: bodyViewportHost
                 Layout.fillWidth: true
+                visible: root.hasBody
                 implicitHeight: root.expandOnHover
-                    ? Math.min(expandedContent.implicitHeight, Style.notificationBodyViewportHeight)
-                    : expandedContent.implicitHeight
+                    ? Math.min(bodyText.implicitHeight, root.bodyViewportHeight)
+                    : bodyText.implicitHeight
 
                 Flickable {
                     id: bodyViewport
                     anchors.fill: parent
                     clip: true
+                    // The wheel scrolls it (below); a press on the body stays the
+                    // card's own, so a swipe or a tap that starts on the text works.
+                    interactive: false
                     boundsBehavior: Flickable.StopAtBounds
                     contentWidth: width
-                    contentHeight: expandedContent.implicitHeight
+                    contentHeight: bodyText.implicitHeight
                     flickableDirection: Flickable.VerticalFlick
 
-                    Column {
-                        id: expandedContent
+                    BodyText {
+                        id: bodyText
                         width: bodyViewport.width
-                        spacing: Style.space1
-
-                        Text {
-                            id: bodyText
-                            width: parent.width
-                            visible: text.length > 0
-                            text: root.entry.body ?? ""
-                            // Ingress sanitizes to the supported b/i/u/br subset.
-                            textFormat: Text.StyledText
-                            color: root.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
-                            font.family: Style.fontFamily
-                            font.pixelSize: Style.textSm
-                            lineHeight: Style.rhythm(Style.textSm * Style.lineBody)
-                            lineHeightMode: Text.FixedHeight
-                            wrapMode: Text.WordWrap
-                            Accessible.role: Accessible.StaticText
-                        }
+                        text: root.entry.body ?? ""
                     }
+                }
+
+                // A popup body that is longer than its viewport says so.
+                ScrollCue {
+                    view: bodyViewport
+                    fadeColor: root.bodied ? body.color : Style.band
+                    indicator: false
                 }
 
                 MouseArea {
@@ -555,31 +640,32 @@ Item {
                 Repeater {
                     model: root.actionList()
 
-                    Text {
+                    Prose {
+                        id: actionLabel
                         required property var modelData
                         required property int index
                         readonly property bool available: root.enabled && root.inputEnabled
                             && !(modelData.disabled ?? false)
+                        readonly property bool focusedAction: root.actionFocusIndex === index
                         enabled: available
                         // Addressable by a consumer or a test without exposing a
                         // repeater handle from the card's own public interface.
                         objectName: "notificationAction" + index
                         text: modelData.label ?? String(modelData)
-                        color: root.enabled && !(modelData.disabled ?? false)
-                            ? (root.actionFocusIndex === index ? Style.text : Style.accent)
-                            : Style.disabled(root.actionFocusIndex === index ? Style.text : Style.accent)
+                        color: !available ? Style.disabled(focusedAction ? Style.text : Style.accent)
+                            : focusedAction || actionHit.containsMouse ? Style.text : Style.accent
                         Accessible.role: Accessible.Button
                         Accessible.name: text
                         Accessible.onPressAction: root.activateAction(String(modelData.id))
-                        font.family: Style.fontFamily
-                        font.pixelSize: Style.textSm
-                        font.weight: root.actionFocusIndex === index ? Style.weightBold : Style.weightMedium
-                        font.underline: root.actionFocusIndex === index
+                        font.weight: focusedAction ? Style.weightBold : Style.weightMedium
+                        font.underline: focusedAction
 
                         MouseArea {
+                            id: actionHit
                             anchors.fill: parent
-                            // Lifts a 14px label to a 24px-tall hit target.
+                            // Lifts a 12px label to a 24px-tall hit target.
                             anchors.margins: -Style.notificationActionHitMargin
+                            hoverEnabled: true
                             cursorShape: parent.available ? Qt.PointingHandCursor : Qt.ArrowCursor
                             enabled: parent.available
                             onClicked: root.activateAction(String(parent.modelData.id))
@@ -587,7 +673,6 @@ Item {
                     }
                 }
             }
-
         }
 
         Divider {
@@ -600,50 +685,85 @@ Item {
     }
 
     // Hover pauses expiry AND expands (one gesture, reported once); the
-    // consumer decides what "paused" does. Its `growth` goes unused because
-    // this card's own response IS its height opening — growing it too would
-    // answer the same hover twice.
+    // consumer decides what "paused" does. The layer only paints the keyboard
+    // ring and answers to the card's own state: a layer with handlers of its own,
+    // stacked above the content, would take the hover from the dismiss button
+    // and the action labels under it. The card is the focus holder (Tab stop).
+    // `growth` goes unused because this card's own response IS its height
+    // opening; growing it too would answer the same hover twice.
     StateLayer {
         id: layer
+        host: root
         anchors.fill: parent
         interactive: root.enabled && root.inputEnabled
-        clickable: root.primaryActionAvailable || root.activatable
-        // The card is the focus holder (Tab stop); the layer only paints the ring.
         focused: root.activeFocus
         focusRadius: root.bodied ? root.bodyRadius : 0
-        onClicked: {
-            // A click on the leading column opens the card; it is not also
-            // the card's action (it marked an unread entry read while the
-            // person was only opening it to read).
-            if (root.leadHovered)
-                return;
-            if (root.primaryActionAvailable)
+    }
+
+    HoverHandler {
+        id: cardHover
+        cursorShape: root.primaryActionAvailable || root.activatable ? Qt.PointingHandCursor : Qt.ArrowCursor
+    }
+
+    // Which part of the card a point of it falls on: the leading column that
+    // opens it when hover does not, the dismiss button, or the body.
+    function zoneAt(point: point): string {
+        if (leadZone.visible && point.x < leadZone.width)
+            return "lead";
+        if (dismissButton.visible && dismissButton.contains(dismissButton.mapFromItem(root, point)))
+            return "dismiss";
+        return "body";
+    }
+
+    // ONE tap, routed by where it lands: a click on the leading column must not
+    // also be the card's action (it marked an unread entry read while the person
+    // was only opening it to read), nor a click on the dismiss button. The press
+    // zone is read from where the press began.
+    readonly property string pressZone: bodyTap.pressed ? root.zoneAt(bodyTap.point.pressPosition) : ""
+    TapHandler {
+        id: bodyTap
+        enabled: root.enabled && root.inputEnabled
+        onTapped: eventPoint => {
+            const zone = root.zoneAt(eventPoint.position);
+            if (zone === "lead")
+                root.expandRequested();
+            else if (zone === "dismiss")
+                root.dismiss();
+            else if (root.primaryActionAvailable)
                 root.activatePrimary();
             else if (root.activatable)
                 root.activated(root.entry);
         }
     }
 
-    // The leading column (cursor and glyph) opens and closes the card when
-    // hover does not; above the body layer, so the rest stays the action.
-    StateLayer {
-        id: leadLayer
-        x: 0
-        y: 0
+    // The leading column's own hover (the chevron and the hand) is read from
+    // an item that sits there and answers nothing else.
+    Item {
+        id: leadZone
         width: lead.x + lead.width + Style.space3
         height: root.height
         visible: !root.expandOnHover
-        interactive: root.enabled && root.inputEnabled
-        clickable: true
-        onClicked: root.expandRequested()
+
+        HoverHandler {
+            id: leadHover
+            enabled: root.enabled && root.inputEnabled
+            cursorShape: Qt.PointingHandCursor
+        }
     }
 
     activeFocusOnTab: root.primaryActionAvailable && root.enabled && root.inputEnabled
 
     Keys.onPressed: event => {
+        if (!root.enabled || !root.inputEnabled)
+            return;
+        if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace || event.key === Qt.Key_Escape) {
+            event.accepted = true;
+            root.dismiss();
+            return;
+        }
         if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space)
             return;
-        if (!root.primaryActionAvailable || !root.enabled || !root.inputEnabled)
+        if (!root.primaryActionAvailable)
             return;
         event.accepted = true;
         if (!event.isAutoRepeat)
@@ -657,11 +777,18 @@ Item {
     }
 
     // Swipe-dismiss: horizontal, both directions, spring-back under the
-    // threshold fraction of the card's own width — works on any urgency.
+    // threshold fraction of the card's own width — works on any urgency. The
+    // card follows the pointer one to one while it is held and eases home
+    // only once it is let go.
+    property real _swipeOffset: 0
+    // Set before the offset moves, in this order, so the ease runs on release
+    // and never during the drag.
+    property bool _swipeHeld: false
     transform: Translate {
-        x: drag.active && !root.verticalDrag ? drag.translation.x : 0
+        x: root._swipeOffset
 
         Behavior on x {
+            enabled: !root._swipeHeld
             NumberAnimation { duration: Motion.fast; easing.type: Motion.standardEasing }
         }
     }
@@ -675,15 +802,19 @@ Item {
         // Remember a completed horizontal swipe while the grab is active, so
         // dismissal does not depend only on the handler's terminal translation.
         onTranslationChanged: {
-            if (active)
-                root.swipeDismissPending = Math.abs(translation.x) > root.width * Style.notificationDismissFraction
-                    && Math.abs(translation.x) >= Math.abs(translation.y);
+            if (!active)
+                return;
+            const horizontal = Math.abs(translation.x) >= Math.abs(translation.y);
+            root._swipeOffset = horizontal ? translation.x : 0;
+            root.swipeDismissPending = horizontal && Math.abs(translation.x) > root.width * Style.notificationDismissFraction;
         }
         onActiveChanged: {
+            root._swipeHeld = active;
             if (active) {
                 root.swipeDismissPending = false;
                 return;
             }
+            root._swipeOffset = 0;
             if (!root.inputEnabled) {
                 root.swipeDismissPending = false;
                 return;
