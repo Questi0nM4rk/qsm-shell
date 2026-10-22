@@ -73,28 +73,10 @@ TestCase {
         ScrollCue { id: wideCue; view: wideView; orientation: Qt.Horizontal }
     }
 
-    // What the cue paints, without naming any of its parts: the children
-    // that are currently visible.
-    function shown(cue) {
-        const out = [];
-        for (let i = 0; i < cue.children.length; i++) {
-            if (cue.children[i].visible)
-                out.push(cue.children[i]);
-        }
-        return out;
-    }
-
-    // The mark is the small child; the fades are the full-span strips. Told
-    // apart by what they cover, not by which child they are.
-    function isFullSpan(child, view, vertical) {
-        return vertical
-            ? Math.abs(child.width - view.width) < 0.5
-            : Math.abs(child.height - view.height) < 0.5;
-    }
-
     function test_content_that_fits_paints_nothing() {
         verify(!fitCue.overflows, "a cue on content that fits claimed there was more");
-        compare(shown(fitCue).length, 0, "a cue on content that fits still painted");
+        compare(fitCue.startFade, 0, "a cue on content that fits painted a start fade");
+        compare(fitCue.endFade, 0, "a cue on content that fits painted an end fade");
         verify(!fitCue.enabled, "the cue was left able to take a pointer event meant for the content");
     }
 
@@ -102,56 +84,35 @@ TestCase {
         verify(tallCue.overflows, "a cue on overflowing content said it fit");
 
         tallView.contentY = 0;
-        tryVerify(() => shown(tallCue).length === 2, 1000,
-            "at the top the cue did not settle on exactly the mark plus one fade");
-        let top = shown(tallCue);
-        let topFades = top.filter(child => isFullSpan(child, tallView, true));
-        compare(topFades.length, 1, "at the top there is not exactly one fade");
-        verify(Math.abs((topFades[0].y + topFades[0].height) - tallView.height) < 0.5,
-            "at the top the visible fade is not on the far edge");
-        verify(topFades[0].y > 0.5,
-            "at the top the near-edge fade is still visible although no content remains past it");
+        compare(tallCue.startFade, 0, "at the top there is a fade although nothing is hidden above");
+        verify(tallCue.endFade > 0, "at the top there is no fade for the content below");
 
         tallView.contentY = tallView.contentHeight - tallView.height;
-        tryVerify(() => {
-            const now = shown(tallCue);
-            if (now.length !== 2)
-                return false;
-            const fades = now.filter(child => isFullSpan(child, tallView, true));
-            return fades.length === 1 && Math.abs(fades[0].y) < 0.5;
-        }, 1000, "at the bottom the cue did not settle on the mark plus the near-edge fade");
+        verify(tallCue.startFade > 0, "at the bottom there is no fade for the content above");
+        compare(tallCue.endFade, 0, "at the bottom there is a fade although nothing is hidden below");
+    }
 
-        tallView.contentY = (tallView.contentHeight - tallView.height) / 2;
-        tryVerify(() => shown(tallCue).length === 3, 1000,
-            "in the middle both fades did not show");
-        const mid = shown(tallCue).filter(child => isFullSpan(child, tallView, true));
-        compare(mid.length, 2, "in the middle there is not one fade per edge");
+    // A fade never reaches deeper than the content hidden past its edge, nor
+    // than a sixth of the viewport however deep it is asked to go.
+    function test_a_fade_is_bounded_by_the_hidden_content_and_the_viewport() {
+        tallCue.fadeDepth = 1000;
+        tallView.contentY = 5;
+        compare(tallCue.startFade, 5, "the fade is deeper than the 5 px hidden above it");
+        tallView.contentY = 150;
+        compare(tallCue.startFade, tallView.height / 6, "the fade is deeper than a sixth of the viewport");
+        compare(tallCue.endFade, tallView.height / 6, "the end fade is deeper than a sixth of the viewport");
     }
 
     function test_horizontal_fades_sit_on_the_left_and_right_edges() {
         verify(wideCue.overflows, "a horizontal cue on overflowing content said it fit");
 
         wideView.contentX = 0;
-        tryVerify(() => shown(wideCue).length === 2, 1000,
-            "at the left the horizontal cue did not settle on exactly the mark plus one fade");
-        let left = shown(wideCue).filter(child => isFullSpan(child, wideView, false));
-        compare(left.length, 1, "at the left there is not exactly one fade");
-        compare(left[0].height, wideView.height, "a horizontal fade does not span the viewport height");
-        compare(left[0].width, wideCue.fadeDepth, "a horizontal fade is not one fade depth wide");
-        verify(Math.abs((left[0].x + left[0].width) - wideView.width) < 0.5,
-            "at the left the visible fade is not on the far edge");
+        compare(wideCue.startFade, 0, "at the left there is a fade although nothing is hidden before it");
+        compare(wideCue.endFade, Math.min(wideCue.fadeDepth, wideView.width / 6),
+            "at the left the end fade is not one fade depth wide");
 
         wideView.contentX = wideView.contentWidth - wideView.width;
-        tryVerify(() => {
-            const now = shown(wideCue);
-            if (now.length !== 2)
-                return false;
-            const fades = now.filter(child => isFullSpan(child, wideView, false));
-            return fades.length === 1 && Math.abs(fades[0].x) < 0.5;
-        }, 1000, "at the right the horizontal cue did not settle on the mark plus the near-edge fade");
-
-        wideView.contentX = (wideView.contentWidth - wideView.width) / 2;
-        tryVerify(() => shown(wideCue).length === 3, 1000,
-            "in the middle both horizontal fades did not show");
+        verify(wideCue.startFade > 0, "at the right there is no fade for the content before it");
+        compare(wideCue.endFade, 0, "at the right there is a fade although nothing is hidden past it");
     }
 }

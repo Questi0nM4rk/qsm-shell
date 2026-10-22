@@ -1094,6 +1094,23 @@
       "docs": "docs/components/ScrollCue.md",
       "unit": "workbench/units/ScrollCue.qml"
     },
+    "scroll-cue-short": {
+      "component": "scroll-cue",
+      "variant": "short",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "ScrollCue / Three rows",
+      "description": "Position cue on a list viewport three rows tall; the edge fades stay inside it.",
+      "tags": [
+        "scroll",
+        "layout"
+      ],
+      "source": "qml/QsmShell/Components/ScrollCue.qml",
+      "docs": "docs/components/ScrollCue.md",
+      "unit": "workbench/units/ScrollCue.qml"
+    },
     "selection-mark": {
       "component": "selection-mark",
       "variant": "shown",

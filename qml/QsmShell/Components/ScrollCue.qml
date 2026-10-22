@@ -35,15 +35,11 @@ Item {
     property color fadeColor: Style.surface
     property bool indicator: true
     property int orientation: Qt.Vertical
-    // How deep the fade reaches. Deep enough that the last row is GONE before
-    // the boundary, not merely dimmed at it — a half-faded row sliced by an
-    // edge reads as a rendering fault. Never more than a quarter of the
-    // viewport per edge, so a short list keeps at least half of itself in full.
-    property real fadeDepth: Style.space6 * 2
+    // The deepest a fade reaches; `startFade` and `endFade` are what it paints.
+    property real fadeDepth: Style.space6
 
     readonly property bool vertical: orientation === Qt.Vertical
     readonly property real _span: vertical ? view.height : view.width
-    readonly property real _depth: Math.min(fadeDepth, _span / 4)
 
     // `visibleArea` is the canonical scroll fraction and raw `contentY`
     // arithmetic is not: a ListView's content origin moves as delegates are
@@ -59,6 +55,18 @@ Item {
 
     readonly property bool overflows: _ratio < 1
 
+    // A fade is bounded three ways, so a short list is never eaten by its own
+    // cue: by `fadeDepth`; by a sixth of the viewport, which leaves two thirds
+    // of it clear with both edges faded; and by the content actually hidden
+    // past that edge, so it grows from nothing as the content leaves and is
+    // gone when the edge is reached. A side with nothing hidden paints none.
+    readonly property real _reach: Math.min(fadeDepth, _span / 6)
+    readonly property real _content: _span / Math.max(_ratio, 0.0001)
+    // Painted depth at the start (top, left) and end (bottom, right), in px.
+    readonly property real startFade: overflows ? Math.min(_reach, Math.max(0, _at * _content)) : 0
+    readonly property real endFade: overflows
+        ? Math.min(_reach, Math.max(0, (1 - _at - _ratio) * _content)) : 0
+
     anchors.fill: view
     // The cue reports; it never intercepts. A pointer aimed at a row must not
     // land on the furniture drawn over it.
@@ -68,8 +76,8 @@ Item {
         // A mark, not a gauge: long enough to see, short enough that it never
         // claims to measure the content.
         readonly property real _thickness: Style.stroke(Style.markThickness, root)
-        readonly property real _length: Math.max(Style.space5,
-            Math.min(Style.space6 * 2, root._span * root._ratio))
+        readonly property real _length: Math.min(root._span, Math.max(Style.space5,
+            Math.min(Style.space6 * 2, root._span * root._ratio)))
         readonly property real _offset: Math.max(0, Math.min(1,
             root._at / Math.max(0.001, 1 - root._ratio))) * (root._span - _length)
 
@@ -92,48 +100,36 @@ Item {
         }
     }
 
-    // Each fade is present only while there is content past that edge, so the
-    // cue and the truth never disagree; it fades in and out rather than
-    // snapping. They sit still while the content moves
-    // under them, which is what makes them read as the boundary rather than as
-    // part of the list.
-    //
-    // The gradient reaches FULL opacity before the edge and holds. A linear
-    // ramp is still translucent at the boundary, so the last row is visible
-    // being cut rather than sinking out of view.
-    // The gradient's DIRECTION is set by the Gradient, not by rotating the
-    // rectangle. Rotating a `fadeDepth × height` strip 90 degrees about its
-    // centre gives `height × fadeDepth` bounds displaced around that centre,
-    // which would put the horizontal fades across the middle of the list.
+    // The fades sit still while the content moves under them, which is what
+    // makes them read as the boundary rather than as part of the list. The
+    // gradient is the fade colour at the edge and clear at its inner end, and
+    // is steepest at the edge, so the row being cut dissolves instead of being
+    // sliced.
+    // Its DIRECTION is set by the Gradient, not by rotating the rectangle:
+    // rotating a `depth × height` strip 90 degrees about its centre gives
+    // bounds displaced around that centre, which would put the horizontal
+    // fades across the middle of the list.
     Rectangle {
-        width: root.vertical ? root.width : root._depth
-        height: root.vertical ? root._depth : root.height
-        visible: root.fade && opacity > 0
-        opacity: root._at > 0.0001 ? 1 : 0
-        Behavior on opacity {
-            NumberAnimation { duration: Motion.medium; easing.type: Motion.standardEasing }
-        }
+        width: root.vertical ? root.width : root.startFade
+        height: root.vertical ? root.startFade : root.height
+        visible: root.fade && root.startFade > 0
         gradient: Gradient {
             orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
             GradientStop { position: 0; color: root.fadeColor }
-            GradientStop { position: 0.3; color: root.fadeColor }
-            GradientStop { position: 1; color: "transparent" }
+            GradientStop { position: 0.4; color: Qt.alpha(root.fadeColor, 0.36) }
+            GradientStop { position: 1; color: Qt.alpha(root.fadeColor, 0) }
         }
     }
     Rectangle {
-        width: root.vertical ? root.width : root._depth
-        height: root.vertical ? root._depth : root.height
-        x: root.vertical ? 0 : root.width - root._depth
-        y: root.vertical ? root.height - root._depth : 0
-        visible: root.fade && opacity > 0
-        opacity: root._at + root._ratio < 0.9999 ? 1 : 0
-        Behavior on opacity {
-            NumberAnimation { duration: Motion.medium; easing.type: Motion.standardEasing }
-        }
+        width: root.vertical ? root.width : root.endFade
+        height: root.vertical ? root.endFade : root.height
+        x: root.vertical ? 0 : root.width - root.endFade
+        y: root.vertical ? root.height - root.endFade : 0
+        visible: root.fade && root.endFade > 0
         gradient: Gradient {
             orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
-            GradientStop { position: 0; color: "transparent" }
-            GradientStop { position: 0.7; color: root.fadeColor }
+            GradientStop { position: 0; color: Qt.alpha(root.fadeColor, 0) }
+            GradientStop { position: 0.6; color: Qt.alpha(root.fadeColor, 0.36) }
             GradientStop { position: 1; color: root.fadeColor }
         }
     }
