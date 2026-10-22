@@ -9,5 +9,5 @@ facts: `pointerHovered`, `keepOpen`, `present`, `animating`, `acceptsInput` and 
 screen reader: a button (with `actionLabel` as its description and the press action) when interactive, a grouping otherwise, named by `accessibleName`; an interactive capsule without one warns.
 motion: opacity only, a reversible fade (`Motion.medium` in, `Motion.micro` out); reduced motion shortens it.
 tokens: Surface, StateLayer, `Style.band`, `rolloutRadius`, the floating shadow roles, the rhythm and Motion.
-measured (rendered, scale 1.25): text 8.5:1 for the reading and 13.7:1 for the title on the rest body, 6.0 and 9.8 on hover, 4.7 and 7.6 on press; the hover zone is exactly the body (380 by 64); keyboard focus rings the body; the unit's copy dims by colour when disabled.
+measured (rendered, scale 1.25): text 8.5:1 for the reading and 13.7:1 for the title on the rest body, 6.0 and 9.8 on hover, 4.7 and 7.6 on press; the hover zone is exactly the body (380 by 64); keyboard focus rings the body; the unit's copy dims by colour when disabled; the fade out is 11 real frames 16.6 ms apart (60 fps), 181 ms from first change to rest (the fade in's tail was not captured).
 not designed: a service, a window policy, an edge join or a Rollout's deformation.
