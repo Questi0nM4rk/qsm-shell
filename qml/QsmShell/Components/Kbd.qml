@@ -18,7 +18,8 @@ import qs.QsmShell.Style
 //
 // The host owns the width. Left alone Kbd is as wide as its caps; a host that
 // gives it a width narrower than that (`width: column.width`) shrinks the caps
-// and elides their text, so a long combo never draws past its column.
+// and elides their text, and one narrower than the smallest caps and their
+// joins cuts the rest, so a long combo never draws past its column.
 RowLayout {
     id: root
 
@@ -27,7 +28,14 @@ RowLayout {
     // of caps is harder to scan than the text it replaced.
     property real minCapWidth: Style.space5
 
-    spacing: Style.spaceTight
+    // Every width below is a whole number of device pixels, so no cap edge
+    // lands between two of them.
+    spacing: Style.snap(Style.spaceTight, root)
+    clip: root.width < root.implicitWidth
+
+    // The whole combo is one name; the caps and joins are not announced one by one.
+    Accessible.role: Accessible.StaticText
+    Accessible.name: root.combo
 
     Repeater {
         model: root.combo.split("+").map(part => part.trim()).filter(part => part.length > 0)
@@ -38,17 +46,24 @@ RowLayout {
             required property string modelData
             required property int index
 
-            spacing: Style.spaceTight
+            // Shrinks with the host's width, never grows past its own.
+            Layout.fillWidth: true
+            Layout.maximumWidth: part.implicitWidth
+            spacing: root.spacing
+            Accessible.ignored: true
 
             Prose {
                 visible: part.index > 0
                 // The join keeps its width; only caps give way.
-                Layout.minimumWidth: implicitWidth
+                Layout.preferredWidth: Style.snap(implicitWidth, this)
+                Layout.minimumWidth: Layout.preferredWidth
                 role: "metadata"
                 text: "+"
             }
             Rectangle {
-                Layout.preferredWidth: Math.max(root.minCapWidth, cap.implicitWidth + Style.space2)
+                Layout.fillWidth: true
+                Layout.preferredWidth: Style.snap(Math.max(root.minCapWidth, cap.implicitWidth + Style.space2), this)
+                Layout.maximumWidth: Layout.preferredWidth
                 // The floor leaves room for an ellipsis and the cap's insets.
                 Layout.minimumWidth: Math.min(Layout.preferredWidth, Style.space5)
                 Layout.preferredHeight: Style.badgeHeight + Style.space1
@@ -57,9 +72,9 @@ RowLayout {
 
                 Prose {
                     id: cap
-                    anchors.centerIn: parent
+                    x: Style.snap((parent.width - width) / 2, this)
+                    y: Style.snap((parent.height - height) / 2, this)
                     width: Math.max(0, Math.min(implicitWidth, parent.width - Style.space2))
-                    elide: Text.ElideRight
                     role: "reading"
                     text: part.modelData
                 }
