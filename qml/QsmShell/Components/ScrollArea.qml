@@ -15,7 +15,7 @@ import qs.QsmShell.Style
 // is what sizes the content. An indicator inside would have its height feed
 // the content height feed its own height — a binding loop, invisible to
 // `qmllint`.
-FocusScope {
+Item {
     id: root
 
     // The scrolled content. `contentData` is not aliasable, and a named host
@@ -74,6 +74,11 @@ FocusScope {
         scrollBy(Infinity);
     }
 
+    // Puts the keyboard on the region itself, ring and all.
+    function focusRegion(): void {
+        focusHost.forceActiveFocus(Qt.TabFocusReason);
+    }
+
     readonly property list<T.Action> actions: [
         T.Action { objectName: "to-start"; text: "Scroll to start"; onTriggered: root.scrollToStart() },
         T.Action { objectName: "to-end"; text: "Scroll to end"; onTriggered: root.scrollToEnd() }
@@ -103,7 +108,6 @@ FocusScope {
     T.Control {
         id: focusHost
         anchors.fill: parent
-        focus: true
         focusPolicy: root.overflows ? Qt.TabFocus : Qt.NoFocus
         Accessible.role: Accessible.Pane
         Accessible.focusable: root.overflows

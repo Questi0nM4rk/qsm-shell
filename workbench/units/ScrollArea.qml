@@ -98,7 +98,7 @@ Rectangle {
                 return true;
             }
             if (name === "focus") {
-                scroll.forceActiveFocus(Qt.TabFocusReason);
+                scroll.focusRegion();
                 return true;
             }
             return false;

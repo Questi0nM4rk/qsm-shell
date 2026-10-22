@@ -3,7 +3,7 @@
 A viewport for static content taller or wider than its room: the content scrolls inside, a sibling `ScrollCue` paints the fades and mark.
 
 states: vertical or horizontal; overflowing or fitting; cues or bare; the region focused by keyboard
-actions: `scrollToStart()`, `scrollToEnd()` and `scrollBy(delta)`, clamped to the content so fitting content stays put; the first two are listed in `actions`; no signals
+actions: `scrollToStart()`, `scrollToEnd()` and `scrollBy(delta)`, clamped to the content so fitting content stays put; the first two are listed in `actions`; `focusRegion()` puts the keyboard on the region; no signals
 pointer: the Flickable takes drag and wheel and stops at the edges; a horizontal area also takes the vertical wheel, one notch is a row; chrome never intercepts
 keyboard: a tab stop only while it overflows (Tab only, a click does not focus it); Up and Down (Left and Right when horizontal) move a row, PageUp and PageDown a viewport less a row, Home and End the ends; a focused child keeps the keys it handles; the ring is `StateLayer`'s and shows for the keyboard only
 screen reader: `Accessible.Pane`, focusable while it overflows; the host names it
