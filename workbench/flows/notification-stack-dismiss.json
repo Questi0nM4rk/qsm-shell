@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "key": "notification-stack-dismiss",
+  "target": { "story": "notification-stack" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "awaitIdle" },
+    { "type": "control", "group": "arrival", "option": "arrive-critical" },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "ids", "equals": "b,c" },
+    { "type": "pointer", "target": "newest", "event": "move", "x": 0.937, "y": 0.261 },
+    { "type": "await", "observable": "newest-hovered", "equals": true },
+    { "type": "expectEvent", "event": "hover-changed", "origin": "component", "payload": { "id": "c", "hovered": true } },
+    { "type": "pointer", "target": "newest", "event": "click", "x": 0.937, "y": 0.261 },
+    { "type": "expectEvent", "event": "dismiss-requested", "origin": "component", "payload": { "id": "c" } },
+    { "type": "expect", "observable": "primary-callback-count", "equals": 0 },
+    { "type": "await", "observable": "source-count", "equals": 2 },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "ids", "equals": "a,b" },
+    { "type": "action", "name": "focus-newest" },
+    { "type": "key", "target": "newest", "key": "Delete" },
+    { "type": "expectEvent", "event": "dismiss-requested", "origin": "component", "payload": { "id": "b" } },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "ids", "equals": "a" },
+    { "type": "pointer", "target": "newest", "event": "click", "button": "middle", "x": 0.5, "y": 0.5 },
+    { "type": "expectEvent", "event": "dismiss-requested", "origin": "component", "payload": { "id": "a" } },
+    { "type": "await", "observable": "source-count", "equals": 0 }
+  ]
+}

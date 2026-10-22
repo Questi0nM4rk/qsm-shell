@@ -2,6 +2,7 @@
 
 A compact, named action for dense shell controls; the caller supplies the glyph and owns the effect.
 states: rest, hover, press, focus and disabled; hover and press go through the shared StateLayer (a disc that grows and lifts, then pushes in), focus rings the complete box, disabled blends every painted role through Style.disabled.
+selected: a toggle that is on (`selected: true`, host-owned) wears the accent tint over its layer at `opacitySelected` and an accent glyph; the tint is the box, so the on state is told apart without colour.
 actions: pointer click, Space, Return, Enter, the screen reader's Press action and the `actions` entry all call `activate()` and emit `clicked`; callers never synthesize pointer events.
 pointer: the whole padded box is the target and reports a pointing hand; a press fires on release inside the box (released 4, 8 and 14 px outside it, nothing fires); the wheel does nothing and propagates.
 keyboard: Tab reaches it (a click focuses it without a ring); Space, Return and Enter read as pressed while held and act once on release, and the repeats of a held key (`isAutoRepeat`) neither press nor act: one 0.7 s hold is one `clicked`. Losing focus mid-press cancels it. Escape has no route.
@@ -9,7 +10,7 @@ screen reader: Accessible.Button named `accessibleName`, which defaults to the i
 size: `size` is a Control preset name (xs 24, sm 32, md 40, lg 48): the box is the preset and the glyph is `Style.glyphAlone(box)` (16, 16, 20, 24), so no call site states either; the padding is the rest of the box, and a slot host that reads `padding` as the hit-box overhang gets the right footprint; a consumer adds `xl` through `sizes.IconButton` or `sizes.Control`.
 tokens: the Control size table, glyphAlone, text, disabled, Motion, StateLayer and `Style.snap`; no local measurements or colours.
 motion: StateLayer's fast press push-in and restrained hover growth, removed or reduced by Style.reducedMotion.
-not designed: a label, loading, a toggled state and menus; Capsule, Segmented or a surface-owned row express those. A host that needs a toggle sets `Accessible.checkable` and `Accessible.checked` itself.
+not designed: a label, loading and menus; Capsule, Segmented or a surface-owned row express those. A host that needs a toggle also sets `Accessible.checkable` and `Accessible.checked`.
 
 ## Contract
 

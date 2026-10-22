@@ -12,6 +12,11 @@ import qs.QsmShell.Style
 // deterministic keyboard stepping that skips nonselectable (header/separator/
 // disabled) rows and a generic `activated(index)` hook. Rows are ListRow
 // instances supplied by the consumer via `content` or a `delegate`.
+//
+// The keyboard is one roving stop: Tab lands on the current row (the first
+// selectable one with no cursor), the arrows along the orientation, Home and
+// End step, Return, Enter and Space activate, and Tab leaves again. The
+// current row carries the focus ring.
 FocusScope {
     id: root
 
@@ -28,6 +33,8 @@ FocusScope {
     property real spacing: Style.space1
     // The band's corner. A menu on a rollout keeps the rollout's own curve.
     property real radius: Style.childRadius(root)
+    // What a screen reader calls the group of rows.
+    property string accessibleName: ""
 
     // ── generic activation hook (no product meaning) ─────────────────────
     signal activated(int index)
@@ -44,12 +51,17 @@ FocusScope {
     readonly property list<T.Action> actions: [
         T.Action { objectName: "step-previous"; text: "Previous item"; enabled: root.enabled; onTriggered: root.step(-1) },
         T.Action { objectName: "step-next"; text: "Next item"; enabled: root.enabled; onTriggered: root.step(1) },
+        T.Action { objectName: "step-first"; text: "First item"; enabled: root.enabled; onTriggered: root.stepToEdge(true) },
+        T.Action { objectName: "step-last"; text: "Last item"; enabled: root.enabled; onTriggered: root.stepToEdge(false) },
         T.Action { objectName: "activate-current"; text: "Activate item"; enabled: root.enabled && root._isSelectable(root.currentIndex); onTriggered: root.activateCurrent() }
     ]
 
-    // Focus goes to the current row so its ring shows (`_focusCurrent`). The
-    // ring sits outside the row, so the Menu does not clip it; the owning
-    // ScrollArea bounds overflow and leaves the ring room.
+    Accessible.role: Accessible.Grouping
+    Accessible.name: root.accessibleName
+
+    // Focus goes to the current row (`_focusCurrent`), so keys reach it and the
+    // thumb's ring shows. The ring sits outside the row, so the Menu does not
+    // clip it; the owning ScrollArea bounds overflow and leaves the ring room.
     focus: true
 
     // The band the rows lie on, and the ONE selection thumb that slides
@@ -64,6 +76,7 @@ FocusScope {
 
     Surface {
         id: thumb
+        objectName: "thumb"
 
         readonly property var row: root.rowAt(root.currentIndex)
         readonly property bool shown: !!row && row.selectable
@@ -80,6 +93,24 @@ FocusScope {
         pressed: shown && row.pressed
         selected: true
         opacity: shown ? 1 : 0
+
+        // The keyboard's mark, one ring that travels with the thumb: outside
+        // the body by a gap and a stroke, concentric with it. A row whose host
+        // already paints its own ring (`focused`) keeps the only one.
+        Rectangle {
+            readonly property real _stroke: Style.stroke(Style.indicatorWidth, thumb)
+            readonly property real _reach: _stroke * 2
+            anchors.fill: parent
+            anchors.margins: -_reach
+            radius: thumb.radius + _reach
+            color: "transparent"
+            border.width: _stroke
+            border.color: Style.focus
+            visible: opacity > 0
+            opacity: root.activeFocus && thumb.shown && !thumb.row.focused ? 1 : 0
+
+            Behavior on opacity { NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing } }
+        }
 
         // Slides between rows that exist; the first appearance and reduced
         // motion jump (a position animation is removed, not shortened).
@@ -107,6 +138,16 @@ FocusScope {
             onItemAdded: root._resync()
             onItemRemoved: Qt.callLater(root._resync)
         }
+    }
+
+    // Unavailable as a whole: every painted colour toward the band by the same
+    // share `Style.disabled` uses, once, so the layers stay layers.
+    Rectangle {
+        anchors.fill: parent
+        radius: root.radius
+        visible: !root.enabled
+        color: Qt.alpha(Style.band, 1 - Style.opacityDisabled)
+        Accessible.ignored: true
     }
 
     // ── row registry / stepping ──────────────────────────────────────────
@@ -189,13 +230,40 @@ FocusScope {
         _currentKey = _current?.objectName ?? ""
         _tracking = !!_current
         _focusCurrent()
+        _applyTabStop()
     }
 
-    function _holdsFocus(row) {
-        for (let it = root.Window.activeFocusItem; it; it = it.parent) {
-            if (it === row) return true
+    // After the focus has moved: Qt refuses to switch `activeFocusOnTab` off on
+    // the item that holds the focus, and warns.
+    function _applyTabStop() {
+        const stop = _tabStop()
+        for (let i = 0; i < _rows.length; i++) {
+            if (i === stop || !_rows[i].activeFocus)
+                _rows[i].activeFocusOnTab = (i === stop)
         }
-        return false
+    }
+
+    // The one row Tab lands on: the cursor when it can be activated and is on
+    // screen, else the first row that can.
+    function _tabStop() {
+        const reachable = i => _isSelectable(i) && _rows[i].visible
+        if (reachable(currentIndex))
+            return currentIndex
+        for (let i = 0; i < _rows.length; i++) {
+            if (reachable(i))
+                return i
+        }
+        return -1
+    }
+
+    // The row the keyboard sits in, whatever inside it holds the focus; -1 for none.
+    function _indexHolding() {
+        for (let it = root.Window.activeFocusItem; it && it !== root; it = it.parent) {
+            const i = _rows.indexOf(it)
+            if (i >= 0)
+                return i
+        }
+        return -1
     }
 
     // The ring is the row's own, so focus lives on the current row while the
@@ -205,7 +273,7 @@ FocusScope {
         if (!root.activeFocus) return
         const row = rowAt(currentIndex)
         if (row && _isSelectable(currentIndex)) {
-            if (!_holdsFocus(row)) row.forceActiveFocus()
+            if (_indexHolding() !== currentIndex) row.forceActiveFocus()
         } else {
             for (const r of _rows) {
                 if (r && r.focus) r.focus = false
@@ -249,6 +317,16 @@ FocusScope {
         }
     }
 
+    // Home and End: the first or the last row that can be activated.
+    function stepToEdge(first) {
+        if (!root.enabled) return
+        const n = _rows.length
+        for (let k = 0; k < n; k++) {
+            const i = first ? k : n - 1 - k
+            if (root._isSelectable(i)) { currentIndex = i; return }
+        }
+    }
+
     // Emit the generic activation hook for the current row when it is selectable.
     function activateCurrent() {
         if (!_isSelectable(currentIndex)) return false
@@ -257,18 +335,57 @@ FocusScope {
         return true
     }
 
-    Keys.onUpPressed: root._vertical ? root.step(-1) : undefined
-    Keys.onDownPressed: root._vertical ? root.step(1) : undefined
-    Keys.onLeftPressed: root._horizontal ? root.step(-1) : undefined
-    Keys.onRightPressed: root._horizontal ? root.step(1) : undefined
-    Keys.onReturnPressed: event => { if (!event.isAutoRepeat) root.activateCurrent() }
-    Keys.onEnterPressed: event => { if (!event.isAutoRepeat) root.activateCurrent() }
+    // The keys the menu owns while it holds the focus. A window shortcut on one
+    // of them (an arrow that walks a list elsewhere) outranks a key handler, so
+    // the menu says it needs them in `onShortcutOverride`. Home, End and Space
+    // are the row's own: from an editor inside it (a slider, a field) they stay
+    // the editor's.
+    function _owns(key: int): bool {
+        const back = root._vertical ? Qt.Key_Up : Qt.Key_Left
+        const forward = root._vertical ? Qt.Key_Down : Qt.Key_Right
+        if ([back, forward, Qt.Key_Return, Qt.Key_Enter].includes(key))
+            return true
+        const held = root.Window.activeFocusItem
+        return [Qt.Key_Home, Qt.Key_End, Qt.Key_Space].includes(key) && (held === root || _rows.indexOf(held) >= 0)
+    }
+
+    Keys.onShortcutOverride: event => { event.accepted = root._owns(event.key) }
+
+    // ONE dispatcher: a key it does not own goes on to the host untouched.
+    Keys.onPressed: event => {
+        event.accepted = root._owns(event.key)
+        if (!event.accepted)
+            return
+        switch (event.key) {
+        case Qt.Key_Home: root.stepToEdge(true); break
+        case Qt.Key_End: root.stepToEdge(false); break
+        case Qt.Key_Return:
+        case Qt.Key_Enter:
+        case Qt.Key_Space:
+            if (!event.isAutoRepeat)
+                root.activateCurrent()
+            break
+        default: root.step(event.key === (root._vertical ? Qt.Key_Up : Qt.Key_Left) ? -1 : 1)
+        }
+    }
 
     // For a consumer whose rows change below the top level (an inline submenu
     // that opened); a model or delegate change resyncs on its own.
     function resync() { root._resync() }
 
-    onActiveFocusChanged: _focusCurrent()
+    // A menu that was not on screen when it was built has no visible row to
+    // pick a stop from.
+    onVisibleChanged: if (visible) _applyTabStop()
+
+    // Tab lands on a row; the cursor follows it.
+    onActiveFocusChanged: {
+        if (activeFocus) {
+            const held = _indexHolding()
+            if (held >= 0 && held !== currentIndex)
+                currentIndex = held
+        }
+        _focusCurrent()
+    }
     onModelChanged: _resync()
     onDelegateChanged: _resync()
     onCurrentIndexChanged: _applySelection()

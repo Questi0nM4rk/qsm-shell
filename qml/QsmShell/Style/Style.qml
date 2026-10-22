@@ -446,6 +446,14 @@ QtObject {
         return Math.max(1, Math.round(n * dpr)) / dpr;
     }
 
+    // `snapUp` is for a size built from fractional line heights: it never
+    // loses the fraction, and a hundredth of a device pixel is float noise
+    // rather than a reason to grow a whole one.
+    function snapUp(px: real, item: Item): real {
+        const dpr = root._ratio(item);
+        return Math.ceil(px * dpr - 0.01) / dpr;
+    }
+
     // A spacing snapped to the 4px rhythm, never below the half step. Insets
     // scaled by a size preset land between the grid lines otherwise.
     function rhythm(px: real): int {

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "key": "notification-card-popup-hover",
+  "target": { "story": "notification" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "body", "option": "long" },
+    { "type": "expect", "observable": "expanded", "equals": false },
+    { "type": "expect", "observable": "height", "equals": 92 },
+    { "type": "pointer", "target": "card", "event": "move", "x": 0.5, "y": 0.5 },
+    { "type": "expect", "observable": "hovered", "equals": true },
+    { "type": "await", "observable": "expanded", "equals": true },
+    { "type": "await", "observable": "height", "equals": 152 },
+    { "type": "pointer", "target": "card", "event": "move", "x": 0.937, "y": 0.1 },
+    { "type": "expect", "observable": "hovered", "equals": true },
+    { "type": "expect", "observable": "expanded", "equals": true },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.5, "y": 0.95 },
+    { "type": "await", "observable": "hovered", "equals": false },
+    { "type": "await", "observable": "expanded", "equals": false },
+    { "type": "await", "observable": "height", "equals": 92 },
+    { "type": "control", "group": "body", "option": "empty" },
+    { "type": "await", "observable": "height", "equals": 48 },
+    { "type": "pointer", "target": "card", "event": "move", "x": 0.5, "y": 0.5 },
+    { "type": "expect", "observable": "hovered", "equals": true },
+    { "type": "expect", "observable": "height", "equals": 48 },
+    { "type": "control", "group": "input", "option": "retiring" },
+    { "type": "expect", "observable": "hovered", "equals": false }
+  ]
+}
