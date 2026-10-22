@@ -67,8 +67,15 @@ Item {
                 selected: root.selectedIndex === index
                 armed: arm.armed
                 onSelectedChanged: if (!selected) arm.disarm()
+                // The selection follows the pointer and the keyboard, so what
+                // Space would act on is what reads as selected.
                 onEntered: root.selectedIndex = index
+                onVisualFocusChanged: if (visualFocus) root.selectedIndex = index
                 onExited: arm.disarm()
+                Keys.onEscapePressed: event => {
+                    event.accepted = arm.armed
+                    arm.disarm()
+                }
                 onActivated: {
                     root.selectedIndex = index
                     root.eventRecorder?.("intent", "activated", { role: modelData.role, armed: arm.armed })
@@ -118,6 +125,12 @@ Item {
             "armed-role": () => {
                 for (let i = 0; i < root.session.length; i++)
                     if (root._tile(i)?.armed)
+                        return root.session[i].role
+                return ""
+            },
+            "focus-role": () => {
+                for (let i = 0; i < root.session.length; i++)
+                    if (root._tile(i)?.focused)
                         return root.session[i].role
                 return ""
             },

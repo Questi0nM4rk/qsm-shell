@@ -42,9 +42,11 @@ T.Control {
     readonly property real _scale: Style.size("ActionTile", root.size) / Style.size("ActionTile", "md")
     property real buttonWidth: Style.rhythm(Style.tileWidth * root._scale)
     property real buttonHeight: Style.rhythm(Style.tileHeight * root._scale)
-    // Keyboard focus. Defaults to this item's own, so a control that takes
-    // focus rings without wiring; a list that owns focus for its rows binds it.
-    property bool focused: root.activeFocus
+    // Keyboard focus, which is when the ring shows. Defaults to this tile's own
+    // visual focus (Tab, Backtab, a shortcut), so a click or a host's
+    // forceActiveFocus() never rings it; a list that owns focus for its rows
+    // binds it.
+    property bool focused: root.visualFocus
     // The most a side may grow on hover, for a set whose tiles sit `gap` apart:
     // pass `Motion.hoverGrowthWithin(gap)`. The focus ring follows the growth,
     // so the room a tile needs is its growth plus the ring.
@@ -122,6 +124,7 @@ T.Control {
         focused: root.focused
         focusRadius: Style.radiusBody
         manualPressOverride: root._keyHeld
+        bodyGrows: true
         growthCap: root.growthCap
         onClicked: {
             root.forceActiveFocus()
@@ -132,9 +135,10 @@ T.Control {
 
     // A tile is a button, and a button answers a key: Space, Return and Enter
     // read as pressed while held and act once on release, and a held key
-    // repeats nothing, so one hold can never arm a tile and then confirm it.
-    // Every route shares `activate()`, so the disabled guard lives in exactly
-    // one place.
+    // repeats nothing, so one hold can never arm a tile and then confirm it
+    // (a held key repeats a release and a press of its own, `isAutoRepeat`,
+    // and neither is the key coming up). Every route shares `activate()`, so
+    // the disabled guard lives in exactly one place.
     function _isActivationKey(key: int): bool {
         return key === Qt.Key_Space || key === Qt.Key_Return || key === Qt.Key_Enter;
     }
@@ -142,12 +146,15 @@ T.Control {
         if (!root._isActivationKey(event.key))
             return;
         event.accepted = true;
-        root._keyHeld = root.enabled;
+        if (!event.isAutoRepeat)
+            root._keyHeld = root.enabled;
     }
     Keys.onReleased: event => {
         if (!root._isActivationKey(event.key) || !root._keyHeld)
             return;
         event.accepted = true;
+        if (event.isAutoRepeat)
+            return;
         root._keyHeld = false;
         root.activate();
     }
