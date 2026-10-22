@@ -255,6 +255,8 @@ TestCase {
         compare(unit().muted, true)
     }
 
+    // A nudge whose release never arrives still ends: the slider commits the
+    // value it moved once, at the loss, and the stale release adds nothing.
     function test_held_nudge_does_not_commit_after_focus_or_availability_loss() {
         keyClick(Qt.Key_Enter)
         tryVerify(() => unit().integration.observables["editor-focus"]())
@@ -264,19 +266,22 @@ TestCase {
         verify(unit().volume < start)
         compare(unit().commits, commits)
         focusTarget("search-input")
+        compare(unit().commits, commits + 1)
         keyRelease(Qt.Key_N)
-        compare(unit().commits, commits)
+        compare(unit().commits, commits + 1)
 
         focusTarget("editor")
         const beforeDisable = unit().volume
         keyPress(Qt.Key_O)
         verify(unit().volume > beforeDisable)
         unit().disabled = true
+        compare(unit().commits, commits + 2)
         keyRelease(Qt.Key_O)
-        compare(unit().commits, commits)
+        compare(unit().commits, commits + 2)
         const disabledValue = unit().volume
         keyClick(Qt.Key_N)
         compare(unit().volume, disabledValue)
+        compare(unit().commits, commits + 2)
     }
 
     function test_up_down_navigates_the_menu_from_the_open_slider() {
