@@ -108,23 +108,31 @@ Item {
     // So it is resampled every frame while OPEN, and never while closed. The
     // assignment is a no-op when nothing moved, so a still popover costs one
     // `mapToItem` per frame and no bindings at all.
+    //
+    // The bounds are sampled in the SAME space as the anchor. Reading only
+    // their width and height puts their origin at (0, 0), so a translated
+    // bounds item (a panel inset inside a scene, the normal case) would be
+    // clamped against the wrong rectangle.
     property rect _anchor: Qt.rect(0, 0, 0, 0)
+    property rect _bounds: Qt.rect(0, 0, 0, 0)
+
+    function _rectOf(item: Item): rect {
+        const origin = item.mapToItem(root.parent, 0, 0);
+        return Qt.rect(origin.x, origin.y, item.width, item.height);
+    }
 
     function resample(): void {
-        if (!root.anchorItem || !root.parent)
+        if (!root.parent)
             return;
-        const origin = root.anchorItem.mapToItem(root.parent, 0, 0);
-        const next = Qt.rect(origin.x, origin.y, root.anchorItem.width, root.anchorItem.height);
-        if (next !== root._anchor)
-            root._anchor = next;
+        if (root.anchorItem)
+            root._anchor = root._rectOf(root.anchorItem);
+        if (root.bounds)
+            root._bounds = root._rectOf(root.bounds);
     }
 
     FrameAnimation {
         running: root.open || root.opacity > 0
-        onTriggered: {
-            root.resample();
-            root.resampleBounds();
-        }
+        onTriggered: root.resample()
     }
 
     // Does the keyboard sit inside the panel? Asked as it closes, while the
@@ -141,27 +149,11 @@ Item {
     onOpenChanged: {
         if (root.open) {
             root.resample();
-            root.resampleBounds();
         } else if (root.anchorItem && root._holdsFocus()) {
             root.anchorItem.forceActiveFocus();
         }
     }
-    Component.onCompleted: { root.resample(); root.resampleBounds(); }
-
-    // The bounds rectangle in the SAME space as the anchor. Reading only its
-    // width and height puts its origin at (0, 0), so a translated bounds item
-    // (a panel inset inside a scene, the normal case) would be clamped
-    // against the wrong rectangle.
-    property rect _bounds: Qt.rect(0, 0, 0, 0)
-
-    function resampleBounds(): void {
-        if (!root.bounds || !root.parent)
-            return;
-        const origin = root.bounds.mapToItem(root.parent, 0, 0);
-        const next = Qt.rect(origin.x, origin.y, root.bounds.width, root.bounds.height);
-        if (next !== root._bounds)
-            root._bounds = next;
-    }
+    Component.onCompleted: root.resample()
 
     // Room on each side, as a number rather than a yes/no. A flip that only
     // asks "does the preferred side fit" will happily flip to a side that does
