@@ -12,11 +12,11 @@
     { "type": "action", "name": "dismiss" },
     { "type": "expect", "observable": "dismissals", "equals": 1 },
     { "type": "control", "group": "visibility", "option": "shown" },
-    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "control", "group": "dismissal", "option": "refused" },
     { "type": "action", "name": "dismiss" },
     { "type": "expect", "observable": "shown", "equals": true },
     { "type": "expect", "observable": "dismissals", "equals": 1 },
-    { "type": "control", "group": "state", "option": "enabled" },
+    { "type": "control", "group": "dismissal", "option": "allowed" },
     { "type": "action", "name": "dismiss" },
     { "type": "expect", "observable": "dismissals", "equals": 2 },
     { "type": "expect", "observable": "shown", "equals": false }
