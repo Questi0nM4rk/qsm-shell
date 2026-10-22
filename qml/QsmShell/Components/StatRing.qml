@@ -12,11 +12,13 @@ import qs.QsmShell.Style
 //
 // `startAngle` and `sweepAngle` make it a three-quarter ring as easily as a
 // closed one, and the open form is not decoration: the gap at the bottom is
-// where a label goes without colliding with the arc. A closed ring pushes its
-// label outside the circle, where it stops belonging to it.
+// where a label goes without colliding with the arc. A closed ring keeps its
+// label inside the circle too, in the hole the arc leaves.
 //
 // The arc's own colour never carries the reading alone — the LENGTH does, and
-// the number is in the middle.
+// the number is in the middle. The fill is the active part of a track, so it
+// reads `primary`, the way a `Meter` does, never the accent a passive metric
+// has no claim on.
 Item {
     id: root
 
@@ -29,10 +31,13 @@ Item {
     property string label: ""
     property string icon: ""
     property color iconColor: Style.text
-    property color fill: Style.accent
+    property color fill: Style.primary
     property color trackColor: Style.overlay
 
-    property int diameter: Style.ringDiameter
+    // A preset NAME of the StatRing size table; the diameter below is the one
+    // number it resolves to, and stating it is the escape hatch.
+    property string size: "md"
+    property int diameter: Style.size("StatRing", root.size)
     // A proportion of the ring, in whole device pixels, so a smaller ring keeps
     // its look instead of a fixed stroke that is a disc on a small one.
     property real strokeWidth: Style.stroke(root._box * Style.ringStrokeRatio, root)
@@ -41,24 +46,27 @@ Item {
     property real sweepAngle: 360
 
     // The reading is the focal point and steps with the ring: a 150px ring and
-    // a 56px one cannot share a type size without one of them being wrong. It
+    // a 64px one cannot share a type size without one of them being wrong. It
     // is the md reading times the live box over the md diameter, snapped to
-    // the type scale; a caller that states it owns the number.
-    property int readingSize: Style.textNear(Style.textXl * root._box / Style.ringDiameter)
+    // the type scale up to display (a 240px ring reads at 28, not at 22 in a
+    // hollow); a caller that states it owns the number.
+    readonly property real _readingWanted: Style.textXl * root._box / Style.ringDiameter
+    property int readingSize: [Style.textSm, Style.textMd, Style.textLg, Style.textXl, Style.textDisplay]
+        .reduce((best, step) => Math.abs(step - root._readingWanted) < Math.abs(best - root._readingWanted) ? step : best)
 
     implicitWidth: diameter
     implicitHeight: diameter
 
     // A passive output: no pointer, wheel, keyboard, focus or selection.
     Accessible.role: Accessible.StaticText
-    Accessible.name: (root.label.length > 0 && root.reading.length > 0)
-        ? root.label + ", " + root.reading
-        : root.label + root.reading
+    Accessible.name: [root.label, root.reading].filter(part => part.length > 0).join(", ")
 
     // The live ring box. It tracks the rendered size, never the diameter
     // preference, so caller-set geometry cannot overflow.
     readonly property real _box: Math.min(root.width, root.height)
-    // The arc's centreline sits this many strokes inside the box edge.
+    // The arc's centreline sits this many strokes inside the box edge, so the
+    // outer edge is a quarter stroke clear of it and the anti-aliased rim is
+    // never cut by the canvas.
     readonly property real _strokeInset: 0.75
 
     // The column the centred content may take: the square inscribed in the
@@ -67,7 +75,8 @@ Item {
     // _box/2 - (inset + 1/2) x stroke, and the inscribed square's side is
     // sqrt(2) times that. Long text elides inside it instead of crossing the
     // arc.
-    readonly property int _contentWidth: Math.max(0, Math.floor(Math.SQRT2 * (root._box / 2 - (root._strokeInset + 0.5) * root.strokeWidth)))
+    // Even, so the column centres on a whole pixel instead of a half.
+    readonly property int _contentWidth: Math.max(0, 2 * Math.floor(Math.SQRT2 * (root._box / 2 - (root._strokeInset + 0.5) * root.strokeWidth) / 2))
     readonly property int _iconSize: Style.iconNear(root.readingSize)
     // The text rows' own height, independent of the icon so that hiding the
     // icon cannot resize the stack back into fitting.
@@ -78,6 +87,15 @@ Item {
     // and label carry the meaning, and a glyph across the arc carries none.
     readonly property bool _iconFits: root.icon.length > 0
         && root._textHeight + (root._textHeight > 0 ? Style.spaceTight : 0) + root._iconSize <= root._contentWidth
+
+    // The fraction on screen: the value clamped, and eased, because a reading
+    // that snaps between samples reads as jitter. Reduced motion removes the
+    // glide; a one-shot position animation is removed, never shortened.
+    property real _shown: Math.max(0, Math.min(1, root.value))
+    Behavior on _shown {
+        enabled: !Style.reducedMotion
+        NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
+    }
 
     Canvas {
         id: canvas
@@ -101,19 +119,18 @@ Item {
             context.arc(cx, cy, radius, start, start + sweep);
             context.stroke();
 
-            const fraction = Math.max(0, Math.min(1, root.value));
             // A round-capped arc of zero length still paints a dot, which
             // reads as "a little" when the answer is "none".
-            if (fraction > 0.005) {
+            if (root._shown > 0.005) {
                 context.strokeStyle = root.fill;
                 context.beginPath();
-                context.arc(cx, cy, radius, start, start + sweep * fraction);
+                context.arc(cx, cy, radius, start, start + sweep * root._shown);
                 context.stroke();
             }
         }
     }
 
-    onValueChanged: canvas.requestPaint()
+    on_ShownChanged: canvas.requestPaint()
     onFillChanged: canvas.requestPaint()
     onTrackColorChanged: canvas.requestPaint()
     onStrokeWidthChanged: canvas.requestPaint()

@@ -12,7 +12,7 @@ Rectangle {
     readonly property string reading: root.measured ? Math.round(root.fraction * 100) + "%" : ""
     property string caption: "CPU"
     property string glyph: "cpu"
-    property int box: Style.ringDiameter
+    property string preset: "md"
     property bool open: true
 
     implicitWidth: Style.controlWidth
@@ -22,7 +22,7 @@ Rectangle {
     StatRing {
         id: ring
         anchors.centerIn: parent
-        diameter: root.box
+        size: root.preset
         value: root.fraction
         reading: root.reading
         label: root.caption
@@ -41,13 +41,14 @@ Rectangle {
             { label: "part", set: { fraction: 0.42 } },
             { label: "full", set: { fraction: 1 } }
         ] },
-        { label: "diameter", options: [
-            { label: "sm", set: { box: Style.size("Control", "lg") } },
-            { label: "md", set: { box: Style.ringDiameter } },
-            { label: "lg", set: { box: Style.controlWidth } }
+        { label: "size", options: [
+            { label: "sm", set: { preset: "sm" } },
+            { label: "md", set: { preset: "md" } },
+            { label: "lg", set: { preset: "lg" } }
         ] },
         { label: "content", options: [
             { label: "full", set: { measured: true, caption: "CPU", glyph: "cpu" } },
+            { label: "long", set: { measured: true, caption: "Package manager", glyph: "cpu" } },
             { label: "reading-only", set: { measured: true, caption: "", glyph: "" } },
             { label: "bare", set: { measured: false, caption: "", glyph: "" } }
         ] }
@@ -57,10 +58,15 @@ Rectangle {
         actions: [],
         observables: {
             value: () => ring.value,
+            // The fraction on screen, which eases to the value.
+            shown: () => ring._shown,
             reading: () => ring.reading,
             label: () => ring.label,
             "start-angle": () => ring.startAngle,
-            "sweep-angle": () => ring.sweepAngle
+            "sweep-angle": () => ring.sweepAngle,
+            diameter: () => ring.width,
+            "reading-size": () => ring.readingSize,
+            "accessible-name": () => ring.Accessible.name
         }
     })
 }
