@@ -658,13 +658,13 @@
     },
     "notification": {
       "component": "notification",
-      "variant": "expanded",
+      "variant": "popup",
       "viewport": [
-        800,
-        500
+        460,
+        300
       ],
-      "title": "NotificationCard / Expanded",
-      "description": "Expanded notification card fixture.",
+      "title": "NotificationCard / Popup and list",
+      "description": "One notification card as the popup stack and the history list host it, in every urgency, lead and record state.",
       "tags": [
         "notification",
         "message"
