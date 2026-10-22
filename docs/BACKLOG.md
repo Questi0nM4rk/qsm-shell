@@ -6,7 +6,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 ## Next
 
 - Full-library UIX audit and redesign: every one of the 52 exported types reviewed against the installed qsm-uix guidance, with per-type records carrying hitbox and pointer-path mathematics, then repairs one item at a time with owner acceptance. Orientation `docs/UIX-AUDIT.md`, plan `openspec/changes/uix-component-audit/`, tracker `qss-9zk`.
-- Kbd, Capsule's detail, ColorSwatch's reading and the Slider thumb's reading still set `textXs` (10 px) directly; the token goes when the last of them does.
+- Capsule's detail, ColorSwatch's reading and the Slider thumb's reading still set `textXs` (10 px) directly; the token goes when the last of them does.
 - Menu and MonthCalendar assign host-owned selection/month directly; these writes can replace host bindings. Source-confirmed ownership mismatch, left for each type's named repair and live review (`qss-bcn`).
 - Rollout unregisters only its current host/key; changing either on a living instance can orphan the previous paint/input registration. Production reachability is unverified; settle the lifetime contract before changing the mechanism (`qss-3il`).
 - Shell readiness first: close concrete component defects and keyboard/public-action
@@ -28,8 +28,7 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   implementation item.
 - NotificationCenter: live notification action targets, spoken output and
   appearance await owner review.
-- R2/R3: Slider's unit does not answer label clicks; long
-  Kbd cases are missing from their review controls. Extend existing units with
+- R2/R3: Slider's unit does not answer label clicks. Extend existing units with
   their owning milestone, not a new catalog or flow suite.
 - R4: include startup empty/one-point Sparkline data and Divider cases;
   align Surface's focus wording with host composition. Deferred to those view reviews;
@@ -91,5 +90,5 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - **Host-owned state written by the component** — `Menu.currentIndex`,
   `Menu` writing row `selected`, `MonthCalendar.shown`: report `moved` /
   `monthShifted` and let the host assign; every host wires it in the same change.
-- **Size presets still missing** — `ActionTile`, `StatRing`, `ColorSwatch`,
+- **Size presets still missing** — `StatRing`, `ColorSwatch`,
   `Avatar`, `Spinner`, `Skeleton` line box.
