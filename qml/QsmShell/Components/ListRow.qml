@@ -169,7 +169,8 @@ Item {
     // from the keyboard while results reshuffle underneath it.
     signal hoveredEntered
 
-    Accessible.role: root.selectable ? Accessible.Button : Accessible.StaticText
+    Accessible.role: root.header ? Accessible.Heading
+        : root.selectable ? Accessible.Button : Accessible.StaticText
     Accessible.name: root.primary
     Accessible.description: root.supporting
     Accessible.selectable: root.selectable
