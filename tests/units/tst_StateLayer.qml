@@ -30,7 +30,6 @@ TestCase {
         StateLayer {
             id: activeLayer
             anchors.fill: parent
-            target: activeHost
         }
     }
     SignalSpy { id: activeClicked; target: activeLayer; signalName: "clicked" }
@@ -43,7 +42,6 @@ TestCase {
         StateLayer {
             id: inactiveLayer
             anchors.fill: parent
-            target: inactiveHost
             interactive: false
         }
     }
@@ -56,7 +54,6 @@ TestCase {
         StateLayer {
             id: hoverOnlyLayer
             anchors.fill: parent
-            target: hoverOnlyHost
             clickable: false
         }
     }
@@ -178,7 +175,6 @@ TestCase {
         StateLayer {
             id: hostedLayer
             anchors.fill: parent
-            target: hostButton
             host: hostButton
         }
     }
@@ -199,7 +195,10 @@ TestCase {
         hostButton.enabled = true;
 
         // The press above gave hostButton active focus (StrongFocus includes
-        // ClickFocus), and the ring follows focus however it arrived.
+        // ClickFocus) and no ring: the ring is for keyboard focus only.
+        compare(hostedLayer.focused, false);
+        probe.forceActiveFocus();
+        hostButton.forceActiveFocus(Qt.TabFocusReason);
         tryCompare(hostedLayer, "focused", true, 500);
         probe.forceActiveFocus();
         tryCompare(hostedLayer, "focused", false, 500);

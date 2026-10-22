@@ -89,6 +89,8 @@ Item {
         : (root.parent as T.Control) ? ((root.parent as T.Control).visualFocus ?? false)
         : (root.parent?.activeFocus ?? false)
     property bool _pointerFocus: false
+    // Whether the ring is showing: keyboard focus on an available layer.
+    readonly property bool ringShown: root.focused && !root._pointerFocus && root.enabled && root.interactive
     onFocusedChanged: if (!root.focused) root._pointerFocus = false
     // The corner the ring follows. The host states it, because `parent` is a
     // plain Item as far as the type system is concerned and probing it for a
@@ -149,20 +151,18 @@ Item {
         }
     }
 
-    readonly property real _dpr: root.Window.window?.devicePixelRatio ?? 1
-
     // Per side, in whole DEVICE pixels: what `response` asks of `extent`,
-    // rounded to the pixel grid, at least one pixel while it asks for anything,
-    // and held under `growthCap`. A fractional scale puts an edge between two
-    // pixels and resamples what is inside, so growth is a size change in
-    // pixels, never a ratio on the painted item. Negative while pressed in.
+    // rounded to the pixel grid, at least one pixel while it asks for anything
+    // (the floor `Style.stroke` gives a line), and held under `growthCap`. A
+    // fractional scale puts an edge between two pixels and resamples what is
+    // inside, so growth is a size change in pixels, never a ratio on the
+    // painted item. Negative while pressed in.
     function _growthAt(response: real): real {
         const wanted = root.extent * (response - 1) / 2;
         if (wanted === 0)
             return 0;
-        const pixels = Math.max(1, Math.round(Math.abs(wanted) * root._dpr));
-        const snapped = Math.sign(wanted) * pixels / root._dpr;
-        return Math.min(snapped, Math.floor(root.growthCap * root._dpr) / root._dpr);
+        const snapped = Math.sign(wanted) * Style.stroke(Math.abs(wanted), root);
+        return Math.min(snapped, Style.snapDown(root.growthCap, root));
     }
     readonly property real growth: root._growthAt(root.response)
     // What a full hover would grow a side by: the room a container must keep
@@ -173,15 +173,17 @@ Item {
     // mark on every control instead of whatever each surface remembered to
     // draw. Outside the painted body, never inside it: a ring on the body's own
     // edge vanishes on a full accent fill. Gap and stroke are both
-    // `spaceTight` in whole device pixels; the outer radius is the body's plus
-    // both, the reverse of `Style.childRadius`, so the ring stays concentric.
-    // The gap is measured from THIS LAYER's edge, so a layer sized to its body
-    // (not outset from it) is what puts the ring a half step clear.
+    // `Style.indicatorWidth` in whole device pixels; the outer radius is the
+    // body's plus both, the reverse of `Style.childRadius`, so the ring stays
+    // concentric. The gap is measured from the body, which is this LAYER's edge
+    // plus its `growth`: a hovered or pressed body carries the ring with it
+    // instead of growing over it.
     Rectangle {
         readonly property real _stroke: Style.stroke(Style.indicatorWidth, root)
-        readonly property real _reach: _stroke * 2
+        readonly property real _gap: _stroke
+        readonly property real _reach: _gap + _stroke
         anchors.fill: parent
-        anchors.margins: -_reach
+        anchors.margins: -(_reach + root.growth)
         z: -1
         // Hidden only once the fade has finished, so a ring leaves as it came.
         visible: opacity > 0
@@ -189,7 +191,7 @@ Item {
         radius: root.focusRadius + _reach
         border.width: _stroke
         border.color: root.focusColor
-        opacity: root.focused && !root._pointerFocus && root.enabled && root.interactive ? 1 : 0
+        opacity: root.ringShown ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }

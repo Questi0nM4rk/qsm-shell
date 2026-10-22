@@ -1,4 +1,5 @@
 import QtQuick
+
 import qs.QsmShell.Components
 import qs.QsmShell.Style
 
@@ -16,39 +17,46 @@ Item {
 
     property string variant: ""
     property var eventRecorder: null
+    property int clicks: 0
 
     implicitWidth: Style.controlWidth / 2
     implicitHeight: Style.size("Control", "lg")
 
-    Rectangle {
-        id: body
+    // The host: it owns the pointer target, the keys and the focus. The layer
+    // fills it at rest size, so the hit zone never grows with the body.
+    Item {
+        id: sample
         anchors.centerIn: parent
-        // The unit plays the host: the layer reports `growth` and the body
-        // takes it on every side.
-        width: root.implicitWidth + 2 * layer.growth
-        height: root.implicitHeight + 2 * layer.growth
+        width: root.implicitWidth
+        height: root.implicitHeight
         enabled: root.variant !== "disabled"
         activeFocusOnTab: enabled
-        radius: Style.radiusMd
-        color: enabled ? Style.tone(Style.surface, layer.hovered, layer.pressed, false, true, Style.accent) : Style.disabled(Style.surface)
         Accessible.role: Accessible.Button
         Accessible.name: "State layer sample"
-        Accessible.onPressAction: layer.activate()
-        Keys.onSpacePressed: layer.activate()
-        Keys.onReturnPressed: layer.activate()
+        Accessible.onPressAction: stateLayer.activate()
+        Keys.onSpacePressed: stateLayer.activate()
+        Keys.onReturnPressed: stateLayer.activate()
+        Keys.onEnterPressed: stateLayer.activate()
+
+        // The layer reports `growth`; the body takes it on every side.
+        Surface {
+            anchors.centerIn: parent
+            width: sample.width + 2 * stateLayer.growth
+            height: sample.height + 2 * stateLayer.growth
+            radius: Style.radiusMd
+            hovered: stateLayer.hovered
+            pressed: stateLayer.pressed
+        }
 
         StateLayer {
-            id: layer
-            x: -Style.spaceTight
-            y: -Style.spaceTight
-            width: body.width + Style.spaceTight * 2
-            height: body.height + Style.spaceTight * 2
-            extent: root.implicitHeight
-            interactive: body.enabled
+            id: stateLayer
+            anchors.fill: parent
+            interactive: sample.enabled
             clickable: root.variant !== "trigger"
-            focusRadius: body.radius + Style.spaceTight
+            focusRadius: Style.radiusMd
             onClicked: {
-                body.forceActiveFocus(Qt.MouseFocusReason)
+                sample.forceActiveFocus(Qt.MouseFocusReason)
+                root.clicks++
                 root.eventRecorder?.("intent", "clicked", {})
             }
             onHoveredEntered: root.eventRecorder?.("intent", "hovered", {})
@@ -65,14 +73,19 @@ Item {
     readonly property var integration: ({
         events: ["clicked", "hovered"],
         actions: ["click"],
+        targets: ({ host: () => sample }),
         observables: {
-            interactive: () => layer.interactive,
-            clickable: () => layer.clickable
+            interactive: () => stateLayer.interactive,
+            clickable: () => stateLayer.clickable,
+            clicks: () => root.clicks,
+            hovered: () => stateLayer.hovered,
+            pressed: () => stateLayer.pressed,
+            "ring-shown": () => stateLayer.ringShown
         },
         runAction: name => {
             if (name !== "click")
                 return false;
-            return layer.activate();
+            return stateLayer.activate();
         }
     })
 }
