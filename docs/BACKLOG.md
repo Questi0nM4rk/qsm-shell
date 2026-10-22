@@ -92,11 +92,10 @@ needs a paragraph is a design question for the owner, not a backlog entry.
   `monthShifted` and let the host assign; every host wires it in the same change.
 - **Size presets still missing** — `StatRing`, `ColorSwatch`,
   `Avatar`, `Spinner`, `Skeleton` line box.
-- **Two components break a stated law for a stated reason** — `SelectionMark`
+- **A component breaks a stated law for a stated reason** — `SelectionMark`
   eases its exit on the enter curve (a `Behavior` reads its easing before a
-  conditional re-runs), against `Motion.exitEasing`; `TextField` does not grow
-  on hover (the caret and text must stay where the eye put them). Keep the
-  exception and write it into the law, or give the component way.
+  conditional re-runs), against `Motion.exitEasing`. Keep the exception and
+  write it into the law, or give the component way.
 - **Slider thumb glyph** — it is the thumb minus two `space2` insets
   (12 / 16 / 32 at sm / md / lg), not `Style.glyphAlone(thumb)` (16 / 16 / 20,
   which fills the sm thumb). Keep the inset rule or move the three sizes.
