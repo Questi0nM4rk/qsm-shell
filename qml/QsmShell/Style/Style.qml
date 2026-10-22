@@ -230,6 +230,28 @@ QtObject {
         return _over(Qt.rgba(t.r, t.g, t.b, hi), c);
     }
 
+    // `fg` as it is while it reads on `bg`, otherwise pulled toward `text` just
+    // far enough to keep `contrastText`. Accent content on a selected body that
+    // hover or press has lifted is the case: 5.25:1 at rest, 4.24:1 hovered,
+    // 3.58:1 pressed.
+    function legible(fg: color, bg: color): color {
+        const shipped = c => Qt.rgba(Math.round(c.r * 255) / 255, Math.round(c.g * 255) / 255,
+                                     Math.round(c.b * 255) / 255, 1);
+        const seen = shipped(_over(bg, root.band));
+        if (contrast(shipped(fg), seen) >= root.contrastText)
+            return fg;
+        const t = root.text;
+        let lo = 0, hi = 1;
+        for (let i = 0; i < 20; i++) {
+            const mid = (lo + hi) / 2;
+            if (contrast(shipped(_over(Qt.rgba(t.r, t.g, t.b, mid), fg)), seen) < root.contrastText)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        return shipped(_over(Qt.rgba(t.r, t.g, t.b, hi), fg));
+    }
+
     // `top` laid over `base`, both with their own alpha. Qt.tint mixes the
     // colour channels with the base's even when the base is transparent, which
     // turns "accent over nothing" into a dark accent.
