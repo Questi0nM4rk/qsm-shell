@@ -105,7 +105,6 @@ Disabled colours blend 35 % toward band (`Style.disabled`) and are exempt from 1
 Source-backed defects. Each cites a file and line, and says what a person sees.
 
 - **D1, medium.** Pressing Return in a number field with intermediate text does nothing visible. `accept()` returns false silently (TextField.qml 126-131). The Return branch then sets `event.accepted = true` regardless (359-364). A person who types "1e" and presses Enter sees no border, no message and no change, because `accepted` is not emitted and `failed` is not set. Fix: emit a `rejected` signal from `accept()` when `!input.acceptableInput`, so the host can set `failed` and show its copy. Shared: no.
-- **D3, minor.** Slot content does not dim when the field is disabled. The text dims to `Style.disabled` (TextField.qml 304), but the unit's leading `SvgIcon` takes `Style.text` at full strength (`SvgIcon.qml` 22; unit 40) and the "%" `Prose` has no `enabled` handling (`Prose.qml`, no match). A person sees dimmed text beside a bright magnifier and a bright "%". Fix: bind slot colours to `field.enabled`. Shared: no.
 
 Redesign proposals (taste, not defects):
 

@@ -50,7 +50,13 @@ Item {
 
         leading: Loader {
             active: root.purpose === "search"
-            sourceComponent: Component { SvgIcon { name: "search"; size: root.slotGlyph } }
+            sourceComponent: Component {
+                SvgIcon {
+                    name: "search"
+                    size: root.slotGlyph
+                    color: enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+                }
+            }
         }
         trailing: Loader {
             id: trailingSlot
@@ -93,6 +99,7 @@ Item {
         Prose {
             role: "metadata"
             text: "%"
+            color: enabled ? Style.textMuted : Style.disabled(Style.textMuted)
         }
     }
 
