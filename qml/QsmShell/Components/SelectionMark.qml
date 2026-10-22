@@ -20,12 +20,6 @@ Rectangle {
     // keyboard is on. Wider, not brighter: brightness is already spoken for.
     property bool strong: false
     property color markColor: Style.accent
-    // What a SHOWN-but-not-strong mark reads at. A list cursor is either gone
-    // or fully present, so this defaults to 1. A mark that never leaves (a notification's urgency tick,
-    // present on every row and only THICKENING on select) needs a third,
-    // dimmer level for "here, but not the current one" — brightening it too
-    // would spend the same signal `strong` already owns.
-    property real restOpacity: 1
 
     width: Style.stroke(root.strong ? Style.markThickness + Style.indicatorWidth : Style.markThickness, root)
     height: root.shown ? Style.markHeight : 0
@@ -37,19 +31,20 @@ Rectangle {
     // column wherever its position falls between two.
     antialiasing: false
     color: root.markColor
-    opacity: root.shown ? (root.strong ? 1 : root.restOpacity) : 0
+    opacity: root.shown ? 1 : 0
 
     // It grows in and shrinks away, and the two are not the same motion: an
-    // arrival lands, a departure gets out of the way.
+    // arrival lands, a departure gets out of the way, in less time than it
+    // took to arrive.
     Behavior on height {
         NumberAnimation {
-            duration: Motion.micro
+            duration: root.shown ? Motion.micro : Motion.exit(Motion.micro)
             easing.type: root.shown ? Motion.emphasizedEasing : Motion.exitEasing
         }
     }
     Behavior on opacity {
         NumberAnimation {
-            duration: Motion.micro
+            duration: root.shown ? Motion.micro : Motion.exit(Motion.micro)
             easing.type: root.shown ? Motion.standardEasing : Motion.exitEasing
         }
     }
