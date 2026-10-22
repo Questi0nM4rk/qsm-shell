@@ -90,6 +90,7 @@ ColumnLayout {
                 rotation: root.expanded ? 90 : 0
 
                 Behavior on rotation {
+                    enabled: !Style.reducedMotion
                     NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
                 }
             }
