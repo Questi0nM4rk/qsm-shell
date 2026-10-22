@@ -20,10 +20,16 @@ Item {
     property string size: "md"
     property int acceptedCount: 0
     property int escapedCount: 0
+    // The host names its field: what the person is asked for, not the value.
+    readonly property string fieldName: purpose === "search" ? "Search settings"
+        : purpose === "password" ? "Network password"
+        : purpose === "number" ? "Brightness" : "Display name"
     // Slot content is the host's: its glyph follows the field's box, and an
-    // action's own box is one preset below the field's so its glyph is the same.
+    // action's own box is the largest preset whose focus ring still sits inside
+    // the field (the ring reaches two strokes past the body).
     readonly property int slotGlyph: Style.glyphBeside(field.fieldHeight)
-    readonly property string actionSize: ({ xs: "xs", sm: "xs", md: "sm", lg: "md" })[root.size] ?? "sm"
+    readonly property string actionSize: ({ xs: "xs", sm: "xs", md: "xs", lg: "sm" })[root.size] ?? "xs"
+    readonly property Item input: Array.from(field.contentItem.children).find(c => c.objectName === "textFieldInput") ?? null
 
     implicitWidth: Style.controlWidth
     implicitHeight: Style.size("Control", "lg")
@@ -37,13 +43,23 @@ Item {
         failed: root.failed
         readOnly: root.readOnly
         size: root.size
-        placeholder: root.purpose === "search" ? "Search" : "Value"
+        placeholder: root.purpose === "search" ? "Search"
+            : root.purpose === "password" ? "Password"
+            : root.purpose === "number" ? "0 to 100" : "Name"
+        Accessible.name: root.fieldName
 
         leading: Loader {
             active: root.purpose === "search"
-            sourceComponent: Component { SvgIcon { name: "search"; size: root.slotGlyph } }
+            sourceComponent: Component {
+                SvgIcon {
+                    name: "search"
+                    size: root.slotGlyph
+                    color: enabled ? Style.textMuted : Style.disabled(Style.textMuted)
+                }
+            }
         }
         trailing: Loader {
+            id: trailingSlot
             active: root.purpose === "password" || root.purpose === "number"
             sourceComponent: root.purpose === "password" ? revealAction : unitSuffix
         }
@@ -73,7 +89,7 @@ Item {
         IconButton {
             size: root.actionSize
             icon: field.passwordVisible ? "eye" : "eye-off"
-            accessibleName: "Reveal password"
+            accessibleName: field.passwordVisible ? "Hide password" : "Show password"
             onClicked: field.toggleReveal()
         }
     }
@@ -83,6 +99,7 @@ Item {
         Prose {
             role: "metadata"
             text: "%"
+            color: enabled ? Style.textMuted : Style.disabled(Style.textMuted)
         }
     }
 
@@ -115,6 +132,10 @@ Item {
     readonly property var integration: ({
         events: ["accepted", "edited", "escaped", "selection-claimed", "key-pressed"],
         actions: ["accept", "clear", "reveal", "select-all"],
+        targets: ({
+            field: () => field,
+            reveal: () => root.purpose === "password" ? trailingSlot.item : null
+        }),
         keys: {
             "Enter": () => { field.accept(); return true }
         },
@@ -136,6 +157,11 @@ Item {
             size: () => field.size,
             accepted: () => root.acceptedCount,
             escaped: () => root.escapedCount,
+            focused: () => field.focused,
+            "keyboard-focused": () => field.keyboardFocused,
+            hovered: () => field.hovered,
+            "accessible-name": () => root.input?.Accessible.name ?? "",
+            "accessible-description": () => root.input?.Accessible.description ?? "",
             "can-accept": () => field.actions[0].enabled,
             "can-clear": () => field.actions[1].enabled
         },

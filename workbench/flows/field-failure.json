@@ -5,6 +5,8 @@
   "steps": [
     { "type": "reset" },
     { "type": "awaitIdle" },
+    { "type": "control", "group": "control", "option": "switch" },
+    { "type": "control", "group": "validation", "option": "ok" },
     { "type": "expect", "observable": "failed", "equals": false },
     { "type": "expect", "observable": "toggled", "equals": true },
     { "type": "expect", "observable": "toggles", "equals": 0 },

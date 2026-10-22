@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "key": "text-field-reveal-keyboard",
+  "target": { "story": "password-input" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "accessible-description", "equals": "Network password, Password" },
+    { "type": "expect", "observable": "revealed", "equals": false },
+    { "type": "pointer", "target": "field", "event": "click", "x": 0.3, "y": 0.5 },
+    { "type": "expect", "observable": "focused", "equals": true },
+    { "type": "expect", "observable": "keyboard-focused", "equals": false },
+    { "type": "key", "target": "field", "key": "Tab" },
+    { "type": "expect", "observable": "focused", "equals": false },
+    { "type": "key", "target": "reveal", "key": "Space" },
+    { "type": "expect", "observable": "revealed", "equals": true },
+    { "type": "expect", "observable": "input-type", "equals": "password" },
+    { "type": "key", "target": "reveal", "key": "Backtab" },
+    { "type": "expect", "observable": "focused", "equals": true },
+    { "type": "expect", "observable": "keyboard-focused", "equals": true },
+    { "type": "key", "target": "field", "key": "Enter" },
+    { "type": "expectEvent", "event": "accepted", "origin": "component" },
+    { "type": "expect", "observable": "accepted", "equals": 1 },
+    { "type": "pointer", "target": "reveal", "event": "click" },
+    { "type": "expect", "observable": "revealed", "equals": false }
+  ]
+}

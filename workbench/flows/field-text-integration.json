@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "key": "field-text-integration",
+  "target": { "story": "field" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "failed", "equals": true },
+    { "type": "expect", "observable": "control-failed", "equals": true },
+    { "type": "expect", "observable": "accessibility-description", "equals": "Network password, Wrong password. Check it and try again. Required" },
+    { "type": "expect", "observable": "message-truncated", "equals": false },
+    { "type": "control", "group": "validation", "option": "long" },
+    { "type": "await", "observable": "message-lines", "equals": 3 },
+    { "type": "expect", "observable": "message-truncated", "equals": false },
+    { "type": "control", "group": "validation", "option": "ok" },
+    { "type": "expect", "observable": "control-failed", "equals": false },
+    { "type": "expect", "observable": "accessibility-description", "equals": "Network password, Enter to connect, Escape to cancel. Required" },
+    { "type": "expect", "observable": "control-focused", "equals": false },
+    { "type": "pointer", "target": "label", "event": "click", "x": 0.5, "y": 0.5 },
+    { "type": "expect", "observable": "control-focused", "equals": true },
+    { "type": "expect", "observable": "control-keyboard-focused", "equals": false },
+    { "type": "write", "target": "control", "text": "ab" },
+    { "type": "expect", "observable": "password", "equals": "hunter2ab" },
+    { "type": "key", "target": "control", "key": "Enter" },
+    { "type": "expectEvent", "event": "accepted", "origin": "component" },
+    { "type": "expect", "observable": "accepted", "equals": 1 },
+    { "type": "expect", "observable": "size-scale", "equals": 1 },
+    { "type": "control", "group": "size", "option": "lg" },
+    { "type": "expect", "observable": "size-scale", "equals": 1.2 },
+    { "type": "control", "group": "size", "option": "sm" },
+    { "type": "expect", "observable": "size-scale", "equals": 0.8 }
+  ]
+}

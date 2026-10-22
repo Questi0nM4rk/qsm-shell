@@ -29,8 +29,8 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 | `activate(): bool` and action `activate` | one guarded operation for pointer, keys and assistive tech | yes, `:34-42` |
 | `clicked` | the intent signal | yes, `:32`, `:40` |
 | rest | `textMuted` | yes, `:57` |
-| hover | grows and changes colour | yes, `hoverTint` on the StateLayer |
-| press | scales or changes colour | yes, `Motion.pressScale` on the StateLayer (CL-1) |
+| hover | grows and changes colour | yes, `hoverTint` on the StateLayer, drawn under the label (`z: -1`), so the label stays readable on its disc |
+| press | scales or changes colour | a pointer press pushes in (`Motion.pressScale`); a held key only recolours |
 | focus | keyboard ring only | yes, through StateLayer: `StateLayer.qml:152`, `:174-181` |
 | disabled | colour through `Style.disabled` | yes, `:57` |
 | empty text and icon | no intent, no Tab stop | yes, `:56`, `:59`, `:61` |
@@ -47,7 +47,7 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 ### Sizes, empty, long content, failure, cancellation
 
 - md: text 12 (`Tokens.qml:36`), glyph 16 (`:43`), hit target 24 (`:45`), gap 4 (`:21`).
-- `sizeScale`: text through `textNear(12 s)`, glyph through `iconNear(16 s)`, gap through `rhythm(4 s)` (`:98`, `:105`, `:115`). The hit target is `iconLg * sizeScale`, unsnapped (`:132-133`), see P-4.
+- `sizeScale`: text through `textNear(12 s)`, glyph through `iconNear(16 s)`, gap through `rhythm(4 s)`. The hit target is `iconLg * max(1, sizeScale)`: it grows with the scale and never drops under the 24 px floor (sm, 0.8: 24 px, was 19.2).
 - Icon only, no text: the caption hides, the glyph remains, the accessible name is empty unless the caller passes one.
 - Neither icon nor text: `visible` false, no focus (`:59`, `:61`).
 - Long text: the natural width is the full text; a host that gives the label less width makes the caption elide.
@@ -64,10 +64,10 @@ Names a control from outside: a Field caption above a text box, a Slider label o
 ### Motion and reduced motion (review-animations)
 
 - No animation of its own. Inherited through StateLayer: hover scale to `Motion.hoverScale` 1.08 (`Tokens.qml:61`, `StateLayer.qml:113`, `:126-131`) over `Motion.micro` 130 ms, OutCubic (`Tokens.qml:47`, `Motion.qml:120`). Focus ring fades in over 130 ms (`StateLayer.qml:159-161`).
-- Press: `Motion.pressScale` through the StateLayer (CL-1).
+- Press: `Motion.pressScale` for a pointer press; a held key shows the tint only.
 - Reduced motion: `Motion.press` falls to 40 ms and `Motion.micro` to 60 ms (`Motion.qml:24`, `:26`). `Motion.hoverScale` is 1, so the hover movement is removed.
-- Standards: 1 justified by state indication. 2 keyboard ring fade on Tab (SC-1). 3 ease-out for a move, which is correct. 4 durations under 300 ms; animate's table was not loaded, so not checked against it. 5 press scale present, but it also animates keyboard presses (CL-1). 6 retargets through `Behavior`. 7 only scale and opacity animate. 8 holds. 9 no press motion to be asymmetric. 10 no local curve.
-- Verdict for this item: Block. The press scale animates keyboard presses (CL-1) and the focus ring fade awaits the owner's ruling (SC-1).
+- Standards: 1 justified by state indication. 2 keyboard ring fade on Tab (SC-1). 3 ease-out for a move, which is correct. 4 durations under 300 ms; animate's table was not loaded, so not checked against it. 5 press scale on a pointer press only. 6 retargets through `Behavior`. 7 only scale and opacity animate. 8 holds. 9 no press motion to be asymmetric. 10 no local curve.
+- Verdict for this item: the focus ring fade awaits the owner's ruling (SC-1).
 
 ### Pointer geometry
 
@@ -78,14 +78,10 @@ Names a control from outside: a Field caption above a text box, a Slider label o
   - W = 24 px (input): ID = log2(1 + 170/24) = 3.01 bits. Landing tolerance plus or minus 12 px on the approach axis.
   - W = 16 px (painted only): ID = log2(1 + 170/16) = 3.54 bits. Tolerance plus or minus 8 px.
   - The input shape removes 0.53 bits of difficulty at this distance.
-- Neighbouring interference: TextField reserves the slot footprint plus a gap of `rhythm(8 s)` (`TextField.qml:176-180`) and an inset of `rhythm(12 s)` (`:175`). The 4 px overflow falls inside the gap at md, and at any scale the overflow (4 s) stays inside the gap (8 s), so no text sits under the hit target.
+- Neighbouring interference: TextField reserves the slot footprint plus a gap of `rhythm(8 s)` (`TextField.qml:176-180`) and an inset of `rhythm(12 s)` (`:175`). The 4 px overflow falls inside the gap at md, and below md the hit target is held at 24 px, so the overflow stays inside the gap (8 s), so no text sits under the hit target.
 - Popup corridor and timing: not applicable. The label is not a popup and has no hover delay or keep-open logic.
 
 ### Findings
-
-Source-backed defects:
-
-- CL-1 (major, shared): the press scale also animates keyboard presses, because `manualPressOverride` drives `pressed` (`StateLayer.qml:83`, `ControlLabel.qml:136`), which breaks review-animations standard 2. The fix makes StateLayer's `response` follow the pointer press only, keeping `pressed` for colour. This needs StateLayer, hence shared.
 
 Source conflicts (owner ruling):
 
@@ -94,7 +90,6 @@ Source conflicts (owner ruling):
 Hypotheses (unmeasured):
 
 - H-2: a disabled action still reports the Button role, because `:65` ignores `enabled`. Check: the disabled state in the accessibility tree (a11y-audit).
-- H-3: below `sizeScale` 1 the hit target shrinks under the 24 px WCAG 2.5.8 floor, because `:132-133` scales `iconLg` by `sizeScale`. Whether a host reaches `sizeScale` below 1 depends on the Field and Slider size presets.
 - H-4: `required` as a property name (`:24`) is a QML contextual keyword. The parse was not checked, because qmllint was not run.
 
 Redesign proposals (taste, not defects):
@@ -102,8 +97,7 @@ Redesign proposals (taste, not defects):
 - P-1: delete the hover growth on a label-sized target. 1.08 on a 16 px glyph is about 1 px of movement, and the colour change carries the state (review-animations standard 10: delete when unsure).
 - P-2: a text-only caption could take its hit target from the text line instead of a fixed 24 px, so the hit target matches what it names.
 - P-3: the `*` as a glyph in `danger` is fine. No change proposed.
-- P-4: the hit target `iconLg * sizeScale` (`:132-133`) could go through `Style.iconNear` or `Style.rhythm` to match the rest of the scale. Polish.
 
 Not examined: runtime (no capture, no Workbench, no tests run); the text footprint width; the contrast of `textMuted` against the band; glyph rendering (offscreen does not rasterise `SvgIcon`); touch targets (pointer only); Slider label clicks (BACKLOG R2 and R3: the Slider unit does not answer them).
 
-Routes: a11y-audit owns H-2. ui-audit owns the contrast ratio. ux-audit owns H-3.
+Routes: a11y-audit owns H-2. ui-audit owns the contrast ratio.

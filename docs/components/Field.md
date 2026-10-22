@@ -1,19 +1,19 @@
 # Field
 
 The one label element above a control with its hint or error on one shared line; invalid input is a fact, failed is this host verdict with copy.
-states: hint and failed; `failed` is true while `error` has non-blank text and error wins over hint; the label, hint and error collapse when empty.
+states: hint and failed; `failed` is true while `error` has non-blank text and error wins over hint; the label, hint and error collapse when empty; the error is a wrapping message with a `circle-alert` glyph on its first line, the hint is plain text on the same left edge as the label and the control.
 actions: none of its own; the wrapped control keeps its actions and routes.
-pointer: none on the wrapper itself; content and message rows claim nothing beyond their children.
+pointer: a click on the label puts the caret in the control, as a label does (a pointer focus, so the keyboard ring stays off); content and message rows claim nothing beyond their children.
 keyboard: none on the wrapper itself; the wrapped control keeps its tab stop and keys.
-screen reader: the host binds the wrapped control to `accessibleName` and `accessibleDescription`; these expose the label and active hint/error plus required status, without replacing a caller's accessibility bindings.
-size: `sizeScale` from the owning surface scales the label, message, glyph and gaps with the control; tight vertical spacing binds label, content and message; width follows the content.
-tokens: space1, spaceTight, rhythm, textNear, iconNear, textXs, iconXs, danger, textMuted, ControlLabel and Prose; no local colours or measurements.
+screen reader: the control is named by the label and described by the active hint or error plus "Required" (`accessibleName` and `accessibleDescription`, bound to the control unless the host already set its own); the label node itself is ignored, so the name is spoken once. Qt has no invalid-entry state, so the error copy in the description is how a failure is announced.
+size: `sizeScale` follows the control the field frames (a host states it only to override) and scales the label, message, glyph and gaps; one gap of `rhythm(space2 * s)` (8) binds label, content and message, past the focus ring's reach (4.8 px at 1.25); width follows the content.
+tokens: space1, space2, rhythm, textNear, textXs, iconNear, iconXs, danger, textMuted, ControlLabel and Prose; no local colours or measurements.
 motion: none; state changes settle in the wrapped control.
 not designed: input, validation logic or layout beyond one labelled control; use TextField, the control itself or the host for those.
 
 ## UIX audit
 
-Evidence: source-reviewed only. No capture, preview, live item tree or Workbench session was taken, so every geometry number here is computed from source and token values. Runtime-exercised: none. Owner-accepted: none.
+Evidence: geometry from the live item tree and the accessibility tree from AT-SPI, both in a headless slot at scale 1.25; owner-accepted: none.
 
 ### Purpose and consequence
 
@@ -21,10 +21,10 @@ It names one control from outside and puts its requirement, hint and failure cop
 
 ### Controls and states
 
-- Unit controls (`workbench/units/Field.qml`): validation ok/failed, hint shown/none, required yes/no, size sm/md/lg. Size reaches the wrapped Switch, and the label follows through `sizeScale`.
+- Unit controls (`workbench/units/Field.qml`): control text/switch, validation ok/failed/long, hint shown/none, required yes/no, size sm/md/lg. The frame follows the control's own scale.
 - Implemented: hint; failed (the error replaces the hint on the same line); required mark; collapse of the label, hint and error when empty.
 - Story key: `field` only, variant `error`.
-- Not reached by the unit: a long label, a long error, and a required field with an empty label (a caller error that logs at load).
+- Not reached by the unit: a long label, and a required field with an empty label (a caller error that logs at load).
 
 ### Routes
 
@@ -37,15 +37,15 @@ It names one control from outside and puts its requirement, hint and failure cop
 
 - Size: `sizeScale` reaches the label, the message, the glyph and both gaps.
 - Empty: the label row is invisible when the label is empty (ControlLabel.qml:59). The message row is hidden when there is neither an error nor a hint (Field.qml:69).
-- Long: the label and the message are single-line and elide (F1, F3).
+- Long: the message wraps and never elides (a 380 px field: 1 line short, 3 lines long); the label is single-line and elides (F3).
 - Failure: `failed` is `error.trim().length > 0`, so whitespace is not a failure. The host owns the verdict and the copy. A host derives `error` from its own operation state.
 - Cancellation: nothing in Field. The host clears `error`.
 
 ### Visual roles and palette pairs
 
-- Roles: label `textMuted` (ControlLabel), required mark `danger`, hint `textMuted` at metadata size, error `danger` with the `circle-alert` glyph at `iconXs`.
-- No literal colour, size, radius or spacing in Field.qml. Spacing is `Style.space1` and `Style.spaceTight`.
-- Structure: label, control and message all start at x=0 on one left axis (Field.qml:49 ColumnLayout).
+- Roles: label `textMuted` (ControlLabel), required mark `danger`, hint `textMuted` and error `danger` as `body` at the field's text step, the glyph `circle-alert` at `iconXs`.
+- No literal colour, size, radius or spacing in Field.qml. Spacing is `Style.space2` and `Style.space1`.
+- Structure: label, control and message all start at x=0 on one left axis; the error text starts after its glyph.
 - Contrast is token arithmetic: WCAG 2.2 relative luminance of the deep-night hex values in `qml/QsmShell/Style/Tokens.qml`. Nothing was sampled from a render.
 
 | pair | band #271e30 | surface #3b3145 | overlay #4c4357 |
@@ -65,7 +65,7 @@ Field adds no pointer target. Its only input is the wrapped control. Worked exam
 
 - Input shape: the Switch's bounds, 36 x 20 px. Painted track 36 x 20 (radius height / 2); painted knob 16 px. The focus and hover layer (40 x 24, Switch.qml StateLayer) is visual only, because it is hosted and the button owns the pointer.
 - Origin assumption: the pointer starts at the label's centre, the label above the control. A 16 px label line is assumed, not read (`typeSm` was not read).
-- Distance: D = 8 (half label) + 4 (`space1`, Field.qml:49) + 10 (half track) = 22 px, vertical.
+- Distance: D = 7 (half label) + 8 (`space2`) + 10 (half track) = 25 px, vertical.
 - Width model: W = 20 px, the track height on the vertical approach. A horizontal approach would use 36 px, which this path does not take.
 - Difficulty: ID = log2(1 + D/W) = log2(2.1) = 1.07 bits, the Shannon form of Fitts' law (Fitts, 1954). A model of this geometry under the stated origin, not a human average.
 - Landing tolerance: ±10 px vertically from the track centre. The knob does not narrow the target.
@@ -76,22 +76,6 @@ Field adds no pointer target. Its only input is the wrapped control. Worked exam
 
 Defects (source-backed):
 
-- F1 (high): Field.qml:78-83 sets the failure copy in `role: "metadata"`. Prose.qml:114 makes non-body roles `NoWrap`, and Prose.qml:118 makes them `ElideRight`. A message wider than the field (380 px in the unit, `Style.controlWidth`) is cut with an ellipsis, and the fix clause that the comment at Field.qml:32 asks for is the part that disappears. Fix in Field.qml: override the message's `wrapMode` to `Text.WordWrap` and `elide` to `Text.ElideNone`, then decide its leading (P1).
-- F2 (medium, shared): a host that binds only the field's `Accessible.name` leaves the hint and the error visible but out of the field's description (Field.qml:44). Fix in the host: bind `Accessible.description` to the Field's `accessibleDescription`.
 - F3 (low): ControlLabel's Prose is single-line and elides (Prose.qml:114, :118, role `label`). A long label is cut on screen, while the full name stays in `accessibleName` (Field.qml:43). Fix belongs to ControlLabel, which Slider also uses.
 
-Proposals (taste, owner decides):
-
-- P1: the failure copy is the smallest, lightest text on the surface, yet it carries the instruction the person must follow. Consider role `supporting` (same colour, body size) or a weight step. A wrapped message also needs its own leading, because Prose sets line height 1 for every non-body role.
-- P2: the gap from the control to the message is the same 4 px as the gap from the label to the control (Field.qml:49). The message therefore reads as part of the control's group. Consider a smaller gap below the control than above it, then check it in the live window.
-
-Source conflicts: none between owners. Internal: the comment at Field.qml:32 asks for a full fix message, and F1 means the implementation cuts it.
-
-Hypotheses (unmeasured):
-
-- H1: the icon and the message may sit at different vertical centres in the RowLayout (Field.qml:67-84 sets no `Layout.alignment`), while AGENTS.md records that RowLayout baseline-aligns text. Needs a live item-tree read.
-- H2: an error that appears is not announced, because the message carries no role or live region (Field.qml:78-83). Criteria are a11y-audit's.
-
-Needs a live window (not run here): with a long server error in a password row, check that the message is cut (F1) and that it shifts (F3). Pass criterion for F1: the full message reads without an ellipsis.
-
-Not examined: rendered pixels and the live item tree (no capture); the light theme; long and empty label cases in the unit; accessibility criteria (a11y-audit). Caelestia's nearest sibling, StyledTextField.qml, also shares one slot between supporting text and error text (`effectiveSupportingText`), which agrees with Field's shared-line rule. Its message wrapping was not checked.
+Not examined: the light theme; long and empty label cases in the unit; a real screen reader (the AT-SPI tree was read, not an announcement). Caelestia's nearest sibling, StyledTextField.qml, also shares one slot between supporting text and error text (`effectiveSupportingText`), which agrees with Field's shared-line rule. Its message wrapping was not checked.
