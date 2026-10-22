@@ -28,7 +28,8 @@ Rectangle {
 
     ScrollArea {
         id: ground
-        anchors.centerIn: parent
+        x: Style.snap((root.width - width) / 2, root)
+        y: Style.snap((root.height - height) / 2, root)
         width: Style.controlWidth - Style.space5 * 2
         fadeColor: Style.surface
 

@@ -191,15 +191,7 @@ Item {
     // main axis is placed then clamped, because a side that does not fit still
     // has to put the panel somewhere a person can see it.
     function _clamp(position: real, origin: real, extent: real, ownSize: real): real {
-        return root._snap(Math.max(origin, Math.min(position, origin + Math.max(0, extent - ownSize))));
-    }
-
-    // A position on the device grid: a content-sized panel centred on its
-    // anchor lands on half a device pixel more often than not, and every edge
-    // it paints is then soft.
-    readonly property real _dpr: root.Window.window?.devicePixelRatio ?? 1
-    function _snap(px: real): real {
-        return Math.round(px * root._dpr) / root._dpr;
+        return Style.snap(Math.max(origin, Math.min(position, origin + Math.max(0, extent - ownSize))), root);
     }
 
     x: {
@@ -229,8 +221,8 @@ Item {
         }
     }
 
-    implicitWidth: Math.ceil(contentHost.childrenRect.width * root._dpr - 0.01) / root._dpr
-    implicitHeight: Math.ceil(contentHost.childrenRect.height * root._dpr - 0.01) / root._dpr
+    implicitWidth: Style.snapUp(contentHost.childrenRect.width, root)
+    implicitHeight: Style.snapUp(contentHost.childrenRect.height, root)
 
     visible: opacity > 0
     opacity: open ? 1 : 0

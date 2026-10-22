@@ -37,8 +37,8 @@ Rectangle {
         // Against the preferred side's edge when tight, against the far one when roomy.
         readonly property bool _lowEdge: root.placement === "top" || root.placement === "left"
         readonly property bool _atLow: root.tight ? _lowEdge : !_lowEdge
-        x: _horizontal ? (_atLow ? Style.space4 : parent.width - width - Style.space4) : (parent.width - width) / 2
-        y: _horizontal ? (parent.height - height) / 2 : (_atLow ? Style.space4 : parent.height - height - Style.space4)
+        x: Style.snap(_horizontal ? (_atLow ? Style.space4 : parent.width - width - Style.space4) : (parent.width - width) / 2, root)
+        y: Style.snap(_horizontal ? (parent.height - height) / 2 : (_atLow ? Style.space4 : parent.height - height - Style.space4), root)
         label: "HDMI output"
         icon: "monitor"
         // The popover wires a press or hover trigger itself; only a manual one is the host's.

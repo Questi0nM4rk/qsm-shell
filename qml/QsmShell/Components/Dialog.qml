@@ -69,18 +69,6 @@ FocusScope {
     property Item returnFocusTo: null
     property Item _returnTo: null
 
-    // A position on the device grid: the card is centred, and half of an odd
-    // remainder lands between two device pixels and blurs every edge.
-    readonly property real _dpr: Window.window?.devicePixelRatio ?? 1
-    function _snap(px: real): real {
-        return Math.round(px * root._dpr) / root._dpr;
-    }
-    // A size rounds UP, so the content never loses the fraction. A hundredth
-    // of a device pixel is float noise, not a reason to grow a whole one.
-    function _snapUp(px: real): real {
-        return Math.ceil(px * root._dpr - 0.01) / root._dpr;
-    }
-
     anchors.fill: parent
     Accessible.role: Accessible.Dialog
     Accessible.name: root.title
@@ -177,10 +165,10 @@ FocusScope {
         // fixed actions instead of pushing them out of reach. Rounded UP to the
         // device grid: the text's line height is fractional, and a card edge
         // between two device pixels is a soft edge.
-        implicitHeight: root._snapUp(Math.min(content.implicitHeight + Style.space5 * 2,
-            root.height - Style.space6 * 2))
-        x: root._snap((root.width - width) / 2)
-        y: root._snap((root.height - height) / 2)
+        implicitHeight: Style.snapUp(Math.min(content.implicitHeight + Style.space5 * 2,
+            root.height - Style.space6 * 2), root)
+        x: Style.snap((root.width - width) / 2, root)
+        y: Style.snap((root.height - height) / 2, root)
         radius: Style.radiusXl
         surfaceColor: Style.overlay
         focus: true
