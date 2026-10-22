@@ -76,6 +76,11 @@ Item {
     // or pressed, grown by `growth` on every side, for a bare glyph that has no
     // body to recolour.
     property bool hoverTint: false
+    // Whether the body this layer rings grows by `growth`: the layer's own disc
+    // does, and a host that applies `growth` to its body says so. The ring then
+    // keeps its gap from the grown body; a host that ignores `growth` (a field,
+    // a slider, a card answers hover with its colour) keeps the ring where it is.
+    property bool bodyGrows: root.hoverTint
 
     // Keyboard focus, which is when the ring shows. Hosted, Qt's `visualFocus`
     // (tab, backtab, shortcut) says it; a plain item says it when its parent
@@ -176,14 +181,14 @@ Item {
     // `Style.indicatorWidth` in whole device pixels; the outer radius is the
     // body's plus both, the reverse of `Style.childRadius`, so the ring stays
     // concentric. The gap is measured from the body, which is this LAYER's edge
-    // plus its `growth`: a hovered or pressed body carries the ring with it
-    // instead of growing over it.
+    // plus its `growth` when `bodyGrows`: a hovered or pressed body carries the
+    // ring with it instead of growing over it.
     Rectangle {
         readonly property real _stroke: Style.stroke(Style.indicatorWidth, root)
         readonly property real _gap: _stroke
         readonly property real _reach: _gap + _stroke
         anchors.fill: parent
-        anchors.margins: -(_reach + root.growth)
+        anchors.margins: -(_reach + (root.bodyGrows ? root.growth : 0))
         z: -1
         // Hidden only once the fade has finished, so a ring leaves as it came.
         visible: opacity > 0

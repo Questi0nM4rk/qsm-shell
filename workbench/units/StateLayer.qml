@@ -40,7 +40,9 @@ Item {
 
         // The layer reports `growth`; the body takes it on every side.
         Surface {
-            anchors.centerIn: parent
+            id: body
+            x: -stateLayer.growth
+            y: -stateLayer.growth
             width: sample.width + 2 * stateLayer.growth
             height: sample.height + 2 * stateLayer.growth
             radius: Style.radiusMd
@@ -52,6 +54,7 @@ Item {
             id: stateLayer
             anchors.fill: parent
             interactive: sample.enabled
+            bodyGrows: true
             clickable: root.variant !== "trigger"
             focusRadius: Style.radiusMd
             onClicked: {
@@ -80,7 +83,19 @@ Item {
             clicks: () => root.clicks,
             hovered: () => stateLayer.hovered,
             pressed: () => stateLayer.pressed,
-            "ring-shown": () => stateLayer.ringShown
+            "ring-shown": () => stateLayer.ringShown,
+            // The hover or press ease has finished: growth is its final size.
+            settled: () => stateLayer.response === (stateLayer.pressed ? stateLayer.pressScale
+                : stateLayer.hovered ? stateLayer.hoverScale : 1),
+            // How far the ring's gap from the (grown) body is off the gap plus
+            // stroke it promises; 0 at rest, hovered and pressed.
+            "ring-gap-error": () => {
+                const ring = stateLayer.children.find(child => child.color !== undefined && child.color.a === 0)
+                if (!ring)
+                    return -1
+                const promised = 2 * Style.stroke(Style.indicatorWidth, sample)
+                return Math.round((body.x - ring.mapToItem(sample, 0, 0).x - promised) * 1000) / 1000
+            }
         },
         runAction: name => {
             if (name !== "click")
