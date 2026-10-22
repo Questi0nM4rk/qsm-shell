@@ -50,6 +50,8 @@ Item {
             enabled: () => root.enabled,
             clicks: () => root.clicks,
             size: () => root.size,
+            "box-size": () => button.width,
+            "glyph-size": () => button.contentItem.implicitWidth,
             glyph: () => root.glyph,
             "accessible-name": () => button.Accessible.name,
             "accessible-button": () => button.Accessible.role === Accessible.Button

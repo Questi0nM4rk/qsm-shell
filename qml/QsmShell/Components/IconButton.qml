@@ -78,16 +78,21 @@ T.Control {
     function _isActivationKey(key: int): bool {
         return key === Qt.Key_Space || key === Qt.Key_Return || key === Qt.Key_Enter;
     }
+    // Held down, a key repeats a release and a press of its own (`isAutoRepeat`);
+    // neither is the key coming up.
     Keys.onPressed: event => {
         if (!root._isActivationKey(event.key))
             return;
         event.accepted = true;
-        root._keyHeld = root.enabled;
+        if (!event.isAutoRepeat)
+            root._keyHeld = root.enabled;
     }
     Keys.onReleased: event => {
         if (!root._isActivationKey(event.key) || !root._keyHeld)
             return;
         event.accepted = true;
+        if (event.isAutoRepeat)
+            return;
         root._keyHeld = false;
         root.activate();
     }
