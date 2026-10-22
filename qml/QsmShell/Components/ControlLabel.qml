@@ -148,16 +148,23 @@ T.Control {
     }
 
     StateLayer {
+        // Under the label: the hover disc is a body the label stands on. Drawn
+        // above it, the disc covered the icon and the text for as long as the
+        // pointer was over them.
+        z: -1
         // The target, not the footprint: at least one large icon each way,
-        // centred, so a two-line-tall hit box costs the layout nothing.
+        // centred, so a two-line-tall hit box costs the layout nothing. It
+        // grows with the scale and never shrinks below the 24 px floor
+        // (measured at sm, 0.8: 19.2 px).
         anchors.centerIn: parent
-        width: Math.max(parent.width, root.clickable ? Style.iconLg * root.sizeScale : 0)
-        height: Math.max(parent.height, root.clickable ? Style.iconLg * root.sizeScale : 0)
+        width: Math.max(parent.width, root.clickable ? Style.iconLg * Math.max(1, root.sizeScale) : 0)
+        height: Math.max(parent.height, root.clickable ? Style.iconLg * Math.max(1, root.sizeScale) : 0)
         hoverTint: root.clickable
         interactive: root._available
-        // A label has no body to recolour, so the press is acknowledged by the
-        // label pushing in, the way a bare glyph's is.
-        pressScale: Motion.pressScale
+        // A label has no body to recolour, so a pointer press is acknowledged
+        // by the label pushing in, the way a bare glyph's is. A held key only
+        // recolours: keyboard-initiated actions do not animate.
+        pressScale: root._keyActivationHeld ? 1 : Motion.pressScale
         manualPressOverride: root._keyActivationHeld
         // The exclusive grab keeps a surrounding passive row tap from firing.
         gesturePolicy: TapHandler.ReleaseWithinBounds

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "key": "control-label-pointer-keyboard",
+  "target": { "story": "control-label" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "focused", "equals": false },
+    { "type": "pointer", "target": "label", "event": "click", "x": 0.5, "y": 0.5 },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
+    { "type": "expect", "observable": "clicks", "equals": 1 },
+    { "type": "expect", "observable": "focused", "equals": true },
+    { "type": "expect", "observable": "keyboard-focused", "equals": false },
+    { "type": "key", "target": "label", "key": "Space" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component" },
+    { "type": "expect", "observable": "clicks", "equals": 2 },
+    { "type": "key", "target": "label", "key": "Enter" },
+    { "type": "expect", "observable": "clicks", "equals": 3 },
+    { "type": "control", "group": "state", "option": "disabled" },
+    { "type": "expect", "observable": "can-activate", "equals": false },
+    { "type": "expect", "observable": "focused", "equals": false },
+    { "type": "control", "group": "state", "option": "enabled" },
+    { "type": "control", "group": "interaction", "option": "caption" },
+    { "type": "pointer", "target": "label", "event": "click", "x": 0.5, "y": 0.5 },
+    { "type": "expect", "observable": "clicks", "equals": 3 },
+    { "type": "expect", "observable": "focused", "equals": false }
+  ]
+}

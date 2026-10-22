@@ -12,7 +12,12 @@ Rectangle {
     property bool required: true
     property bool iconShown: true
     property string caption: "Volume"
+    property string size: "md"
     property int clicks: 0
+
+    // The label wears the scale of the control it names: the same ratios the
+    // text field and the slider hand it at their sm, md and lg.
+    readonly property real labelScale: ({ sm: 0.8, md: 1, lg: 1.3 })[root.size] ?? 1
 
     color: Style.band
     implicitWidth: Style.controlWidth
@@ -26,6 +31,7 @@ Rectangle {
         icon: root.iconShown ? "volume" : ""
         required: root.required
         clickable: root.clickable
+        sizeScale: root.labelScale
         onClicked: {
             root.clicks++
             root.eventRecorder?.("intent", "clicked", {})
@@ -52,6 +58,11 @@ Rectangle {
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
             { label: "disabled", set: { enabled: false } }
+        ] },
+        { label: "size", options: [
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } }
         ] }
     ]
 
@@ -64,7 +75,10 @@ Rectangle {
             required: () => label.required,
             "has-content": () => label.hasContent,
             "can-activate": () => label.actions[0].enabled,
-            clicks: () => root.clicks
+            clicks: () => root.clicks,
+            focused: () => label.activeFocus,
+            "keyboard-focused": () => label.visualFocus,
+            size: () => root.size
         },
         runAction: name => {
             if (name !== "activate")
