@@ -70,8 +70,16 @@ Canvas {
         const usable = root.height - thickness;
         // A flat series centres its line, with the stroke's top edge on a
         // device row so the line is one crisp run.
-        const dpr = root.Window.window?.devicePixelRatio ?? 1;
-        const flatY = Math.round(usable / 2 * dpr) / dpr + thickness / 2;
+        const flatY = Style.snap(usable / 2, root) + thickness / 2;
+
+        // A flat series has no span to divide by, and a zero span would put
+        // every point on the same line by dividing by zero rather than by
+        // being flat. Centre it instead. A value past a pinned extent sits on
+        // that extent, so the stroke never leaves the box.
+        const span = root._max - root._min;
+        const yOf = value => span === 0
+            ? flatY
+            : thickness / 2 + usable - ((Math.min(Math.max(value, root._min), root._max) - root._min) / span) * usable;
 
         // Nothing yet is a quiet line on the floor and one sample is a dot at
         // the end, so a first-sample box never reads as a graph that failed.
@@ -86,25 +94,13 @@ Canvas {
                 c.stroke();
             } else {
                 c.fillStyle = root.color;
-                const span = root._max - root._min;
-                const y = span === 0
-                    ? flatY
-                    : thickness / 2 + usable - (Math.min(Math.max(points[0], root._min), root._max) - root._min) / span * usable;
-                c.arc(right, y, thickness / 2, 0, 2 * Math.PI);
+                c.arc(right, yOf(points[0]), thickness / 2, 0, 2 * Math.PI);
                 c.fill();
             }
             return;
         }
 
-        // A flat series has no span to divide by, and a zero span would put
-        // every point on the same line by dividing by zero rather than by
-        // being flat. Centre it instead. A value past a pinned extent sits on
-        // that extent, so the stroke never leaves the box.
-        const span = root._max - root._min;
         const step = (right - left) / (points.length - 1);
-        const yOf = value => span === 0
-            ? flatY
-            : thickness / 2 + usable - ((Math.min(Math.max(value, root._min), root._max) - root._min) / span) * usable;
 
         const trace = () => {
             c.beginPath();

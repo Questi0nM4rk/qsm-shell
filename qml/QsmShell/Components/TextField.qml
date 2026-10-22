@@ -196,7 +196,6 @@ T.Control {
 
     background: Surface {
         objectName: "textFieldSurface"
-        radius: Style.radiusBody
         // Hover is answered by the SURFACE, not by growth: the caret and the
         // text have to stay where the eye put them, and a field that jumps
         // under the pointer is a field you cannot aim a click into. A
@@ -501,10 +500,7 @@ T.Control {
         // Tapping the padding focuses the input; slot actions sit above and
         // take their own taps first. A tap on the text never reaches here:
         // the input accepts that press itself.
-        onTapped: {
-            root._pointerFocus = true;
-            input.forceActiveFocus(Qt.MouseFocusReason);
-        }
+        onTapped: root.focusFromPointer()
     }
 
     // The cursor describes the region under it, not the outer component: a

@@ -162,6 +162,7 @@ Item {
             role: "reading"
             font.pixelSize: root.readingSize
             text: root.reading
+            Accessible.ignored: true
         }
         Prose {
             id: labelText
@@ -171,6 +172,7 @@ Item {
             visible: root.label.length > 0
             role: "metadata"
             text: root.label
+            Accessible.ignored: true
         }
     }
 }

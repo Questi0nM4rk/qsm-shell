@@ -48,10 +48,7 @@ Item {
             onHoveredChanged: if (!hovered) guard.disarm()
             onActiveFocusChanged: if (!activeFocus) guard.disarm()
             // Escape takes the question back; unarmed, it is left to the surface.
-            Keys.onEscapePressed: event => {
-                event.accepted = guard.armed
-                guard.disarm()
-            }
+            Keys.onEscapePressed: event => event.accepted = guard.cancel()
         }
 
         // Both wordings take the longer one's width, so arming never moves the

@@ -34,17 +34,8 @@ Rectangle {
     // a status that merely accompanies a name is not.
     property bool filled: false
 
-    readonly property color _tone: {
-        switch (tone) {
-        case "accent": return Style.accent;
-        case "success": return Style.success;
-        case "warning": return Style.warning;
-        case "danger": return Style.danger;
-        case "info": return Style.info;
-        case "neutral": return Style.textMuted;
-        default: throw new Error(`Badge: unknown tone "${tone}"`);
-        }
-    }
+    // An unknown tone is reported (`Style.expect`) and drawn neutral.
+    readonly property color _tone: Style.tones[tone] ?? Style.tones.neutral
     // On a filled badge the reading sits ON the tone, so it takes the ground
     // colour rather than the text colour — text-on-accent is the one place
     // this palette cannot be read.
@@ -89,8 +80,12 @@ Rectangle {
         if (visible && accessibleName === "" && text === "")
             console.warn("Badge: a dot or icon-only badge has no accessibleName -- a screen reader hears nothing")
     }
-    Component.onCompleted: _checkName()
+    Component.onCompleted: {
+        _checkName()
+        Style.expect("Badge", "tone", tone, Object.keys(Style.tones))
+    }
     onVisibleChanged: _checkName()
+    onToneChanged: Style.expect("Badge", "tone", tone, Object.keys(Style.tones))
 
     Behavior on color {
         ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }

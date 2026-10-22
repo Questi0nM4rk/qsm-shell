@@ -62,14 +62,10 @@ Text {
     readonly property var _roles: ["hero", "display", "heading", "title", "body",
         "label", "supporting", "metadata", "reading", "section"]
 
-    // A misspelt role still renders as label, so it says so once per role
-    // value instead of passing for a deliberate label.
-    function _checkRole(): void {
-        if (_roles.indexOf(role) < 0)
-            console.warn(`Prose: unknown role "${role}" -- rendering as "label"`);
-    }
-    Component.onCompleted: _checkRole()
-    onRoleChanged: _checkRole()
+    // A misspelt role still renders as label, so it is reported
+    // (`Style.expect`) instead of passing for a deliberate label.
+    Component.onCompleted: Style.expect("Prose", "role", role, _roles)
+    onRoleChanged: Style.expect("Prose", "role", role, _roles)
 
     color: muted || role === "supporting" || role === "metadata" || role === "section" ? Style.textMuted : Style.text
 
@@ -124,9 +120,7 @@ Text {
     // wherever the line already fits the grid. A layout rounds an implicit
     // height UP to a whole logical pixel, which would undo it, so the height
     // is also the preferred one.
-    readonly property real _dpr: root.Window.window?.devicePixelRatio ?? 1
-    bottomPadding: Math.max(0, Math.ceil(root.contentHeight * root._dpr - 0.001)
-        - root.contentHeight * root._dpr) / root._dpr
+    bottomPadding: Math.max(0, Style.snapUp(root.contentHeight, root) - root.contentHeight)
 
     Layout.preferredHeight: root.implicitHeight
 

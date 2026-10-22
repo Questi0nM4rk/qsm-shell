@@ -4,7 +4,7 @@ A non-visual confirm-then-fire helper for destructive commands; the host owns th
 states: disarmed rest and armed intent; arming expires after `timeout` (3000 ms by default) and reports `disarmed` (a confirmed fire does not); with `destructive` false every trigger fires at once, so a control keeps one code path for "this one asks" and "this one does not".
 actions: `trigger()` arms a destructive command or fires when already armed, `disarm()` abandons the intent; pointer, keyboard and programmatic routes share them. Changing `destructive` while armed disarms.
 pointer: none; it paints nothing and takes no pointer. The host calls `disarm()` when the pointer leaves the control it guards (`hovered` on a T.Control with `hoverEnabled`, or an `exited` signal such as ActionTile's).
-keyboard: none; the surface holding it routes keys to `trigger()` and `disarm()`, and disarms when its focus leaves. Escape takes an armed question back and is left to the surface when nothing is armed (the unit does this).
+keyboard: none; the surface holding it routes keys to `trigger()` and `disarm()`, and disarms when its focus leaves. Escape takes an armed question back through `cancel()`, which answers whether there was one and leaves the key to the surface when nothing is armed (the unit and the notification center do this).
 screen reader: none; the guarded control supplies the accessible name and changes it while armed (ActionTile names itself `confirmLabel`, an IconButton's `accessibleName` follows `armed`).
 size: none; a QtObject with no footprint, slots or natural size.
 tokens: none; no Style, Motion or colour roles of its own.

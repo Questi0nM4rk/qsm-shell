@@ -33,25 +33,17 @@ Rectangle {
     // Consumer-owned recovery controls.
     default property alias actions: actionHost.data
 
-    readonly property var _tones: ({
-        info: { color: Style.info, icon: "info" },
-        success: { color: Style.success, icon: "circle-check" },
-        warning: { color: Style.warning, icon: "alert-triangle" },
-        danger: { color: Style.danger, icon: "circle-alert" }
+    // The mark each tone carries; the colour is `Style.tones`.
+    readonly property var _marks: ({
+        info: "info", success: "circle-check", warning: "alert-triangle", danger: "circle-alert"
     })
-    readonly property bool _toneKnown: _tones[tone] !== undefined
-    readonly property var _kind: _tones[tone] ?? _tones.info
-    readonly property color _tone: _kind.color
-    readonly property string _icon: icon.length > 0 ? icon : _kind.icon
+    readonly property string _kind: root._marks[tone] !== undefined ? tone : "info"
+    readonly property color _tone: Style.tones[root._kind]
+    readonly property string _icon: icon.length > 0 ? icon : root._marks[root._kind]
 
-    // QML cannot throw out of a binding, so an unknown tone or icon is
-    // reported on the error stream and drawn as info / nothing.
-    on_ToneKnownChanged: _checkTone()
-    Component.onCompleted: _checkTone()
-    function _checkTone() {
-        if (!_toneKnown)
-            console.error(`Callout: unknown tone "${tone}" -- expected info, success, warning or danger`);
-    }
+    // An unknown tone is reported (`Style.expect`) and drawn as info.
+    onToneChanged: Style.expect("Callout", "tone", tone, Object.keys(root._marks))
+    Component.onCompleted: Style.expect("Callout", "tone", tone, Object.keys(root._marks))
 
     // What is wrong interrupts, what is merely so does not.
     Accessible.role: tone === "warning" || tone === "danger" ? Accessible.AlertMessage : Accessible.Note

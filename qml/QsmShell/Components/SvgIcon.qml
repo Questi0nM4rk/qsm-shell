@@ -37,7 +37,7 @@ Item {
         source: root.name.length > 0
             ? Qt.resolvedUrl("../assets/icons/" + root.name + ".svg")
             : ""
-        sourceSize: Qt.size(root.size * 2, root.size * 2)
+        sourceSize: Qt.size(root.size * Style.rasterScale, root.size * Style.rasterScale)
         asynchronous: true
         visible: false
         // QML cannot throw out of a binding, so a missing glyph says so on the

@@ -60,10 +60,9 @@ Item {
     // so content that fits stays put. Writing contentY directly with
     // `contentHeight - height` goes negative for it.
     function scrollBy(delta: real): void {
-        if (vertical)
-            scroller.contentY = Math.max(0, Math.min(scroller.contentHeight - scroller.height, scroller.contentY + delta));
-        else
-            scroller.contentX = Math.max(0, Math.min(scroller.contentWidth - scroller.width, scroller.contentX + delta));
+        const axis = vertical ? "contentY" : "contentX";
+        const room = vertical ? scroller.contentHeight - scroller.height : scroller.contentWidth - scroller.width;
+        scroller[axis] = Math.max(0, Math.min(room, scroller[axis] + delta));
     }
 
     function scrollToStart(): void {

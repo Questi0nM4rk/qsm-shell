@@ -88,7 +88,6 @@ Item {
     // see — an app name, say) overrides it directly.
     property var swatch: root.entry.swatch
 
-    readonly property bool verticalDrag: drag.active && Math.abs(drag.translation.y) > Math.abs(drag.translation.x)
     readonly property bool dragActive: drag.active
     // The pointer is anywhere over the card. It is read on the card itself:
     // a handler on a layer stacked above another steals the hover from the one
@@ -119,7 +118,7 @@ Item {
         .filter(action => action.text.length > 0)
 
     Accessible.role: root.primaryActionAvailable ? Accessible.Button : Accessible.StaticText
-    Accessible.name: (root.unread ? "Unread. " : "") + (root.primaryActionAvailable
+    Accessible.name: (root.unread ? qsTr("Unread. ") : "") + (root.primaryActionAvailable
         ? `${root.primaryActionLabel}: ${root.entry.summary}`
         : `${root.entry.appName}: ${root.entry.summary}`)
     Accessible.description: String(root.entry.body ?? "")
@@ -295,7 +294,7 @@ Item {
     scale: root.entranceScale + root.entranceProgress * (1 - root.entranceScale)
     Behavior on entranceProgress {
         enabled: !root.expansionFrozen
-        NumberAnimation { id: entranceAnimation; duration: Motion.microPop; easing.type: Motion.emphasizedEasing }
+        NumberAnimation { duration: Motion.microPop; easing.type: Motion.emphasizedEasing }
     }
     Component.onCompleted: {
         if (root.animateEntrance)
@@ -390,7 +389,7 @@ Item {
                 anchors.fill: parent
                 visible: !root.leadHovered && root.showsImage
                 source: root.iconSource
-                sourceSize: Qt.size(width * 2, height * 2)
+                sourceSize: Qt.size(width * Style.rasterScale, height * Style.rasterScale)
                 asynchronous: true
                 fillMode: Image.PreserveAspectFit
             }
@@ -514,7 +513,7 @@ Item {
                     visible: root.dismissShown || opacity > 0
 
                     Accessible.role: Accessible.Button
-                    Accessible.name: "Dismiss"
+                    Accessible.name: qsTr("Dismiss")
                     Accessible.onPressAction: root.dismiss()
 
                     Behavior on opacity {

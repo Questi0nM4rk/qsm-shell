@@ -67,13 +67,9 @@ Item {
         }
     }
 
-    // QML cannot throw out of a binding, so an unknown mode says so loudly
-    // instead of passing for a deliberate `never`.
-    function _checkMode(): void {
-        if (_modes.indexOf(mode) < 0)
-            console.error(`Marquee: unknown mode "${mode}" -- expected once, always, hover or never`)
-    }
-    Component.onCompleted: _checkMode()
+    // An unknown mode says so loudly (`Style.expect`) instead of passing for
+    // a deliberate `never`.
+    Component.onCompleted: Style.expect("Marquee", "mode", mode, _modes)
 
     onTextChanged: {
         settle.stop()
@@ -81,7 +77,7 @@ Item {
         Qt.callLater(run.arm)
     }
     onModeChanged: {
-        _checkMode()
+        Style.expect("Marquee", "mode", mode, _modes)
         settle.stop()
         label.x = 0
     }
