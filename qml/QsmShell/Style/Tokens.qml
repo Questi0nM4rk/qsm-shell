@@ -69,7 +69,7 @@ QtObject {
     readonly property real motionRowHoverScale: 1.12
     readonly property real motionRowPressScale: 0.92
     readonly property int motionSpin: 900
-    readonly property int motionPulse: 1400
+    readonly property int motionPulse: 2000
     readonly property int motionHoverGrace: 180
     readonly property real motionExitRatio: 0.8
     readonly property int motionReadingPace: 16
