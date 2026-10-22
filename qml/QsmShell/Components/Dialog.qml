@@ -152,6 +152,8 @@ FocusScope {
 
     Card {
         id: card
+        // Stands alone over its scrim: nothing around it paints an edge.
+        glow: true
 
         // Never wider than the window leaves room for: a dialog that outgrows a
         // small output would clip its own actions.

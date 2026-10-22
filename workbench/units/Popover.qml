@@ -67,6 +67,7 @@ Rectangle {
         Card {
             id: card
             surfaceColor: Style.overlay
+            glow: true
             width: Style.controlWidth / 2
             height: content.implicitHeight + Style.space4 * 2
 

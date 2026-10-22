@@ -8,10 +8,13 @@ Rectangle {
 
     property color surfaceColor: Style.surface
     // The silhouette's edge separation (a slight line at the edge fading
-    // inward), painted inside this card's rounded edge so the card reads as an
-    // object, not a traced rectangle. A card that sits flat inside another
-    // body (a callout, a button) turns it off.
-    property bool glow: true
+    // inward), painted inside this card's rounded edge so a card standing
+    // alone (a dialog over its scrim) reads as an object, not a traced
+    // rectangle. Off by default: a card on a rollout body, the common case,
+    // is separated by lightness alone, and the rollout's own silhouette
+    // already paints the edge, so a second line one fade inside it is a second
+    // edge.
+    property bool glow: false
     // The slight shadow that says where the card ends: the body's step
     // separates it from the ground, the shadow only finishes the edge.
     property bool shadow: true
