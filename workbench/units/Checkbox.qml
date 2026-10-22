@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 
@@ -24,6 +26,7 @@ Item {
         "Photos",
         "Music"
     ]
+    readonly property var names: ["documents", "photos", "music"]
     readonly property int count: root.picked.filter(on => on).length
 
     implicitWidth: group.implicitWidth
@@ -33,6 +36,21 @@ Item {
         const next = root.picked.slice()
         next[index] = on
         root.picked = next
+    }
+
+    function _box(index: int): var {
+        return items.itemAt(index)
+    }
+
+    // The name of the first box (the parent is "all") for which `test` holds, else "".
+    function _which(test: var): string {
+        if (test(all))
+            return "all"
+        for (let i = 0; i < items.count; i++) {
+            if (test(items.itemAt(i)))
+                return root.names[i]
+        }
+        return ""
     }
 
     ColumnLayout {
@@ -68,7 +86,7 @@ Item {
             spacing: Style.space2
 
             Repeater {
-                id: children
+                id: items
                 model: root.labels.length
 
                 Checkbox {
@@ -80,7 +98,7 @@ Item {
                     accessibleName: root.labels[child.index]
                     onToggleRequested: next => {
                         root._set(child.index, next)
-                        root.eventRecorder?.("intent", "toggle-requested", { item: ["documents", "photos", "music"][child.index], checked: next })
+                        root.eventRecorder?.("intent", "toggle-requested", { item: root.names[child.index], checked: next })
                     }
 
                     Prose {
@@ -121,8 +139,8 @@ Item {
         actions: ["toggle-all", "toggle-first"],
         targets: ({
             all: () => all,
-            documents: () => children.itemAt(0),
-            photos: () => children.itemAt(1),
+            documents: () => root._box(0),
+            photos: () => root._box(1),
             scene: () => root
         }),
         observables: {
@@ -131,16 +149,16 @@ Item {
             "all-mixed": () => all.indeterminate,
             "accessible-mixed": () => all.Accessible.checkStateMixed,
             "accessible-checked": () => all.Accessible.checked,
-            hovered: () => all.hovered ? "all" : children.itemAt(0).hovered ? "documents" : children.itemAt(1).hovered ? "photos" : "",
-            pressed: () => all.pressed || children.itemAt(0).pressed || children.itemAt(1).pressed,
-            "keyboard-focus": () => all.visualFocus ? "all" : children.itemAt(0).visualFocus ? "documents" : children.itemAt(1).visualFocus ? "photos" : "",
+            hovered: () => root._which(box => box.hovered),
+            pressed: () => root._which(box => box.pressed) !== "",
+            "keyboard-focus": () => root._which(box => box.visualFocus),
             "target-height": () => all.height
         },
         runAction: name => {
             if (name === "toggle-all")
                 all.flip()
             else if (name === "toggle-first")
-                children.itemAt(0).flip()
+                root._box(0).flip()
             else
                 return false
             return true

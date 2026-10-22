@@ -151,7 +151,7 @@
         500
       ],
       "title": "Checkbox / Mixed",
-      "description": "Tri-state checkbox in the indeterminate state.",
+      "description": "Select-all checkbox over three children, two checked, in its mixed state.",
       "tags": [
         "input",
         "control"
@@ -174,7 +174,7 @@
         500
       ],
       "title": "Radio / Off",
-      "description": "Radio control in an unselected state.",
+      "description": "Exclusive group of three radio options with none selected.",
       "tags": [
         "input",
         "control"
