@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "key": "popover-hover",
+  "target": { "story": "popover" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "state", "option": "closed" },
+    { "type": "control", "group": "trigger", "option": "hover" },
+    { "type": "expect", "observable": "open", "equals": false },
+    { "type": "pointer", "target": "anchor", "event": "move" },
+    { "type": "await", "observable": "hovered", "equals": true },
+    { "type": "await", "observable": "open", "equals": true },
+    { "type": "expectEvent", "event": "open-requested", "origin": "component" },
+    { "type": "expect", "observable": "open-requests", "equals": 1 },
+    { "type": "pointer", "target": "panel", "event": "move", "x": 0.5, "y": 0.3 },
+    { "type": "expect", "observable": "hovered", "equals": true },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.02, "y": 0.95 },
+    { "type": "await", "observable": "open", "equals": false },
+    { "type": "expectEvent", "event": "dismiss-requested", "origin": "component" },
+    { "type": "expect", "observable": "dismiss-requests", "equals": 1 },
+    { "type": "expect", "observable": "hovered", "equals": false },
+    { "type": "pointer", "target": "anchor", "event": "move" },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.02, "y": 0.95 },
+    { "type": "expect", "observable": "open-requests", "equals": 1 },
+    { "type": "action", "name": "focus-anchor" },
+    { "type": "await", "observable": "open", "equals": true },
+    { "type": "expect", "observable": "open-requests", "equals": 2 },
+    { "type": "key", "target": "scene", "key": "Escape" },
+    { "type": "await", "observable": "open", "equals": false },
+    { "type": "expect", "observable": "focus", "equals": "anchor" }
+  ]
+}

@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Templates as T
+import QtQuick.Window
 
 import qs.QsmShell.Style
 
@@ -20,7 +22,12 @@ import qs.QsmShell.Style
 // Compose the control you need over this; do not expect this to be it.
 //
 // ── what it owns ─────────────────────────────────────────────────────────
-// Position, flipping, clamping, and the delays.
+// Position, flipping, clamping, and the delays; on the device grid, so an
+// edge never lands between two pixels. The keyboard follows the trigger: a
+// press trigger answers the anchor's own activation (a button's Space and
+// Return, not only a tap), a hover trigger also opens for an anchor the
+// keyboard has reached, and a close with the focus inside hands it back to
+// the anchor.
 //
 // ── what it does NOT own ─────────────────────────────────────────────────
 // Whether it is open. It REQUESTS — `openRequested` when a trigger has been
@@ -120,7 +127,25 @@ Item {
         }
     }
 
-    onOpenChanged: if (root.open) { root.resample(); root.resampleBounds(); }
+    // Does the keyboard sit inside the panel? Asked as it closes, while the
+    // content is still laid out, because an item that hides takes its focus
+    // with it and leaves the keyboard on nothing.
+    function _holdsFocus(): bool {
+        for (let item = root.Window.window?.activeFocusItem ?? null; item; item = item.parent) {
+            if (item === root)
+                return true;
+        }
+        return false;
+    }
+
+    onOpenChanged: {
+        if (root.open) {
+            root.resample();
+            root.resampleBounds();
+        } else if (root.anchorItem && root._holdsFocus()) {
+            root.anchorItem.forceActiveFocus();
+        }
+    }
     Component.onCompleted: { root.resample(); root.resampleBounds(); }
 
     // The bounds rectangle in the SAME space as the anchor. Reading only its
@@ -166,7 +191,15 @@ Item {
     // main axis is placed then clamped, because a side that does not fit still
     // has to put the panel somewhere a person can see it.
     function _clamp(position: real, origin: real, extent: real, ownSize: real): real {
-        return Math.max(origin, Math.min(position, origin + Math.max(0, extent - ownSize)));
+        return root._snap(Math.max(origin, Math.min(position, origin + Math.max(0, extent - ownSize))));
+    }
+
+    // A position on the device grid: a content-sized panel centred on its
+    // anchor lands on half a device pixel more often than not, and every edge
+    // it paints is then soft.
+    readonly property real _dpr: root.Window.window?.devicePixelRatio ?? 1
+    function _snap(px: real): real {
+        return Math.round(px * root._dpr) / root._dpr;
     }
 
     x: {
@@ -196,8 +229,8 @@ Item {
         }
     }
 
-    implicitWidth: contentHost.childrenRect.width
-    implicitHeight: contentHost.childrenRect.height
+    implicitWidth: Math.ceil(contentHost.childrenRect.width * root._dpr - 0.01) / root._dpr
+    implicitHeight: Math.ceil(contentHost.childrenRect.height * root._dpr - 0.01) / root._dpr
 
     visible: opacity > 0
     opacity: open ? 1 : 0
@@ -212,17 +245,17 @@ Item {
 
         Behavior on x {
             enabled: !Style.reducedMotion
-            NumberAnimation { duration: Motion.medium; easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
+            NumberAnimation { duration: root.open ? Motion.medium : Motion.exit(Motion.medium); easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
         }
         Behavior on y {
             enabled: !Style.reducedMotion
-            NumberAnimation { duration: Motion.medium; easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
+            NumberAnimation { duration: root.open ? Motion.medium : Motion.exit(Motion.medium); easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
         }
     }
 
     Behavior on opacity {
         NumberAnimation {
-            duration: Motion.medium
+            duration: root.open ? Motion.medium : Motion.exit(Motion.medium)
             easing.type: root.open ? Motion.standardEasing : Motion.exitEasing
         }
     }
@@ -250,8 +283,21 @@ Item {
     // pointer into is a menu you cannot use.
     HoverHandler { id: selfHover }
 
+    // A press trigger follows the anchor's own activation when it has one: a
+    // button answers Space and Return through `clicked` and a tap handler
+    // would never hear them. An anchor with no `clicked` is tapped instead.
+    readonly property var _anchorAsVar: root.anchorItem
+    readonly property bool _anchorClicks: typeof root._anchorAsVar?.clicked === "function"
+
+    Connections {
+        target: root.anchorItem
+        enabled: root.trigger === "press" && root._anchorClicks
+        ignoreUnknownSignals: true
+        function onClicked(): void { root.toggle(); }
+    }
+
     TapHandler {
-        enabled: root.trigger === "press"
+        enabled: root.trigger === "press" && !root._anchorClicks
         parent: root.anchorItem
         onTapped: root.toggle()
     }
@@ -272,12 +318,21 @@ Item {
         onTriggered: root.dismissRequested()
     }
 
-    onHoveredChanged: {
+    // A hover popover is also for the person who cannot hover: an anchor the
+    // keyboard has reached asks at once, with no intent delay to wait out.
+    readonly property bool _anchorFocused: root.trigger === "hover" && ((root.anchorItem as T.Control)?.visualFocus ?? false)
+    readonly property bool _engaged: root.hovered || root._anchorFocused
+
+    on_EngagedChanged: {
         if (root.trigger !== "hover")
             return;
-        if (root.hovered) {
+        if (root._engaged) {
             closeTimer.stop();
-            if (!root.open)
+            if (root.open)
+                return;
+            if (root._anchorFocused)
+                root.openRequested();
+            else
                 openTimer.restart();
         } else {
             openTimer.stop();

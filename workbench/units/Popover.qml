@@ -1,8 +1,16 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
+import QtQuick.Layouts
+import QtQuick.Window
 
 import qs.QsmShell.Components
 import qs.QsmShell.Style
 
+// The host: an output button whose detail opens beside it, with an action in
+// the panel so the keyboard and a pointer have something to reach there. The
+// host answers every request; `manual` is the one trigger where it also wires
+// the button itself.
 Rectangle {
     id: root
 
@@ -17,27 +25,24 @@ Rectangle {
     property bool tight: false
     property int openRequests: 0
     property int dismissRequests: 0
+    property int settingsClicks: 0
 
     color: Style.band
     implicitWidth: Style.controlWidth
     implicitHeight: Style.controlWidth
 
-    Rectangle {
+    Capsule {
         id: anchor
         readonly property bool _horizontal: root.placement === "left" || root.placement === "right"
-        // Against the preferred side when tight, against the far one when roomy.
+        // Against the preferred side's edge when tight, against the far one when roomy.
         readonly property bool _lowEdge: root.placement === "top" || root.placement === "left"
         readonly property bool _atLow: root.tight ? _lowEdge : !_lowEdge
         x: _horizontal ? (_atLow ? Style.space4 : parent.width - width - Style.space4) : (parent.width - width) / 2
         y: _horizontal ? (parent.height - height) / 2 : (_atLow ? Style.space4 : parent.height - height - Style.space4)
-        width: Style.space6 * 2
-        height: Style.size("Control", "sm")
-        color: Style.overlay
-        radius: Style.radiusSm
-
-        activeFocusOnTab: true
-        Keys.onReturnPressed: pop.toggle()
-        Keys.onSpacePressed: pop.toggle()
+        label: "HDMI output"
+        icon: "monitor"
+        // The popover wires a press or hover trigger itself; only a manual one is the host's.
+        onClicked: if (root.trigger === "manual") pop.toggle()
     }
 
     Popover {
@@ -50,26 +55,47 @@ Rectangle {
 
         onOpenRequested: {
             root.openRequests++
-            root.open = true
             root.eventRecorder?.("intent", "open-requested", {})
+            root.open = true
         }
         onDismissRequested: {
             root.dismissRequests++
-            root.open = false
             root.eventRecorder?.("intent", "dismiss-requested", {})
+            root.open = false
         }
 
         Card {
+            id: card
             surfaceColor: Style.overlay
             width: Style.controlWidth / 2
-            height: note.implicitHeight + Style.space4 * 2
+            height: content.implicitHeight + Style.space4 * 2
 
-            Prose {
-                id: note
-                anchors.fill: parent
-                anchors.margins: Style.space4
-                role: "body"
-                text: "Pinned beside its anchor"
+            ColumnLayout {
+                id: content
+                x: Style.space4
+                y: Style.space4
+                width: parent.width - Style.space4 * 2
+                spacing: Style.space1
+
+                Prose {
+                    role: "title"
+                    text: "HDMI output"
+                }
+                Prose {
+                    role: "supporting"
+                    text: "48 kHz · 2 channels"
+                }
+                Capsule {
+                    id: settings
+                    Layout.fillWidth: true
+                    Layout.topMargin: Style.space2
+                    size: "sm"
+                    label: "Sound settings"
+                    onClicked: {
+                        root.settingsClicks++
+                        root.eventRecorder?.("intent", "settings-clicked", {})
+                    }
+                }
             }
         }
     }
@@ -101,21 +127,43 @@ Rectangle {
         ] }
     ]
 
+    // Where the keyboard is, by the name a person would give it.
+    function _focusName(): string {
+        for (let item = root.Window.window?.activeFocusItem ?? null; item; item = item.parent) {
+            if (item === settings)
+                return "settings"
+            if (item === anchor)
+                return "anchor"
+        }
+        return ""
+    }
+
     readonly property var integration: ({
-        events: ["open-requested", "dismiss-requested"],
-        actions: ["toggle"],
-        runAction: name => {
-            if (name !== "toggle")
-                return false
-            pop.toggle()
-            return true
-        },
+        events: ["open-requested", "dismiss-requested", "settings-clicked"],
+        actions: ["toggle", "focus-anchor"],
+        targets: ({
+            anchor: () => anchor,
+            settings: () => settings,
+            panel: () => card,
+            scene: () => root
+        }),
         observables: {
             open: () => pop.open,
             hovered: () => pop.hovered,
             side: () => pop.side,
+            focus: () => root._focusName(),
             "open-requests": () => root.openRequests,
-            "dismiss-requests": () => root.dismissRequests
+            "dismiss-requests": () => root.dismissRequests,
+            "settings-clicks": () => root.settingsClicks
+        },
+        runAction: name => {
+            if (name === "toggle")
+                pop.toggle()
+            else if (name === "focus-anchor")
+                anchor.forceActiveFocus(Qt.TabFocusReason)
+            else
+                return false
+            return true
         }
     })
 }
