@@ -481,7 +481,12 @@ Item {
                 Prose {
                     id: stamp
                     anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
+                    // The slot's full height, centred inside it: a 14 px line centred
+                    // by its own box would start on a quarter pixel. Whole pixels wide,
+                    // so a right-aligned reading starts on the pixel grid.
+                    height: parent.height
+                    verticalAlignment: Text.AlignVCenter
+                    width: Math.ceil(implicitWidth)
                     role: "metadata"
                     technical: true
                     text: root.timestampText()
