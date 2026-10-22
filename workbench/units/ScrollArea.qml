@@ -42,7 +42,7 @@ Rectangle {
 
                 x: scroll.vertical ? 0 : index * step
                 y: scroll.vertical ? index * step : 0
-                height: scroll.vertical ? step : implicitHeight
+                height: root._rowStep
                 verticalAlignment: Text.AlignVCenter
                 role: "label"
                 text: "Scrollable row " + (index + 1)
