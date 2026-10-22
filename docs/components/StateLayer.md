@@ -8,7 +8,7 @@ keyboard: none of its own. `focused` is keyboard focus only: a hosted `T.Control
 screen reader: none; the host carries the role, name and state.
 size: no footprint; a host sizes the layer to its body at rest. `extent` is the body's smaller side at rest, the number `hoverScale` is a ratio of; `growth` is whole device pixels per side, never under one while the ratio asks for any, never over `growthCap`.
 tokens: `Style.stroke` and `Style.snapDown` (the one place the window pixel ratio is read), `Style.indicatorWidth`, `Style.tone`, `Style.focus`, `Motion.hoverScale`, `Motion.press`, `Motion.micro`.
-motion: `response` eases to the hover or press scale and the ring fades in `Motion.micro`; reduced motion shortens both and takes the hover growth to zero (the press push-in stays, one device pixel for `Motion.press`).
+motion: `response` eases to the hover or press scale and the ring appears and leaves at once (a keyboard-initiated change is never animated); reduced motion shortens the response and takes the hover growth to zero (the press push-in stays, one device pixel for `Motion.press`).
 not designed: content, layout, dismissal or a keyboard press; a host that wants a held key to read as pressed sets `manualPressOverride`.
 
 ## Contract

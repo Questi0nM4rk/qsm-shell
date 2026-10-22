@@ -48,7 +48,7 @@ ColumnLayout {
     readonly property bool failed: error.trim().length > 0
     readonly property bool hinted: hint.trim().length > 0
     readonly property string accessibleName: label
-    readonly property string accessibleDescription: [failed ? error : hint, required && label !== "" ? "Required" : ""].filter(value => value.length > 0).join(" ")
+    readonly property string accessibleDescription: [failed ? error : hint, nameLabel.requiredNote].filter(value => value.length > 0).join(" ")
 
     // The control this frames.
     default property alias content: contentHost.data
@@ -100,6 +100,7 @@ ColumnLayout {
 
     // The same label element a slider wears; one style for naming a control.
     ControlLabel {
+        id: nameLabel
         objectName: "controlLabel"
         // The control carries this name and the required note, so a screen
         // reader does not meet them twice.

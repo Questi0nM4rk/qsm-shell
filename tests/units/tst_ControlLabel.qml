@@ -21,7 +21,6 @@ TestCase {
         label.clickable = true
         label.text = "Name"
         label.icon = ""
-        label._keyActivationHeld = false
     }
 
     function test_pointer_and_programmatic_activation_share_intent() {

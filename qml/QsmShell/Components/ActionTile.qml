@@ -51,8 +51,6 @@ T.Control {
     // pass `Motion.hoverGrowthWithin(gap)`. The focus ring follows the growth,
     // so the room a tile needs is its growth plus the ring.
     property real growthCap: Infinity
-    // A key is down: the tile reads as pressed until it is released.
-    property bool _keyHeld: false
     signal entered
     signal exited
     signal activated
@@ -123,7 +121,7 @@ T.Control {
         interactive: root.enabled
         focused: root.focused
         focusRadius: Style.radiusBody
-        manualPressOverride: root._keyHeld
+        manualPressOverride: keys.held
         bodyGrows: true
         growthCap: root.growthCap
         onClicked: {
@@ -133,30 +131,14 @@ T.Control {
         onHoveredChanged: { if (hovered) root.entered(); else root.exited(); }
     }
 
-    // A tile is a button, and a button answers a key: Space, Return and Enter
-    // read as pressed while held and act once on release, and a held key
-    // repeats nothing, so one hold can never arm a tile and then confirm it
-    // (a held key repeats a release and a press of its own, `isAutoRepeat`,
-    // and neither is the key coming up). Every route shares `activate()`, so
-    // the disabled guard lives in exactly one place.
-    function _isActivationKey(key: int): bool {
-        return key === Qt.Key_Space || key === Qt.Key_Return || key === Qt.Key_Enter;
+    // A tile is a button, and a button answers a key: one hold can never arm
+    // a tile and then confirm it (ActivationKeys acts once, on release). Every
+    // route shares `activate()`, so the disabled guard lives in exactly one
+    // place.
+    ActivationKeys {
+        id: keys
+        available: root.enabled
+        onActivated: root.activate()
     }
-    Keys.onPressed: event => {
-        if (!root._isActivationKey(event.key))
-            return;
-        event.accepted = true;
-        if (!event.isAutoRepeat)
-            root._keyHeld = root.enabled;
-    }
-    Keys.onReleased: event => {
-        if (!root._isActivationKey(event.key) || !root._keyHeld)
-            return;
-        event.accepted = true;
-        if (event.isAutoRepeat)
-            return;
-        root._keyHeld = false;
-        root.activate();
-    }
-    onActiveFocusChanged: if (!root.activeFocus) root._keyHeld = false
+    Keys.forwardTo: [keys]
 }

@@ -201,8 +201,7 @@ T.TabBar {
             // option that is itself unavailable dims the pill as well, and
             // its dimmed accent label (1.88:1 on it, the same dim as any
             // unavailable label) stays a legible word in a receding pill.
-            color: root.enabled && root._enabled(root.currentIndex) ? Style.selected(Style.surface, Style.accent)
-                : Style.disabled(Style.selected(Style.surface, Style.accent))
+            color: Style.tone(Style.surface, false, false, true, root.enabled && root._enabled(root.currentIndex), Style.accent)
             layer.enabled: !Style.reducedEffects
             layer.effect: MultiEffect {
                 shadowEnabled: true
@@ -372,6 +371,7 @@ T.TabBar {
             hoverScale: tab.selectedSegment ? 1 : Motion.capsuleHoverScale
             pressScale: 1
             focusRadius: root._itemRadius
+            bodyGrows: true
             // The ring marks keyboard focus only: a click selects and slides
             // the thumb, it does not ring. Focus normally sits on the bar and
             // the ring marks the picked segment, or the first available one

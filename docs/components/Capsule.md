@@ -5,7 +5,7 @@ states: rest, hover, press, focus, disabled and active; active is lavender ident
 ground: `base` is the rung the body rests on, `surface` over the band; on a surface card the host passes `Style.overlay`, because a body the colour of its ground is no body.
 actions: pointer click, Space, Enter and the actions entry call activate() and emit clicked; the screen reader's press action takes the same route; a held key does not repeat it; active never changes inside the component.
 pointer: the full body is the target and reports a hand; wheel does not claim the event; `hovered` and `pressed` report the pointer.
-keyboard: tab reaches an enabled capsule, click takes focus without a ring, and Space/Enter activate the same route.
+keyboard: tab reaches an enabled capsule, click takes focus without a ring, and Space, Return and Enter read as pressed while held and activate the same route once on release (ActivationKeys).
 screen reader: Accessible.Button names the label, or `accessibleName` when glyph-only (a capsule with neither warns once); `checkable: true` marks a toggle and exposes `active` as checked; detail is a muted reading, not a second action.
 size: xs, sm, md and lg are the Control presets; the glyph (glyphBeside), label and inset derive from the box, while radius and focus gap remain constant. A glyph-only capsule is the box itself, a circle. The width follows the content up to `controlWidth` and the label elides past it or inside a narrower `width`; a wider `width` keeps the group centred.
 tokens: Style.size (Control ladder), glyphBeside, text scale, space scale, surface ladder, accent, danger, Motion, Surface and StateLayer; no local colors or measurements.

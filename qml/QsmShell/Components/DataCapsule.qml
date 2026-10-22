@@ -150,7 +150,7 @@ T.Control {
         base: root.surfaceColor
         radius: root.radius
         hovered: root.interactive && root.pointerHovered
-        pressed: body.pressed
+        pressed: body.pressed || keys.held
         layer.enabled: root.elevated && !Style.reducedEffects
         layer.effect: MultiEffect {
             shadowEnabled: true
@@ -199,11 +199,13 @@ T.Control {
         }
     }
 
-    // One dispatcher, and a held key asks once: it would reopen the details at
-    // the key-repeat rate.
-    Keys.onPressed: event => {
-        if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space)
-            return;
-        event.accepted = event.isAutoRepeat ? root.acceptsInput && root.interactive : root.activate();
+    // A held key asks once, on release: it would reopen the details at the
+    // key-repeat rate. A capsule that takes no input leaves the key to the
+    // surface above it.
+    ActivationKeys {
+        id: keys
+        available: root.acceptsInput && root.interactive
+        onActivated: root.activate()
     }
+    Keys.forwardTo: [keys]
 }

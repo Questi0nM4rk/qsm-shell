@@ -26,9 +26,9 @@ T.AbstractButton {
 
     signal selectionRequested()
 
-    // Every route is this one call: pointer (clicked), Space (the template
-    // clicks on Space), Return and keypad Enter (below), the screen reader and
-    // a caller.
+    // Every route is this one call: pointer (clicked), Space, Return and
+    // keypad Enter (ActivationKeys, once on release), the screen reader and a
+    // caller.
     function select(): void {
         if (root.enabled && !root.checked)
             root.selectionRequested();
@@ -44,15 +44,19 @@ T.AbstractButton {
     Accessible.role: Accessible.RadioButton
     Accessible.checkable: true
     Accessible.checked: root.checked
-    Accessible.name: root.accessibleName !== "" ? root.accessibleName : root._labelText()
+    Accessible.name: root.accessibleName !== "" ? root.accessibleName : labelSlot.text
     Accessible.onPressAction: root.select()
 
     onClicked: root.select()
-    Keys.onReturnPressed: root.select()
-    Keys.onEnterPressed: root.select()
+    ActivationKeys {
+        id: keys
+        available: root.enabled
+        onActivated: root.select()
+    }
+    Keys.forwardTo: [keys]
 
     readonly property real _radio: root.radioSize
-    readonly property bool _hasLabel: labelSlot.children.length > 0
+    readonly property bool _hasLabel: labelSlot.hasContent
     readonly property real _gap: root._hasLabel ? Style.rhythm(root._radio * 0.5) : 0
 
     // The label column is a constant, never content-derived: the row is one
@@ -61,20 +65,11 @@ T.AbstractButton {
     property real labelWidth: Math.round(Style.controlWidth * root.sizeScale) - root._radio - root._gap
     implicitWidth: row.implicitWidth
     // The pointer target is the footprint, and the footprint is at least
-    // `Style.iconLg` tall (the 24 px floor of WCAG 2.5.8), so the hit zone and
+    // `Style.targetFloor` tall (WCAG 2.5.8), so the hit zone and
     // the hover zone are one rectangle and nothing overflows it. A shorter
     // circle and label centre in the slack.
-    implicitHeight: Math.max(Style.iconLg, row.implicitHeight)
+    implicitHeight: Math.max(Style.targetFloor, row.implicitHeight)
     padding: 0
-
-    // First slotted item that carries text names the control.
-    function _labelText(): string {
-        for (const item of labelSlot.children) {
-            if (typeof item.text === "string" && item.text !== "")
-                return item.text;
-        }
-        return "";
-    }
 
     // The pointing hand over the whole row while enabled.
     HoverHandler {
@@ -142,16 +137,10 @@ T.AbstractButton {
         // through the default property alias. Disabled colouring is the host's
         // responsibility -- slot content is opaque to the component. An empty
         // slot takes no width and no row gap.
-        Item {
+        LabelSlot {
             id: labelSlot
             visible: root._hasLabel
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            // The host binds its label's width to this slot's, so a long
-            // label elides here instead of growing the control.
-            clip: true
-            implicitWidth: root.labelWidth
-            implicitHeight: childrenRect.height
+            columnWidth: root.labelWidth
         }
     }
 
@@ -163,5 +152,7 @@ T.AbstractButton {
         height: circle.height
         host: root
         focusRadius: Style.radiusPill
+        bodyGrows: true
+        manualPressOverride: keys.held
     }
 }

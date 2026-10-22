@@ -35,11 +35,15 @@ T.AbstractButton {
     // composing around the switch needs to follow.
     readonly property real sizeScale: root.knobSize / Style.size("Switch", "md")
 
+    // What a screen reader speaks; a switch has no label slot of its own, so
+    // the host names what it throws.
+    property string accessibleName: ""
+
     signal toggleRequested(bool checked)
 
-    // Every route is this one call: pointer (clicked), Space (the template
-    // clicks on Space), Return and keypad Enter (below), the screen reader and
-    // a caller.
+    // Every route is this one call: pointer (clicked), Space, Return and
+    // keypad Enter (ActivationKeys, once on release), the screen reader and a
+    // caller.
     function flip(): void {
         if (root.enabled)
             root.toggleRequested(!root.checked);
@@ -55,22 +59,27 @@ T.AbstractButton {
     Accessible.role: Accessible.Switch
     Accessible.checkable: true
     Accessible.checked: root.checked
+    Accessible.name: root.accessibleName
     Accessible.onPressAction: root.flip()
     Accessible.onToggleAction: root.flip()
 
     onClicked: root.flip()
-    Keys.onReturnPressed: root.flip()
-    Keys.onEnterPressed: root.flip()
+    ActivationKeys {
+        id: keys
+        available: root.enabled
+        onActivated: root.flip()
+    }
+    Keys.forwardTo: [keys]
 
     // The track is a pill two knobs wide; one rhythm step of air sits between
     // its edge and the knob at every size, enough to keep the 2 px outline of an
     // off switch clear of the knob. The pointer target is the footprint, and
-    // the footprint is at least `Style.iconLg` tall (the 24 px floor of WCAG
+    // the footprint is at least `Style.targetFloor` tall (WCAG
     // 2.5.8): a track shorter than that is centred in the slack, so the hit
     // zone and the hover zone are one rectangle and nothing overflows it.
     readonly property real _air: Style.space1
     readonly property real _trackHeight: root.knobSize + root._air * 2
-    readonly property real _slack: Math.max(0, Style.iconLg - root._trackHeight) / 2
+    readonly property real _slack: Math.max(0, Style.targetFloor - root._trackHeight) / 2
     implicitWidth: root.knobSize * 2 + root._air * 2
     implicitHeight: root._trackHeight + root._slack * 2
     leftPadding: 0
@@ -95,7 +104,7 @@ T.AbstractButton {
             anchors.fill: parent
             radius: Style.radiusPill
             readonly property color _tone: Style.tone(root.checked ? root.accentColor : Style.textMuted,
-                root.hovered, root.pressed, false, root.enabled, root.accentColor)
+                root.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
             color: Qt.alpha(track._tone, root.checked ? 1 : 0)
             border.width: Style.stroke(Style.indicatorWidth, root)
             border.color: track._tone
@@ -130,7 +139,7 @@ T.AbstractButton {
                 anchors.margins: -stateLayer.growth
                 radius: Style.radiusPill
                 color: Style.tone(root.checked ? Style.textOnPrimary : Style.textMuted,
-                    !root.checked && root.hovered, !root.checked && root.pressed, false, root.enabled, root.accentColor)
+                    !root.checked && root.hovered, !root.checked && stateLayer.pressed, false, root.enabled, root.accentColor)
 
                 Behavior on color {
                     ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
@@ -151,6 +160,7 @@ T.AbstractButton {
             extent: root.knobSize
             hoverScale: Style.reducedMotion ? 1 : 1 + Style.spaceTight / root.knobSize
             pressScale: stateLayer.hoverScale
+            manualPressOverride: keys.held
             focusRadius: height / 2
         }
     }

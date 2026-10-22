@@ -39,15 +39,15 @@ T.AbstractButton {
     // The type step a label in the slot reads at, so the text scales with the box.
     readonly property int labelSize: Style.textNear(Style.textMd * root.sizeScale)
 
-    // Short string for screen readers; does not render visible content.
+    // Overrides the name read from the label slot's own text.
     property string accessibleName: ""
     default property alias label: labelSlot.data
 
     signal toggleRequested(bool checked)
 
-    // Every route is this one call: pointer (clicked), Space (the template
-    // clicks on Space), Return and keypad Enter (below), the screen reader and
-    // a caller.
+    // Every route is this one call: pointer (clicked), Space, Return and
+    // keypad Enter (ActivationKeys, once on release), the screen reader and a
+    // caller.
     function flip(): void {
         if (root.enabled)
             root.toggleRequested(!root.checked);
@@ -64,16 +64,20 @@ T.AbstractButton {
     Accessible.checkable: true
     Accessible.checked: root.checked && !root.indeterminate
     Accessible.checkStateMixed: root.indeterminate
-    Accessible.name: root.accessibleName
+    Accessible.name: root.accessibleName !== "" ? root.accessibleName : labelSlot.text
     Accessible.onPressAction: root.flip()
     Accessible.onToggleAction: root.flip()
 
     onClicked: root.flip()
-    Keys.onReturnPressed: root.flip()
-    Keys.onEnterPressed: root.flip()
+    ActivationKeys {
+        id: keys
+        available: root.enabled
+        onActivated: root.flip()
+    }
+    Keys.forwardTo: [keys]
 
     readonly property real _box: root.boxSize
-    readonly property bool _hasLabel: labelSlot.children.length > 0
+    readonly property bool _hasLabel: labelSlot.hasContent
     readonly property real _gap: root._hasLabel ? Style.rhythm(root._box * 0.5) : 0
     readonly property bool _marked: root.checked || root.indeterminate
     // The mark rides at 3:4 of the box -- the inner eighth stays air at every
@@ -88,10 +92,10 @@ T.AbstractButton {
     property real labelWidth: Math.round(Style.controlWidth * root.sizeScale) - root._box - root._gap
     implicitWidth: row.implicitWidth
     // The pointer target is the footprint, and the footprint is at least
-    // `Style.iconLg` tall (the 24 px floor of WCAG 2.5.8), so the hit zone and
+    // `Style.targetFloor` tall (WCAG 2.5.8), so the hit zone and
     // the hover zone are one rectangle and nothing overflows it. A shorter box
     // and label centre in the slack.
-    implicitHeight: Math.max(Style.iconLg, row.implicitHeight)
+    implicitHeight: Math.max(Style.targetFloor, row.implicitHeight)
     padding: 0
 
     // The pointing hand over the whole row while enabled.
@@ -168,15 +172,9 @@ T.AbstractButton {
         // Adjacent content slot: the host provides a label (or anything else)
         // through the default property alias. Disabled colouring is the host's
         // responsibility -- slot content is opaque to the component.
-        Item {
+        LabelSlot {
             id: labelSlot
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            // The host binds its label's width to this slot's, so a long
-            // label elides here instead of growing the control.
-            clip: true
-            implicitWidth: root._hasLabel ? root.labelWidth : 0
-            implicitHeight: childrenRect.height
+            columnWidth: root.labelWidth
         }
     }
 
@@ -191,5 +189,7 @@ T.AbstractButton {
         height: box.height
         host: root
         focusRadius: Style.radiusXs
+        bodyGrows: true
+        manualPressOverride: keys.held
     }
 }
