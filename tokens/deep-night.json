@@ -20,7 +20,8 @@
     "step": 1.3
   },
   "contrast": {
-    "text": 4.5
+    "text": 4.5,
+    "graphic": 3
   },
   "space": {
     "1": 4,
@@ -130,7 +131,6 @@
     "badgeHeight": 16,
     "badgeWidth": 32,
     "trackThickness": 4,
-    "ringDiameter": 150,
     "ringStrokeRatio": 0.0533,
     "tileWidth": 96,
     "tileHeight": 72,
@@ -206,6 +206,11 @@
     "MonthCalendar": {
       "sm": 24,
       "md": 32
+    },
+    "StatRing": {
+      "sm": 64,
+      "md": 150,
+      "lg": 240
     }
   }
 }

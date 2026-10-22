@@ -16,7 +16,8 @@ Canvas {
     id: root
 
     property var values: []
-    property color color: Style.accent
+    // Luminous text, not the accent: a trend is a passive reading.
+    property color color: Style.text
     // Out of range means "take it from the data".
     property real minimum: NaN
     property real maximum: NaN
@@ -29,15 +30,32 @@ Canvas {
     // band, which reads as one thick trend rather than as two.
     property real thickness: 0
 
+    // A twelfth of the height, in whole device pixels: a fractional weight
+    // paints a flat run as two soft rows instead of one crisp one.
     readonly property real _thickness: thickness > 0
         ? thickness
-        : Math.max(1, height / 12)
+        : Style.stroke(height / 12, root)
 
     readonly property real _min: isNaN(minimum) ? Math.min(...(values.length > 0 ? values : [0])) : minimum
     readonly property real _max: isNaN(maximum) ? Math.max(...(values.length > 0 ? values : [1])) : maximum
 
-    implicitWidth: Style.size("Sparkline", "lg") * 2
-    implicitHeight: Style.size("Sparkline", "sm")
+    // A preset NAME of the size table (the Control family's): the height, and
+    // the width is three of it, the proportion a trend reads best in.
+    property string size: "md"
+    implicitHeight: Style.size("Sparkline", root.size)
+    implicitWidth: implicitHeight * 3
+
+    // A graphic with a text equivalent: how many values and where the series
+    // starts and ends. A host whose neighbour already says it sets
+    // `Accessible.ignored`.
+    function _say(value: real): string {
+        return String(Number(Number(value).toPrecision(3)));
+    }
+    Accessible.role: Accessible.Graphic
+    Accessible.name: values.length === 0 ? qsTr("Trend, no data")
+        : values.length === 1 ? qsTr("Trend, one value, %1").arg(root._say(values[0]))
+        : qsTr("Trend, %1 values, from %2 to %3").arg(values.length)
+            .arg(root._say(values[0])).arg(root._say(values[values.length - 1]))
 
     onPaint: {
         const c = getContext("2d");
@@ -50,6 +68,10 @@ Canvas {
         const left = thickness / 2;
         const right = root.width - thickness / 2;
         const usable = root.height - thickness;
+        // A flat series centres its line, with the stroke's top edge on a
+        // device row so the line is one crisp run.
+        const dpr = root.Window.window?.devicePixelRatio ?? 1;
+        const flatY = Math.round(usable / 2 * dpr) / dpr + thickness / 2;
 
         // Nothing yet is a quiet line on the floor and one sample is a dot at
         // the end, so a first-sample box never reads as a graph that failed.
@@ -66,7 +88,7 @@ Canvas {
                 c.fillStyle = root.color;
                 const span = root._max - root._min;
                 const y = span === 0
-                    ? root.height / 2
+                    ? flatY
                     : thickness / 2 + usable - (Math.min(Math.max(points[0], root._min), root._max) - root._min) / span * usable;
                 c.arc(right, y, thickness / 2, 0, 2 * Math.PI);
                 c.fill();
@@ -81,7 +103,7 @@ Canvas {
         const span = root._max - root._min;
         const step = (right - left) / (points.length - 1);
         const yOf = value => span === 0
-            ? root.height / 2
+            ? flatY
             : thickness / 2 + usable - ((Math.min(Math.max(value, root._min), root._max) - root._min) / span) * usable;
 
         const trace = () => {

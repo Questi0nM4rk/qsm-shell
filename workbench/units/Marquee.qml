@@ -30,17 +30,29 @@ Rectangle {
             { label: "always", set: { mode: "always" } },
             { label: "hover", set: { mode: "hover" } },
             { label: "never", set: { mode: "never" } }
+        ] },
+        { label: "text", options: [
+            { label: "long", set: { text: "Battery 87 percent, charging, three hours remaining at the present rate" } },
+            { label: "short", set: { text: "Battery 87 percent" } },
+            { label: "empty", set: { text: "" } }
         ] }
     ]
     readonly property var integration: ({
         events: [],
         actions: [],
+        targets: ({
+            marquee: () => line,
+            scene: () => root
+        }),
         observables: {
             overflows: () => line.overflows,
-            mode: () => line.mode
+            mode: () => line.mode,
+            travelling: () => line.travelling,
+            offset: () => line.offset,
+            "accessible-name": () => line.Accessible.name
         },
         textDriver: text => {
-            line.text = String(text)
+            root.text = String(text)
             return true
         }
     })

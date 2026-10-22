@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "key": "svg-icon-set",
+  "target": { "story": "svg-icon" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "sizes", "equals": [12, 16, 20, 24, 32, 44] },
+    { "type": "await", "observable": "ready", "equals": true },
+    { "type": "control", "group": "name", "option": "cloud" },
+    { "type": "expect", "observable": "name", "equals": "cloud" },
+    { "type": "await", "observable": "ready", "equals": true },
+    { "type": "control", "group": "name", "option": "snow" },
+    { "type": "await", "observable": "ready", "equals": true },
+    { "type": "control", "group": "name", "option": "fog" },
+    { "type": "await", "observable": "ready", "equals": true },
+    { "type": "control", "group": "name", "option": "rain" },
+    { "type": "await", "observable": "ready", "equals": true },
+    { "type": "control", "group": "name", "option": "battery" },
+    { "type": "expect", "observable": "name", "equals": "battery-full" },
+    { "type": "await", "observable": "ready", "equals": true },
+    { "type": "control", "group": "name", "option": "empty" },
+    { "type": "expect", "observable": "name", "equals": "" },
+    { "type": "expect", "observable": "ready", "equals": false }
+  ]
+}

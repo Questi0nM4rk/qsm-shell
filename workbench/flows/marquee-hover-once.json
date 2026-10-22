@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "key": "marquee-hover-once",
+  "target": { "story": "marquee" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "mode", "option": "hover" },
+    { "type": "expect", "observable": "mode", "equals": "hover" },
+    { "type": "expect", "observable": "travelling", "equals": false },
+    { "type": "pointer", "target": "marquee", "event": "move", "x": 0.5, "y": 0.5 },
+    { "type": "await", "observable": "travelling", "equals": true },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.02, "y": 0.02 },
+    { "type": "await", "observable": "travelling", "equals": false },
+    { "type": "await", "observable": "offset", "equals": 0 },
+    { "type": "control", "group": "mode", "option": "once" },
+    { "type": "expect", "observable": "travelling", "equals": false },
+    { "type": "write", "text": "Battery 87 percent, charging, three hours remaining at the present rate." },
+    { "type": "await", "observable": "travelling", "equals": true },
+    { "type": "await", "observable": "travelling", "equals": false },
+    { "type": "expect", "observable": "offset", "equals": 0 },
+    { "type": "control", "group": "text", "option": "short" },
+    { "type": "expect", "observable": "overflows", "equals": false },
+    { "type": "expect", "observable": "travelling", "equals": false }
+  ]
+}

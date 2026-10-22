@@ -5,6 +5,7 @@
   "steps": [
     { "type": "reset" },
     { "type": "expect", "observable": "ladder-mode", "equals": true },
-    { "type": "expect", "observable": "ladder-roles", "equals": 10 }
+    { "type": "expect", "observable": "ladder-roles", "equals": 10 },
+    { "type": "expect", "observable": "device-aligned", "equals": true }
   ]
 }

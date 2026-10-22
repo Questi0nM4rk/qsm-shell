@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "key": "swatch-palette-pick",
+  "target": { "story": "swatch" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "arrangement", "option": "palette" },
+    { "type": "expect", "observable": "picked", "equals": 1 },
+    { "type": "expect", "observable": "palette-focus", "equals": -1 },
+    { "type": "pointer", "target": "palette-first", "event": "click" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component", "payload": { "index": 0 } },
+    { "type": "expect", "observable": "picked", "equals": 0 },
+    { "type": "expect", "observable": "palette-focus", "equals": -1 },
+    { "type": "key", "target": "palette-first", "key": "Tab" },
+    { "type": "expect", "observable": "palette-focus", "equals": 1 },
+    { "type": "key", "target": "palette-second", "key": "Space" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component", "payload": { "index": 1 } },
+    { "type": "expect", "observable": "picked", "equals": 1 },
+    { "type": "key", "target": "palette-second", "key": "Tab" },
+    { "type": "expect", "observable": "palette-focus", "equals": 2 },
+    { "type": "key", "target": "palette-third", "key": "Backtab" },
+    { "type": "expect", "observable": "palette-focus", "equals": 1 },
+    { "type": "pointer", "target": "palette-last", "event": "click" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component", "payload": { "index": 5 } },
+    { "type": "expect", "observable": "picked", "equals": 5 },
+    { "type": "pointer", "target": "palette-second", "event": "press" },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.02, "y": 0.02 },
+    { "type": "pointer", "target": "scene", "event": "release", "x": 0.02, "y": 0.02 },
+    { "type": "expect", "observable": "picked", "equals": 5 },
+    { "type": "expect", "observable": "clicks", "equals": 3 }
+  ]
+}

@@ -6,11 +6,18 @@
     { "type": "reset" },
     { "type": "expect", "observable": "mode", "equals": "always" },
     { "type": "expect", "observable": "overflows", "equals": true },
+    { "type": "await", "observable": "travelling", "equals": true },
+    { "type": "expect", "observable": "accessible-name", "equals": "Battery 87 percent, charging, three hours remaining at the present rate" },
     { "type": "write", "text": "Battery 87" },
     { "type": "expect", "observable": "overflows", "equals": false },
+    { "type": "await", "observable": "travelling", "equals": false },
+    { "type": "await", "observable": "offset", "equals": 0 },
+    { "type": "expect", "observable": "accessible-name", "equals": "Battery 87" },
     { "type": "control", "group": "mode", "option": "never" },
     { "type": "expect", "observable": "mode", "equals": "never" },
-    { "type": "write", "text": "Battery 87 percent, charging, three hours remaining at the present rate" },
-    { "type": "expect", "observable": "overflows", "equals": true }
+    { "type": "control", "group": "text", "option": "long" },
+    { "type": "expect", "observable": "overflows", "equals": true },
+    { "type": "expect", "observable": "travelling", "equals": false },
+    { "type": "expect", "observable": "offset", "equals": 0 }
   ]
 }

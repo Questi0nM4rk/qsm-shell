@@ -457,7 +457,7 @@ TestCase {
     // not, and 0 keeps the derived one.
     function test_sparkline_thickness_falls_back_to_the_height() {
         compare(thinLine._thickness, 1.5, "a stated thickness was ignored");
-        compare(autoLine._thickness, Math.max(1, autoLine.height / 12),
+        compare(autoLine._thickness, Style.stroke(autoLine.height / 12, autoLine),
             "the derived thickness was lost");
     }
 

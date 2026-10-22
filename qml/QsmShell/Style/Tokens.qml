@@ -21,6 +21,7 @@ QtObject {
     readonly property color colorCheckerLight: "#ffffff"
     readonly property color colorCheckerDark: "#c0c0c0"
     readonly property real contrastText: 4.5
+    readonly property int contrastGraphic: 3
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -114,7 +115,6 @@ QtObject {
     readonly property int geometryBadgeHeight: 16
     readonly property int geometryBadgeWidth: 32
     readonly property int geometryTrackThickness: 4
-    readonly property int geometryRingDiameter: 150
     readonly property real geometryRingStrokeRatio: 0.0533
     readonly property int geometryTileWidth: 96
     readonly property int geometryTileHeight: 72
@@ -143,5 +143,5 @@ QtObject {
     readonly property real lineBody: 1.55
     readonly property real trackingWide: 1.4
     readonly property real blendBadgeInk: 0.5
-    readonly property var sizes: ({"Control":{"xs":24,"sm":32,"md":40,"lg":48},"ListRow":{"sm":32,"md":40,"lg":56},"DataCapsule":{"sm":32,"md":64,"lg":96},"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"Slider":{"sm":16,"md":24,"lg":40},"MonthCalendar":{"sm":24,"md":32}})
+    readonly property var sizes: ({"Control":{"xs":24,"sm":32,"md":40,"lg":48},"ListRow":{"sm":32,"md":40,"lg":56},"DataCapsule":{"sm":32,"md":64,"lg":96},"Switch":{"sm":12,"md":16,"lg":24},"Checkbox":{"sm":12,"md":16,"lg":24},"Radio":{"sm":12,"md":16,"lg":24},"Slider":{"sm":16,"md":24,"lg":40},"MonthCalendar":{"sm":24,"md":32},"StatRing":{"sm":64,"md":150,"lg":240}})
 }
