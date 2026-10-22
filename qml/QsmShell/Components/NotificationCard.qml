@@ -376,14 +376,6 @@ Item {
             width: Style.iconLg
             height: Style.iconLg
 
-            SvgIcon {
-                anchors.centerIn: parent
-                visible: root.leadHovered
-                name: root.expanded ? "chevron-up" : "chevron-down"
-                size: Style.iconSm
-                color: Style.text
-            }
-
             Rectangle {
                 anchors.fill: parent
                 visible: root.hasSwatch && !root.leadHovered
@@ -403,33 +395,38 @@ Item {
                 fillMode: Image.PreserveAspectFit
             }
 
+            // The urgency glyph, or the chevron that says the leading column
+            // opens the card while the pointer is on it.
             SvgIcon {
-                anchors.fill: parent
-                visible: !root.leadHovered && !root.hasSwatch && !root.showsImage
-                name: root.iconName
-                size: Style.iconLg
-                color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+                anchors.centerIn: parent
+                visible: root.leadHovered || (!root.hasSwatch && !root.showsImage)
+                name: root.leadHovered ? (root.expanded ? "chevron-up" : "chevron-down") : root.iconName
+                size: root.leadHovered ? Style.iconSm : Style.iconLg
+                color: root.leadHovered ? Style.text
+                    : root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
             }
 
             // An image or swatch carries no urgency, so a critical or low
             // entry keeps its glyph as a badge on the slot's corner, on a disc
             // of the card's own colour so it stands clear of what is under it.
-            Rectangle {
+            Loader {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.rightMargin: -Style.space1
                 anchors.bottomMargin: -Style.space1
-                width: Style.iconSm
-                height: width
-                radius: Style.radiusPill
-                visible: !root.leadHovered && root.urgencyBadged
-                color: root.bodied ? body.color : Style.band
+                active: root.urgencyBadged && !root.leadHovered
+                sourceComponent: Rectangle {
+                    width: Style.iconSm
+                    height: width
+                    radius: Style.radiusPill
+                    color: root.bodied ? body.color : Style.band
 
-                SvgIcon {
-                    anchors.centerIn: parent
-                    name: root.iconName
-                    size: Style.iconXs
-                    color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+                    SvgIcon {
+                        anchors.centerIn: parent
+                        name: root.iconName
+                        size: Style.iconXs
+                        color: root.enabled ? root.glyphColor : Style.disabled(root.glyphColor)
+                    }
                 }
             }
         }
