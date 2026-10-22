@@ -32,7 +32,7 @@ Item {
 
     // The viewport, for a consumer that needs to drive the position itself
     // (scroll a selection into view, jump to the top on a new query).
-    readonly property alias viewport: view
+    readonly property alias viewport: scroller
     readonly property alias overflows: cue.overflows
     // How deep the fade paints at each end, in px.
     readonly property alias startFade: cue.startFade
@@ -61,9 +61,9 @@ Item {
     // `contentHeight - height` goes negative for it.
     function scrollBy(delta: real): void {
         if (vertical)
-            view.contentY = Math.max(0, Math.min(view.contentHeight - view.height, view.contentY + delta));
+            scroller.contentY = Math.max(0, Math.min(scroller.contentHeight - scroller.height, scroller.contentY + delta));
         else
-            view.contentX = Math.max(0, Math.min(view.contentWidth - view.width, view.contentX + delta));
+            scroller.contentX = Math.max(0, Math.min(scroller.contentWidth - scroller.width, scroller.contentX + delta));
     }
 
     function scrollToStart(): void {
@@ -89,7 +89,7 @@ Item {
     Keys.onPressed: event => {
         const back = root.vertical ? Qt.Key_Up : Qt.Key_Left;
         const forward = root.vertical ? Qt.Key_Down : Qt.Key_Right;
-        const page = (root.vertical ? view.height : view.width) - root._line;
+        const page = (root.vertical ? scroller.height : scroller.width) - root._line;
         event.accepted = true;
         switch (event.key) {
         case back: root.scrollBy(-root._line); break;
@@ -120,7 +120,7 @@ Item {
     }
 
     Flickable {
-        id: view
+        id: scroller
 
         anchors.fill: parent
         clip: true
@@ -133,8 +133,8 @@ Item {
             id: host
             // The free axis matches the viewport, so content that fills the
             // width does not have to be told how wide the viewport is.
-            width: root.vertical ? view.width : root._extentX
-            height: root.vertical ? root._extentY : view.height
+            width: root.vertical ? scroller.width : root._extentX
+            height: root.vertical ? root._extentY : scroller.height
         }
     }
 
@@ -156,7 +156,7 @@ Item {
 
     ScrollCue {
         id: cue
-        view: view
+        view: scroller
         orientation: root.orientation
     }
 }
