@@ -48,7 +48,7 @@ TestCase {
         compare(stack.displayStack.map(item => item.notificationId).join(","), "a,b");
         const card = row("b");
         verify(card !== null);
-        card.dragExpanded = true;
+        card._dragExpanded = true;
         oldAction.metadata.destination = "mutated source";
         compare(stack.displayStack.find(item => item.notificationId === "b")
             .actions[0].metadata.destination, "disk");
@@ -70,7 +70,7 @@ TestCase {
         alive = ["a", "b", "c"];
         source = [b, a];
         tryVerify(() => stack.cardGeometry().length === 2);
-        row("b").dragExpanded = true;
+        row("b")._dragExpanded = true;
         tryVerify(() => row("b").entranceProgress === 1 && !row("b").expansionAnimating);
 
         source = [c, b];

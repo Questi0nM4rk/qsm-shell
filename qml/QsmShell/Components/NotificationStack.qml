@@ -22,9 +22,9 @@ Item {
     // gap between rows. The gap is part of the column AND of the eviction
     // extent, so a departing row takes its gap with it and the survivors
     // land exactly where the shift stops.
-    property bool bodied: false
+    property bool bodied: true
     property real bodyRadius: Style.radiusBody
-    property real rowSpacing: 0
+    property real rowSpacing: Style.space2
 
     signal dismissRequested(var entry)
     signal hoverChanged(var entry, bool hovered)
