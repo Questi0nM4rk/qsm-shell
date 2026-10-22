@@ -1,6 +1,6 @@
 # TextField
 
-states: rest(surface on band, 1.30:1 from the deep-night ladder; no border) hover(answered by Surface) press(caret lands) focus(ring, keyboard focus only; `keyboardFocused` reports it, a click leaves the caret as the mark) disabled(surface, text, placeholder, caret and danger border each through Style.disabled) readOnly failed
+states: rest(surface on band, 1.30:1 from the deep-night ladder; no border) hover(the body grows one StateLayer growth step a side, 2 device pixels at 1.25, and lifts; the text, caret and slots stay put; read-only neither lifts nor grows; `growthCap` bounds it for a field with close neighbours) press(caret lands) focus(ring, keyboard focus only; `keyboardFocused` reports it, a click leaves the caret as the mark) disabled(surface, text, placeholder, caret and danger border each through Style.disabled) readOnly failed
 actions: Accept Clear Reveal(password only) Select all
 purposes: text search password number; one type, the purpose switches input semantics, leading glyph, trailing action and sample value together
 size: `size` is a preset name (Control family) resolved by Style.size("TextField", name) into `fieldHeight` (escape hatch); s = fieldHeight / md; text textNear(textMd·s), slot content is the host's and the host scales it by `sizeScale` (the unit uses iconNear(iconMd·s)), insets rhythm(space3·s), slot gap rhythm(space2·s); a leading action owns the full-height strip from the field edge while its glyph keeps the inset; a trailing Control reserves only its glyph width (its padding is hit box and overflows, above the text); caret, radius and border constant; width naturalWidth = controlWidth, constant, text scrolls inside
@@ -10,7 +10,7 @@ events: accepted(only when acceptableInput) edited(text) escaped keyPressed(even
 label: outside, through Field, which uses ControlLabel (the element Slider wears)
 accessibility: the input is the one node a screen reader meets (role text, password text for a password; the frame is ignored); `Accessible.name` and `Accessible.description` set on the field, or by `Field`, are read by the input; the placeholder describes it when nothing else does; Qt withholds the name of a password input, so a password is named through its description; Qt has no invalid-entry state, so `failed` is spoken through the error copy `Field` puts in the description
 not designed: multiline, autocomplete, floating label, filled/outlined variants
-readOnly: no resting mark (owner ruling; the majority convention across M3, MUI, Fluent, Spectrum, Radix, Ant); it reports at full strength, takes no hover lift and shows no caret, stays a tab stop and copyable
+readOnly: no resting mark (owner ruling; the majority convention across M3, MUI, Fluent, Spectrum, Radix, Ant); it reports at full strength, takes no hover lift or growth and shows no caret, stays a tab stop and copyable
 open: audit lines in docs/BACKLOG.md
 
 ## UIX audit
@@ -38,7 +38,7 @@ The one text input a person uses to type or search a value, enter a password, or
 
 ### Routes
 
-- **Pointer.** Press on the field focuses the input (TextField.qml 301-303, 461-469). Hover lifts the surface through `Surface` (TextField.qml 200). Cursor: I-beam over the body, pointing hand over the trailing slot (63, 480-489). No `WheelHandler` or wheel code exists in this file (grep: none), so the wheel passes to whatever contains the field (not measured).
+- **Pointer.** Press on the field focuses the input (TextField.qml 301-303, 461-469). Hover lifts and grows the surface (TextField.qml background). Cursor: I-beam over the body, pointing hand over the trailing slot (63, 480-489). No `WheelHandler` or wheel code exists in this file (grep: none), so the wheel passes to whatever contains the field (not measured).
 - **Keyboard.** The input takes Tab (TextField.qml 298). The root has `focusPolicy: NoFocus` (186). Return and Enter claim selection and call `accept()` (359-362). Escape emits `escaped` and does not revert the text (365-367). Up and Down reach `keyPressed` and are not consumed (369-373).
 - **Focus.** Keyboard only, through `StateLayer` (StateLayer.qml 147-170): a 2 px stroke with a 2 px gap outside the body, outer radius 16 px (12 px body + 4 px reach). A pointer press latches `_pointerFocus` and hides the ring until focus leaves (TextField.qml 119-120, 302). The caret is a 2 px accent bar (396-399).
 - **Accessibility.** One AT-SPI node per field (measured): `text` with the name and description above; `password text` for a password; `READ_ONLY` while readOnly; no ENABLED or SENSITIVE while disabled. The unit names its fields (`Display name`, `Search settings`, `Network password`, `Brightness`) and its reveal action `Show password` / `Hide password`.
@@ -116,7 +116,7 @@ Redesign proposals (taste, not defects):
 
 Source conflicts (owner decides which wins):
 
-- SC1. Hover growth: AGENTS.md says hover "grows slightly AND changes colour" through `StateLayer`. TextField.qml 191-193 chose colour only, because the caret and text must not move under the pointer. Owner ruling needed.
+- Hover growth: owner ("A nejde udělat prostě slight růst, tak že budeme všude počítat s tím, že věci musí být tak daleko, aby se jich hover nedotknul?"): the painted body grows by `StateLayer.growth` on every side, 1.6 px at md (a 380 x 40 field measures 383.2 x 43.2 under the pointer), and the content is a sibling at its own size, so nothing moves under the pointer.
 - SC2. Record line 5 says the purpose switch changes "leading glyph, trailing action". The component changes `inputType`, validator and hints only (TextField.qml 91-100). The glyph and action come from the host, and each host builds them its own way.
 
 Hypotheses (unmeasured):

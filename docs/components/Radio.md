@@ -11,4 +11,4 @@ accessibility: role RadioButton, `Accessible.checked` bound; each option is its 
 tokens: radioSize textMuted accent textOnPrimary radiusPill indicatorWidth targetFloor spaceTight
 motion: fill, ring and dot Motion.micro; growth through StateLayer (1 under reduced motion)
 base: T.AbstractButton with checkable false, because T.RadioButton owns checked and group behaviour belongs outside the component
-not designed: arrow-key roving and a single Tab stop for a group (the host owns the group; that needs a group type)
+group: arrow keys, one Tab stop and the group name belong to `RadioGroup`; a bare Radio is its own Tab stop

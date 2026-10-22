@@ -358,6 +358,14 @@ meter), never an edge. The silhouette itself keeps its edge separation
   not grow, so the join stays flush. `extent` is the body's size at rest, the
   number the ratio is taken on, so the grown size never feeds back into it. A
   neighbour gap bounds it through `growthCap` (`Motion.hoverGrowthWithin`).
+- Anything that grows on hover sits far enough from its neighbours that the
+  grown body never touches or overlaps them (owner: "A nejde udělat prostě
+  slight růst, tak že budeme všude počítat s tím, že věci musí být tak daleko,
+  aby se jich hover nedotknul?"). Two neighbours are grown at once, so each
+  side gives up half the gap: a host that places grown bodies `gap` apart
+  passes `Motion.hoverGrowthWithin(gap)` as the type's `growthCap`, which
+  keeps `spaceTight` between them. A field grows too; its text, caret and
+  slots stay put because the content is a sibling of the grown body.
 - An inactive track (progress, meter, ring, slider) is `overlay`, a line of
   content on the card, never a body's step.
 - Selected is identity, not a lift: `accent` at 12 % over the layer plus

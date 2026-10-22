@@ -163,6 +163,9 @@ T.Control {
     // implicit width into this sum would stretch the box as the person types
     // instead of scrolling inside itself.
     property real naturalWidth: Style.controlWidth
+    // The most a side may grow on hover, for a field whose neighbours sit
+    // `gap` away: pass `Motion.hoverGrowthWithin(gap)`.
+    property real growthCap: Infinity
 
     implicitWidth: Math.max(naturalWidth, leftPadding + rightPadding)
     implicitHeight: root.fieldHeight
@@ -196,15 +199,20 @@ T.Control {
 
     background: Surface {
         objectName: "textFieldSurface"
-        // Hover is answered by the SURFACE, not by growth: the caret and the
-        // text have to stay where the eye put them, and a field that jumps
-        // under the pointer is a field you cannot aim a click into. A
-        // read-only field REPORTS; it is not a target, and lifting under the
-        // pointer told a person it was one. Focus still lifts: a read-only
-        // value is selectable and copyable.
+        // The body grows by the layer's `growth` on every side while the text,
+        // the caret and the slots stay where they are (the content is a
+        // sibling at its own size), so nothing moves under the pointer. A
+        // read-only field REPORTS; it is not a target, so it neither lifts
+        // nor grows under the pointer. Focus still lifts: a read-only value
+        // is selectable and copyable.
         // Gated on `enabled`: `hoverEnabled` is unconditional here, so a
         // disabled field under the pointer still reports `hovered`, and the
         // dim must come off the REST colour, not the lifted one.
+        x: -fieldLayer.growth
+        y: -fieldLayer.growth
+        width: root.width + 2 * fieldLayer.growth
+        height: root.height + 2 * fieldLayer.growth
+        radius: Style.radiusBody + fieldLayer.growth
         hovered: root.enabled && (root.focused || (root.hovered && !input.readOnly))
         enabled: root.enabled
         // This border means one thing: this field FAILED. Invisible otherwise.
@@ -464,9 +472,9 @@ T.Control {
 
     // The five states, owned in one place. Host mode: hovered, pressed and the
     // enabled cascade come from the control itself, so there is one source of
-    // every state. Nothing here applies `growth`.
+    // every state. The background applies `growth`.
     StateLayer {
-        id: layer
+        id: fieldLayer
         objectName: "textFieldLayer"
         anchors.fill: parent
         host: root
@@ -477,6 +485,9 @@ T.Control {
         // read-only rule lives in the background binding, where the pointer
         // states are answered.
         interactive: root.enabled
+        bodyGrows: true
+        hoverScale: input.readOnly ? 1 : Motion.hoverScale
+        growthCap: root.growthCap
         // The focus lives on the input, and a `T.Control` is not a focus
         // scope: measured, the frame's own `activeFocus` stays false while
         // the input holds it, so the layer's hosted default would never ring.
