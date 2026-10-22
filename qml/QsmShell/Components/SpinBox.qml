@@ -39,7 +39,11 @@ T.DoubleSpinBox {
 
     editable: true
     hoverEnabled: root.enabled
-    wheelEnabled: root.enabled
+    // The wheel steps the value only while the field has focus, the way a
+    // number field does everywhere else: a pointer passing over it while a
+    // panel scrolls must not change a setting, so an unfocused field hands the
+    // wheel to the scroller beneath it.
+    wheelEnabled: root.enabled && root.focused
     focusPolicy: Qt.StrongFocus
     Accessible.name: root.accessibleName
 
@@ -70,18 +74,24 @@ T.DoubleSpinBox {
         return true;
     }
 
+    // One native step as long as the distance, with wrapping off so it clamps
+    // on the bound instead of wrapping past it. The two writes are Bindings
+    // that give the property back when they release, so a host's binding on
+    // `stepSize` or `wrap` survives, and a range of a million steps is one
+    // call instead of two million (5.1 s of a frozen window measured).
+    Binding { id: jumpStep; target: root; property: "stepSize"; when: false }
+    Binding { id: jumpWrap; target: root; property: "wrap"; value: false; when: jumpStep.when }
+
     function _toBound(target: real): bool {
         if (!root.enabled || root.value === target)
             return false;
-        const unit = Math.abs(root.stepSize) || 1;
-        const upwards = target > root.value;
-        const count = Math.ceil(Math.abs(target - root.value) / unit);
-        for (let i = 0; i < count; i++) {
-            if (upwards)
-                root.increase();
-            else
-                root.decrease();
-        }
+        jumpStep.value = Math.abs(target - root.value);
+        jumpStep.when = true;
+        if (target > root.value)
+            root.increase();
+        else
+            root.decrease();
+        jumpStep.when = false;
         root.valueModified();
         return true;
     }
@@ -122,6 +132,11 @@ T.DoubleSpinBox {
     }
 
     contentItem: Item {
+        // Qt accepts an edit by reading the `text` of its content item when
+        // Return is pressed or focus leaves. This wrapper clips the editor, so
+        // it states the editor's text itself: without it a typed value was
+        // never taken and the field kept the old one.
+        property alias text: editor.text
         clip: true
 
         TextInput {
@@ -146,6 +161,19 @@ T.DoubleSpinBox {
             font.family: Style.technicalFontFamily
             font.pixelSize: root.fieldTextSize
             cursorDelegate: Item {}
+
+            // A value too long for the fixed viewport shows its head while
+            // nobody is typing. Scrolled to a caret at the end it read 3,456.7
+            // for 123,456.7: losing digits from the right keeps the magnitude,
+            // losing them from the left changes it.
+            // Deferred: `contentWidth` still measures the previous text while
+            // `textChanged` is being delivered.
+            function showHead(): void {
+                if (!editor.activeFocus && editor.contentWidth > editor.width)
+                    editor.cursorPosition = 0;
+            }
+            onActiveFocusChanged: Qt.callLater(editor.showHead)
+            onTextChanged: Qt.callLater(editor.showHead)
 
             // Passive: sees the press that focuses the editor without taking it.
             TapHandler {
