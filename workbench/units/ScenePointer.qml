@@ -24,6 +24,7 @@ Item {
     }
 
     Card {
+        id: card
         anchors.centerIn: parent
         width: Style.controlWidth / 2
         height: body.implicitHeight + Style.space4 * 2
@@ -35,11 +36,12 @@ Item {
             role: "body"
             text: "Pointer inside the scene"
         }
-
-        StateLayer {
-            anchors.fill: parent
-        }
     }
+
+    readonly property rect cardArea: Qt.rect(card.x, card.y, card.width, card.height)
+    // The card's top-left half: a right triangle on its diagonal.
+    readonly property var cardCorner: pointer.triangleArea(
+        Qt.point(card.x, card.y), Qt.point(card.x + card.width, card.y), Qt.point(card.x, card.y + card.height))
 
     readonly property var controls: [
         { label: "source", options: [
@@ -51,11 +53,14 @@ Item {
     readonly property var integration: ({
         events: [],
         actions: [],
+        targets: ({ scene: () => root, card: () => card }),
         observables: {
             "injected-source": () => pointer.source === injectedSource,
             inside: () => pointer.inside,
             position: () => pointer.position,
-            rectangle: () => pointer.contains(Qt.rect(0, 0, root.width, root.height))
+            rectangle: () => pointer.contains(Qt.rect(0, 0, root.width, root.height)),
+            "over-card": () => pointer.contains(root.cardArea),
+            "over-corner": () => pointer.contains(root.cardCorner)
         }
     })
 }
