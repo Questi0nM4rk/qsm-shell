@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "key": "segmented-panel-tabs",
+  "target": { "story": "segmented" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "navigation", "option": "panel-tabs" },
+    { "type": "pointer", "target": "overview", "event": "click" },
+    { "type": "expect", "observable": "current-index", "equals": 0 },
+    { "type": "key", "target": "bar", "key": "Tab" },
+    { "type": "expectEvent", "event": "selected", "origin": "component", "payload": { "index": 1 } },
+    { "type": "key", "target": "bar", "key": "Tab" },
+    { "type": "expect", "observable": "current-index", "equals": 2 },
+    { "type": "key", "target": "bar", "key": "Tab" },
+    { "type": "expect", "observable": "current-index", "equals": 2 },
+    { "type": "key", "target": "bar", "key": "Backtab" },
+    { "type": "expect", "observable": "current-index", "equals": 1 },
+    { "type": "control", "group": "unavailable", "option": "last" },
+    { "type": "key", "target": "bar", "key": "Tab" },
+    { "type": "expect", "observable": "current-index", "equals": 1 },
+    { "type": "control", "group": "unavailable", "option": "all" },
+    { "type": "key", "target": "bar", "key": "Backtab" },
+    { "type": "expect", "observable": "current-index", "equals": 1 }
+  ]
+}

@@ -72,10 +72,30 @@ Item {
             { label: "disabled", set: { enabled: false } }
         ] }
     ]
+    function _which(test: var): int {
+        for (let i = 0; i < bar.count; i++) {
+            if (test(bar.itemAt(i)))
+                return i
+        }
+        return -1
+    }
+
     readonly property var integration: ({
         events: ["selected"],
         actions: ["previous", "next", "first", "last"],
-        observables: { "current-index": () => root.currentIndex },
+        targets: ({
+            bar: () => bar,
+            overview: () => bar.itemAt(0),
+            media: () => bar.itemAt(1),
+            alerts: () => bar.itemAt(2),
+            scene: () => root
+        }),
+        observables: {
+            "current-index": () => root.currentIndex,
+            hovered: () => root._which(tab => tab.hovered),
+            pressed: () => root._which(tab => tab.pressed),
+            "segment-height": () => bar.itemAt(0).height
+        },
         runAction: name => {
             if (name === "previous")
                 return bar.step(-1)
