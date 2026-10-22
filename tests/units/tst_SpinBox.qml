@@ -67,6 +67,11 @@ TestCase {
         fuzzyCompare(spin.value, 5, 0.0001, "pointer increase did not move by one step");
 
         spin.forceActiveFocus();
+        // An editable field keeps Home for the caret; with typing off it
+        // reaches the bound.
+        keyClick(Qt.Key_Home);
+        fuzzyCompare(spin.value, 5, 0.0001, "Home moved the value of an editable field");
+        spin.editable = false;
         keyClick(Qt.Key_Home);
         fuzzyCompare(spin.value, spin.from, 0.0001, "Home did not reach the minimum");
 
@@ -97,6 +102,22 @@ TestCase {
         compare(feedbackHost.value, 0);
         compare(feedbackSpin.value, feedbackHost.value);
         compare(feedbackSpy.count, 1);
+    }
+
+    // A jump to a bound is one native step with wrapping off; stepSize, wrap
+    // and the host's binding on value must all come back.
+    function test_a_jump_to_a_bound_is_one_step_and_gives_everything_back() {
+        feedbackSpin.to = 1000000;
+        feedbackSpin.wrap = true;
+        verify(feedbackSpin.toMaximum());
+        compare(feedbackHost.value, 1000000);
+        compare(feedbackSpin.stepSize, 0.5);
+        compare(feedbackSpin.wrap, true);
+        feedbackHost.value = 3;
+        compare(feedbackSpin.value, 3);
+        verify(feedbackSpin.toMinimum());
+        compare(feedbackHost.value, 0);
+        compare(feedbackSpy.count, 2);
     }
 
     function test_native_input_feedback_reports_once() {

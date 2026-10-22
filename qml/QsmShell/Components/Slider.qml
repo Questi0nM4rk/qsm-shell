@@ -171,10 +171,13 @@ T.RangeSlider {
     // the track sits a step away.
     readonly property real _labelGap: Style.rhythm(Style.space2 * root._s)
     readonly property real _labelGapStacked: Style.rhythm(Style.space1 * root._s)
-    readonly property real _labelAbove: _hasLabel && labelPosition === "above" ? label.implicitHeight + _labelGapStacked : 0
-    readonly property real _labelBelow: _hasLabel && labelPosition === "below" ? label.implicitHeight + _labelGapStacked : 0
-    readonly property real _labelLeft: _hasLabel && labelPosition === "left" ? label.implicitWidth + _labelGap : 0
-    readonly property real _labelRight: _hasLabel && labelPosition === "right" ? label.implicitWidth + _labelGap : 0
+    // Whole pixels: a text's own width is fractional, and the padding it makes
+    // is where the track starts, so a fraction here put the track's rounded
+    // ends between two device rows.
+    readonly property real _labelAbove: _hasLabel && labelPosition === "above" ? Math.ceil(label.implicitHeight) + _labelGapStacked : 0
+    readonly property real _labelBelow: _hasLabel && labelPosition === "below" ? Math.ceil(label.implicitHeight) + _labelGapStacked : 0
+    readonly property real _labelLeft: _hasLabel && labelPosition === "left" ? Math.ceil(label.implicitWidth) + _labelGap : 0
+    readonly property real _labelRight: _hasLabel && labelPosition === "right" ? Math.ceil(label.implicitWidth) + _labelGap : 0
 
     // ── events ─────────────────────────────────────────────────────────
     // `moved()` says a gesture changed a value, and the host reads `value` or
@@ -368,6 +371,9 @@ T.RangeSlider {
     // ring of fill colour around the thumb, no straight edge, and at either
     // bound the ring is the track's own end cap.
     readonly property real _capReach: !root._pill && root.thickness > root.thumbSize ? root.thickness / 2 : 0
+    readonly property real _hitFloor: Style.size("Control", "xs")
+    readonly property real _hitMain: Math.max(root._thumbMain, root._hitFloor)
+    readonly property real _hitCross: Math.max(root._thumbCross, root._hitFloor)
     readonly property real _mainSpan: root.vertical ? root.availableHeight : root.availableWidth
     readonly property real _travel: Math.max(0, _mainSpan - root._thumbMain)
     readonly property real _highOffset: root._paintedHigh * _travel
@@ -399,14 +405,19 @@ T.RangeSlider {
     readonly property real _restEndStart: root._bIsThumb ? root._bOffset + root._trailInset : root._mainSpan
 
     // ── geometry across the axis ───────────────────────────────────────
-    // How far a thumb grows PER SIDE under the pointer. Growth and the
-    // shadow's drop OVERFLOW into the gap around the control and are never
-    // added to its layout size, so the visible gap between two sliders is
-    // the gap the host declared. It is not capped: a cap at the room the
-    // cross extent leaves made a lg circle (thumb = cross extent) never grow.
+    // How far a thumb grows PER SIDE under the pointer: one spacing step in
+    // whole device pixels, at every size. Growth and the shadow's drop
+    // OVERFLOW into the gap around the control and are never added to its
+    // layout size, so the visible gap between two sliders is the gap the host
+    // declared. It is not capped: a cap at the room the cross extent leaves
+    // made a lg circle (thumb = cross extent) never grow. The overhang does
+    // NOT scale with the preset, because a step scaled up and snapped to the
+    // rhythm grows the bigger control by a larger share of itself; a fixed
+    // step is 25%, 17% and 10% of the thumb at sm, md and lg: the bigger the
+    // instance, the calmer.
     // A pill grows along its length only, and twice as far because that is
     // the only cue it has.
-    readonly property real _hoverGrowth: Style.rhythm(Style.space1 * root._s)
+    readonly property real _hoverGrowth: Style.stroke(Style.space1, root)
     readonly property real _crossGrowth: root._hoverGrowth * (root._pill ? 2 : 1)
 
     // At least a comfortable hit target across the axis, whatever the track's
@@ -547,15 +558,32 @@ T.RangeSlider {
         property bool carriesContent: false
         property string thumbName: "sliderThumb"
         Accessible.role: Accessible.Slider
+        // The thumb holds the keyboard focus, so it is what a screen reader
+        // announces: Qt reads a slider's reading from these four names on the
+        // item that carries the role, and a thumb's own are its node's.
+        readonly property real value: thumb.node.value
+        readonly property real from: root.from
+        readonly property real to: root.to
+        readonly property real stepSize: root.stepSize
+        Accessible.onIncreaseAction: thumb._act(Style.sliderKeyboardUnits)
+        Accessible.onDecreaseAction: thumb._act(-Style.sliderKeyboardUnits)
+        function _act(units: int): void {
+            root._lowActive = thumb.node === root.first;
+            root.stepBy(units);
+        }
         // Tab is handled by this focused control before it can bubble to the slider.
         Keys.onPressed: event => root.keyPressed(event)
         // Qt owns the handles' z from the first press on (the grabbed one
         // rises above the other); the track sits at -1 so neither ever drops
         // under it.
-        x: root.leftPadding + (root.vertical ? (root.availableWidth - width) / 2 : offset)
-        y: root.topPadding + (root.vertical ? offset : (root.availableHeight - height) / 2)
-        implicitWidth: root.vertical ? root._thumbCross : root._thumbMain
-        implicitHeight: root.vertical ? root._thumbMain : root._thumbCross
+        x: root.leftPadding + (root.vertical ? (root.availableWidth - width) / 2 : offset - (width - root._thumbMain) / 2)
+        y: root.topPadding + (root.vertical ? offset - (height - root._thumbMain) / 2 : (root.availableHeight - height) / 2)
+        // The box a pointer meets is at least the target floor each way, and
+        // the paint (centred in it) may be smaller: a 4 px pill or a 16 px
+        // thumb that grows under the pointer only when it is hit exactly asks
+        // for pixel-perfect aim.
+        implicitWidth: root.vertical ? root._hitCross : root._hitMain
+        implicitHeight: root.vertical ? root._hitMain : root._hitCross
         // A hidden thumb has NO size: Qt hit-tests a handle's geometry whether
         // or not it is visible, and a parked handle with a size caught every
         // press at the low end.
@@ -634,7 +662,11 @@ T.RangeSlider {
                     role: "reading"
                     text: root.thumbText
                     color: root._paintedThumbContent
-                    font.pixelSize: Style.textXs
+                    // Twelve in an md thumb, the floor of what is read, and it
+                    // steps up the type scale with the thumb: "100" is 22 px
+                    // wide at 12 and 32 at 18, which the md (24) and lg (40)
+                    // thumbs hold.
+                    font.pixelSize: Style.textNear(Style.textSm * root.thumbSize / Style.size("Slider", "md"))
                     font.weight: Style.weightBold
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
@@ -816,8 +848,8 @@ T.RangeSlider {
     // too. The last node grabbed is the one every keyboard route steps.
     property real _pressValue: 0
     property bool _preJumped: false
-    property bool _keyMoved: false
-    property var _customKeyGestures: ({})
+    // One record per key held, so `committed` follows the physical key.
+    property var _keyGestures: ({})
 
     function _customKeyAllowed(event): bool {
         return event.key !== 0
@@ -851,11 +883,27 @@ T.RangeSlider {
     first.onPressedChanged: root._pressChanged(root.first, true, root.first.pressed)
     second.onPressedChanged: root._pressChanged(root.second, false, root.second.pressed)
 
-    // Qt's own RangeSlider handles the four arrows for the handle that has
-    // focus; every branch here accepts its event first, from the focused
-    // handle bubbling up, so the dispatcher below is the only keyboard route. Page, Home and End
-    // are ours entirely -- an EXTENSION, not parity. Arrows are on-axis only,
-    // so the surface keeps the other pair.
+    // What a key asks of the active thumb, in units of `stepSize`, or 0 when
+    // the key is not ours. Qt's own RangeSlider handles the four arrows for the
+    // handle that has focus; the dispatcher below accepts the event first, from
+    // the focused handle bubbling up, so it is the only keyboard route. Arrows
+    // are on-axis only (the surface keeps the other pair), and Page, Home and
+    // End are ours entirely -- an EXTENSION, not parity. A bound is the whole
+    // range in units.
+    function _keyUnits(event): int {
+        const forward = root.vertical ? Qt.Key_Up : (root.mirrored ? Qt.Key_Left : Qt.Key_Right);
+        const backward = root.vertical ? Qt.Key_Down : (root.mirrored ? Qt.Key_Right : Qt.Key_Left);
+        switch (event.key) {
+        case forward: return Style.sliderKeyboardUnits;
+        case backward: return -Style.sliderKeyboardUnits;
+        case Qt.Key_PageUp: return Style.sliderPageUnits;
+        case Qt.Key_PageDown: return -Style.sliderPageUnits;
+        case Qt.Key_Home: return -root._unitsInRange;
+        case Qt.Key_End: return root._unitsInRange;
+        }
+        return root._customKeyAllowed(event) ? root._customBinding(event.key) * Style.sliderKeyboardUnits : 0;
+    }
+
     Keys.onPressed: event => {
         if (!root.enabled)
             return;
@@ -864,61 +912,13 @@ T.RangeSlider {
         if (event.accepted)
             return;
 
-        const onAxis = root.vertical
-            ? (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
-            : (event.key === Qt.Key_Left || event.key === Qt.Key_Right);
-
-        if (onAxis) {
-            const forward = root.vertical
-                ? Qt.Key_Up
-                : (root.mirrored ? Qt.Key_Left : Qt.Key_Right);
-            const units = event.key === forward
-                ? Style.sliderKeyboardUnits
-                : -Style.sliderKeyboardUnits;
-            if (root.stepBy(units))
-                root._keyMoved = true;
-            event.accepted = true;
+        const units = root._keyUnits(event);
+        if (units === 0)
             return;
-        }
-
-        const standardKey = event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown
-            || event.key === Qt.Key_Home || event.key === Qt.Key_End;
-        const custom = !standardKey && root._customKeyAllowed(event)
-            ? root._customBinding(event.key) : 0;
-        if (custom !== 0) {
-            let gesture = root._customKeyGestures[event.key];
-            if (!gesture) {
-                gesture = { moved: false };
-                root._customKeyGestures[event.key] = gesture;
-            }
-            if (root.stepBy(custom * Style.sliderKeyboardUnits))
-                gesture.moved = true;
-            event.accepted = true;
-            return;
-        }
-
-        switch (event.key) {
-        case Qt.Key_PageUp:
-            if (root.stepBy(Style.sliderPageUnits))
-                root._keyMoved = true;
-            event.accepted = true;
-            break;
-        case Qt.Key_PageDown:
-            if (root.stepBy(-Style.sliderPageUnits))
-                root._keyMoved = true;
-            event.accepted = true;
-            break;
-        case Qt.Key_Home:
-            if (root.toMinimum())
-                root._keyMoved = true;
-            event.accepted = true;
-            break;
-        case Qt.Key_End:
-            if (root.toMaximum())
-                root._keyMoved = true;
-            event.accepted = true;
-            break;
-        }
+        const gesture = root._keyGestures[event.key] ?? (root._keyGestures[event.key] = { moved: false });
+        if (root.stepBy(units))
+            gesture.moved = true;
+        event.accepted = true;
     }
 
     // One `committed` per key that actually moved something, however many
@@ -926,38 +926,22 @@ T.RangeSlider {
     // press dispatcher took; the release of any other key still reaches the
     // template and the surface.
     Keys.onReleased: event => {
-        const customGesture = root._customKeyGestures[event.key];
-        if (customGesture) {
-            event.accepted = true;
-            if (event.isAutoRepeat)
-                return;
-            delete root._customKeyGestures[event.key];
-            if (customGesture.moved)
-                root.committed();
+        const gesture = root._keyGestures[event.key];
+        if (!gesture)
             return;
-        }
-        const ours = root.vertical
-            ? (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
-            : (event.key === Qt.Key_Left || event.key === Qt.Key_Right);
-        if (!ours
-            && event.key !== Qt.Key_PageUp && event.key !== Qt.Key_PageDown
-            && event.key !== Qt.Key_Home && event.key !== Qt.Key_End)
-            return;
-
         event.accepted = true;
-        if (event.isAutoRepeat || !root._keyMoved)
+        if (event.isAutoRepeat)
             return;
-        root._keyMoved = false;
-        root.committed();
+        delete root._keyGestures[event.key];
+        if (gesture.moved)
+            root.committed();
     }
 
     // A gesture that moved a value and loses its release (focus, availability
     // or visibility gone) still ends: `committed` is the end of every gesture.
     function _clearKeyGestures(): void {
-        const moved = root._keyMoved
-            || Object.values(root._customKeyGestures).some(gesture => gesture.moved)
-        root._customKeyGestures = ({})
-        root._keyMoved = false
+        const moved = Object.values(root._keyGestures).some(gesture => gesture.moved)
+        root._keyGestures = ({})
         if (moved)
             root.committed()
     }

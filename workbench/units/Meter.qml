@@ -25,7 +25,11 @@ Rectangle {
         value: root.reading
         low: root.floor
         high: root.ceiling
+        accessibleName: "Battery"
     }
+
+    // The painted fill, read from the meter's own part.
+    readonly property Item fillPart: level.children.find(child => child.objectName === "meterFill")
 
     readonly property var controls: [
         { label: "value", options: [
@@ -55,7 +59,14 @@ Rectangle {
             "low-threshold": () => level.low,
             "high-threshold": () => level.high,
             orientation: () => level.orientation,
-            enabled: () => level.enabled
+            enabled: () => level.enabled,
+            breached: () => level.breached,
+            // The painted fill as a share of the track along its axis, to two
+            // decimals: what a person reads, not the value the host handed in.
+            "fill-share": () => Math.round((level.vertical
+                ? root.fillPart.height / level.height
+                : root.fillPart.width / level.width) * 100) / 100,
+            description: () => level.Accessible.description
         }
     })
 }

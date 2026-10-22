@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "key": "slider-thumb-reach",
+  "target": { "story": "level" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "awaitIdle" },
+    { "type": "control", "group": "thumb", "option": "pill" },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "thumb-hovered", "equals": false },
+    { "type": "pointer", "target": "track", "event": "move", "x": 0.895, "y": 0.5 },
+    { "type": "expect", "observable": "thumb-hovered", "equals": true },
+    { "type": "pointer", "target": "track", "event": "move", "x": 0.955, "y": 0.5 },
+    { "type": "expect", "observable": "thumb-hovered", "equals": false },
+    { "type": "pointer", "target": "track", "event": "move", "x": 0.1, "y": 0.5 },
+    { "type": "expect", "observable": "thumb-hovered", "equals": false }
+  ]
+}

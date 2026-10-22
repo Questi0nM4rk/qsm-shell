@@ -5,17 +5,26 @@
   "steps": [
     { "type": "reset" },
     { "type": "expect", "observable": "indeterminate", "equals": true },
-    { "type": "expect", "observable": "value", "equals": 0.42 },
-    { "type": "expect", "observable": "enabled", "equals": true },
+    { "type": "expect", "observable": "sweeping", "equals": true },
+    { "type": "expect", "observable": "description", "equals": "" },
     { "type": "control", "group": "mode", "option": "determinate" },
-    { "type": "expect", "observable": "indeterminate", "equals": false },
+    { "type": "expect", "observable": "sweeping", "equals": false },
+    { "type": "await", "observable": "fill-share", "equals": 0.42 },
+    { "type": "expect", "observable": "description", "equals": "42%" },
     { "type": "control", "group": "value", "option": "half" },
-    { "type": "expect", "observable": "value", "equals": 0.5 },
+    { "type": "await", "observable": "fill-share", "equals": 0.5 },
+    { "type": "expect", "observable": "description", "equals": "50%" },
     { "type": "control", "group": "value", "option": "full" },
-    { "type": "expect", "observable": "value", "equals": 1 },
+    { "type": "await", "observable": "fill-share", "equals": 1 },
+    { "type": "control", "group": "value", "option": "empty" },
+    { "type": "await", "observable": "fill-share", "equals": 0 },
+    { "type": "expect", "observable": "description", "equals": "0%" },
+    { "type": "control", "group": "mode", "option": "indeterminate" },
+    { "type": "expect", "observable": "sweeping", "equals": true },
     { "type": "control", "group": "state", "option": "disabled" },
     { "type": "expect", "observable": "enabled", "equals": false },
+    { "type": "expect", "observable": "sweeping", "equals": false },
     { "type": "control", "group": "state", "option": "enabled" },
-    { "type": "expect", "observable": "enabled", "equals": true }
+    { "type": "expect", "observable": "sweeping", "equals": true }
   ]
 }

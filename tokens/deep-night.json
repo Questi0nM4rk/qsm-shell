@@ -79,7 +79,7 @@
     "rowHoverScale": 1.12,
     "rowPressScale": 0.92,
     "spin": 900,
-    "pulse": 1400,
+    "pulse": 2000,
     "hoverGrace": 180,
     "exitRatio": 0.8,
     "readingPace": 16,

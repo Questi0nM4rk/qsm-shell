@@ -36,6 +36,10 @@ Item {
         }
     }
 
+    // The field's own state layer, which owns the focus ring, and its editor.
+    readonly property var ringLayer: spin.children.find(child => child.objectName === "spinBoxLayer")
+    readonly property var editor: spin.contentItem.children.find(child => child.objectName === "spinBoxInput")
+
     readonly property var controls: [
         { label: "size", options: [
             { label: "sm", set: { size: "sm" } },
@@ -56,9 +60,11 @@ Item {
             { label: "off", set: { failed: false } },
             { label: "on", set: { failed: true } }
         ] },
-        { label: "editable", options: [
-            { label: "editable", set: { editable: true } },
-            { label: "read-only", set: { editable: false } }
+        // Off, the text is not typed into and Home and End reach the bounds;
+        // the steppers, the wheel and the arrow keys still work.
+        { label: "typing", options: [
+            { label: "on", set: { editable: true } },
+            { label: "off", set: { editable: false } }
         ] },
         { label: "wrap", options: [
             { label: "off", set: { wrap: false } },
@@ -68,10 +74,24 @@ Item {
     readonly property var integration: ({
         events: ["value-modified"],
         actions: ["increase", "decrease", "minimum", "maximum"],
+        targets: ({
+            spinbox: () => spin,
+            increase: () => spin.up.indicator,
+            decrease: () => spin.down.indicator
+        }),
         observables: {
             value: () => root.value,
             size: () => root.size,
-            "acceptable-input": () => spin.acceptableInput
+            "acceptable-input": () => spin.acceptableInput,
+            // What the person reads in the field, and whether the keyboard ring
+            // is showing: a click focuses the field and must not ring it.
+            text: () => spin.displayText,
+            // What is typed in the field right now, accepted or not.
+            "typed-text": () => root.editor.text,
+            focused: () => spin.focused,
+            "focus-ring": () => root.ringLayer.focused && !root.ringLayer._pointerFocus,
+            "can-increase": () => spin.actions[0].enabled,
+            "can-decrease": () => spin.actions[1].enabled
         },
         runAction: name => {
             if (name === "increase")

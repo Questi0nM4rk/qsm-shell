@@ -7,68 +7,119 @@ Rectangle {
     id: root
 
     property string variant: ""
-    property string shape: "block"
     property string role: "label"
     property real fraction: 1
+    property string size: "md"
+    property bool loaded: false
 
     implicitWidth: Style.controlWidth
-    implicitHeight: place.implicitHeight
+    implicitHeight: placeholders.implicitHeight
     color: Style.band
 
-    Column {
-        id: place
+    // The same card twice, in one place: the placeholders while the data is
+    // on its way and the content that replaces them. Lines stack with no gap,
+    // because a line placeholder is a whole line box, so the two stacks are
+    // the same height by construction and the surface does not jump.
+    Item {
         anchors.centerIn: parent
         width: Style.controlWidth
-        spacing: Style.space1
+        height: placeholders.height
 
-        Skeleton {
-            id: lead
-            shape: root.shape
-            role: root.role
-            fraction: root.fraction
+        Column {
+            id: placeholders
+            width: parent.width
+            visible: !root.loaded
+
+            Skeleton {
+                id: media
+                size: root.size
+            }
+            Skeleton {
+                id: lead
+                shape: "line"
+                role: root.role
+                fraction: root.fraction
+            }
+            Skeleton {
+                shape: "line"
+                role: "title"
+            }
+            // The last line of a paragraph is short, and three identical bars
+            // read as a barcode.
+            Skeleton {
+                shape: "line"
+                role: "metadata"
+                fraction: 0.6
+            }
         }
-        Skeleton {
-            shape: "line"
-            role: "title"
-        }
-        // The last line of a paragraph is short, and three identical bars
-        // read as a barcode.
-        Skeleton {
-            shape: "line"
-            role: "metadata"
-            fraction: 0.6
+
+        Column {
+            id: content
+            width: parent.width
+            visible: root.loaded
+
+            Rectangle {
+                width: parent.width
+                height: Style.size("Control", root.size)
+                radius: Style.radiusSm
+                color: Style.surface
+            }
+            Prose {
+                width: parent.width
+                role: root.role
+                text: "Wireless headset"
+            }
+            Prose {
+                width: parent.width
+                role: "title"
+                text: "Connected"
+            }
+            Prose {
+                width: parent.width
+                role: "metadata"
+                text: "Last seen 2 min ago"
+            }
         }
     }
 
     // Every knob here is a property of the type: a placeholder has no pointer,
-    // so a shape, a role and a width are only reachable this way. Role sets a
-    // line's height and a block ignores it, so the group exists only for a line.
-    readonly property var _roleGroup: ({ label: "role", options: [
-        { label: "hero", set: { role: "hero" } },
-        { label: "display", set: { role: "display" } },
-        { label: "heading", set: { role: "heading" } },
-        { label: "title", set: { role: "title" } },
-        { label: "body", set: { role: "body" } },
-        { label: "metadata", set: { role: "metadata" } }
-    ] })
+    // so a role, a preset and a width are only reachable this way.
     readonly property var controls: [
-        { label: "shape", options: [
-            { label: "block", set: { shape: "block" } },
-            { label: "line", set: { shape: "line" } }
+        // The role of the lead line, the second row of the card.
+        { label: "role", options: [
+            { label: "hero", set: { role: "hero" } },
+            { label: "display", set: { role: "display" } },
+            { label: "heading", set: { role: "heading" } },
+            { label: "title", set: { role: "title" } },
+            { label: "body", set: { role: "body" } },
+            { label: "label", set: { role: "label" } },
+            { label: "metadata", set: { role: "metadata" } }
         ] },
-        ...(shape === "line" ? [_roleGroup] : []),
+        // The preset of the block, the first row of the card.
+        { label: "size", options: [
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } }
+        ] },
         { label: "width", options: [
             { label: "full", set: { fraction: 1 } },
             { label: "short", set: { fraction: 0.6 } }
+        ] },
+        { label: "data", options: [
+            { label: "loading", set: { loaded: false } },
+            { label: "loaded", set: { loaded: true } }
         ] }
     ]
     readonly property var integration: ({
         events: [],
         actions: [],
         observables: {
-            shape: () => lead.shape,
             role: () => lead.role,
-            fraction: () => lead.fraction
+            fraction: () => lead.fraction,
+            size: () => media.size,
+            // How far the surface moves when the data lands: the content's
+            // height less the placeholders', in pixels.
+            "landing-jump": () => Math.round((content.implicitHeight - placeholders.implicitHeight) * 100) / 100
         }
     })
 }

@@ -16,6 +16,8 @@ Item {
     property string thumbStyle: "circle"
     property int wheelUnits: 0
     property bool labelClickable: false
+    property bool grab: ods
+    property bool reading: false
     property bool muted: false
     readonly property var actionHandlers: ({
         increase: () => slider.stepBy(Style.sliderKeyboardUnits),
@@ -43,14 +45,15 @@ Item {
         size: root.size
         thumbStyle: root.thumbStyle
         raised: true
+        grabThumb: root.grab
         wheelUnits: root.wheelUnits
         labelPosition: root.ods ? "above" : "left"
         labelText: "Output"
         labelClickable: root.labelClickable
         labelIcon: "volume"
         labelAccessibleName: root.muted ? "Unmute output" : "Mute output"
-        thumbIcon: "volume"
-        thumbText: ""
+        thumbIcon: root.reading ? "" : "volume"
+        thumbText: root.reading ? String(Math.round(root.value)) : ""
         fill: root.muted ? Style.textMuted : Style.primary
         thumbColor: root.muted ? Style.textMuted : Style.text
 
@@ -91,6 +94,18 @@ Item {
             { label: "circle", set: { thumbStyle: "circle" } },
             { label: "pill", set: { thumbStyle: "pill" } }
         ] },
+        // A press on the thumb either jumps the value to the pointer or grabs
+        // the thumb and moves nothing until the pointer does.
+        { label: "press", options: [
+            { label: "jump", set: { grab: false } },
+            { label: "grab", set: { grab: true } }
+        ] },
+        // What the thumb carries: the channel's glyph at rest, or the reading
+        // while it is being changed.
+        { label: "content", options: [
+            { label: "glyph", set: { reading: false } },
+            { label: "reading", set: { reading: true } }
+        ] },
         { label: "wheel", options: [
             { label: "off", set: { wheelUnits: 0 } },
             { label: "nudge", set: { wheelUnits: 1 } }
@@ -106,9 +121,20 @@ Item {
     ]
 
     readonly property var integration: ({
+        // Idle once the painted thumbs have reached the values: a host write
+        // glides in, and a press aimed at a thumb still on its way lands
+        // wherever it has got to.
+        idle: () => slider._paintedHigh === slider.second.visualPosition
+            && slider._paintedLow === slider.first.visualPosition,
         events: ["moved", "committed", "mute-changed"],
         actions: ["increase", "decrease", "minimum", "maximum", "activate-label"],
-        targets: ({ slider: () => slider, label: () => slider.labelItem }),
+        targets: ({
+            slider: () => slider,
+            track: () => slider.contentItem,
+            thumb: () => slider.second.handle,
+            "low-thumb": () => slider.first.handle,
+            label: () => slider.labelItem
+        }),
         observables: {
             value: () => slider.value,
             "low-value": () => slider.lowValue,
@@ -116,9 +142,12 @@ Item {
             size: () => slider.size,
             orientation: () => slider.orientation === Qt.Vertical ? "vertical" : "horizontal",
             "thumb-icon": () => slider.thumbIcon,
+            "thumb-text": () => slider.thumbText,
+            "thumb-hovered": () => slider.second.hovered,
             "label-position": () => slider.labelPosition,
             "thumb-style": () => slider.thumbStyle,
             "wheel-units": () => slider.wheelUnits,
+            "grab-thumb": () => slider.grabThumb,
             "label-clickable": () => slider.labelClickable,
             muted: () => root.muted,
             "can-increase": () => slider.actions[0].enabled,

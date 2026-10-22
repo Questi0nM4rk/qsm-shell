@@ -19,7 +19,8 @@ import qs.QsmShell.Style
 // yours to change".
 //
 // Colour never carries the reading on its own — the FILL does. `low` and
-// `high` only tint what the length already says.
+// `high` only tint what the length already says, and `breached` reports the
+// same fact for a host that wants a second cue beside the bar.
 Rectangle {
     id: root
 
@@ -34,6 +35,7 @@ Rectangle {
     property color trackColor: Style.overlay
     property real thickness: Style.stroke(Style.trackThickness, root)
     property int orientation: Qt.Horizontal
+    property string accessibleName: ""
 
     readonly property bool vertical: orientation === Qt.Vertical
     readonly property real _fraction: Math.max(0, Math.min(1, value))
@@ -45,11 +47,13 @@ Rectangle {
         enabled: !Style.reducedMotion
         NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
     }
-    readonly property bool _breached: (low >= 0 && _fraction <= low) || (high >= 0 && _fraction >= high)
+    // Whether the reading is past a threshold: what tints the fill.
+    readonly property bool _belowLow: low >= 0 && _fraction <= low
+    readonly property bool breached: _belowLow || (high >= 0 && _fraction >= high)
     // Breaching a threshold is a WARNING, not a failure: the level is doing
     // exactly what it should, it is the reading that is unwelcome. Danger is
     // reserved for something that went wrong.
-    readonly property color _fill: _breached ? Style.warning : fill
+    readonly property color _fill: breached ? Style.warning : fill
     // Disabled dims every role BY COLOUR, never by opacity on the composite:
     // a translucent fill would show through a translucent track and the two
     // would stop being two layers.
@@ -62,15 +66,24 @@ Rectangle {
     antialiasing: false
     color: root._paintedTrack
 
+    // An output with no hand: a level, announced with its reading and, past a
+    // threshold, which side.
+    Accessible.role: Accessible.Indicator
+    Accessible.name: root.accessibleName
+    Accessible.description: Math.round(root._fraction * 100) + "%"
+        + (root.breached ? (root._belowLow ? ", low" : ", high") : "")
+
     Rectangle {
-        // Vertical fills from the bottom: "more" belongs upward, the same
-        // direction a person expects a level to rise.
-        anchors.left: parent.left
-        anchors.right: root.vertical ? parent.right : undefined
-        anchors.bottom: root.vertical ? parent.bottom : undefined
-        anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
-        width: root.vertical ? undefined : Math.round(parent.width * root._shown)
-        height: root.vertical ? Math.round(parent.height * root._shown) : parent.height
+        objectName: "meterFill"
+        // The fill is the track less what is not filled, anchored from the
+        // start edge: left (right when mirrored), or bottom, because "more"
+        // belongs upward, the direction a person expects a level to rise.
+        // Margins, not anchors that come and go: an anchor a ternary sets to
+        // `undefined` is not withdrawn, so a meter that changed orientation
+        // collapsed its fill to a dot.
+        anchors.fill: parent
+        anchors.rightMargin: root.vertical ? 0 : parent.width - Math.round(parent.width * root._shown)
+        anchors.topMargin: root.vertical ? parent.height - Math.round(parent.height * root._shown) : 0
         radius: parent.radius
         antialiasing: false
         color: root._paintedFill
