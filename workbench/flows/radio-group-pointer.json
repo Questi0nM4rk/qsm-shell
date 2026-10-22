@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "key": "radio-group-pointer",
+  "target": { "story": "radio-group" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "await", "observable": "laid-out", "equals": true },
+    { "type": "expect", "observable": "selected", "equals": 0 },
+    { "type": "expect", "observable": "group-name", "equals": "When the lid closes" },
+    { "type": "expect", "observable": "group-description", "equals": "Suspend" },
+    { "type": "expect", "observable": "tab-stop", "equals": 0 },
+    { "type": "pointer", "target": "lock", "event": "click" },
+    { "type": "expectEvent", "event": "selected", "origin": "component", "payload": { "index": 2 } },
+    { "type": "expect", "observable": "selected", "equals": 2 },
+    { "type": "expect", "observable": "accessible-checked", "equals": 2 },
+    { "type": "expect", "observable": "tab-stop", "equals": 2 },
+    { "type": "expect", "observable": "group-description", "equals": "Lock the screen" },
+    { "type": "pointer", "target": "keep", "event": "move" },
+    { "type": "await", "observable": "hovered", "equals": 3 },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.02, "y": 0.02 },
+    { "type": "await", "observable": "hovered", "equals": -1 },
+    { "type": "control", "group": "hibernate", "option": "available" },
+    { "type": "await", "observable": "laid-out", "equals": true },
+    { "type": "pointer", "target": "hibernate", "event": "click" },
+    { "type": "expectEvent", "event": "selected", "origin": "component", "payload": { "index": 1 } },
+    { "type": "expect", "observable": "selected", "equals": 1 }
+  ]
+}

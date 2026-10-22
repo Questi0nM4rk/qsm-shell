@@ -189,6 +189,23 @@
       ],
       "unit": "workbench/units/Radio.qml"
     },
+    "radio-group": {
+      "component": "radio-group",
+      "variant": "lid",
+      "viewport": [
+        800,
+        500
+      ],
+      "title": "RadioGroup / Lid action",
+      "description": "One exclusive choice of what closing the lid does: one Tab stop, arrows that move and select, an unavailable option and a long label.",
+      "tags": [
+        "input",
+        "control"
+      ],
+      "source": "qml/QsmShell/Components/RadioGroup.qml",
+      "docs": "docs/components/RadioGroup.md",
+      "unit": "workbench/units/RadioGroup.qml"
+    },
     "spin-box": {
       "component": "spin-box",
       "variant": "decimal",
