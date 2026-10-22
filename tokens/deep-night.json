@@ -131,7 +131,6 @@
     "badgeHeight": 16,
     "badgeWidth": 32,
     "trackThickness": 4,
-    "ringDiameter": 150,
     "ringStrokeRatio": 0.0533,
     "tileWidth": 96,
     "tileHeight": 72,
@@ -207,6 +206,11 @@
     "MonthCalendar": {
       "sm": 24,
       "md": 32
+    },
+    "StatRing": {
+      "sm": 64,
+      "md": 150,
+      "lg": 240
     }
   }
 }

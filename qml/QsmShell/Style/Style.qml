@@ -498,8 +498,9 @@ QtObject {
     readonly property real notificationDismissFraction: backend?.notificationDismissFraction
         ?? Tokens.geometryNotificationDismissFraction
 
-    // The ring at its default size; a call site that fits several states its own.
-    readonly property int ringDiameter: backend?.ringDiameter ?? Tokens.geometryRingDiameter
+    // The ring at its default size, the md preset of the StatRing table; a call
+    // site that fits several names a preset or states its own.
+    readonly property int ringDiameter: backend?.ringDiameter ?? root.size("StatRing", "md")
     // A ring's stroke as a share of its diameter, the way a spinner's is.
     readonly property real ringStrokeRatio: backend?.ringStrokeRatio ?? Tokens.geometryRingStrokeRatio
     // A spinner's stroke as a share of its diameter: a fixed stroke is a disc
