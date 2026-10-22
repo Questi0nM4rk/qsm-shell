@@ -8,6 +8,7 @@ inputs: `view`, `orientation`, `fade`, `fadeColor`, `indicator`, `fadeDepth`
 tokens: `space5`, `space6`, `spaceTight`, `markThickness`, `surface`, `textMuted`
 motion: `Motion.medium` mark opacity only
 not designed: scrolling input, dragging, ticks, or a gauge
+fade and mark: the edge fade is the cue; the mark paints only where `fade` is off. A fade is never deeper than a quarter of the viewport, so a short list keeps half of itself in full.
 
 ## UIX audit
 

@@ -12,7 +12,9 @@ import qs.QsmShell.Style
 // chrome plus a plain Flickable for the static case. One implementation, two
 // ways in.
 //
-// It is a POSITION cue, not a scrollbar. It is not draggable: that promises a
+// It is a POSITION cue, not a scrollbar: the edge fade is the cue, and the mark
+// is the cue only where the fade is off (one idiom, never both beside each
+// other). It is not draggable: that promises a
 // precision nobody uses on a 300px list and takes a hit area away from the
 // rows underneath. And the mark's LENGTH is capped, so it stays a mark —
 // uncapped, a three-item list gets a thumb nearly as tall as the viewport,
@@ -35,11 +37,13 @@ Item {
     property int orientation: Qt.Vertical
     // How deep the fade reaches. Deep enough that the last row is GONE before
     // the boundary, not merely dimmed at it — a half-faded row sliced by an
-    // edge reads as a rendering fault.
+    // edge reads as a rendering fault. Never more than a quarter of the
+    // viewport per edge, so a short list keeps at least half of itself in full.
     property real fadeDepth: Style.space6 * 2
 
     readonly property bool vertical: orientation === Qt.Vertical
     readonly property real _span: vertical ? view.height : view.width
+    readonly property real _depth: Math.min(fadeDepth, _span / 4)
 
     // `visibleArea` is the canonical scroll fraction and raw `contentY`
     // arithmetic is not: a ListView's content origin moves as delegates are
@@ -69,7 +73,7 @@ Item {
         readonly property real _offset: Math.max(0, Math.min(1,
             root._at / Math.max(0.001, 1 - root._ratio))) * (root._span - _length)
 
-        visible: root.indicator && root.overflows
+        visible: root.indicator && root.overflows && !root.fade
         x: root.vertical ? root.width - width - Style.spaceTight : _offset
         y: root.vertical ? _offset : root.height - height - Style.spaceTight
         width: root.vertical ? _thickness : _length
@@ -102,8 +106,8 @@ Item {
     // centre gives `height × fadeDepth` bounds displaced around that centre,
     // which would put the horizontal fades across the middle of the list.
     Rectangle {
-        width: root.vertical ? root.width : root.fadeDepth
-        height: root.vertical ? root.fadeDepth : root.height
+        width: root.vertical ? root.width : root._depth
+        height: root.vertical ? root._depth : root.height
         visible: root.fade && opacity > 0
         opacity: root._at > 0.0001 ? 1 : 0
         Behavior on opacity {
@@ -117,10 +121,10 @@ Item {
         }
     }
     Rectangle {
-        width: root.vertical ? root.width : root.fadeDepth
-        height: root.vertical ? root.fadeDepth : root.height
-        x: root.vertical ? 0 : root.width - root.fadeDepth
-        y: root.vertical ? root.height - root.fadeDepth : 0
+        width: root.vertical ? root.width : root._depth
+        height: root.vertical ? root._depth : root.height
+        x: root.vertical ? 0 : root.width - root._depth
+        y: root.vertical ? root.height - root._depth : 0
         visible: root.fade && opacity > 0
         opacity: root._at + root._ratio < 0.9999 ? 1 : 0
         Behavior on opacity {
