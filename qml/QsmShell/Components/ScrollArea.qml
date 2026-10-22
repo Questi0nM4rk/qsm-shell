@@ -15,7 +15,7 @@ import qs.QsmShell.Style
 // is what sizes the content. An indicator inside would have its height feed
 // the content height feed its own height — a binding loop, invisible to
 // `qmllint`.
-Item {
+FocusScope {
     id: root
 
     // The scrolled content. `contentData` is not aliasable, and a named host
@@ -23,17 +23,32 @@ Item {
     default property alias content: host.data
 
     property int orientation: Qt.Vertical
-    property bool fade: true
-    property color fadeColor: Style.surface
-    property bool indicator: true
-    property real fadeDepth: Style.space6 * 2
+    // The chrome is `ScrollCue`'s: its properties, and its defaults, are
+    // read through.
+    property alias fade: cue.fade
+    property alias fadeColor: cue.fadeColor
+    property alias indicator: cue.indicator
+    property alias fadeDepth: cue.fadeDepth
 
     // The viewport, for a consumer that needs to drive the position itself
     // (scroll a selection into view, jump to the top on a new query).
     readonly property alias viewport: view
     readonly property alias overflows: cue.overflows
+    // How deep the fade paints at each end, in px.
+    readonly property alias startFade: cue.startFade
+    readonly property alias endFade: cue.endFade
+    // Keyboard focus on the region itself, which is what its ring shows.
+    readonly property bool focused: focusHost.visualFocus
 
     readonly property bool vertical: orientation === Qt.Vertical
+
+    // A natural size that is a constant: a few rows. Content longer than it
+    // scrolls, it never grows the area.
+    implicitWidth: Style.controlWidth
+    implicitHeight: root._line * 3
+
+    // What one arrow key or one wheel notch moves: a row.
+    readonly property real _line: Style.size("Control", "md")
 
     // Far edge of the content, not its size: content whose first child starts
     // inset from the origin ends at `origin + size`, and scrolling to the size
@@ -41,26 +56,64 @@ Item {
     readonly property real _extentX: host.childrenRect.x + host.childrenRect.width
     readonly property real _extentY: host.childrenRect.y + host.childrenRect.height
 
-    // Clamped to the content, so content that fits stays put. Writing contentY
-    // directly with `contentHeight - height` goes negative for it.
-    function scrollToStart() {
+    // Every route moves the view through these three, clamped to the content,
+    // so content that fits stays put. Writing contentY directly with
+    // `contentHeight - height` goes negative for it.
+    function scrollBy(delta: real): void {
         if (vertical)
-            view.contentY = 0;
+            view.contentY = Math.max(0, Math.min(view.contentHeight - view.height, view.contentY + delta));
         else
-            view.contentX = 0;
+            view.contentX = Math.max(0, Math.min(view.contentWidth - view.width, view.contentX + delta));
     }
 
-    function scrollToEnd() {
-        if (vertical)
-            view.contentY = Math.max(0, view.contentHeight - view.height);
-        else
-            view.contentX = Math.max(0, view.contentWidth - view.width);
+    function scrollToStart(): void {
+        scrollBy(-Infinity);
+    }
+
+    function scrollToEnd(): void {
+        scrollBy(Infinity);
     }
 
     readonly property list<T.Action> actions: [
         T.Action { objectName: "to-start"; text: "Scroll to start"; onTriggered: root.scrollToStart() },
         T.Action { objectName: "to-end"; text: "Scroll to end"; onTriggered: root.scrollToEnd() }
     ]
+
+    // ONE dispatcher. A descendant that handles a key keeps it; the rest reach
+    // here from the focused child or from the region itself.
+    Keys.onPressed: event => {
+        const back = root.vertical ? Qt.Key_Up : Qt.Key_Left;
+        const forward = root.vertical ? Qt.Key_Down : Qt.Key_Right;
+        const page = (root.vertical ? view.height : view.width) - root._line;
+        event.accepted = true;
+        switch (event.key) {
+        case back: root.scrollBy(-root._line); break;
+        case forward: root.scrollBy(root._line); break;
+        case Qt.Key_PageUp: root.scrollBy(-page); break;
+        case Qt.Key_PageDown: root.scrollBy(page); break;
+        case Qt.Key_Home: root.scrollToStart(); break;
+        case Qt.Key_End: root.scrollToEnd(); break;
+        default: event.accepted = false;
+        }
+    }
+
+    // The region is a tab stop only while there is something to scroll to,
+    // and only for the keyboard: a click on content is not a request to focus
+    // a scroller.
+    T.Control {
+        id: focusHost
+        anchors.fill: parent
+        focus: true
+        focusPolicy: root.overflows ? Qt.TabFocus : Qt.NoFocus
+        Accessible.role: Accessible.Pane
+        Accessible.focusable: root.overflows
+
+        StateLayer {
+            anchors.fill: parent
+            host: focusHost
+            focusRadius: Style.radiusSm
+        }
+    }
 
     Flickable {
         id: view
@@ -81,13 +134,25 @@ Item {
         }
     }
 
+    // A Flickable ignores a vertical wheel when it only scrolls sideways, and
+    // that is the only wheel most mice have. A MouseArea takes the wheel where
+    // a WheelHandler never sees it; an event it does not map goes on to the
+    // Flickable.
+    MouseArea {
+        anchors.fill: parent
+        enabled: !root.vertical
+        acceptedButtons: Qt.NoButton
+        onWheel: wheel => {
+            if (wheel.angleDelta.x === 0 && wheel.angleDelta.y !== 0)
+                root.scrollBy(-wheel.angleDelta.y / 120 * root._line);
+            else
+                wheel.accepted = false;
+        }
+    }
+
     ScrollCue {
         id: cue
         view: view
         orientation: root.orientation
-        fade: root.fade
-        fadeColor: root.fadeColor
-        indicator: root.indicator
-        fadeDepth: root.fadeDepth
     }
 }
