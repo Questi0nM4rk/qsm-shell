@@ -43,7 +43,15 @@ Item {
     readonly property var integration: ({
         events: ["toggle-requested"],
         actions: ["toggle"],
-        observables: { checked: () => root.checked },
+        targets: ({ toggle: () => toggle, scene: () => root }),
+        observables: {
+            checked: () => root.checked,
+            hovered: () => toggle.hovered,
+            pressed: () => toggle.pressed,
+            "keyboard-focus": () => toggle.visualFocus,
+            "accessible-checked": () => toggle.Accessible.checked,
+            "target-height": () => toggle.height
+        },
         runAction: name => {
             if (name !== "toggle")
                 return false
