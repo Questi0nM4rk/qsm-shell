@@ -209,13 +209,15 @@ Item {
         enabled: root.interactive && root.clickable && !root._hosted
         gesturePolicy: root.gesturePolicy
         onTapped: root.activate()
-        // A pointer press that takes focus must not ring it; a press on a host
-        // that already holds focus keeps its ring. Released without taking
-        // focus, the mark is cleared so a later Tab still rings.
+        // A pointer press that takes focus must not ring it, and neither does
+        // the next press while that focus stays; a press on a host that
+        // already rings keeps its ring. Released without taking focus, the
+        // mark is cleared so a later Tab still rings.
         onPressedChanged: {
-            if (pressed)
-                root._pointerFocus = !root.focused;
-            else
+            if (pressed) {
+                if (!root.focused)
+                    root._pointerFocus = true;
+            } else
                 Qt.callLater(() => { if (!root.focused) root._pointerFocus = false; });
         }
     }

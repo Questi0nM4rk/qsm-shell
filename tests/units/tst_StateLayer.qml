@@ -166,6 +166,22 @@ TestCase {
         compare(activeLayer.focused, true, "host focus did not propagate to StateLayer.focused");
     }
 
+    function test_a_pointer_never_rings_the_host_it_focused() {
+        probe.forceActiveFocus();
+        mouseMove(probe, 340, 220);
+        mouseClick(activeHost, 80, 32);
+        activeHost.forceActiveFocus(Qt.MouseFocusReason);
+        compare(activeLayer.focused, true, "the host holds focus");
+        compare(activeLayer.ringShown, false, "a click rang the host");
+        mousePress(activeHost, 80, 32);
+        compare(activeLayer.ringShown, false, "the next press on the pointer-focused host rang it");
+        mouseRelease(activeHost, 80, 32);
+        compare(activeLayer.ringShown, false, "the release rang the host");
+        probe.forceActiveFocus();
+        activeHost.forceActiveFocus(Qt.TabFocusReason);
+        compare(activeLayer.ringShown, true, "a keyboard arrival did not ring the host");
+    }
+
     T.AbstractButton {
         id: hostButton
         x: 20; y: 200; width: 120; height: 32
