@@ -18,6 +18,9 @@ import qs.QsmShell.Style
 //
 // Natural width is the constant `contentWidth`, never the text: a long reading
 // or label elides inside it, so a ticking value cannot resize the control.
+// Everything sits at the start of its row: the reading row ends in a spacer
+// that takes the slack, because a layout with nothing left to stretch spreads
+// its items apart; the label row ends in the label, which fills it.
 ColumnLayout {
     id: root
 
@@ -40,12 +43,29 @@ ColumnLayout {
     readonly property bool _goodKnown: _goods.indexOf(good) >= 0
     readonly property bool _directional: trend === "up" || trend === "down"
     readonly property bool _unwelcome: _directional && (good === "up" || good === "down") && trend !== good
+    readonly property bool _welcome: _directional && trend === good
+    // A unit and a trend belong to a reading; without one they would describe nothing.
+    readonly property bool _measured: value.length > 0
 
     readonly property color _trendColor: {
         if (!_directional || good === "none" || !_goodKnown)
             return Style.textMuted;
         return trend === good ? Style.success : Style.warning;
     }
+
+    // What colour and shape say, in words, for a reader that sees neither.
+    readonly property string _trendWords: {
+        if (!root._measured)
+            return "";
+        const direction = { up: qsTr("rising"), down: qsTr("falling"), flat: qsTr("steady") }[trend] ?? "";
+        const verdict = root._unwelcome ? qsTr("worse") : root._welcome ? qsTr("better") : "";
+        return [direction, verdict].filter(word => word.length > 0).join(", ");
+    }
+
+    // A readout: one name for the whole figure, never its parts.
+    Accessible.role: Accessible.StaticText
+    Accessible.name: [root.label, root._measured ? root.value + root.unit : qsTr("no reading"), root._trendWords]
+        .filter(part => part.length > 0).join(", ")
 
     // A misspelt trend or good must not pass for a plausible reading, so it is
     // reported and drawn as nothing rather than as a fallback glyph.
@@ -64,35 +84,41 @@ ColumnLayout {
     onTrendChanged: _checkTrend()
     onGoodChanged: _checkGood()
 
-    spacing: Style.spaceTight
+    spacing: Style.space1
 
     RowLayout {
-        Layout.alignment: Qt.AlignLeft
         Layout.preferredWidth: root.contentWidth
         Layout.maximumWidth: root.contentWidth
-        spacing: Style.space1
+        spacing: Style.spaceTight
 
+        // No reading yet is a dash, not a blank: an empty figure reads as a
+        // control that failed to draw.
         Prose {
             Layout.fillWidth: true
-            Layout.maximumWidth: implicitWidth
+            // Whole pixels: a layout rounds a width it hands out, and one
+            // short of the text elides it.
+            Layout.maximumWidth: Math.ceil(implicitWidth)
+            Layout.alignment: Qt.AlignBaseline
             role: root.emphasis
             technical: true
-            text: root.value
+            muted: !root._measured
+            font.weight: root._measured ? Style.weightBold : Style.weightRegular
+            text: root._measured ? root.value : "—"
         }
-        // The unit is smaller and sits on the reading's own baseline: "72" and
-        // "%" at one size makes the unit compete with the number.
+        // The unit is half the reading's size and sits on its baseline: "72"
+        // and "%" at one size makes the unit compete with the number.
         Prose {
-            Layout.alignment: Qt.AlignBottom
-            Layout.bottomMargin: Style.spaceTight
-            visible: root.unit.length > 0
-            role: "label"
+            Layout.alignment: Qt.AlignBaseline
+            visible: root._measured && root.unit.length > 0
+            role: root.emphasis === "hero" ? "heading" : "title"
             technical: true
             muted: true
             text: root.unit
         }
         SvgIcon {
             Layout.alignment: Qt.AlignVCenter
-            visible: root.trend.length > 0 && root._trendKnown
+            Layout.leftMargin: Style.spaceTight
+            visible: root._measured && root.trend.length > 0 && root._trendKnown
             name: root.trend === "up" ? "chevron-up"
                 : root.trend === "down" ? "chevron-down"
                 : root.trend === "flat" ? "minus"
@@ -102,15 +128,15 @@ ColumnLayout {
         }
         SvgIcon {
             Layout.alignment: Qt.AlignVCenter
-            visible: root._unwelcome
+            visible: root._measured && root._unwelcome
             name: "alert-triangle"
             size: Style.iconXs
             color: Style.warning
         }
+        Item { Layout.fillWidth: true }
     }
 
     RowLayout {
-        Layout.alignment: Qt.AlignLeft
         Layout.preferredWidth: root.contentWidth
         Layout.maximumWidth: root.contentWidth
         visible: root.label.length > 0
@@ -124,7 +150,6 @@ ColumnLayout {
         }
         Prose {
             Layout.fillWidth: true
-            Layout.maximumWidth: implicitWidth
             role: "metadata"
             text: root.label
         }

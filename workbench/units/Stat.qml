@@ -11,8 +11,8 @@ Rectangle {
     property string caption: variant === "cpu" ? "CPU" : "Load"
     property string suffix: "%"
     property string glyph: "cpu"
-    property string direction: ""
-    property string welcome: "none"
+    property string direction: "up"
+    property string welcome: "down"
     property string weight: "display"
 
     implicitWidth: Style.controlWidth
@@ -66,7 +66,8 @@ Rectangle {
             label: () => stat.label,
             trend: () => stat.trend,
             good: () => stat.good,
-            emphasis: () => stat.emphasis
+            emphasis: () => stat.emphasis,
+            "accessible-name": () => stat.Accessible.name
         }
     })
 }
