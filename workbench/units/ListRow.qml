@@ -143,6 +143,7 @@ FocusScope {
             selected: () => row.selected,
             size: () => row.size,
             hovered: () => row.hovered,
+            pressed: () => row.pressed,
             focused: () => row.focused,
             activations: () => root.activations,
             "hover-enters": () => root.hoverEnters,

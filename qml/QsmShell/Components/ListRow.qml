@@ -171,9 +171,11 @@ Item {
 
     Accessible.role: root.selectable ? Accessible.Button : Accessible.StaticText
     Accessible.name: root.primary
-    Accessible.description: root._hasExpandedContent
-        ? root.supporting + (root.supporting.length ? ", " : "") + (root.expanded ? "Expanded" : "Collapsed")
-        : root.supporting
+    Accessible.description: root.supporting
+    Accessible.selectable: root.selectable
+    Accessible.selected: root._normal && root.selected
+    Accessible.expandable: root._hasExpandedContent
+    Accessible.expanded: root.expanded
 
     Accessible.onPressAction: root.activate()
 
@@ -202,7 +204,6 @@ Item {
     // rest: a list paints no box around a row nobody is touching.
     Surface {
         readonly property bool _selectedHere: root._normal && root.selected && root.paintsSelection
-        y: 0
         width: parent.width
         height: root._headingHeight
         radius: root.selectionRadius
@@ -224,8 +225,6 @@ Item {
     // action's click must not be swallowed by the row's own tap.
     StateLayer {
         id: layer
-        x: 0
-        y: 0
         width: parent.width
         height: root._headingHeight
         visible: root.selectable
@@ -247,7 +246,6 @@ Item {
         visible: root.header
         anchors.left: parent.left
         anchors.right: parent.right
-        y: 0
         height: root._headingHeight
         anchors.leftMargin: root._inset
         anchors.rightMargin: root._inset
@@ -279,7 +277,6 @@ Item {
         visible: root._normal
         anchors.left: parent.left
         anchors.right: parent.right
-        y: 0
         height: root._headingHeight
         anchors.leftMargin: root._inset
         anchors.rightMargin: root._inset
