@@ -15,6 +15,9 @@ T.DoubleSpinBox {
     property real fieldHeight: Style.size("SpinBox", size)
     property real naturalWidth: Style.spinBoxWidth
     property bool failed: false
+    // The most a side may grow on hover, for a field whose neighbours sit
+    // `gap` away: pass `Motion.hoverGrowthWithin(gap)`.
+    property real growthCap: Infinity
     property string accessibleName: ""
 
     readonly property real _s: root.fieldHeight / Style.size("SpinBox", "md")
@@ -124,7 +127,15 @@ T.DoubleSpinBox {
 
     background: Surface {
         objectName: "spinBoxSurface"
-        radius: Style.radiusBody
+        // The body grows by the layer's `growth` on every side while the
+        // reading, the caret and the indicators stay where they are (the
+        // content is a sibling at its own size), so nothing moves under the
+        // pointer. The glyphs still grow inside their own indicators.
+        x: -layer.growth
+        y: -layer.growth
+        width: root.width + 2 * layer.growth
+        height: root.height + 2 * layer.growth
+        radius: Style.radiusBody + layer.growth
         hovered: root.enabled && (root.hovered || root.focused)
         enabled: root.enabled
         border.width: root.failed ? Style.stroke(Style.indicatorWidth, root) : 0
@@ -265,8 +276,11 @@ T.DoubleSpinBox {
     }
 
     StateLayer {
+        id: layer
         objectName: "spinBoxLayer"
         z: -0.5
+        bodyGrows: true
+        growthCap: root.growthCap
         width: root.width
         height: root.height
         host: root
