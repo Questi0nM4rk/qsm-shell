@@ -313,21 +313,21 @@ ColumnLayout {
         IconButton {
             icon: "moon"
             accessibleName: "Do not disturb"
-            color: root.dnd ? Style.accent : Style.text
+            selected: root.dnd
             size: "md"
             Accessible.checkable: true
             Accessible.checked: root.dnd
             onClicked: root.dndToggled()
         }
 
-        // Irreversible, so it asks twice: the first press arms (danger
-        // colour, the name says confirm), the second reports
-        // `clearRequested`. Timeout, a lost focus or the pointer leaving
-        // disarm it.
+        // Irreversible, so it asks twice: the first press arms (the glyph
+        // becomes a tick in the danger colour, the name says confirm), the
+        // second reports `clearRequested`. Timeout, a lost focus or the pointer
+        // leaving disarm it.
         IconButton {
             id: clearButton
             Layout.alignment: Qt.AlignVCenter
-            icon: "trash-2"
+            icon: clearAction.armed ? "check" : "trash-2"
             accessibleName: clearAction.armed ? "Confirm clear history" : "Clear history"
             color: clearAction.armed ? Style.danger : Style.text
             size: "md"
@@ -373,6 +373,8 @@ ColumnLayout {
             spacing: Style.space2
             model: historyModel
             boundsBehavior: Flickable.StopAtBounds
+            Accessible.role: Accessible.List
+            Accessible.name: "Notifications"
 
             // Model replacement temporarily resets the numeric cursor; only
             // user navigation updates the stable identity during that handoff.
@@ -421,7 +423,8 @@ ColumnLayout {
                 hostExpanded: root.expandedKey === root.entryKey(modelData)
                 actionFocusIndex: ListView.isCurrentItem ? root.actionFocusIndex : -1
                 animateEntrance: false
-                bodied: true
+                // The group heading above already names the app.
+                showAppName: false
                 expandOnHover: false
                 onExpandRequested: {
                     const key = root.entryKey(modelData);

@@ -34,7 +34,7 @@ Rectangle {
     property bool replacementKeptRow: false
 
     color: Style.band
-    implicitWidth: Style.notificationWidth + Style.space6 * 2
+    implicitWidth: Style.notificationWidth + Style.rolloutPadding * 2 + Style.space6 * 2
     implicitHeight: Style.controlWidth + Style.space6 * 2
 
     ScenePointer { id: scenePointer }
@@ -47,7 +47,7 @@ Rectangle {
     Item {
         id: band
         x: (root.width - width) / 2
-        width: Style.notificationWidth
+        width: Style.notificationWidth + Style.rolloutPadding * 2
         height: border.edge
     }
 
@@ -60,6 +60,29 @@ Rectangle {
         root.all = [{ notificationId: id, appName: "Shell", summary: "Transfer complete",
             body: "The same transfer reports its latest result.", urgency: "normal",
             createdAt: Date.now(), actions: [{ id: "open", label: "Open" }] }].concat(root.all);
+        root.eventRecorder?.("scenario", "arrival", { id });
+    }
+
+    function arriveCritical(): void {
+        const id = String.fromCharCode(96 + root.nextId++);
+        root.all = [{ notificationId: id, appName: "Power", summary: "Battery critically low",
+            body: "Plug in within five minutes or the session will hibernate.", urgency: "critical",
+            createdAt: Date.now() }].concat(root.all);
+        root.eventRecorder?.("scenario", "arrival", { id });
+    }
+
+    function arriveLong(): void {
+        const id = String.fromCharCode(96 + root.nextId++);
+        root.all = [{ notificationId: id, appName: "Mail", summary: "Weekly report",
+            body: "The quarterly numbers are in and the summary is attached. Revenue is up on the previous period and the three open risks from the last review are closed; the remaining items need a decision from you before the end of the week. Please read section four first.",
+            urgency: "normal", createdAt: Date.now(), actions: [{ id: "default", label: "Open message" }] }].concat(root.all);
+        root.eventRecorder?.("scenario", "arrival", { id });
+    }
+
+    function arriveColour(): void {
+        const id = String.fromCharCode(96 + root.nextId++);
+        root.all = [{ notificationId: id, appName: "Colour picker", summary: "#c78fe0",
+            body: "Copied to the clipboard.", urgency: "normal", createdAt: Date.now() }].concat(root.all);
         root.eventRecorder?.("scenario", "arrival", { id });
     }
 
@@ -108,8 +131,11 @@ Rectangle {
         edges: ["top"]
         shouldBeActive: root.all.length > 0
         tier: "small"
-        bodyWidth: stack.implicitWidth
-        bodyHeight: stack.implicitHeight
+        // The cards stand one rollout padding inside the body, which is what
+        // makes `Style.radiusBody` concentric with the rollout's corners.
+        padding: Style.rolloutPadding
+        bodyWidth: stack.implicitWidth + padding * 2
+        bodyHeight: stack.implicitHeight + padding * 2
         // Row heights already animate; the containing aperture follows directly.
         animateBodySize: false
 
@@ -119,6 +145,9 @@ Rectangle {
             height: implicitHeight
             stack: root.windowed
             isAlive: id => root.all.some(entry => entry.notificationId === id)
+            // A colour-picker announcement's summary IS the picked colour.
+            swatchFor: entry => entry.appName === "Colour picker" && /^#[0-9a-fA-F]{6}$/.test(entry.summary)
+                ? entry.summary : undefined
             retainWhenEmpty: rollout.visible
             inputEnabled: rollout.shouldBeActive
 
@@ -160,6 +189,9 @@ Rectangle {
     readonly property var controls: [
         { label: "arrival", options: [
             { label: "arrive", call: "arrive" },
+            { label: "arrive-critical", call: "arriveCritical" },
+            { label: "arrive-colour", call: "arriveColour" },
+            { label: "arrive-long", call: "arriveLong" },
             { label: "same-id-update", call: "replaceNewest" },
             { label: "expire-newest", call: "expireNewest" },
             { label: "clear", call: "clearAll" },
@@ -178,7 +210,7 @@ Rectangle {
 
     readonly property var integration: ({
         events: ["dismiss-requested", "hover-changed", "geometry-changed", "primary-triggered", "action-invoked"],
-        actions: ["activate-newest-primary"],
+        actions: ["activate-newest-primary", "focus-newest"],
         targets: {
             scene: () => root,
             newest: () => root.all.length ? root.card(root.all[0].notificationId) : null,
@@ -202,16 +234,22 @@ Rectangle {
             "callback-evidence": () => root.callbackEvidence,
             "newest-expanded": () => root.all.length > 0 && root.card(root.all[0].notificationId)?.expanded === true,
             "newest-hovered": () => root.all.length > 0 && root.card(root.all[0].notificationId)?.hovered === true,
+            "newest-focused": () => root.all.length > 0 && root.card(root.all[0].notificationId)?.activeFocus === true,
             "newest-drag-active": () => root.all.length > 0 && root.card(root.all[0].notificationId)?.dragActive === true,
             "source-count": () => root.all.length,
             "reveal-progress": () => rollout.revealProgress,
             retracting: () => rollout.visible && rollout.offsetScale > 0
         },
         runAction: name => {
-            if (name !== "activate-newest-primary" || root.all.length === 0)
+            if (root.all.length === 0)
                 return false;
             const card = root.card(root.all[0].notificationId);
-            return !!card && card.activatePrimary();
+            // The host grants the newest row keyboard focus, as a focus-capable popup host does.
+            if (name === "focus-newest") {
+                card?.forceActiveFocus();
+                return !!card && card.activeFocus;
+            }
+            return name === "activate-newest-primary" && !!card && card.activatePrimary();
         }
     })
 
