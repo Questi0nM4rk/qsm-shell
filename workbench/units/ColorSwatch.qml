@@ -74,6 +74,7 @@ Rectangle {
             { label: "iris", set: { empty: false, sample: Style.accent, reading: "Iris" } },
             { label: "translucent", set: { empty: false, sample: Qt.rgba(Style.accent.r, Style.accent.g, Style.accent.b, 0.2), reading: "20%" } },
             { label: "plum", set: { empty: false, sample: "#2D1540", reading: "Plum" } },
+            { label: "slate", set: { empty: false, sample: "#7C7F8A", reading: "Ash" } },
             { label: "empty", set: { empty: true, sample: Style.textMuted, reading: "" } }
         ] },
         { label: "ground", options: [
