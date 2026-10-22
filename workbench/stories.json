@@ -254,7 +254,7 @@
         500
       ],
       "title": "ColorSwatch / Pale",
-      "description": "Color sample with readable value text.",
+      "description": "A colour slot with a short reading, a containment edge and a selection ring.",
       "tags": [
         "color",
         "data"
@@ -934,7 +934,7 @@
         500
       ],
       "title": "SvgIcon / Selected",
-      "description": "SVG icon in selected color treatment.",
+      "description": "One glyph across the whole icon scale in the selected colour.",
       "tags": [
         "icon",
         "status"

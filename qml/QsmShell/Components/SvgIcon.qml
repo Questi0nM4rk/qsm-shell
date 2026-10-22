@@ -10,6 +10,9 @@ import qs.QsmShell.Style
 // SVGs are one stroke set normalised to a WHITE stroke, because MultiEffect
 // colorises by multiplying luminance: white tints exactly to `color`, and a
 // black or currentColor stroke would stay black.
+//
+// It is a picture and nothing else: no input, no focus and no accessible
+// role, so a control that carries it names itself.
 Item {
     id: root
 
@@ -20,6 +23,8 @@ Item {
     property string name: ""
     property int size: Style.iconMd
     property color color: Style.text
+    // The glyph is on screen: false for an empty name and while one loads.
+    readonly property bool ready: base.status === Image.Ready
 
     width: size
     height: size
