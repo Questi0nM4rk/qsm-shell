@@ -9,5 +9,8 @@
     "compositions",
     "flows",
     "tasks"
+  ],
+  "uncovered": [
+    "Fuzzy.qml"
   ]
 }
