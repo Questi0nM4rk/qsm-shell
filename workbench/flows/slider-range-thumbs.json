@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "key": "slider-range-thumbs",
+  "target": { "story": "level" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "range", "option": "range" },
+    { "type": "expect", "observable": "range", "equals": true },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "low-value", "equals": 0 },
+    { "type": "expect", "observable": "value", "equals": 87 },
+    { "type": "pointer", "target": "low-thumb", "event": "click" },
+    { "type": "key", "target": "low-thumb", "key": "Right" },
+    { "type": "expect", "observable": "low-value", "equals": 5 },
+    { "type": "expect", "observable": "value", "equals": 87 },
+    { "type": "expectEvent", "event": "committed", "origin": "component", "payload": { "value": 87, "low-value": 5 } },
+    { "type": "key", "target": "low-thumb", "key": "PageUp" },
+    { "type": "key", "target": "low-thumb", "key": "PageUp" },
+    { "type": "expect", "observable": "low-value", "equals": 45 },
+    { "type": "pointer", "target": "thumb", "event": "click" },
+    { "type": "key", "target": "thumb", "key": "Home" },
+    { "type": "expect", "observable": "value", "equals": 45 },
+    { "type": "expect", "observable": "low-value", "equals": 45 },
+    { "type": "key", "target": "thumb", "key": "End" },
+    { "type": "expect", "observable": "value", "equals": 100 },
+    { "type": "expect", "observable": "low-value", "equals": 45 },
+    { "type": "control", "group": "range", "option": "single" },
+    { "type": "expect", "observable": "range", "equals": false }
+  ]
+}

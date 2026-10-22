@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "key": "slider-osd-grab",
+  "target": { "story": "osd-slider" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "value", "equals": 72 },
+    { "type": "expect", "observable": "orientation", "equals": "vertical" },
+    { "type": "control", "group": "press", "option": "grab" },
+    { "type": "pointer", "target": "thumb", "event": "press" },
+    { "type": "pointer", "target": "thumb", "event": "release" },
+    { "type": "expect", "observable": "value", "equals": 72 },
+    { "type": "key", "target": "thumb", "key": "Up" },
+    { "type": "expect", "observable": "value", "equals": 77 },
+    { "type": "key", "target": "thumb", "key": "Down" },
+    { "type": "expect", "observable": "value", "equals": 72 },
+    { "type": "pointer", "target": "track", "event": "click", "x": 0.5, "y": 0.9 },
+    { "type": "expectEvent", "event": "moved", "origin": "component" },
+    { "type": "control", "group": "wheel", "option": "nudge" },
+    { "type": "pointer", "target": "slider", "event": "wheel", "dx": 0, "dy": 120 },
+    { "type": "expectEvent", "event": "committed", "origin": "component" },
+    { "type": "control", "group": "label", "option": "action" },
+    { "type": "pointer", "target": "label", "event": "click" },
+    { "type": "expectEvent", "event": "mute-changed", "origin": "component", "payload": { "muted": true } },
+    { "type": "expect", "observable": "muted", "equals": true },
+    { "type": "pointer", "target": "label", "event": "click" },
+    { "type": "expect", "observable": "muted", "equals": false }
+  ]
+}

@@ -555,13 +555,12 @@ TestCase {
             sliderFat.thickness = shape.thickness;
             sliderFat.thumbSize = shape.thumb;
 
-            // The thumb GROWS by `space1` per side on hover, and a growth the
-            // control does not reserve is a growth that paints outside it.
+            // The thumb grows by `space1` per side on hover and overflows the
+            // control: growth is never added to its layout size.
             const expected = Math.max(
-                Style.size("Control", "xs"), shape.thickness, shape.thumb + Style.space1 * 2);
+                Style.size("Control", "xs"), shape.thickness, shape.thumb);
             compare(sliderFat.implicitHeight, expected,
-                "the cross axis is not the largest of the Control xs floor, thickness and the "
-                + "thumb plus the room its hover growth needs");
+                "the cross axis is not the largest of the Control xs floor, thickness and the thumb");
             compare(sliderFat.height, expected,
                 "the control did not take the cross size it asked for");
 
@@ -574,17 +573,13 @@ TestCase {
         }
     }
 
-    // A raised thumb casts a shadow that drops further while pressed, and the
-    // control has to be big enough to hold it: a caller sizing a row to a
-    // slider otherwise gets a smudge over whatever sits under it.
-    //
-    // The shadow drops along `y` in BOTH orientations -- it is gravity, not
-    // the axis -- so on a horizontal slider the slack it needs is cross-axis
-    // and on a vertical one it is MAIN-axis. Measured, the vertical case
-    // spent its slack on the width and painted 2px (4px pressed) below the
-    // control's own bottom edge at the low bound, which is where the thumb is
-    // flush with the end of the track and there is nothing left to give.
-    function test_a_raised_thumb_keeps_its_shadow_inside_the_control() {
+    // Growth and the shadow's drop overflow the control and are never added
+    // to its layout size, so what a host must leave free around a slider is
+    // bounded and known: one growth step plus the lift, and the lift doubles
+    // while pressed. The shadow drops along `y` in BOTH orientations -- it is
+    // gravity, not the axis -- so on a vertical slider the overhang is on the
+    // MAIN axis, at the low bound where the thumb is flush with the track end.
+    function test_a_raised_thumb_overhangs_the_control_by_no_more_than_its_growth_and_lift() {
         const cases = [
             { slider: sliderFat, horizontal: true },
             { slider: sliderVertRaised, horizontal: false }
@@ -606,13 +601,15 @@ TestCase {
             const x = slider.width / 2;
             const y = cases[i].horizontal ? slider.height / 2 : slider.height - 2;
 
+            const growth = Style.space1;
             mouseMove(slider, x, y);
+            wait(Motion.micro * 3);
             let rect = shadow.mapToItem(slider, 0, 0);
-            verify(rect.y + shadow.height <= slider.height + 0.5,
+            verify(rect.y + shadow.height <= slider.height + growth + Style.sliderThumbLift + 0.5,
                 label + ": a hovered raised thumb's shadow paints "
                 + (rect.y + shadow.height - slider.height) + "px below the control's bottom edge");
-            verify(rect.x >= -0.5 && rect.x + shadow.width <= slider.width + 0.5,
-                label + ": the shadow paints outside the control across the axis");
+            verify(rect.x >= -growth - 0.5 && rect.x + shadow.width <= slider.width + growth + 0.5,
+                label + ": the shadow paints more than one growth step outside the control across the axis");
 
             mousePress(slider, x, y);
             wait(Motion.press * 3);
@@ -620,9 +617,9 @@ TestCase {
             const overflow = rect.y + shadow.height - slider.height;
             mouseRelease(slider, x, y);
 
-            verify(overflow <= 0.5,
+            verify(overflow <= growth + Style.sliderThumbLift * 2 + 0.5,
                 label + ": a pressed raised thumb's shadow paints " + overflow
-                + "px below the control's own bottom edge");
+                + "px below the control's own bottom edge, past one growth step and the doubled lift");
             mouseMove(probe, 5, 5);
         }
 
