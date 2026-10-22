@@ -25,7 +25,7 @@ Rectangle {
         dot: root.dot
         text: root.reading
         icon: root.glyph
-        accessibleName: root.dot ? "Unread" : root.glyph !== "" ? "Done" : ""
+        accessibleName: root.dot ? "Unread" : root.glyph !== "" && root.reading === "" ? "Done" : ""
     }
 
     readonly property var controls: [
@@ -43,7 +43,9 @@ Rectangle {
         ] },
         { label: "presence", options: [
             { label: "reading", set: { reading: "3", glyph: "", dot: false } },
-            { label: "count 120", set: { reading: "120", glyph: "", dot: false } },
+            { label: "count-120", set: { reading: "120", glyph: "", dot: false } },
+            { label: "word", set: { reading: "Connected", glyph: "", dot: false } },
+            { label: "glyph-word", set: { reading: "Connected", glyph: "check", dot: false } },
             { label: "long", set: { reading: "Reconnecting to the network", glyph: "", dot: false } },
             { label: "glyph", set: { reading: "", glyph: "check", dot: false } },
             { label: "dot", set: { reading: "", glyph: "", dot: true } },
@@ -58,7 +60,9 @@ Rectangle {
             filled: () => badge.filled,
             icon: () => badge.icon,
             dot: () => badge.dot,
-            visible: () => badge.visible
+            visible: () => badge.visible,
+            width: () => badge.width,
+            height: () => badge.height
         }
     })
 }

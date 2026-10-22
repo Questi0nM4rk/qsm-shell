@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "key": "card-passthrough",
+  "target": { "story": "card" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "glow", "equals": true },
+    { "type": "expect", "observable": "shadow", "equals": true },
+    { "type": "expect", "observable": "raised", "equals": false },
+    { "type": "expect", "observable": "cleared", "equals": 0 },
+    { "type": "pointer", "target": "card", "event": "click", "x": 0.5, "y": 0.2 },
+    { "type": "expect", "observable": "card-focused", "equals": false },
+    { "type": "expect", "observable": "cleared", "equals": 0 },
+    { "type": "pointer", "target": "action", "event": "click" },
+    { "type": "expectEvent", "event": "clicked", "origin": "component", "payload": { "cleared": 1 } },
+    { "type": "expect", "observable": "action-focused", "equals": false },
+    { "type": "key", "target": "action", "key": "Space" },
+    { "type": "expect", "observable": "cleared", "equals": 2 },
+    { "type": "key", "target": "action", "key": "Enter" },
+    { "type": "expect", "observable": "cleared", "equals": 3 },
+    { "type": "control", "group": "surface", "option": "raised" },
+    { "type": "expect", "observable": "raised", "equals": true },
+    { "type": "control", "group": "glow", "option": "off" },
+    { "type": "expect", "observable": "glow", "equals": false },
+    { "type": "control", "group": "shadow", "option": "off" },
+    { "type": "expect", "observable": "shadow", "equals": false },
+    { "type": "action", "name": "activate" },
+    { "type": "expect", "observable": "cleared", "equals": 4 }
+  ]
+}
