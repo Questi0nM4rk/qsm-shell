@@ -495,9 +495,11 @@ TestCase {
             "an unringed avatar is not exactly its size");
         verify(ringed.implicitWidth > ringed.size,
             "a ring did not ask for room of its own");
+        // StatRing centres its arc 0.75 strokes inside its box, so the arc's
+        // inner edge sits 1.25 strokes in; each side rounds to a whole pixel.
         compare(ringed.implicitWidth,
-            ringed.size + (ringed.ringGap + ringed.ringWidth) * 2,
-            "the ring's room is not gap plus stroke on both sides");
+            ringed.size + 2 * Math.round(ringed.ringGap + 1.25 * ringed.ringWidth),
+            "the ring's room is not the gap plus the arc's reach on both sides");
     }
 
     function test_menu_selects_a_real_row() {
