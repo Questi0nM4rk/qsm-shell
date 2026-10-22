@@ -21,8 +21,10 @@ Rectangle {
 
     property bool shown: false
     property real strength: Style.scrimOpacity
-    // Whether a click on the ground is an answer. The ground is caught either way.
-    property bool dismissible: true
+    // Whether a click on the ground is an answer. The ground is caught either
+    // way; a disabled scrim answers nothing, so it follows `enabled` until a
+    // host states it.
+    property bool dismissible: root.enabled
 
     signal dismissed
     readonly property list<T.Action> actions: [T.Action { text: "Dismiss"; enabled: root.shown && root.dismissible; onTriggered: root.dismiss() }]

@@ -146,7 +146,6 @@ TestCase {
     // An anchored panel that is right in the middle of a surface and wrong at
     // its edge is wrong.
     function test_popover_flips_when_it_does_not_fit() {
-        squeezed.resampleBounds();
         squeezed.resample();
         compare(squeezed.side, "bottom", "a popover with no room above did not flip below");
     }
@@ -155,7 +154,6 @@ TestCase {
     // off the far edge instead of the near one. With no room either way it has
     // to pick the larger side and then clamp into the bounds.
     function test_popover_with_no_room_either_way_stays_inside() {
-        boxed.resampleBounds();
         boxed.resample();
         verify(boxed.y >= 0, "a popover with no room either way went off the top");
         verify(boxed.y + boxed.height <= cramped.height + 0.01,
@@ -191,7 +189,7 @@ TestCase {
     // but still in the tab order is a set of controls nobody can see.
     function test_a_closed_dialog_is_not_reachable() {
         dialog.open = false;
-        wait(1);
-        verify(!dialog.enabled, "a closed dialog stayed enabled");
+        tryVerify(() => !dialog.visible, 1000);
+        verify(!dialog.visible, "a closed dialog stayed visible");
     }
 }

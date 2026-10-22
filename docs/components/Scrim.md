@@ -2,7 +2,7 @@
 
 The ground going quiet behind something that has taken over; it dims what is behind and catches the pointer so a modal is modal in behaviour, not just appearance.
 states: shown and hidden with an opacity fade between them (`Motion.medium` in, `Motion.exit` out, standard and exit easing); hidden removes itself from the scene so it never eats clicks meant for the surface underneath.
-actions: `dismiss()` and a click with any button report `dismissed` while shown and `dismissible`; the surface decides what that means. Neither route changes `shown`.
+actions: `dismiss()` and a click with any button report `dismissed` while shown and `dismissible` (it follows `enabled` until a host states it); the surface decides what that means. Neither route changes `shown`.
 pointer: while painted, fade out included, it takes the click, the hover and the wheel of every button, so nothing beneath it answers; `dismissible: false` stops the report and still catches. `enabled: false` is not a refusal: a disabled item stops receiving events and the ground would hear them.
 keyboard: none; Escape belongs to the modal content, never to the dim.
 screen reader: decoration (`Accessible.ignored`); the modal content names itself.
