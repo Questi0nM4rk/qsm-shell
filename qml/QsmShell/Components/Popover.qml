@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Templates as T
+import QtQuick.Window
 
 import qs.QsmShell.Style
 
@@ -20,7 +22,12 @@ import qs.QsmShell.Style
 // Compose the control you need over this; do not expect this to be it.
 //
 // ── what it owns ─────────────────────────────────────────────────────────
-// Position, flipping, clamping, and the delays.
+// Position, flipping, clamping, and the delays; on the device grid, so an
+// edge never lands between two pixels. The keyboard follows the trigger: a
+// press trigger answers the anchor's own activation (a button's Space and
+// Return, not only a tap), a hover trigger also opens for an anchor the
+// keyboard has reached, and a close with the focus inside hands it back to
+// the anchor.
 //
 // ── what it does NOT own ─────────────────────────────────────────────────
 // Whether it is open. It REQUESTS — `openRequested` when a trigger has been
@@ -71,9 +78,10 @@ Item {
             root.openRequested();
     }
 
-    // The pointer is over the anchor (hover trigger only) or over the popover
-    // itself: the fact a host would otherwise re-derive to decide on closing.
-    readonly property bool hovered: anchorHover.hovered || selfHover.hovered
+    // The pointer is over the anchor (hover trigger only), over the popover
+    // itself or over the strip between them: the fact a host would otherwise
+    // re-derive to decide on closing.
+    readonly property bool hovered: anchorHover.hovered || selfHover.hovered || corridorHover.hovered
 
     // Which side it ACTUALLY landed on, after flipping. A caller drawing a
     // tail or a seam needs this, not the preference.
@@ -101,42 +109,52 @@ Item {
     // So it is resampled every frame while OPEN, and never while closed. The
     // assignment is a no-op when nothing moved, so a still popover costs one
     // `mapToItem` per frame and no bindings at all.
+    //
+    // The bounds are sampled in the SAME space as the anchor. Reading only
+    // their width and height puts their origin at (0, 0), so a translated
+    // bounds item (a panel inset inside a scene, the normal case) would be
+    // clamped against the wrong rectangle.
     property rect _anchor: Qt.rect(0, 0, 0, 0)
+    property rect _bounds: Qt.rect(0, 0, 0, 0)
+
+    function _rectOf(item: Item): rect {
+        const origin = item.mapToItem(root.parent, 0, 0);
+        return Qt.rect(origin.x, origin.y, item.width, item.height);
+    }
 
     function resample(): void {
-        if (!root.anchorItem || !root.parent)
+        if (!root.parent)
             return;
-        const origin = root.anchorItem.mapToItem(root.parent, 0, 0);
-        const next = Qt.rect(origin.x, origin.y, root.anchorItem.width, root.anchorItem.height);
-        if (next !== root._anchor)
-            root._anchor = next;
+        if (root.anchorItem)
+            root._anchor = root._rectOf(root.anchorItem);
+        if (root.bounds)
+            root._bounds = root._rectOf(root.bounds);
     }
 
     FrameAnimation {
         running: root.open || root.opacity > 0
-        onTriggered: {
+        onTriggered: root.resample()
+    }
+
+    // Does the keyboard sit inside the panel? Asked as it closes, while the
+    // content is still laid out, because an item that hides takes its focus
+    // with it and leaves the keyboard on nothing.
+    function _holdsFocus(): bool {
+        for (let item = root.Window.window?.activeFocusItem ?? null; item; item = item.parent) {
+            if (item === root)
+                return true;
+        }
+        return false;
+    }
+
+    onOpenChanged: {
+        if (root.open) {
             root.resample();
-            root.resampleBounds();
+        } else if (root.anchorItem && root._holdsFocus()) {
+            root.anchorItem.forceActiveFocus();
         }
     }
-
-    onOpenChanged: if (root.open) { root.resample(); root.resampleBounds(); }
-    Component.onCompleted: { root.resample(); root.resampleBounds(); }
-
-    // The bounds rectangle in the SAME space as the anchor. Reading only its
-    // width and height puts its origin at (0, 0), so a translated bounds item
-    // (a panel inset inside a scene, the normal case) would be clamped
-    // against the wrong rectangle.
-    property rect _bounds: Qt.rect(0, 0, 0, 0)
-
-    function resampleBounds(): void {
-        if (!root.bounds || !root.parent)
-            return;
-        const origin = root.bounds.mapToItem(root.parent, 0, 0);
-        const next = Qt.rect(origin.x, origin.y, root.bounds.width, root.bounds.height);
-        if (next !== root._bounds)
-            root._bounds = next;
-    }
+    Component.onCompleted: root.resample()
 
     // Room on each side, as a number rather than a yes/no. A flip that only
     // asks "does the preferred side fit" will happily flip to a side that does
@@ -166,7 +184,7 @@ Item {
     // main axis is placed then clamped, because a side that does not fit still
     // has to put the panel somewhere a person can see it.
     function _clamp(position: real, origin: real, extent: real, ownSize: real): real {
-        return Math.max(origin, Math.min(position, origin + Math.max(0, extent - ownSize)));
+        return Style.snap(Math.max(origin, Math.min(position, origin + Math.max(0, extent - ownSize))), root);
     }
 
     x: {
@@ -196,8 +214,8 @@ Item {
         }
     }
 
-    implicitWidth: contentHost.childrenRect.width
-    implicitHeight: contentHost.childrenRect.height
+    implicitWidth: Style.snapUp(contentHost.childrenRect.width, root)
+    implicitHeight: Style.snapUp(contentHost.childrenRect.height, root)
 
     visible: opacity > 0
     opacity: open ? 1 : 0
@@ -212,17 +230,17 @@ Item {
 
         Behavior on x {
             enabled: !Style.reducedMotion
-            NumberAnimation { duration: Motion.medium; easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
+            NumberAnimation { duration: root.open ? Motion.medium : Motion.exit(Motion.medium); easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
         }
         Behavior on y {
             enabled: !Style.reducedMotion
-            NumberAnimation { duration: Motion.medium; easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
+            NumberAnimation { duration: root.open ? Motion.medium : Motion.exit(Motion.medium); easing.type: root.open ? Motion.emphasizedEasing : Motion.exitEasing }
         }
     }
 
     Behavior on opacity {
         NumberAnimation {
-            duration: Motion.medium
+            duration: root.open ? Motion.medium : Motion.exit(Motion.medium)
             easing.type: root.open ? Motion.standardEasing : Motion.exitEasing
         }
     }
@@ -250,8 +268,54 @@ Item {
     // pointer into is a menu you cannot use.
     HoverHandler { id: selfHover }
 
+    // The path between them. The gap belongs to neither, so a pointer that
+    // lingers in it would leave both and close the panel after the grace
+    // period; this strip, from the anchor's edge to the panel's across both of
+    // their extents, keeps the union whole. It only listens, and only while a
+    // hover popover is open.
+    Item {
+        id: corridor
+
+        readonly property rect _anchor: root._anchor
+        readonly property real _left: Math.min(_anchor.x, root.x)
+        readonly property real _right: Math.max(_anchor.x + _anchor.width, root.x + root.width)
+        readonly property real _top: Math.min(_anchor.y, root.y)
+        readonly property real _bottom: Math.max(_anchor.y + _anchor.height, root.y + root.height)
+        readonly property rect _strip: {
+            switch (root.side) {
+            case "top": return Qt.rect(_left, root.y + root.height, _right - _left, _anchor.y - root.y - root.height);
+            case "bottom": return Qt.rect(_left, _anchor.y + _anchor.height, _right - _left, root.y - _anchor.y - _anchor.height);
+            case "left": return Qt.rect(root.x + root.width, _top, _anchor.x - root.x - root.width, _bottom - _top);
+            default: return Qt.rect(_anchor.x + _anchor.width, _top, root.x - _anchor.x - _anchor.width, _bottom - _top);
+            }
+        }
+
+        x: _strip.x - root.x
+        y: _strip.y - root.y
+        width: Math.max(0, _strip.width)
+        height: Math.max(0, _strip.height)
+
+        HoverHandler {
+            id: corridorHover
+            enabled: root.trigger === "hover" && root.open
+        }
+    }
+
+    // A press trigger follows the anchor's own activation when it has one: a
+    // button answers Space and Return through `clicked` and a tap handler
+    // would never hear them. An anchor with no `clicked` is tapped instead.
+    readonly property var _anchorAsVar: root.anchorItem
+    readonly property bool _anchorClicks: typeof root._anchorAsVar?.clicked === "function"
+
+    Connections {
+        target: root.anchorItem
+        enabled: root.trigger === "press" && root._anchorClicks
+        ignoreUnknownSignals: true
+        function onClicked(): void { root.toggle(); }
+    }
+
     TapHandler {
-        enabled: root.trigger === "press"
+        enabled: root.trigger === "press" && !root._anchorClicks
         parent: root.anchorItem
         onTapped: root.toggle()
     }
@@ -272,12 +336,21 @@ Item {
         onTriggered: root.dismissRequested()
     }
 
-    onHoveredChanged: {
+    // A hover popover is also for the person who cannot hover: an anchor the
+    // keyboard has reached asks at once, with no intent delay to wait out.
+    readonly property bool _anchorFocused: root.trigger === "hover" && ((root.anchorItem as T.Control)?.visualFocus ?? false)
+    readonly property bool _engaged: root.hovered || root._anchorFocused
+
+    on_EngagedChanged: {
         if (root.trigger !== "hover")
             return;
-        if (root.hovered) {
+        if (root._engaged) {
             closeTimer.stop();
-            if (!root.open)
+            if (root.open)
+                return;
+            if (root._anchorFocused)
+                root.openRequested();
+            else
                 openTimer.restart();
         } else {
             openTimer.stop();

@@ -65,7 +65,9 @@ A glyph, a line and a body's corner are roles, not call-site choices:
 `Style.stroke(n, item)` gives a line a whole number of device pixels in
 the item's own window (`Style.hairline` for a rule, `Style.indicatorWidth` for
 a border, a ring or a caret), `Style.radiusBody` is the corner of a body directly in a
-rollout, and `Style.recede(colour)` dims a colour for "not the current one".
+rollout, `Style.recede(colour)` dims a colour for "not the current one", and
+`Style.snap(px, item)` and `Style.snapUp(px, item)` put a centred position or a
+content-sized height on the device grid.
 A role derives from the scales and the size table, so a theme changes it by
 changing those.
 

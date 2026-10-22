@@ -1,1 +1,26 @@
-{"key":"popover-placement","steps":[{"equals":true,"observable":"open","type":"expect"},{"equals":"bottom","observable":"side","type":"expect"},{"group":"placement","option":"top","type":"control"},{"equals":"bottom","observable":"side","type":"expect"},{"group":"state","option":"closed","type":"control"},{"equals":false,"observable":"open","type":"expect"},{"group":"state","option":"open","type":"control"},{"equals":true,"observable":"open","type":"expect"},{"group":"placement","option":"bottom","type":"control"},{"equals":"bottom","observable":"side","type":"expect"}],"target":{"story":"popover"},"version":1}
+{
+  "version": 1,
+  "key": "popover-placement",
+  "target": { "story": "popover" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "open", "equals": true },
+    { "type": "await", "observable": "side", "equals": "bottom" },
+    { "type": "control", "group": "placement", "option": "top" },
+    { "type": "await", "observable": "side", "equals": "top" },
+    { "type": "control", "group": "room", "option": "tight" },
+    { "type": "await", "observable": "side", "equals": "bottom" },
+    { "type": "control", "group": "placement", "option": "left" },
+    { "type": "control", "group": "room", "option": "roomy" },
+    { "type": "await", "observable": "side", "equals": "left" },
+    { "type": "control", "group": "room", "option": "tight" },
+    { "type": "await", "observable": "side", "equals": "right" },
+    { "type": "control", "group": "state", "option": "closed" },
+    { "type": "expect", "observable": "open", "equals": false },
+    { "type": "control", "group": "state", "option": "open" },
+    { "type": "expect", "observable": "open", "equals": true },
+    { "type": "control", "group": "placement", "option": "bottom" },
+    { "type": "control", "group": "room", "option": "roomy" },
+    { "type": "await", "observable": "side", "equals": "bottom" }
+  ]
+}

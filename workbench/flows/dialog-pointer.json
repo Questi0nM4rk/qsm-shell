@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "key": "dialog-pointer",
+  "target": { "story": "dialog" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "await", "observable": "focus", "equals": "keep" },
+    { "type": "pointer", "target": "dialog", "event": "click", "x": 0.5, "y": 0.5 },
+    { "type": "expect", "observable": "dismissals", "equals": 0 },
+    { "type": "expect", "observable": "open", "equals": true },
+    { "type": "pointer", "target": "dialog", "event": "wheel", "dx": 0, "dy": -120 },
+    { "type": "expect", "observable": "open", "equals": true },
+    { "type": "control", "group": "dismissal", "option": "refused" },
+    { "type": "pointer", "target": "dialog", "event": "click", "x": 0.05, "y": 0.9 },
+    { "type": "expectEvent", "event": "dismiss-requested", "origin": "component" },
+    { "type": "expect", "observable": "dismissals", "equals": 1 },
+    { "type": "expect", "observable": "open", "equals": true },
+    { "type": "control", "group": "dismissal", "option": "allowed" },
+    { "type": "pointer", "target": "dialog", "event": "click", "x": 0.05, "y": 0.9 },
+    { "type": "expect", "observable": "dismissals", "equals": 2 },
+    { "type": "expect", "observable": "open", "equals": false },
+    { "type": "pointer", "target": "remove", "event": "click", "x": 0.2, "y": 0.5 },
+    { "type": "expect", "observable": "confirms", "equals": 0 },
+    { "type": "pointer", "target": "dialog", "event": "click", "x": 0.05, "y": 0.9 },
+    { "type": "expect", "observable": "dismissals", "equals": 2 },
+    { "type": "await", "observable": "visible", "equals": false }
+  ]
+}
