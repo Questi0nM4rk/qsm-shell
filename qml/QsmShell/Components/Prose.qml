@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 
 import qs.QsmShell.Style
 
@@ -12,7 +13,7 @@ import qs.QsmShell.Style
 // heading") instead of restating its three consequences, so the decision can
 // be changed in one place and cannot be half-applied.
 //
-// The roles are the type scale's semantic layer, and there are eight because
+// The roles are the type scale's semantic layer, and there are ten because
 // that is how many kinds of text a shell actually has:
 //
 //   hero      a number read from across the room. A clock, nothing else.
@@ -24,8 +25,8 @@ import qs.QsmShell.Style
 //   metadata  the fine print: a timestamp, a source, a count. It sits on the
 //             type floor, 12: nothing a person reads is smaller.
 //   supporting  the line that explains the thing above it and is meant to be
-//             READ, not skimmed past. Same shape and size as metadata; a call
-//             site says which of the two it means.
+//             READ, not skimmed past. It renders as metadata does; the name is
+//             what a call site says it means.
 //   reading   a VALUE, in the technical face — a percentage, an address, a
 //             key combination. Tabular by intent: numbers that change must not
 //             move the text around them.
@@ -79,11 +80,6 @@ Text {
         case "display": return Style.textDisplay;
         case "heading": return Style.textXl;
         case "title": return Style.textMd;
-        case "body": return Style.textSm;
-        case "supporting": return Style.textSm;
-        case "metadata": return Style.textSm;
-        case "reading": return Style.textSm;
-        case "section": return Style.textSm;
         default: return Style.textSm;
         }
     }
@@ -116,8 +112,23 @@ Text {
 
     // Numbers that change must not shift the text beside them, which is the
     // whole reason the face exists as its own axis: it is a TABULAR decision,
-    // and it applies at every size a number is written at.
+    // and it applies at every size a number is written at. The monospace face
+    // makes the digits equal; kerning off keeps pair adjustments from undoing it.
     font.kerning: !technical
+
+    // The text box is a whole number of DEVICE pixels tall. Qt rounds a line to
+    // a whole logical pixel, which at a fractional scale lands between two
+    // device rows (14 px is 17.5 at 1.25) and puts every node stacked below off
+    // the grid. The slack goes under the glyphs as padding, never into
+    // `lineHeight`, which would move them; it is under one device pixel, and 0
+    // wherever the line already fits the grid. A layout rounds an implicit
+    // height UP to a whole logical pixel, which would undo it, so the height
+    // is also the preferred one.
+    readonly property real _dpr: root.Window.window?.devicePixelRatio ?? 1
+    bottomPadding: Math.max(0, Math.ceil(root.contentHeight * root._dpr - 0.001)
+        - root.contentHeight * root._dpr) / root._dpr
+
+    Layout.preferredHeight: root.implicitHeight
 
     wrapMode: _wraps ? Text.WordWrap : Text.NoWrap
     textFormat: Text.PlainText

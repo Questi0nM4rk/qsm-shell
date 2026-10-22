@@ -90,7 +90,17 @@ Item {
             muted: () => specimen.muted,
             technical: () => specimen.technical,
             "wraps": () => specimen.wrapMode !== Text.NoWrap,
-            "ladder-roles": () => ladderRows.count
+            "ladder-roles": () => ladderRows.count,
+            // Every text box of the ladder is a whole number of device pixels tall.
+            "device-aligned": () => {
+                const dpr = root.Window.window?.devicePixelRatio ?? 1
+                for (let i = 0; i < ladderRows.count; i++) {
+                    const device = ladderRows.itemAt(i).height * dpr
+                    if (Math.abs(device - Math.round(device)) > 0.001)
+                        return false
+                }
+                return ladderRows.count > 0
+            }
         },
         runAction: () => false
     })
