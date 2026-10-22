@@ -13,6 +13,8 @@ TestCase {
         id: center
         width: 460
         entries: []
+        view: "all"
+        fadeColor: "#271e30"
     }
     SignalSpy { id: triggered; target: center; signalName: "actionTriggered" }
     SignalSpy { id: dismissed; target: center; signalName: "dismissRequested" }

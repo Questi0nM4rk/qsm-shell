@@ -155,6 +155,8 @@ TestCase {
         id: center
         y: 780
         width: 400
+        view: "all"
+        fadeColor: "#271e30"
         entries: probe.centerEntries
         onDismissRequested: entry => probe.centerDismissed = entry
         onActionTriggered: (entry, id) => { probe.centerActionEntry = entry; probe.centerActionId = id; }
@@ -534,11 +536,11 @@ TestCase {
     }
 
     // The entry shape's two time fields are mutually exclusive by
-    // construction: a live entry with a fresh `createdAt` reads as relative
-    // once expanded, and an archived one always reads as its wall-clock time.
+    // construction: a live entry with a fresh `createdAt` reads as just now,
+    // and an archived one reads its age from `archivedAt`, in the same format.
     function test_notification_card_timestamp_follows_archived_vs_live() {
-        compare(archivedNotification.timestampText(), "09:30",
-            "an archived entry did not show its wall-clock time");
+        verify(/^\d+d ago$/.test(archivedNotification.timestampText()),
+            "an archived entry did not show its age from archivedAt");
         verify(notification.alwaysExpanded === false, "fixture drifted");
         notification.alwaysExpanded = true;
         compare(notification.timestampText(), "just now",
@@ -575,6 +577,7 @@ TestCase {
     function test_notification_center_remove_selected_reports_without_mutating_entries() {
         probe.centerDismissed = null;
         center.currentIndex = 0;
+        tryVerify(() => center.selectedEntry() !== null);
         center.removeSelected();
         verify(probe.centerDismissed !== null, "removeSelected did not report a dismissal");
         compare(probe.centerDismissed.notificationId, 10, "the wrong entry was reported");

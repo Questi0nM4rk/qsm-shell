@@ -1047,11 +1047,11 @@
       "component": "notification-center",
       "variant": "resting",
       "viewport": [
-        800,
-        500
+        436,
+        480
       ],
       "title": "NotificationCenter / Resting",
-      "description": "Searchable notification history grouped by application.",
+      "description": "Searchable notification history grouped by application, with the unread view, do-not-disturb and an armed clear.",
       "tags": [
         "notification",
         "list"
