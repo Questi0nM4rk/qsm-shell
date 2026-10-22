@@ -78,9 +78,10 @@ Item {
             root.openRequested();
     }
 
-    // The pointer is over the anchor (hover trigger only) or over the popover
-    // itself: the fact a host would otherwise re-derive to decide on closing.
-    readonly property bool hovered: anchorHover.hovered || selfHover.hovered
+    // The pointer is over the anchor (hover trigger only), over the popover
+    // itself or over the strip between them: the fact a host would otherwise
+    // re-derive to decide on closing.
+    readonly property bool hovered: anchorHover.hovered || selfHover.hovered || corridorHover.hovered
 
     // Which side it ACTUALLY landed on, after flipping. A caller drawing a
     // tail or a seam needs this, not the preference.
@@ -266,6 +267,39 @@ Item {
     // Hovering the popover itself keeps it alive. A menu you cannot move the
     // pointer into is a menu you cannot use.
     HoverHandler { id: selfHover }
+
+    // The path between them. The gap belongs to neither, so a pointer that
+    // lingers in it would leave both and close the panel after the grace
+    // period; this strip, from the anchor's edge to the panel's across both of
+    // their extents, keeps the union whole. It only listens, and only while a
+    // hover popover is open.
+    Item {
+        id: corridor
+
+        readonly property rect _anchor: root._anchor
+        readonly property real _left: Math.min(_anchor.x, root.x)
+        readonly property real _right: Math.max(_anchor.x + _anchor.width, root.x + root.width)
+        readonly property real _top: Math.min(_anchor.y, root.y)
+        readonly property real _bottom: Math.max(_anchor.y + _anchor.height, root.y + root.height)
+        readonly property rect _strip: {
+            switch (root.side) {
+            case "top": return Qt.rect(_left, root.y + root.height, _right - _left, _anchor.y - root.y - root.height);
+            case "bottom": return Qt.rect(_left, _anchor.y + _anchor.height, _right - _left, root.y - _anchor.y - _anchor.height);
+            case "left": return Qt.rect(root.x + root.width, _top, _anchor.x - root.x - root.width, _bottom - _top);
+            default: return Qt.rect(_anchor.x + _anchor.width, _top, root.x - _anchor.x - _anchor.width, _bottom - _top);
+            }
+        }
+
+        x: _strip.x - root.x
+        y: _strip.y - root.y
+        width: Math.max(0, _strip.width)
+        height: Math.max(0, _strip.height)
+
+        HoverHandler {
+            id: corridorHover
+            enabled: root.trigger === "hover" && root.open
+        }
+    }
 
     // A press trigger follows the anchor's own activation when it has one: a
     // button answers Space and Return through `clicked` and a tap handler

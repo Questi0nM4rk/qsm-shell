@@ -149,6 +149,8 @@ Rectangle {
         }),
         observables: {
             open: () => pop.open,
+            // The panel has stopped travelling: fully opaque and painted where it is laid out.
+            settled: () => pop.opacity === 1 && Math.hypot(card.mapToItem(root, 0, 0).x - pop.x, card.mapToItem(root, 0, 0).y - pop.y) < 0.01,
             hovered: () => pop.hovered,
             side: () => pop.side,
             focus: () => root._focusName(),
