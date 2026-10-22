@@ -8,7 +8,7 @@ keyboard: none; it is never a tab stop and takes no keys.
 screen reader: none; the owning row carries the name and the selected state.
 size: `Style.markThickness` wide (`strong` adds `Style.indicatorWidth`), `Style.markHeight` tall, pill radius, both widths a whole number of device pixels; hidden collapses height and opacity together. The consumer positions it in the row's own layout.
 tokens: markThickness, markHeight, indicatorWidth, radiusPill, accent, Motion and `Style.stroke`; no local colours or measurements.
-motion: an arrival grows in `Motion.micro` with the emphasized curve; a departure shortens by `Motion.exit` (80 %) on the exit curve; widening takes `Motion.micro`. Reduced motion shortens all of them.
+motion: one curve both ways, `Motion.micro` on the emphasized curve for the height and the standard curve for the opacity; widening takes `Motion.micro` on the move curve. Reduced motion shortens all of them. A departure that eased in (`Motion.exitEasing`) would hold the old mark on screen while the next lands, so there is none; a Behavior also reads its duration before a `shown ? a : b` binding in it has re-evaluated, so such a branch never ran (a 600 ms departure still finished in 71 ms).
 not designed: selection state, focus, activation, a dimmed resting level or a mark that is always present; the row owns them.
 
 ## Contract
@@ -25,5 +25,5 @@ not designed: selection state, focus, activation, a dimmed resting level or a ma
 | mark centre against its row label centre | 0 px |
 | mark left inset, label inset | 4 px, 16 px |
 | accent on band | 8.87:1 |
-| departure, recorded frames at 60 fps (16.4 ms apart) | 82 ms to zero before `Motion.exit`, 65 ms after |
-| arrival, same frames | height settled within 66 ms |
+| arrival, height to 90 %, sampled every 4 ms | 72 ms (token 130, ease-out, frames 17 ms apart in the offscreen renderer) |
+| departure, height to 10 % | 71 ms, the same curve as the arrival |

@@ -33,20 +33,17 @@ Rectangle {
     color: root.markColor
     opacity: root.shown ? 1 : 0
 
-    // It grows in and shrinks away, and the two are not the same motion: an
-    // arrival lands, a departure gets out of the way, in less time than it
-    // took to arrive.
+    // It grows in and shrinks away on one curve. The mark that leaves must
+    // clear the row as fast as the next one lands: an exit that eased in
+    // (`Motion.exitEasing`) would hold the old mark at full height while the
+    // new one arrives. (A Behavior reads its duration and easing before a
+    // `shown ? a : b` binding in them has re-evaluated, so a branch on
+    // `shown` here never ran: the departure always took the arrival's curve.)
     Behavior on height {
-        NumberAnimation {
-            duration: root.shown ? Motion.micro : Motion.exit(Motion.micro)
-            easing.type: root.shown ? Motion.emphasizedEasing : Motion.exitEasing
-        }
+        NumberAnimation { duration: Motion.micro; easing.type: Motion.emphasizedEasing }
     }
     Behavior on opacity {
-        NumberAnimation {
-            duration: root.shown ? Motion.micro : Motion.exit(Motion.micro)
-            easing.type: root.shown ? Motion.standardEasing : Motion.exitEasing
-        }
+        NumberAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
     }
     // Widening is neither an arrival nor a departure: both ends already exist.
     Behavior on width {
