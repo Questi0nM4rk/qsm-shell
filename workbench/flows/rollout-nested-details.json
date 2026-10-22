@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "key": "rollout-nested-details",
+  "target": { "story": "rollout-hover" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "control", "group": "layer", "option": "short-child" },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "nested", "equals": true },
+    { "type": "await", "observable": "child-visible", "equals": true },
+    { "type": "pointer", "target": "details", "event": "click" },
+    { "type": "expectEvent", "event": "details-changed", "origin": "component", "payload": { "open": false } },
+    { "type": "await", "observable": "child-visible", "equals": false },
+    { "type": "expect", "observable": "hit-active", "equals": true },
+    { "type": "action", "name": "toggle-details" },
+    { "type": "expectEvent", "event": "details-changed", "origin": "component", "payload": { "open": true } },
+    { "type": "await", "observable": "child-hit-active", "equals": true },
+    { "type": "pointer", "target": "alarms", "event": "click" },
+    { "type": "expectEvent", "event": "alarms-changed", "origin": "component", "payload": { "checked": false } },
+    { "type": "expect", "observable": "alarms-audible", "equals": false },
+    { "type": "key", "target": "alarms", "key": "Space" },
+    { "type": "expect", "observable": "alarms-audible", "equals": true },
+    { "type": "control", "group": "mode", "option": "hidden" },
+    { "type": "awaitIdle" },
+    { "type": "expect", "observable": "hit-active", "equals": false },
+    { "type": "expect", "observable": "child-visible", "equals": false },
+    { "type": "control", "group": "mode", "option": "shown" },
+    { "type": "await", "observable": "child-visible", "equals": true }
+  ]
+}

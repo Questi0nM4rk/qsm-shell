@@ -9,6 +9,10 @@ Item {
     default property alias content: inner.data
     readonly property alias contentItem: inner
 
+    // A named pane for assistive tools while it shows; the host names it
+    // through `Accessible.name` on its own instance.
+    Accessible.role: Accessible.Pane
+
     // The host hosting this rollout — owner of both registries.
     required property var host
     // Registry key; unique per rollout within a host.
@@ -68,7 +72,6 @@ Item {
     // detached capsule geometry. Normal rollouts never consult these values.
     property bool fullscreenDetached: false
     property bool fullscreenCapsule: true
-    property real fullscreenInset: Style.rolloutPadding
     property real fullscreenRadius: Style.radiusPill
     // Scales the speed-driven stretch of a detached presentation; attached
     // content never travels or deforms.
@@ -133,6 +136,17 @@ Item {
     // what `keepOpen` means.
     readonly property bool keepOpen: root.visible && (hovered || closeDelayTimer.running)
 
+    // True while keyboard focus sits inside the content. A host that wants a
+    // keyboard user to keep the surface open reads it beside `keepOpen`; the
+    // rollout never opens or closes on it.
+    readonly property bool focusWithin: {
+        for (let item = root.Window.window?.activeFocusItem ?? null; item; item = item.parent) {
+            if (item === inner)
+                return true;
+        }
+        return false;
+    }
+
     // The verdict a surface binds `shouldBeActive` against: open because the
     // pointer is on the trigger right now (which works even while closed),
     // or open because `keepOpen` says so (which only ever applies once
@@ -145,32 +159,27 @@ Item {
         interval: root.closeDelay
     }
 
-    onVisibleChanged: {
-        syncRegistries()
-        if (!visible)
-            closeDelayTimer.stop()
-        else if (!hovered)
-            closeDelayTimer.restart()
-    }
-    onSuppressedChanged: {
-        if (suppressed) {
-            closeDelayTimer.stop()
-            widthMorph.complete()
-            heightMorph.complete()
-        }
-        syncRegistries()
-    }
-    onPointerChanged: {
-        if (!pointer || !pointer.inside)
-            closeDelayTimer.stop()
-    }
-
-    onHoveredChanged: {
-        if (root.hovered || !root.visible || root.suppressed)
+    // The grace runs only while the rollout shows and nothing hovers it.
+    function _restartGrace(): void {
+        if (hovered || !visible || suppressed)
             closeDelayTimer.stop();
         else
             closeDelayTimer.restart();
     }
+
+    onVisibleChanged: {
+        syncRegistries()
+        _restartGrace()
+    }
+    onSuppressedChanged: {
+        if (suppressed) {
+            widthMorph.complete()
+            heightMorph.complete()
+        }
+        _restartGrace()
+        syncRegistries()
+    }
+    onHoveredChanged: _restartGrace()
 
     function attached(side: string): bool {
         return edges.includes(side);
@@ -184,9 +193,12 @@ Item {
     readonly property rect _placementArea: parentRollout ? _parentRect : placementBounds
     readonly property rect _anchorRect: anchorItem && host && typeof host.mapFromItem === "function"
         ? (() => {
-            // mapFromItem does not notify when its source moves after loading.
+            // mapFromItem does not notify when its source moves after loading;
+            // reading x and y subscribes this binding to the move.
+            // qmllint disable confusing-expression-statement
             anchorItem.x;
             anchorItem.y;
+            // qmllint enable confusing-expression-statement
             const point = host.mapFromItem(anchorItem, 0, 0);
             return Qt.rect(point.x, point.y, anchorItem.width, anchorItem.height);
         })()
@@ -393,7 +405,10 @@ Item {
         const entry = tier === "small" ? Motion.revealSmall : Motion.revealLarge;
         revealAnim.from = offsetScale;
         revealAnim.to = _offsetTarget;
-        revealAnim.duration = revealing ? entry : Motion.exit(entry);
+        // A turn-back covers only the distance left, so it never replays the
+        // whole pace from a half-open aperture.
+        revealAnim.duration = Math.round((revealing ? entry : Motion.exit(entry))
+            * Math.abs(_offsetTarget - offsetScale));
         // Reveal decelerates hard, retract never overshoots: no springs.
         revealAnim.easing.bezierCurve = revealing ? Motion.revealCurve : Motion.retractCurve;
         revealAnim.start();
@@ -406,6 +421,8 @@ Item {
     visible: !suppressed && (revealAnim.running || offsetScale < 1)
     // Even a custom offset must never grow past the flush body extent.
     readonly property real _detachedTravel: _joined ? 0 : Math.max(0, offsetScale)
+    readonly property real _travelX: (bodyWidth + Style.space1) * _detachedTravel
+    readonly property real _travelY: (bodyHeight + Style.space1) * _detachedTravel
     readonly property real revealProgress: Math.max(0, Math.min(1, 1 - offsetScale))
     // Anchor-item placement and explicit QML anchors share the same
     // source wall; only the aperture depth changes with reveal.
@@ -427,8 +444,10 @@ Item {
     // being settled, because during the reveal the size IS the animation and a
     // second one fighting it produces exactly the jitter the back limit exists
     // to prevent.
+    readonly property bool _morphs: animateBodySize && visible && offsetScale <= 0 && !revealAnim.running
+
     Behavior on bodyWidth {
-        enabled: root.animateBodySize && root.visible && root.offsetScale <= 0 && !revealAnim.running
+        enabled: root._morphs
         NumberAnimation {
             id: widthMorph
             duration: Motion.morphGlide
@@ -437,7 +456,7 @@ Item {
     }
 
     Behavior on bodyHeight {
-        enabled: root.animateBodySize && root.visible && root.offsetScale <= 0 && !revealAnim.running
+        enabled: root._morphs
         NumberAnimation {
             id: heightMorph
             duration: Motion.morphGlide
@@ -448,7 +467,8 @@ Item {
     // Paint survives retract; input is only the near-settled active aperture.
     // The content slot and the hit region share this one predicate, so nothing
     // clipped out of view can take a key or a click while the reveal runs.
-    readonly property bool _inputReady: shouldBeActive && !suppressed && revealProgress >= 0.9
+    readonly property real _nearSettled: 0.9
+    readonly property bool _inputReady: shouldBeActive && !suppressed && revealProgress >= _nearSettled
     readonly property bool hitActive: registerHitRect && _inputReady && visible
 
     // Melt-blend factor: the neck's reach grows with the window's size, so
@@ -596,10 +616,9 @@ Item {
             host.unregisterRolloutRegion(rolloutId);
     }
 
-    onXChanged: syncRegistries()
-    onYChanged: syncRegistries()
-    onWidthChanged: syncRegistries()
-    onHeightChanged: syncRegistries()
+    // One handler per fact the registration reads. x, y, width, height and the
+    // body's geometry are already inside the two rects, so a handler of their
+    // own would register the same frame again.
     onHitActiveChanged: syncRegistries()
     onFullscreenDetachedChanged: syncRegistries()
     onFullscreenCapsuleChanged: syncRegistries()
@@ -611,14 +630,6 @@ Item {
     onEffectiveDeformChanged: syncRegistries()
     onFlushToParentChanged: syncRegistries()
     on_ChildSeamBitsChanged: syncRegistries()
-
-    Connections {
-        target: body
-        function onXChanged() { root.syncRegistries(); }
-        function onYChanged() { root.syncRegistries(); }
-        function onWidthChanged() { root.syncRegistries(); }
-        function onHeightChanged() { root.syncRegistries(); }
-    }
 
     Connections {
         target: root.childRollout
@@ -644,8 +655,7 @@ Item {
     Component.onCompleted: {
         offsetScale = _offsetTarget;
         _ready = true;
-        if (visible && !hovered && !suppressed)
-            closeDelayTimer.restart();
+        _restartGrace();
         // 1..3 edges: edges[0] names the REVEAL axis; the rest are flush
         // contacts (squared corners + rim burial). An opposite pair is only
         // legal on the CROSS axis (a full-extent column/strip).
@@ -658,6 +668,8 @@ Item {
             || opposedOnReveal;
         if (bad)
             console.warn("Rollout: invalid edges", JSON.stringify(edges));
+        if (tier !== "small" && tier !== "large")
+            console.warn("Rollout: unknown tier", tier);
         syncRegistries();
     }
 
@@ -675,15 +687,11 @@ Item {
         width: root.bodyWidth
         height: root.bodyHeight
         x: !root.revealHorizontal ? 0
-            : root.attached("left")
-                ? -(root.bodyWidth + 5) * root._detachedTravel
-                : root.width - root.bodyWidth
-                    + (root.bodyWidth + 5) * root._detachedTravel
+            : root.attached("left") ? -root._travelX
+            : root.width - root.bodyWidth + root._travelX
         y: root.revealHorizontal ? 0
-            : root.attached("top")
-                ? -(root.bodyHeight + 5) * root._detachedTravel
-                : root.height - root.bodyHeight
-                    + (root.bodyHeight + 5) * root._detachedTravel
+            : root.attached("top") ? -root._travelY
+            : root.height - root.bodyHeight + root._travelY
 
         Item {
             id: inner
