@@ -870,13 +870,13 @@
     },
     "action-tile": {
       "component": "action-tile",
-      "variant": "armed",
+      "variant": "session",
       "viewport": [
         800,
         500
       ],
-      "title": "ActionTile / Armed",
-      "description": "Action tile in armed confirmation state.",
+      "title": "ActionTile / Session set",
+      "description": "Session actions as a set of tiles: select, arm, confirm.",
       "tags": [
         "action",
         "control"

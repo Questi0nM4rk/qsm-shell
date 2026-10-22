@@ -1,37 +1,102 @@
 import QtQuick
+import QtQuick.Layouts
 
 import qs.QsmShell.Components
+import qs.QsmShell.Style
 
+// The task: choose what happens to the session. The set plays the host a
+// session surface plays: it owns which tile is selected (the pointer moves it),
+// arms the destructive ones through the library's ArmedAction and runs the
+// choice. The tiles only report.
 Item {
     id: root
 
     property string variant: ""
     property var eventRecorder: null
-    property bool selected: false
-    property bool armed: variant === "armed"
+    property string size: "md"
+    property bool longLabels: false
+    property int selectedIndex: -1
+    property int firedCount: 0
+    property string firedRole: ""
 
-    implicitWidth: tile.implicitWidth
-    implicitHeight: tile.implicitHeight
+    readonly property var session: [
+        { icon: "lock", label: "Lock", role: "lock", destructive: false },
+        { icon: "moon", label: "Hibernate", role: "hibernate", destructive: false },
+        { icon: "log-out", label: "Log out", confirmLabel: "Log out?", role: "logout", destructive: true },
+        { icon: "rotate-cw", label: "Restart", confirmLabel: "Restart?", role: "reboot", destructive: true },
+        { icon: "power", label: "Shut down", confirmLabel: "Shut down?", role: "shutdown", destructive: true }
+    ]
+    readonly property string _longWord: " and close everything"
 
-    ActionTile {
-        id: tile
+    implicitWidth: row.implicitWidth
+    implicitHeight: row.implicitHeight
+
+    RowLayout {
+        id: row
         anchors.centerIn: parent
-        icon: "power"
-        label: "Power off"
-        confirmLabel: "Confirm?"
-        selected: root.selected
-        armed: root.armed
-        onActivated: root.eventRecorder?.("intent", "activated", { selected: root.selected, armed: root.armed })
+        spacing: Style.space2
+
+        Repeater {
+            id: tiles
+            model: root.session
+
+            ActionTile {
+                id: tile
+                required property var modelData
+                required property int index
+
+                readonly property ArmedAction arm: ArmedAction {
+                    destructive: tile.modelData.destructive
+                    onFired: {
+                        root.firedCount++
+                        root.firedRole = tile.modelData.role
+                        root.eventRecorder?.("intent", "fired", { role: tile.modelData.role })
+                    }
+                }
+
+                icon: modelData.icon
+                label: root.longLabels ? modelData.label + root._longWord : modelData.label
+                confirmLabel: modelData.confirmLabel ?? ""
+                size: root.size
+                growthCap: Motion.hoverGrowthWithin(row.spacing)
+                danger: modelData.role === "shutdown"
+                // The group that ends the session starts a full step after the
+                // group that keeps it.
+                Layout.leftMargin: index > 0 && modelData.destructive && !root.session[index - 1].destructive
+                    ? Style.space4 - Style.space2 : 0
+                selected: root.selectedIndex === index
+                armed: arm.armed
+                onSelectedChanged: if (!selected) arm.disarm()
+                onEntered: root.selectedIndex = index
+                onExited: arm.disarm()
+                onActivated: {
+                    root.selectedIndex = index
+                    root.eventRecorder?.("intent", "activated", { role: modelData.role, armed: arm.armed })
+                    arm.trigger()
+                }
+            }
+        }
+    }
+
+    function _tile(index: int): var {
+        return tiles.itemAt(index)
     }
 
     readonly property var controls: [
-        { label: "selection", options: [
-            { label: "rest", set: { selected: false } },
-            { label: "selected", set: { selected: true } }
+        { label: "size", options: [
+            { label: "xs", set: { size: "xs" } },
+            { label: "sm", set: { size: "sm" } },
+            { label: "md", set: { size: "md" } },
+            { label: "lg", set: { size: "lg" } }
         ] },
-        { label: "armed", options: [
-            { label: "off", set: { armed: false } },
-            { label: "on", set: { armed: true } }
+        { label: "labels", options: [
+            { label: "short", set: { longLabels: false } },
+            { label: "long", set: { longLabels: true } }
+        ] },
+        { label: "selection", options: [
+            { label: "none", set: { selectedIndex: -1 } },
+            { label: "first", set: { selectedIndex: 0 } },
+            { label: "last", set: { selectedIndex: 4 } }
         ] },
         { label: "state", options: [
             { label: "enabled", set: { enabled: true } },
@@ -39,22 +104,35 @@ Item {
         ] }
     ]
     readonly property var integration: ({
-        events: ["activated"],
+        events: ["activated", "fired"],
         actions: ["activate"],
-        keys: {
-            "Space": () => { tile.activate(); return true },
-            "Enter": () => { tile.activate(); return true }
-        },
+        targets: ({
+            lock: () => root._tile(0),
+            logout: () => root._tile(2),
+            shutdown: () => root._tile(4)
+        }),
         observables: {
-            selected: () => root.selected,
-            armed: () => root.armed,
             enabled: () => root.enabled,
-            "shown-label": () => tile.shownLabel
+            size: () => root.size,
+            "selected-index": () => root.selectedIndex,
+            "armed-role": () => {
+                for (let i = 0; i < root.session.length; i++)
+                    if (root._tile(i)?.armed)
+                        return root.session[i].role
+                return ""
+            },
+            "fired-role": () => root.firedRole,
+            "fired-count": () => root.firedCount,
+            "shutdown-label": () => root._tile(4)?.shownLabel ?? "",
+            "tile-width": () => root._tile(0)?.width ?? 0,
+            "tile-height": () => root._tile(0)?.height ?? 0,
+            "lock-name": () => root._tile(0)?.Accessible.name ?? "",
+            "shutdown-selected": () => root._tile(4)?.Accessible.selected ?? false
         },
         runAction: name => {
             if (name !== "activate")
                 return false
-            tile.activate()
+            root._tile(4).activate()
             return true
         }
     })
