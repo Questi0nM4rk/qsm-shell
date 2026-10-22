@@ -33,7 +33,7 @@ Item {
 
     readonly property bool _line: shape === "line"
     // The breath's low point: the share of its colour the bar keeps.
-    readonly property real _trough: 0.4
+    readonly property real _trough: 0.5
 
     // The real line box, from a real text. Hidden, and never painted.
     Prose {
