@@ -5,16 +5,21 @@
   "steps": [
     { "type": "reset" },
     { "type": "expect", "observable": "checked", "equals": true },
-    { "type": "action", "name": "toggle" },
+    { "type": "expect", "observable": "accessible-checked", "equals": true },
+    { "type": "pointer", "target": "toggle", "event": "click" },
+    { "type": "expectEvent", "event": "toggle-requested", "origin": "component", "payload": { "checked": false } },
     { "type": "expect", "observable": "checked", "equals": false },
-    { "type": "expectEvent", "event": "toggle-requested", "origin": "component" },
+    { "type": "expect", "observable": "accessible-checked", "equals": false },
+    { "type": "key", "target": "toggle", "key": "Space" },
+    { "type": "expectEvent", "event": "toggle-requested", "origin": "component", "payload": { "checked": true } },
+    { "type": "expect", "observable": "checked", "equals": true },
+    { "type": "key", "target": "toggle", "key": "Enter" },
+    { "type": "expectEvent", "event": "toggle-requested", "origin": "component", "payload": { "checked": false } },
+    { "type": "expect", "observable": "checked", "equals": false },
+    { "type": "action", "name": "toggle" },
+    { "type": "expect", "observable": "checked", "equals": true },
     { "type": "control", "group": "state", "option": "disabled" },
     { "type": "action", "name": "toggle" },
-    { "type": "expect", "observable": "checked", "equals": false },
-    { "type": "key", "key": "Space" },
-    { "type": "expect", "observable": "checked", "equals": false },
-    { "type": "control", "group": "state", "option": "enabled" },
-    { "type": "key", "key": "Enter" },
     { "type": "expect", "observable": "checked", "equals": true }
   ]
 }

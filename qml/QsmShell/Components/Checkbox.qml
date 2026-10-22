@@ -35,8 +35,9 @@ T.AbstractButton {
     // One scale per instance: the mark, the row gap and the label (provided
     // by the host through the default slot) are derived from this ratio
     // against md, so it is the one number a host composing around it needs.
-    readonly property real _s: root.boxSize / Style.size("Checkbox", "md")
-    readonly property real sizeScale: root._s
+    readonly property real sizeScale: root.boxSize / Style.size("Checkbox", "md")
+    // The type step a label in the slot reads at, so the text scales with the box.
+    readonly property int labelSize: Style.textNear(Style.textMd * root.sizeScale)
 
     // Short string for screen readers; does not render visible content.
     property string accessibleName: ""
@@ -45,7 +46,8 @@ T.AbstractButton {
     signal toggleRequested(bool checked)
 
     // Every route is this one call: pointer (clicked), Space (the template
-    // clicks on Space), Return (below) and a caller.
+    // clicks on Space), Return and keypad Enter (below), the screen reader and
+    // a caller.
     function flip(): void {
         if (root.enabled)
             root.toggleRequested(!root.checked);
@@ -66,36 +68,41 @@ T.AbstractButton {
     Accessible.onPressAction: root.flip()
     Accessible.onToggleAction: root.flip()
 
-    // A constant, never content-derived: a long label elides inside it.
-    property real labelWidth: Style.rhythm(Style.controlWidth * root._s)
-    readonly property bool _hasLabel: labelSlot.children.length > 0
-    readonly property real _box: root.boxSize
-    readonly property real _markRatio: 0.75
-    readonly property bool _marked: root.checked || root.indeterminate
-    implicitWidth: row.implicitWidth
-    implicitHeight: Math.max(_box, row.implicitHeight)
-    padding: 0
-
-    // The pointer hits the footprint plus a square of at least `iconLg` around
-    // the box, so a bare sm or md box is not a smaller target than the floor.
-    // The overflow is hit area only: the natural size above is untouched.
-    containmentMask: QtObject {
-        function contains(point: point): bool {
-            if (point.x >= 0 && point.y >= 0 && point.x < root.width && point.y < root.height)
-                return true;
-            const c = box.mapToItem(root, box.width / 2, box.height / 2);
-            const reach = Math.max(root._box, Style.iconLg) / 2;
-            return Math.abs(point.x - c.x) <= reach && Math.abs(point.y - c.y) <= reach;
-        }
-    }
-
     onClicked: root.flip()
     Keys.onReturnPressed: root.flip()
+    Keys.onEnterPressed: root.flip()
+
+    readonly property real _box: root.boxSize
+    readonly property bool _hasLabel: labelSlot.children.length > 0
+    readonly property real _gap: root._hasLabel ? Style.rhythm(root._box * 0.5) : 0
+    readonly property bool _marked: root.checked || root.indeterminate
+    // The mark rides at 3:4 of the box -- the inner eighth stays air at every
+    // size, the ratio M3 draws its mark at. Snapping it to the icon scale would
+    // land a 12px glyph inside the 12px sm box, so it is a proportion of the
+    // box, not a token.
+    readonly property real _markSize: root._box * 0.75
+
+    // The label column is a constant, never content-derived: the row is one
+    // `controlWidth` wide at md, so a checkbox lines up with the fields and
+    // bars around it, and a long label elides inside the column.
+    property real labelWidth: Math.round(Style.controlWidth * root.sizeScale) - root._box - root._gap
+    implicitWidth: row.implicitWidth
+    // The pointer target is the footprint, and the footprint is at least
+    // `Style.iconLg` tall (the 24 px floor of WCAG 2.5.8), so the hit zone and
+    // the hover zone are one rectangle and nothing overflows it. A shorter box
+    // and label centre in the slack.
+    implicitHeight: Math.max(Style.iconLg, row.implicitHeight)
+    padding: 0
+
+    // The pointing hand over the whole row while enabled.
+    HoverHandler {
+        enabled: root.enabled
+        cursorShape: Qt.PointingHandCursor
+    }
 
     contentItem: RowLayout {
         id: row
-        anchors.fill: parent
-        spacing: root._hasLabel ? Style.rhythm(root._box * 0.5) : 0
+        spacing: root._gap
 
         // The box is the footprint; the body is what the layer grows, so the
         // mark inside it keeps its size.
@@ -105,50 +112,53 @@ T.AbstractButton {
             implicitWidth: root._box
             implicitHeight: root._box
 
+            // The unchecked box has to EXIST before it can be checked, and a
+            // transparent square on a boxless surface does not: an empty toggle
+            // is an outline (`textMuted`), and checking it fills the outline in
+            // with accent. The ring stays and takes the fill's colour, so
+            // checking is one cross-fade of fill and ring on one clock. The
+            // fill is the SAME colour at no alpha when unmarked, not
+            // "transparent", so the fade never passes through a dark mix.
+            // Hover and press change the colour through the one state matrix
+            // (the layer below grows the body; a press only recolours it).
+            // Disabled dims every role BY COLOUR, never by opacity on the
+            // composite, which would show the fill through the mark.
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: -stateLayer.growth
                 radius: Style.radiusXs
-                // The unchecked box has to EXIST before it can be checked, and a
-                // transparent square on a boxless surface does not. This is the
-                // second place in the library that draws an outline, and for the
-                // same reason as the text field: the edge is the affordance.
-                // Disabled dims every role BY COLOUR, never by opacity on the
-                // composite, which would show the fill through the mark.
-                // Hover and press change the colour through the one state matrix
-                // (the layer below grows the body; a press only recolours it).
-                color: root._marked
-                    ? Style.tone(root.accentColor, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
-                    : "transparent"
-                border.width: root._marked ? 0 : Style.stroke(Style.indicatorWidth, root)
-                border.color: Style.tone(Style.textMuted, stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+                readonly property color _tone: Style.tone(root._marked ? root.accentColor : Style.textMuted,
+                    stateLayer.hovered, stateLayer.pressed, false, root.enabled, root.accentColor)
+                color: Qt.alpha(_tone, root._marked ? 1 : 0)
+                border.width: Style.stroke(Style.indicatorWidth, root)
+                border.color: _tone
 
                 Behavior on color {
                     ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
                 }
+                Behavior on border.color {
+                    ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
+                }
             }
 
-            // The check rides at 3:4 of the box (`_markRatio`) -- the inner
-            // eighth stays air at every size, the ratio M3 draws its mark at.
-            // Snapping it to the icon scale would land a 12px glyph inside the
-            // 12px sm box, so it is a proportion of the box, not a token.
+            // Content on the accent is the background, as the Switch knob.
             SvgIcon {
                 anchors.centerIn: parent
                 visible: root.checked && !root.indeterminate
                 name: "check"
-                size: root._box * root._markRatio
-                // Content on the accent is the background, as the Switch knob.
-                // Style.disabled(background) is the identity blend, written
-                // explicitly so every role passes through the same function.
+                size: root._markSize
                 color: root.enabled ? Style.textOnPrimary : Style.disabled(Style.textOnPrimary)
             }
-            // A dash, not a smaller tick: "some" must not read as a faint
-            // "yes".
+            // A dash, not a smaller tick: "some" must not read as a faint "yes".
+            // A straight line is a radius-0 rectangle a whole number of device
+            // pixels thick, never a glyph that smears over two rows; its weight
+            // is the check's stroke (2 on a 24 grid) and its length the check's
+            // width, so "some" weighs what "yes" does at every size.
             Rectangle {
                 anchors.centerIn: parent
                 visible: root.indeterminate
-                width: parent.width / 2
-                height: Style.stroke(Style.indicatorWidth, root)
+                width: root._markSize * 2 / 3
+                height: Style.stroke(root._markSize / 12, root)
                 radius: Style.radiusPill
                 antialiasing: false
                 color: root.enabled ? Style.textOnPrimary : Style.disabled(Style.textOnPrimary)
@@ -172,15 +182,14 @@ T.AbstractButton {
 
     // The layer is the box's own geometry: StateLayer's ring already reaches
     // `spaceTight` clear of it, a half step, on the box alone -- not the label.
-    // Pointer clicking still covers the row and the hit square above.
+    // Pointer clicking still covers the whole row.
     StateLayer {
         id: stateLayer
-        x: box.x
-        y: box.y
+        x: row.x + box.x
+        y: row.y + box.y
         width: box.width
         height: box.height
         host: root
         focusRadius: Style.radiusXs
-        hoverScale: 1.15
     }
 }

@@ -51,9 +51,8 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 - Popup family (`Menu`, `Popover`, `Dialog`, `ToolTip`) stays hand-rolled:
   `T.Popup` inside a `PanelWindow` paints only inside the window rect.
 - Equal-recency NotificationCenter groups retain feed order;
-  an alphabetical preference would need an owner decision. `Segmented`
-  may want one gliding indicator instead of a fill per cell (`ui-design` and
-  live judgement first); a compact CPU/memory readout is composed from
+  an alphabetical preference would need an owner decision. A compact
+  CPU/memory readout is composed from
   `Stat`, `Meter` and `Prose`, never a new type.
 - Types with no consumer yet: `Dialog`, `Scrim`, `Skeleton`, and `Popover`
   used as a tooltip or menu. Wait for a surface that needs them.
@@ -86,13 +85,9 @@ needs a paragraph is a design question for the owner, not a backlog entry.
 
 ## Owner rulings the type audit left open
 
-- **Segmented thumb** — the selected thumb is 1.30:1 on its track
-  (`opacity.selected` 0.12); raise it or add a non-colour cue.
 - **Label width ceiling** — `Capsule`, `Badge`, `ControlLabel` (so `Slider` and
   `Field`) widen without limit. One width token is needed; pick the number
   against a live popout row (190 = half a control width is the candidate).
-- **Hover growth of a small box** — `Checkbox` hardcodes 1.15, `Switch` 1.25,
-  the library default is 1.08.
 - **Host-owned state written by the component** — `Menu.currentIndex`,
   `Menu` writing row `selected`, `MonthCalendar.shown`: report `moved` /
   `monthShifted` and let the host assign; every host wires it in the same change.

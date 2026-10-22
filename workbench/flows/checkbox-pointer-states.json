@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "key": "checkbox-pointer-states",
+  "target": { "story": "checkbox" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "hovered", "equals": "" },
+    { "type": "expect", "observable": "target-height", "equals": 24 },
+    { "type": "pointer", "target": "documents", "event": "move", "x": 0.6, "y": 0.02 },
+    { "type": "await", "observable": "hovered", "equals": "documents" },
+    { "type": "pointer", "target": "documents", "event": "press", "x": 0.6, "y": 0.02 },
+    { "type": "await", "observable": "pressed", "equals": true },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.02, "y": 0.02 },
+    { "type": "await", "observable": "pressed", "equals": false },
+    { "type": "pointer", "target": "scene", "event": "release", "x": 0.02, "y": 0.02 },
+    { "type": "expect", "observable": "selected-count", "equals": 2 },
+    { "type": "pointer", "target": "documents", "event": "click", "x": 0.6, "y": 0.9 },
+    { "type": "expectEvent", "event": "toggle-requested", "origin": "component", "payload": { "item": "documents", "checked": false } },
+    { "type": "expect", "observable": "selected-count", "equals": 1 },
+    { "type": "expect", "observable": "keyboard-focus", "equals": "" }
+  ]
+}

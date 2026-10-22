@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "key": "switch-pointer-states",
+  "target": { "story": "switch" },
+  "steps": [
+    { "type": "reset" },
+    { "type": "expect", "observable": "hovered", "equals": false },
+    { "type": "expect", "observable": "target-height", "equals": 24 },
+    { "type": "pointer", "target": "toggle", "event": "move", "x": 0.5, "y": 0.02 },
+    { "type": "await", "observable": "hovered", "equals": true },
+    { "type": "pointer", "target": "toggle", "event": "press" },
+    { "type": "await", "observable": "pressed", "equals": true },
+    { "type": "pointer", "target": "scene", "event": "move", "x": 0.05, "y": 0.05 },
+    { "type": "await", "observable": "pressed", "equals": false },
+    { "type": "pointer", "target": "scene", "event": "release", "x": 0.05, "y": 0.05 },
+    { "type": "expect", "observable": "checked", "equals": true },
+    { "type": "pointer", "target": "toggle", "event": "move" },
+    { "type": "await", "observable": "hovered", "equals": true },
+    { "type": "pointer", "target": "toggle", "event": "press" },
+    { "type": "pointer", "target": "toggle", "event": "release" },
+    { "type": "expectEvent", "event": "toggle-requested", "origin": "component", "payload": { "checked": false } },
+    { "type": "expect", "observable": "checked", "equals": false },
+    { "type": "expect", "observable": "keyboard-focus", "equals": false }
+  ]
+}

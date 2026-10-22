@@ -215,9 +215,11 @@ T.TabBar {
                 blurMax: Style.cardShadowExtent
             }
 
+            // The thumb moves between two places it already occupies, so it
+            // eases at both ends; an arrival curve reads as it being thrown.
             Behavior on x {
                 enabled: !Style.reducedMotion && root._pointerChoice
-                NumberAnimation { duration: Motion.fast; easing.type: Motion.standardEasing }
+                NumberAnimation { duration: Motion.fast; easing.type: Motion.moveEasing }
             }
         }
     }
@@ -225,7 +227,8 @@ T.TabBar {
     contentItem: ListView {
         id: tabs
         anchors.fill: parent
-        anchors.margins: root._pad
+        anchors.leftMargin: root._pad
+        anchors.rightMargin: root._pad
         orientation: ListView.Horizontal
         spacing: root._gap
         interactive: false
@@ -256,10 +259,15 @@ T.TabBar {
         readonly property bool iconOnly: tab.labelText.length === 0
             && String(tab.option?.icon ?? "").length > 0
         objectName: "segmentedTab" + tab.index
+        // The segment is the bar's full height, so the pointer target is the
+        // whole bar and not the 24 px pill inside it: the air above and below
+        // the pill answers the pointer and the pill is what paints.
         implicitWidth: root._segmentWidth
-        implicitHeight: root.barHeight - root._pad * 2
+        implicitHeight: root.barHeight
         width: implicitWidth
         height: implicitHeight
+        topPadding: root._pad
+        bottomPadding: root._pad
         enabled: root.enabled && tab.available
         checkable: false
         hoverEnabled: enabled
@@ -279,19 +287,29 @@ T.TabBar {
 
         // An item's own pill: empty at rest, a lift under the pointer and a
         // deeper step under a press. The picked item shows the sliding
-        // thumb behind it instead, so it paints nothing of its own.
+        // thumb behind it instead, and an unavailable one has no pill to lift
+        // (`Style.disabled` of nothing is an opaque dark body, a hole in the
+        // track), so each paints nothing of its own. Rest is the lift's own
+        // hue at no alpha, so the fade never passes through a dark mix.
         background: Rectangle {
             x: -tabLayer.growth
-            y: -tabLayer.growth
+            y: root._pad - tabLayer.growth
             width: tab.width + 2 * tabLayer.growth
-            height: tab.height + 2 * tabLayer.growth
+            height: tab.availableHeight + 2 * tabLayer.growth
             radius: root._itemRadius
-            color: tab.selectedSegment ? "transparent"
-                : Style.tone("transparent", tab.hovered, tab.pressed, false, tab.enabled, Style.accent)
+            color: tab.enabled && !tab.selectedSegment && (tab.hovered || tab.pressed)
+                ? Style.tone("transparent", tab.hovered, tab.pressed, false, true, Style.accent)
+                : Qt.alpha(Style.text, 0)
 
             Behavior on color {
                 ColorAnimation { duration: Motion.micro; easing.type: Motion.standardEasing }
             }
+        }
+
+        // The pointing hand over an available segment.
+        HoverHandler {
+            enabled: tab.enabled
+            cursorShape: Qt.PointingHandCursor
         }
 
         // The glyph and label group sits centred and takes only its own
@@ -317,7 +335,10 @@ T.TabBar {
                     text: tab.labelText
                     color: tab.contentColor
                     font.pixelSize: root._textSize
-                    font.weight: Style.weightMedium
+                    // The picked label is heavier as well as accent: the thumb
+                    // lifts 1.30:1 off the track and the accent is 1.03:1 off the
+                    // muted label, so weight is the cue that needs no colour.
+                    font.weight: tab.selectedSegment ? Style.weightBold : Style.weightMedium
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     maximumLineCount: 1
@@ -342,7 +363,9 @@ T.TabBar {
 
         StateLayer {
             id: tabLayer
-            anchors.fill: parent
+            y: tab.topPadding
+            width: tab.width
+            height: tab.availableHeight
             host: tab
             // Hover lifts the item's pill a little; a press only changes its
             // colour and never its size. The picked item does not grow, because
