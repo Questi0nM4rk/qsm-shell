@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "key": "data-capsule-window",
+  "key": "data-capsule-fullscreen",
   "target": { "composition": "compositions/capsule-sound.json" },
   "steps": [
     { "type": "reset" },
     { "type": "expect", "node": "capsule", "observable": "fullscreen", "equals": false },
     { "type": "expect", "node": "sound", "observable": "level", "equals": 42 },
-    { "type": "window", "mode": "fullscreen" },
-    { "type": "expect", "node": "capsule", "observable": "fullscreen", "equals": false },
+    { "type": "environment", "mode": "fullscreen" },
+    { "type": "expect", "node": "capsule", "observable": "fullscreen", "equals": true },
     { "type": "expect", "node": "sound", "observable": "level", "equals": 42 },
     { "type": "pointer", "node": "sound", "target": "slider", "event": "wheel", "dx": 0, "dy": 120 },
     { "type": "expectEvent", "node": "sound", "event": "changed", "origin": "component", "payload": { "level": 47 } },
@@ -18,7 +18,7 @@
     { "type": "expectEvent", "node": "sound", "event": "mute-changed", "origin": "route", "targetNode": "capsule" },
     { "type": "expect", "node": "sound", "observable": "level", "equals": 47 },
     { "type": "expect", "node": "sound", "observable": "muted", "equals": true },
-    { "type": "window", "mode": "windowed" },
+    { "type": "environment", "mode": "desktop" },
     { "type": "expect", "node": "capsule", "observable": "fullscreen", "equals": false },
     { "type": "expect", "node": "sound", "observable": "level", "equals": 47 },
     { "type": "expect", "node": "sound", "observable": "muted", "equals": true }

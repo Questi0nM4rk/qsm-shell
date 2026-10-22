@@ -147,7 +147,7 @@ TestCase {
     }
 
     function test_focus_retention_and_restart_same_value() {
-        inner.forceActiveFocus();
+        inner.forceActiveFocus(Qt.TabFocusReason);
         tryCompare(capsule, "keepOpen", true);
         capsule.timeout = 120;
         wait(180);

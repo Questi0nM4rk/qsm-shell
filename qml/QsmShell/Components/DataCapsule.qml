@@ -115,7 +115,11 @@ T.Control {
     }
     onTimeoutChanged: root.restart()
     onKeepOpenChanged: root.syncTimeout()
-    Component.onCompleted: root.restart()
+    Component.onCompleted: {
+        if (root.interactive && root.accessibleName.length === 0)
+            console.warn("DataCapsule: an interactive capsule has no accessibleName -- a screen reader hears an unnamed button");
+        root.restart();
+    }
 
     Behavior on opacity {
         NumberAnimation {
@@ -195,7 +199,11 @@ T.Control {
         }
     }
 
-    Keys.onReturnPressed: event => { event.accepted = root.activate(); }
-    Keys.onEnterPressed: event => { event.accepted = root.activate(); }
-    Keys.onSpacePressed: event => { event.accepted = root.activate(); }
+    // One dispatcher, and a held key asks once: it would reopen the details at
+    // the key-repeat rate.
+    Keys.onPressed: event => {
+        if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space)
+            return;
+        event.accepted = event.isAutoRepeat ? root.acceptsInput && root.interactive : root.activate();
+    }
 }

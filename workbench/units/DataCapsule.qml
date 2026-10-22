@@ -140,6 +140,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignHCenter
                         font.pixelSize: Style.textNear(Style.textMd * capsule.sizeScale)
+                        color: capsule.enabled ? Style.text : Style.disabled(Style.text)
                         text: root.titleText
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -151,6 +152,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignHCenter
                         font.pixelSize: Style.textNear(Style.textSm * capsule.sizeScale)
+                        color: capsule.enabled ? Style.textMuted : Style.disabled(Style.textMuted)
                         text: root.statusText
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -170,6 +172,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignHCenter
                         font.pixelSize: Style.textNear(Style.textMd * capsule.sizeScale)
+                        color: capsule.enabled ? Style.text : Style.disabled(Style.text)
                         text: root.singleLineText
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -187,6 +190,7 @@ Item {
                         id: glyphItem
                         objectName: "capsuleGlyph"
                         name: "workspace"
+                        color: capsule.enabled ? Style.text : Style.disabled(Style.text)
                         size: composition.glyphSpan
                         Layout.alignment: Qt.AlignHCenter
                     }
@@ -198,6 +202,7 @@ Item {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignHCenter
                         font.pixelSize: Style.textNear(Style.textMd * capsule.sizeScale)
+                        color: capsule.enabled ? Style.text : Style.disabled(Style.text)
                         text: root.readingText
                         horizontalAlignment: Text.AlignHCenter
                     }
@@ -313,12 +318,15 @@ Item {
         events: ["activated", "timeout-requested"],
         actions: ["present", "hide", "activate", "restart", "reset"],
         targets: {
-            "capsule": () => screen.emptyPlacement ? null : capsule
+            "capsule": () => screen.emptyPlacement ? null : capsule,
+            "scene": () => root
         },
         observables: {
             shown: () => root.shown,
             present: () => capsule.present,
             "keep-open": () => capsule.keepOpen,
+            hovered: () => capsule.pointerHovered,
+            focused: () => capsule.visualFocus,
             "accepts-input": () => capsule.acceptsInput,
             animating: () => capsule.animating,
             "can-activate": () => capsule.actions[0].enabled,
