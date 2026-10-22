@@ -12,9 +12,10 @@ import qs.QsmShell.Style
 //
 // Meaning never travels in the colour alone (`tone` is a hue, and a hue is
 // invisible to a good number of people and to anyone glancing). A badge
-// therefore carries TEXT, or an ICON, or both — `dot` is the one exception,
-// and it exists only for "there is something here", which is a presence
-// signal rather than a state, so it ignores `tone` and is always neutral.
+// therefore carries TEXT, or an ICON, or both — `dot` is the one exception:
+// a filled circle that says "there is something here" and nothing more. It
+// takes `tone` like any badge (neutral until a host says otherwise) and is
+// always filled, because a 12 % tint of an 8 px disc is not a mark.
 Rectangle {
     id: root
 
@@ -25,8 +26,9 @@ Rectangle {
     // What a screen reader says when `text` does not say it: the dot and the
     // icon-only form have no reading of their own.
     property string accessibleName: ""
-    // Presence only: a filled circle with no reading. Use it for "unread",
-    // never for a state a person has to distinguish from another state.
+    // Presence only: a filled circle with no reading. Use it for "unread" or a
+    // status riding a picture; whatever it means must also reach a screen
+    // reader through `accessibleName`, because a hue alone does not.
     property bool dot: false
     // Filled reads louder than tinted. A count that must be noticed is filled;
     // a status that merely accompanies a name is not.
@@ -43,14 +45,13 @@ Rectangle {
         default: throw new Error(`Badge: unknown tone "${tone}"`);
         }
     }
-    readonly property color _hue: dot ? Style.textMuted : _tone
     // On a filled badge the reading sits ON the tone, so it takes the ground
     // colour rather than the text colour — text-on-accent is the one place
     // this palette cannot be read.
     // A tinted badge's reading is its tone pulled toward the text colour:
     // the bare tone on its own tint is below 4.5:1 at this size.
     readonly property color _prose: filled ? Style.textOnPrimary
-        : Qt.tint(_hue, Qt.rgba(Style.text.r, Style.text.g, Style.text.b, Style.badgeInkMix))
+        : Qt.tint(_tone, Qt.rgba(Style.text.r, Style.text.g, Style.text.b, Style.badgeInkMix))
     // The reading settles with the fill; on its own it would snap while the
     // fill is still half way between two tones.
     property color _ink: _prose
@@ -66,13 +67,18 @@ Rectangle {
 
     implicitHeight: dot ? Style.badgeDot : Style.badgeHeight
     // A count takes the fixed chip; any other reading grows into a pill
-    // rather than stretching the glyph's own box.
+    // rather than stretching the glyph's own box, one end radius of air on
+    // each side so the first letter starts where the curve ends (a lone glyph
+    // is the circle). A marker is not a paragraph: past `_maxWidth` the
+    // reading elides.
+    readonly property real _maxWidth: Style.rhythm(Style.controlWidth / 3)
+    readonly property real _padding: root.text.length > 0 ? Style.space4 : 0
     implicitWidth: dot
         ? implicitHeight
         : root._count ? Style.badgeWidth
-        : Math.max(implicitHeight, content.implicitWidth + Style.space2)
+        : Math.min(root._maxWidth, Math.max(implicitHeight, content.implicitWidth + root._padding))
     radius: Style.radiusPill
-    color: filled ? _hue : Qt.rgba(_hue.r, _hue.g, _hue.b, Style.badgeTintOpacity)
+    color: filled || dot ? _tone : Qt.rgba(_tone.r, _tone.g, _tone.b, Style.badgeTintOpacity)
     visible: dot || text.length > 0 || icon.length > 0
 
     Accessible.role: Accessible.StaticText
@@ -112,14 +118,16 @@ Rectangle {
         }
         Prose {
             Layout.fillWidth: content._alone
+            Layout.maximumWidth: root._maxWidth - root._padding - (root.icon.length > 0 ? Style.iconXs + Style.spaceTight : 0)
+            Layout.alignment: content._alone ? Qt.AlignHCenter : 0
             Layout.fillHeight: true
             horizontalAlignment: content._alone ? Text.AlignHCenter : Text.AlignLeft
             verticalAlignment: Text.AlignVCenter
             visible: root.text.length > 0
-            // The technical face has tabular digits, so a ticking number does
-            // not shift the text inside the chip either.
-            role: "reading"
-            font.pixelSize: Style.textSm
+            // A count is a value in the technical face, whose tabular digits
+            // keep a ticking number from shifting the text inside the chip; a
+            // word is a word, in the UI face.
+            role: root._count ? "reading" : "label"
             color: root._ink
             text: root._shown
         }
